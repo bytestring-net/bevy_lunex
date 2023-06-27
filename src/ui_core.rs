@@ -19,7 +19,7 @@ pub struct Hierarchy {
 }
 impl Hierarchy {
     pub fn new () -> Hierarchy {
-        let mut branch = Branch::new();
+        let mut branch = Branch::new(0.0);
         branch.container.position_layout_set(Layout::Relative {
             relative_1: Vec2 { x: 0.0, y: 0.0 },
             relative_2: Vec2 { x: 100.0, y: 100.0 },
@@ -72,9 +72,14 @@ pub fn hierarchy_update(mut query: Query<&mut Hierarchy>, mut windows: Query<&mu
 #[derive(Default)]
 pub struct Branch {
     name: String,                                                                                                                           //Caches name for debug
-    level: f32,                                                                                                                             //How deep it is located (For highlighting)
+    depth: f32,                                                                                                                             //How deep it is located (For highlighting)
+    in_focus: bool,
+
     container: Container,
     data: Option<Data>,
+    visible: bool,
+    
+    parent_visible: bool,
     //active: bool,
 
     pernament: Vec<Branch>,
@@ -103,6 +108,33 @@ impl Branch {
     pub fn container_get_mut (&mut self) -> &mut Container {                                                                
         &mut self.container
     }
+
+
+    pub fn get_depth (&self) -> f32 {
+        if self.in_focus {self.depth + 0.5} else {self.depth}
+    }
+    pub fn set_focus (&mut self, focus: bool) {
+        self.in_focus = focus;
+    }
+    pub fn get_focus (&self) -> bool {
+        self.in_focus
+    }
+
+    pub fn is_visible (&self) -> bool {
+        self.visible && self.parent_visible
+    }
+    pub fn set_visibility (&mut self, visible: bool) {
+        let old = self.is_visible();
+        self.visible = visible;
+        let new = self.is_visible();
+        if new != old {
+            self.cascade_visibility(new)
+        }
+    }
+    pub fn get_visibility (&self) -> bool {
+        self.visible
+    }
+
 
     //#LIBRARY RECURSION CALLS
     pub (in crate) fn map (&self, mut string: String, level: u32) -> String {                                                      //This will cascade map registered branches
@@ -185,13 +217,31 @@ impl Branch {
         }
     }
 
+    pub (in crate) fn cascade_visibility (&mut self, visible: bool) {                                                              //This will cascade set parent visible all branches
+        self.parent_visible = visible;
+
+        let visibility = self.is_visible();
+
+        for i in 0..self.pernament.len() {
+            let pos = self.container.position_get();
+            self.pernament[i].cascade_visibility(visibility);
+        }
+        for x in self.removable.iter_mut(){
+            let pos = self.container.position_get();
+            x.1.cascade_visibility(visibility);
+        }
+    }
     //#LIBRARY MECHANISMS
-    fn new () -> Branch {
+    fn new (depth: f32) -> Branch {
         Branch {
             name: String::new(),
-            level: 0.0,
+            depth,
+            in_focus: false,
+
             container: Container::new(),
             data: Option::None,
+            visible: true,
+            parent_visible: true,
 
             pernament: Vec::new(),
             removable: HashMap::new(),
@@ -202,7 +252,7 @@ impl Branch {
     pub (in crate) fn create_simple (&mut self, removable: bool, position: PositionLayout) -> String {                              //This creates unnamed Branch in one of the 2 registers and return string with ABSOLUTE local path
         if !removable {
             let ukey = self.pernament.len();
-            let mut branch = Branch::new();
+            let mut branch = Branch::new(self.depth + 1.0);
             branch.container.position_layout_set(position);
             self.pernament.push(branch);
             String::from("#p") + &ukey.to_string()
@@ -212,7 +262,7 @@ impl Branch {
                 if !self.removable.contains_key(&ukey) {break;};
                 ukey += 1;
             };
-            let mut branch = Branch::new();
+            let mut branch = Branch::new(self.depth + 1.0);
             branch.container.position_layout_set(position);
             self.removable.insert(ukey, branch);
             String::from("#r") + &ukey.to_string()

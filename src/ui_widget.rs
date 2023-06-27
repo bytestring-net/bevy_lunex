@@ -85,7 +85,11 @@ impl Widget {
 
     pub fn new(system: &mut Hierarchy, key: &str, position: PositionLayout) -> Result<Widget, String> {
         match system.expose_mut().create_simple_checked(key, position) {
-            Ok (new_key) => Result::Ok(Widget::from_path(&new_key)),
+            Ok (new_key) => {
+                let widget = Widget::from_path(&new_key);
+                widget.fetch_mut(system, "").unwrap().set_visibility(false);
+                Result::Ok(widget)
+            },
             Err (message) => Err(String::from("UNABLE TO CREATE WIDGET! #Error: ") + &message),
         }
     }
