@@ -129,7 +129,7 @@ impl Branch {
         let new = self.is_visible();
         println!("({} != {}) parent: {}", new, old, self.parent_visible);
         if new != old {
-            self.cascade_visibility(new)
+            self.cascade_visibility()
         }
     }
     pub fn get_visibility (&self) -> bool {
@@ -154,6 +154,8 @@ impl Branch {
     }
     pub (in crate) fn map_debug (&self, mut string: String, level: u32) -> String {                                                //This will cascade map all branches with debug mode
         let mut done_widgets: HashMap<String, bool> = HashMap::new();
+        string += &format!("- Depth:{}, Visible:{}, PVisible:{}", self.depth, self.visible, self.parent_visible);
+        
         for x in self.register.iter(){
             match self.borrow_chain_checked(x.1){
                 Ok (widget) => {
@@ -166,7 +168,6 @@ impl Branch {
                     string += " (";
                     string += x.1;
                     string += ")";
-                    string += &format!("- Depth:{}, Visible:{}, PVisible:{}", self.depth, self.visible, self.parent_visible);
                     string = widget.map_debug(string, level + 1);
                     done_widgets.insert(x.1.to_string(), true);
                 },
@@ -219,18 +220,30 @@ impl Branch {
         }
     }
 
-    pub (in crate) fn cascade_visibility (&mut self, visible: bool) {                                                              //This will cascade set parent visible all branches
+    pub (in crate) fn cascade_visibility_receive (&mut self, visible: bool) {                                                              //This will cascade set parent visible all branches
         self.parent_visible = visible;
 
         let visibility = self.is_visible();
 
         for i in 0..self.pernament.len() {
             let pos = self.container.position_get();
-            self.pernament[i].cascade_visibility(visibility);
+            self.pernament[i].cascade_visibility_receive(visibility);
         }
         for x in self.removable.iter_mut(){
             let pos = self.container.position_get();
-            x.1.cascade_visibility(visibility);
+            x.1.cascade_visibility_receive(visibility);
+        }
+    }
+    pub (in crate) fn cascade_visibility (&mut self) {                                                              //This will cascade set parent visible all branches
+        let visibility = self.is_visible();
+
+        for i in 0..self.pernament.len() {
+            let pos = self.container.position_get();
+            self.pernament[i].cascade_visibility_receive(visibility);
+        }
+        for x in self.removable.iter_mut(){
+            let pos = self.container.position_get();
+            x.1.cascade_visibility_receive(visibility);
         }
     }
     //#LIBRARY MECHANISMS
