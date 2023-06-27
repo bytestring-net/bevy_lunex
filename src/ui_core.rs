@@ -19,7 +19,7 @@ pub struct Hierarchy {
 }
 impl Hierarchy {
     pub fn new () -> Hierarchy {
-        let mut branch = Branch::new(0.0);
+        let mut branch = Branch::new(0.0, true);
         branch.container.position_layout_set(Layout::Relative {
             relative_1: Vec2 { x: 0.0, y: 0.0 },
             relative_2: Vec2 { x: 100.0, y: 100.0 },
@@ -237,7 +237,7 @@ impl Branch {
     }
     
     //#LIBRARY MECHANISMS
-    fn new (depth: f32) -> Branch {
+    fn new (depth: f32, parent_visible: bool) -> Branch {
         Branch {
             name: String::new(),
             depth,
@@ -246,7 +246,7 @@ impl Branch {
             container: Container::new(),
             data: Option::None,
             visible: true,
-            parent_visible: true,
+            parent_visible,
 
             pernament: Vec::new(),
             removable: HashMap::new(),
@@ -257,7 +257,7 @@ impl Branch {
     pub (in crate) fn create_simple (&mut self, removable: bool, position: PositionLayout) -> String {                              //This creates unnamed Branch in one of the 2 registers and return string with ABSOLUTE local path
         if !removable {
             let ukey = self.pernament.len();
-            let mut branch = Branch::new(self.depth + 1.0);
+            let mut branch = Branch::new(self.depth + 1.0, self.parent_visible);
             branch.container.position_layout_set(position);
             self.pernament.push(branch);
             String::from("#p") + &ukey.to_string()
@@ -267,7 +267,7 @@ impl Branch {
                 if !self.removable.contains_key(&ukey) {break;};
                 ukey += 1;
             };
-            let mut branch = Branch::new(self.depth + 1.0);
+            let mut branch = Branch::new(self.depth + 1.0, self.parent_visible);
             branch.container.position_layout_set(position);
             self.removable.insert(ukey, branch);
             String::from("#r") + &ukey.to_string()
