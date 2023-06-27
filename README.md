@@ -2,7 +2,7 @@
 <p align="left">A novel path-based approach to UI built on top of existing Bevy features.</p>
 
 ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
-
+*A recreation of Cyberpunk 2077 menu in Bevy using Lunex*
 
 ## Table of Contents
 
