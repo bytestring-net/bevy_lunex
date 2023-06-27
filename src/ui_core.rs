@@ -121,7 +121,8 @@ impl Branch {
     }
 
     pub fn is_visible (&self) -> bool {
-        if self.visible && self.parent_visible {true} else {false}
+        println!("{} to {}",self.visible, self.parent_visible);
+        self.visible && self.parent_visible
     }
     pub fn set_visibility (&mut self, visible: bool) {
         let old = self.is_visible();
