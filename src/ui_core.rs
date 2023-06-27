@@ -46,10 +46,10 @@ impl Hierarchy {
         string
     }
     
-    pub (in crate) fn expose (&self) -> & Branch {
-        & self.branch
+    pub fn root_get (&self) -> & Branch {
+        &self.branch
     }
-    pub (in crate) fn expose_mut (&mut self) -> &mut Branch {
+    pub fn root_get_mut (&mut self) -> &mut Branch {
         &mut self.branch
     }
     
