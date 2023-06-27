@@ -156,9 +156,6 @@ impl Branch {
         for x in self.register.iter(){
             match self.borrow_chain_checked(x.1){
                 Ok (widget) => {
-
-                    string += &format!("- Depth:{}, Visible:{}, PVisible:{}", self.depth, self.visible, self.parent_visible);
-
                     string += "\n  ";
                     for _x in 0..level {
                         string += "|    ";
@@ -168,6 +165,7 @@ impl Branch {
                     string += " (";
                     string += x.1;
                     string += ")";
+                    string += &format!("- Depth:{}, Visible:{}, PVisible:{}", self.depth, self.visible, self.parent_visible);
                     string = widget.map_debug(string, level + 1);
                     done_widgets.insert(x.1.to_string(), true);
                 },
