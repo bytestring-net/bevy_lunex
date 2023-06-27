@@ -129,7 +129,7 @@ impl Widget {
 
                         let new_key: String = match system.root_get_mut().borrow_chain_mut(&source) {
                             Ok (set_widget) => {
-                                set_widget.create_simple(true, position)
+                                set_widget.create_simple(true, position, &tuple1.1)
                             },
                             Err (message) => return Result::Err(message),
                         };
@@ -146,7 +146,7 @@ impl Widget {
                     let mut new_local_path = String::from(&path) + "/";
                     match system.root_get_mut().borrow_chain_checked_mut(&(String::from(&widget.path)+ "/" + &path)) {
                         Ok (set_widget) => {
-                            new_local_path += &set_widget.create_simple(true, position);
+                            new_local_path += &set_widget.create_simple(true, position, &tuple1.1);
                         },
                         Err (message) => return Err(String::from("CRASHED ON MAKING NEW BRANCH! #Error: ") + &message),
                     };

@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 
 use bevy::prelude::*;
+use colored::Colorize;
 
 use crate::prelude::*;
 
@@ -19,7 +20,7 @@ pub struct Hierarchy {
 }
 impl Hierarchy {
     pub fn new () -> Hierarchy {
-        let mut branch = Branch::new(0.0, true);
+        let mut branch = Branch::new(0.0, true, "ROOT");
         branch.container.position_layout_set(Layout::Relative {
             relative_1: Vec2 { x: 0.0, y: 0.0 },
             relative_2: Vec2 { x: 100.0, y: 100.0 },
@@ -137,13 +138,12 @@ impl Branch {
 
 
     //#LIBRARY RECURSION CALLS
-    pub (in crate) fn map (&self, mut string: String, level: u32) -> String {                                                      //This will cascade map registered branches
+    pub (in crate) fn map (&self, mut string: String, level: u32) -> String {
+        
         for x in self.register.iter(){
             if let Ok (widget) = self.borrow_chain_checked(x.1){
                 string += "\n  ";
-                for _x in 0..level {
-                    string += "|    ";
-                };
+                for _x in 0..level {string += "|    "}
                 string += "|-> ";
                 string += x.0;
                 string = widget.map(string, level + 1);
@@ -153,7 +153,7 @@ impl Branch {
     }
     pub (in crate) fn map_debug (&self, mut string: String, level: u32) -> String {                                                //This will cascade map all branches with debug mode
         let mut done_widgets: HashMap<String, bool> = HashMap::new();
-        string += &format!("- Depth:{}, Visible:{}, PVisible:{}", self.depth, self.visible, self.parent_visible);
+        string += &format!("- Depth:{}, Visible:{}, PVisible:{}, Name:{}", self.depth, self.visible, self.parent_visible, self.name);
         
         for x in self.register.iter(){
             match self.borrow_chain_checked(x.1){
@@ -237,9 +237,9 @@ impl Branch {
     }
     
     //#LIBRARY MECHANISMS
-    fn new (depth: f32, parent_visible: bool) -> Branch {
+    fn new (depth: f32, parent_visible: bool, name: &str) -> Branch {
         Branch {
-            name: String::new(),
+            name: name.to_string(),
             depth,
             in_focus: false,
 
@@ -254,10 +254,10 @@ impl Branch {
         }
     }
 
-    pub (in crate) fn create_simple (&mut self, removable: bool, position: PositionLayout) -> String {                              //This creates unnamed Branch in one of the 2 registers and return string with ABSOLUTE local path
+    pub (in crate) fn create_simple (&mut self, removable: bool, position: PositionLayout, name: &str) -> String {                              //This creates unnamed Branch in one of the 2 registers and return string with ABSOLUTE local path
         if !removable {
             let ukey = self.pernament.len();
-            let mut branch = Branch::new(self.depth + 1.0, self.is_visible());
+            let mut branch = Branch::new(self.depth + 1.0, self.is_visible(), "nameless");
             branch.container.position_layout_set(position);
             self.pernament.push(branch);
             String::from("#p") + &ukey.to_string()
@@ -267,7 +267,7 @@ impl Branch {
                 if !self.removable.contains_key(&ukey) {break;};
                 ukey += 1;
             };
-            let mut branch = Branch::new(self.depth + 1.0, self.is_visible());
+            let mut branch = Branch::new(self.depth + 1.0, self.is_visible(), name);
             branch.container.position_layout_set(position);
             self.removable.insert(ukey, branch);
             String::from("#r") + &ukey.to_string()
@@ -275,11 +275,11 @@ impl Branch {
     }
     pub (in crate) fn create_simple_checked (&mut self, key: &str, position: PositionLayout) -> Result<String, String> {            //This decides if Branch should be removable or not and also checks for key collision and returns ABSOLUTE/RELATIVE local path
         if key.is_empty() {
-            Result::Ok(self.create_simple(false, position))
+            Result::Ok(self.create_simple(false, position, "nameless"))
         } else {
             match self.register.get(key){
                 None => {
-                    let path = self.create_simple(true, position);
+                    let path = self.create_simple(true, position, key);
                     self.register_path(String::from(key), path);
                     Result::Ok(String::from(key))
                 },
