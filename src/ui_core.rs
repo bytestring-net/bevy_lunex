@@ -33,7 +33,7 @@ impl Hierarchy {
         }
     }
     pub fn update (&mut self) {
-        self.branch.cascade_update(Vec2::default(), self.width, self.height);
+        self.branch.cascade_update_self(Vec2::default(), self.width, self.height);
     }
     pub fn map (&self) -> String {
         let mut string = String::from("#HIERARCHY");
@@ -113,27 +113,26 @@ impl Branch {
     pub fn get_depth (&self) -> f32 {
         if self.in_focus {self.depth + 0.5} else {self.depth}
     }
-    pub fn set_focus (&mut self, focus: bool) {
-        self.in_focus = focus;
-    }
     pub fn get_focus (&self) -> bool {
         self.in_focus
+    }
+    pub fn set_focus (&mut self, focus: bool) {
+        self.in_focus = focus;
     }
 
     pub fn is_visible (&self) -> bool {
         self.visible == true && self.parent_visible == true
     }
+    pub fn get_visibility (&self) -> bool {
+        self.visible
+    }
     pub fn set_visibility (&mut self, visible: bool) {
         let old = self.is_visible();
         self.visible = visible;
         let new = self.is_visible();
-        println!("({} != {}) parent: {}", new, old, self.parent_visible);
         if new != old {
             self.cascade_visibility()
         }
-    }
-    pub fn get_visibility (&self) -> bool {
-        self.visible
     }
 
 
@@ -208,44 +207,35 @@ impl Branch {
         }
         string
     }
-    pub (in crate) fn cascade_update (&mut self, point: Vec2, width: f32, height: f32) {                                           //This will cascade update all branches
+    pub (in crate) fn cascade_update_self (&mut self, point: Vec2, width: f32, height: f32) {                                      //This will cascade update all branches
         self.container.update(point, width, height);
         for i in 0..self.pernament.len() {
             let pos = self.container.position_get();
-            self.pernament[i].cascade_update(pos.point_1, pos.width, pos.height);
+            self.pernament[i].cascade_update_self(pos.point_1, pos.width, pos.height);
         }
         for x in self.removable.iter_mut(){
             let pos = self.container.position_get();
-            x.1.cascade_update(pos.point_1, pos.width, pos.height);
+            x.1.cascade_update_self(pos.point_1, pos.width, pos.height);
         }
     }
 
-    pub (in crate) fn cascade_visibility_receive (&mut self, visible: bool) {                                                              //This will cascade set parent visible all branches
+    pub (in crate) fn cascade_visibility (&mut self) {                                                                              //This will cascade set parent visible all branches
+        let visibility = self.is_visible();
+
+        for i in 0..self.pernament.len() {
+            let pos = self.container.position_get();
+            self.pernament[i].cascade_visibility_self(visibility);
+        }
+        for x in self.removable.iter_mut(){
+            let pos = self.container.position_get();
+            x.1.cascade_visibility_self(visibility);
+        }
+    }
+    pub (in crate) fn cascade_visibility_self (&mut self, visible: bool) {                                                          //This will cascade set parent visible all branches
         self.parent_visible = visible;
-
-        let visibility = self.is_visible();
-
-        for i in 0..self.pernament.len() {
-            let pos = self.container.position_get();
-            self.pernament[i].cascade_visibility_receive(visibility);
-        }
-        for x in self.removable.iter_mut(){
-            let pos = self.container.position_get();
-            x.1.cascade_visibility_receive(visibility);
-        }
+        self.cascade_visibility()
     }
-    pub (in crate) fn cascade_visibility (&mut self) {                                                              //This will cascade set parent visible all branches
-        let visibility = self.is_visible();
-
-        for i in 0..self.pernament.len() {
-            let pos = self.container.position_get();
-            self.pernament[i].cascade_visibility_receive(visibility);
-        }
-        for x in self.removable.iter_mut(){
-            let pos = self.container.position_get();
-            x.1.cascade_visibility_receive(visibility);
-        }
-    }
+    
     //#LIBRARY MECHANISMS
     fn new (depth: f32) -> Branch {
         Branch {
