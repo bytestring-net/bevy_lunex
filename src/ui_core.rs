@@ -127,7 +127,7 @@ impl Branch {
         let old = self.is_visible();
         self.visible = visible;
         let new = self.is_visible();
-        println!("({} != {}) {}", new, old, self.parent_visible);
+        println!("({} != {}) parent: {}", new, old, self.parent_visible);
         if new != old {
             self.cascade_visibility(new)
         }
