@@ -87,7 +87,7 @@ impl Widget {
         match system.root_get_mut().create_simple_checked(key, position) {
             Ok (new_key) => {
                 let widget = Widget::from_path(&new_key);
-                widget.fetch_mut(system, "").unwrap().set_visibility(false);
+                //widget.fetch_mut(system, "").unwrap().set_visibility(false);
                 Result::Ok(widget)
             },
             Err (message) => Err(String::from("UNABLE TO CREATE WIDGET! #Error: ") + &message),
