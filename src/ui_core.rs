@@ -257,7 +257,7 @@ impl Branch {
     pub (in crate) fn create_simple (&mut self, removable: bool, position: PositionLayout) -> String {                              //This creates unnamed Branch in one of the 2 registers and return string with ABSOLUTE local path
         if !removable {
             let ukey = self.pernament.len();
-            let mut branch = Branch::new(self.depth + 1.0, self.parent_visible);
+            let mut branch = Branch::new(self.depth + 1.0, self.is_visible());
             branch.container.position_layout_set(position);
             self.pernament.push(branch);
             String::from("#p") + &ukey.to_string()
@@ -267,7 +267,7 @@ impl Branch {
                 if !self.removable.contains_key(&ukey) {break;};
                 ukey += 1;
             };
-            let mut branch = Branch::new(self.depth + 1.0, self.parent_visible);
+            let mut branch = Branch::new(self.depth + 1.0, self.is_visible());
             branch.container.position_layout_set(position);
             self.removable.insert(ukey, branch);
             String::from("#r") + &ukey.to_string()
