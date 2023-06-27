@@ -89,5 +89,4 @@ There are multiple layout options to choose from. With their combination and sma
 
 ## License
 
-LICENSE NAME - see the [LICENSE](https://github.com/satwikkansal/readme_styles/blob/master/LICENSE) file for more details.
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
