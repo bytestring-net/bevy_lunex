@@ -46,10 +46,10 @@ impl Hierarchy {
         string
     }
     
-    pub fn root_get (&self) -> & Branch {
+    pub (in crate) fn root_get (&self) -> & Branch {
         &self.branch
     }
-    pub fn root_get_mut (&mut self) -> &mut Branch {
+    pub (in crate) fn root_get_mut (&mut self) -> &mut Branch {
         &mut self.branch
     }
     
@@ -121,7 +121,7 @@ impl Branch {
     }
 
     pub fn is_visible (&self) -> bool {
-        self.visible && self.parent_visible
+        if self.visible && self.parent_visible {true} else {false}
     }
     pub fn set_visibility (&mut self, visible: bool) {
         let old = self.is_visible();
