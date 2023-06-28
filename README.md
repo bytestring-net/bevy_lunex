@@ -16,7 +16,7 @@ Bevy_Lunex is an UI framework expanding on top of existing Bevy ECS features. It
 It's focus is on simlicity and the speed with how fast you can achieve AAA level UI. It achieves this by adding layout capabilites to vanilla entities so you can use them as UI elements.
 It uses a path-based hierarchy to manage UI widgets. Pointers to these widgets are then passed to entities as components.
 ```
-#HIERARCHY
+#ROOT
   |-> Main menu
   |    |-> Wallpaper
   |    |    |-> Background
