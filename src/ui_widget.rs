@@ -18,7 +18,7 @@ impl Widget {
     pub fn fetch<'a> (&'a self, system: &'a  Hierarchy, key: &str) -> Result<&Branch, String> {
         let mut extra_path = String::from(&self.path);
         if !key.is_empty() { extra_path += "/";extra_path += key;}
-        match system.expose().borrow_chain_checked(&extra_path){
+        match system.root_get().borrow_chain_checked(&extra_path){
             Ok (branch) => Result::Ok(branch),
             Err (message) => Err(format!("Fetch failed, could not find '{}' #REASON: {}", &extra_path, message).to_string()),
         }
@@ -26,7 +26,7 @@ impl Widget {
     pub fn fetch_mut<'a> (&'a self, system: &'a mut Hierarchy, key: &str) -> Result<&mut Branch, String> {
         let mut extra_path = String::from(&self.path);
         if !key.is_empty() { extra_path += "/";extra_path += key;}
-        match system.expose_mut().borrow_chain_checked_mut(&extra_path){
+        match system.root_get_mut().borrow_chain_checked_mut(&extra_path){
             Ok (branch) => Result::Ok(branch),
             Err (message) => Err(format!("Fetch failed, could not find '{}' #REASON: {}", &extra_path, message).to_string()),
         }
@@ -84,15 +84,19 @@ impl Widget {
     }
 
     pub fn new(system: &mut Hierarchy, key: &str, position: PositionLayout) -> Result<Widget, String> {
-        match system.expose_mut().create_simple_checked(key, position) {
-            Ok (new_key) => Result::Ok(Widget::from_path(&new_key)),
+        match system.root_get_mut().create_simple_checked(key, position) {
+            Ok (new_key) => {
+                let widget = Widget::from_path(&new_key);
+                widget.fetch_mut(system, "").unwrap().set_visibility(false);
+                Result::Ok(widget)
+            },
             Err (message) => Err(String::from("UNABLE TO CREATE WIDGET! #Error: ") + &message),
         }
     }
     pub fn new_in(system: &mut Hierarchy, widget: &Widget, key: &str, position: PositionLayout) -> Result <Widget, String> {
         match key.split_once('/') {
             None => {
-                match system.expose_mut().borrow_chain_checked_mut(&widget.path){
+                match system.root_get_mut().borrow_chain_checked_mut(&widget.path){
                     Ok (reference) => match reference.create_simple_checked(key, position) {
                         Ok (new_key) => Result::Ok(Widget::from_path(&(String::new() + &widget.path + "/"+ &new_key))),
                         Err (message) => Result::Err(message),
@@ -112,24 +116,24 @@ impl Widget {
                     if path.is_empty() {
                         Result::Err(String::from("THIS KEY IS ILLEGAL!"))
                     } else {
-                        let source = match system.expose_mut().translate_chain_checked(&path){
+                        let source = match system.root_get_mut().translate_chain_checked(&path){
                             Ok (source) => source,
                             Err (message) => return Result::Err(message),
                         };
-                        let substring = match system.expose_mut().translate_chain_checked(&widget.path){
+                        let substring = match system.root_get_mut().translate_chain_checked(&widget.path){
                             Ok (substring) => substring,
                             Err (message) => return Result::Err(message),
                         };
 
                         let _path = MString::subtract_void(&source, &substring);
 
-                        let new_key: String = match system.expose_mut().borrow_chain_mut(&source) {
+                        let new_key: String = match system.root_get_mut().borrow_chain_mut(&source) {
                             Ok (set_widget) => {
-                                set_widget.create_simple(true, position)
+                                set_widget.create_simple(true, position, &tuple1.1)
                             },
                             Err (message) => return Result::Err(message),
                         };
-                        match system.expose_mut().borrow_chain_mut(&substring) {
+                        match system.root_get_mut().borrow_chain_mut(&substring) {
                             Ok (register_widget) => {
                                 register_widget.register_path(String::from(&tuple1.1), _path + "/" + &new_key)
                             },
@@ -140,13 +144,13 @@ impl Widget {
                     }
                 } else {
                     let mut new_local_path = String::from(&path) + "/";
-                    match system.expose_mut().borrow_chain_checked_mut(&(String::from(&widget.path)+ "/" + &path)) {
+                    match system.root_get_mut().borrow_chain_checked_mut(&(String::from(&widget.path)+ "/" + &path)) {
                         Ok (set_widget) => {
-                            new_local_path += &set_widget.create_simple(true, position);
+                            new_local_path += &set_widget.create_simple(true, position, &tuple1.1);
                         },
                         Err (message) => return Err(String::from("CRASHED ON MAKING NEW BRANCH! #Error: ") + &message),
                     };
-                    match system.expose_mut().borrow_chain_checked_mut(&widget.path) {
+                    match system.root_get_mut().borrow_chain_checked_mut(&widget.path) {
                         Ok (register_widget) => {
                             register_widget.register_path(String::from(&tuple1.1), new_local_path.clone())
                         },
@@ -159,8 +163,8 @@ impl Widget {
     }
     
 
-    fn map (&self, system: & Hierarchy) -> Result<String, String> {
-        match system.expose().borrow_chain_checked(&self.path){
+    /*fn map (&self, system: & Hierarchy) -> Result<String, String> {
+        match system.root_get().borrow_chain_checked(&self.path){
             Ok (reference) => {
                 let list: Vec<&str> =  self.path.split('/').collect();
                 let mut string = String::from(list[list.len()-1]);
@@ -169,9 +173,9 @@ impl Widget {
             },
             Err (message) => Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
         }
-    }
-    fn map_debug (&self, system: & Hierarchy) -> Result<String, String> {
-        match system.expose().borrow_chain_checked(&self.path){
+    }*/
+    /*fn map_debug (&self, system: & Hierarchy) -> Result<String, String> {
+        match system.root_get().borrow_chain_checked(&self.path){
             Ok (reference) => {
                 let list: Vec<&str> =  self.path.split('/').collect();
                 let mut string = String::from(list[list.len()-1]);
@@ -180,9 +184,9 @@ impl Widget {
             },
             Err (message) => Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
         }
-    }
+    }*/
     pub fn destroy (&self, system: &mut Hierarchy, path : &str) -> Result<(), String> {
-        match system.expose_mut().borrow_chain_checked_mut(&self.path){
+        match system.root_get_mut().borrow_chain_checked_mut(&self.path){
             Ok (reference) => {
                 reference.destroy_chain_checked(path)
             },
@@ -190,7 +194,7 @@ impl Widget {
         }
     }
     pub fn remove (&self, system: &mut Hierarchy, key : &str) -> Result<(), String> {
-        match system.expose_mut().borrow_chain_checked_mut(&self.path){
+        match system.root_get_mut().borrow_chain_checked_mut(&self.path){
             Ok (reference) => {
                 reference.remove_simple_checked(key)
             },

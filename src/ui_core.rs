@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 
 use bevy::prelude::*;
+use colored::Colorize;
 
 use crate::prelude::*;
 
@@ -19,7 +20,7 @@ pub struct Hierarchy {
 }
 impl Hierarchy {
     pub fn new () -> Hierarchy {
-        let mut branch = Branch::new();
+        let mut branch = Branch::new(0.0, true, "ROOT");
         branch.container.position_layout_set(Layout::Relative {
             relative_1: Vec2 { x: 0.0, y: 0.0 },
             relative_2: Vec2 { x: 100.0, y: 100.0 },
@@ -33,23 +34,21 @@ impl Hierarchy {
         }
     }
     pub fn update (&mut self) {
-        self.branch.cascade_update(Vec2::default(), self.width, self.height);
+        self.branch.cascade_update_self(Vec2::default(), self.width, self.height);
     }
-    pub fn map (&self) -> String {
-        let mut string = String::from("#HIERARCHY");
-        string = self.branch.map(string, 0);
-        string
+    pub fn get_map (&self) -> String {
+        let text = String::new();
+        format!("{}{}", "#ROOT".purple().bold().underline(), self.branch.cascade_map(text, 0))
     }
-    pub fn map_debug (&self) -> String {
-        let mut string = String::from("#HIERARCHY");
-        string = self.branch.map_debug(string, 0);
-        string
+    pub fn get_map_debug (&self) -> String {
+        let text = String::new();
+        format!("{}{}", "#ROOT".purple().bold().underline(), self.branch.cascade_map_debug(text, 0))
     }
     
-    pub (in crate) fn expose (&self) -> & Branch {
-        & self.branch
+    pub (in crate) fn root_get (&self) -> & Branch {
+        &self.branch
     }
-    pub (in crate) fn expose_mut (&mut self) -> &mut Branch {
+    pub (in crate) fn root_get_mut (&mut self) -> &mut Branch {
         &mut self.branch
     }
     
@@ -72,9 +71,14 @@ pub fn hierarchy_update(mut query: Query<&mut Hierarchy>, mut windows: Query<&mu
 #[derive(Default)]
 pub struct Branch {
     name: String,                                                                                                                           //Caches name for debug
-    level: f32,                                                                                                                             //How deep it is located (For highlighting)
+    depth: f32,                                                                                                                             //How deep it is located (For highlighting)
+    in_focus: bool,
+
     container: Container,
     data: Option<Data>,
+    visible: bool,
+    
+    parent_visible: bool,
     //active: bool,
 
     pernament: Vec<Branch>,
@@ -83,6 +87,8 @@ pub struct Branch {
 }
 impl Branch {
     //#USER EXPOSED CONTROL
+
+    //Borrows
     pub fn data_get (&self) -> &Option<Data> {                                                                
         &self.data
     }
@@ -104,46 +110,80 @@ impl Branch {
         &mut self.container
     }
 
+    //Fn calls
+    pub fn get_depth (&self) -> f32 {
+        if self.in_focus {self.depth + 0.5} else {self.depth}
+    }
+    pub fn get_focus (&self) -> bool {
+        self.in_focus
+    }
+    pub fn set_focus (&mut self, focus: bool) {
+        self.in_focus = focus;
+    }
+
+    pub fn is_visible (&self) -> bool {
+        self.visible == true && self.parent_visible == true
+    }
+    pub fn get_visibility (&self) -> bool {
+        self.visible
+    }
+    pub fn set_visibility (&mut self, visible: bool) {
+        let old = self.is_visible();
+        self.visible = visible;
+        let new = self.is_visible();
+        if new != old {
+            self.cascade_visibility()
+        }
+    }
+
+    pub fn get_map (&self) -> String {
+        let text = String::new();
+        format!("{}{}", self.name.purple().bold().underline(), self.cascade_map(text, 0))
+    }
+    pub fn get_map_debug (&self) -> String {
+        let text = String::new();
+        format!("{}{}", self.name.purple().bold().underline(), self.cascade_map_debug(text, 0))
+    }
+
     //#LIBRARY RECURSION CALLS
-    pub (in crate) fn map (&self, mut string: String, level: u32) -> String {                                                      //This will cascade map registered branches
-        for x in self.register.iter(){
-            if let Ok (widget) = self.borrow_chain_checked(x.1){
-                string += "\n  ";
-                for _x in 0..level {
-                    string += "|    ";
-                };
-                string += "|-> ";
-                string += x.0;
-                string = widget.map(string, level + 1);
+    pub (in crate) fn cascade_map (&self, mut string: String, level: u32) -> String {                                                
+        for (name, path) in self.register.iter(){
+            match self.borrow_chain_checked(&path){
+                Ok (widget) => {
+
+                    let mut text = String::from("\n  ");
+                    for _ in 0..level {text += "|    "}
+                    text += "|-> ";
+                    string = format!("{}{}{}", string, text.black(), name.bold().yellow());
+
+                    string = widget.cascade_map(string, level + 1);
+                },
+                Err(..) => (),
             }
         }
         string
     }
-    pub (in crate) fn map_debug (&self, mut string: String, level: u32) -> String {                                                //This will cascade map all branches with debug mode
+    pub (in crate) fn cascade_map_debug (&self, mut string: String, level: u32) -> String {                                              
         let mut done_widgets: HashMap<String, bool> = HashMap::new();
-        for x in self.register.iter(){
-            match self.borrow_chain_checked(x.1){
+        string = format!("{}{}", string, format!(" - [{}] [{}] | ({}/{})", self.name, self.depth, self.visible, self.parent_visible).black().italic());
+        
+        for (name, path) in self.register.iter(){
+            match self.borrow_chain_checked(&path){
                 Ok (widget) => {
-                    string += "\n  ";
-                    for _x in 0..level {
-                        string += "|    ";
-                    }
-                    string += "|-> ";
-                    string += x.0;
-                    string += " (";
-                    string += x.1;
-                    string += ")";
-                    string = widget.map_debug(string, level + 1);
-                    done_widgets.insert(x.1.to_string(), true);
+
+                    let mut text = String::from("\n  ");
+                    for _ in 0..level {text += "|    "}
+                    text += "|-> ";
+                    string = format!("{}{}{} ({})", string, text.black(), name.bold().yellow(), path);
+
+                    string = widget.cascade_map_debug(string, level + 1);
+                    done_widgets.insert(path.to_string(), true);
                 },
                 Err(..) => {
-                    string += "\n  ";
-                    for _x in 0..level {
-                        string += "|    ";
-                    }
-                    string += "|-> ";
-                    string += x.0;
-                    string += " #[! Dangling pointer !]";
+                    let mut text = String::from("\n  ");
+                    for _ in 0..level {text += "|    "}
+                    text += "|-> ";
+                    string = format!("{}{}{}", string, text.black(), format!("{} #[! Dangling register pointer !]", name).bold().red());
                 },
             }
         }
@@ -151,47 +191,69 @@ impl Branch {
             if done_widgets.contains_key( &("#p".to_string() + &i.to_string())) {
                 continue;
             }
-            string += "\n  ";
-            for _x in 0..level {
-                string += "|    ";
-            }
-            string += "|-> #p";
-            string += &i.to_string();
-            string = self.pernament[i].map_debug(string, level + 1);
+
+            let mut text = String::from("\n  ");
+            for _ in 0..level {text += "|    "}
+            text += "|-> ";
+            string = format!("{}{}{}", string, text.black(), format!("#p{}", i).bold().truecolor(255, 185, 165));
+
+            string = self.pernament[i].cascade_map_debug(string, level + 1);
         }
         for x in self.removable.iter(){
             if done_widgets.contains_key( &("#r".to_string() + &x.0.to_string())) {
                 continue;
             }
-            string += "\n  ";
-            for _x in 0..level {
-                string += "|    ";
-            }
-            string += "|-> #r";
-            string += &x.0.to_string();
-            string = x.1.map_debug(string, level + 1);
+            
+            let mut text = String::from("\n  ");
+            for _ in 0..level {text += "|    "}
+            text += "|-> ";
+            string = format!("{}{}{}", string, text.black(), format!("#r{}", x.0).bold().truecolor(255, 165, 214));
+
+            string = x.1.cascade_map_debug(string, level + 1);
         }
         string
     }
-    pub (in crate) fn cascade_update (&mut self, point: Vec2, width: f32, height: f32) {                                           //This will cascade update all branches
+
+    pub (in crate) fn cascade_update_self (&mut self, point: Vec2, width: f32, height: f32) {                                       //This will cascade update all branches
         self.container.update(point, width, height);
         for i in 0..self.pernament.len() {
             let pos = self.container.position_get();
-            self.pernament[i].cascade_update(pos.point_1, pos.width, pos.height);
+            self.pernament[i].cascade_update_self(pos.point_1, pos.width, pos.height);
         }
         for x in self.removable.iter_mut(){
             let pos = self.container.position_get();
-            x.1.cascade_update(pos.point_1, pos.width, pos.height);
+            x.1.cascade_update_self(pos.point_1, pos.width, pos.height);
         }
     }
 
+    pub (in crate) fn cascade_visibility (&mut self) {                                                                              //This will cascade set parent visible all branches
+        let visibility = self.is_visible();
+
+        for i in 0..self.pernament.len() {
+            let pos = self.container.position_get();
+            self.pernament[i].cascade_visibility_self(visibility);
+        }
+        for x in self.removable.iter_mut(){
+            let pos = self.container.position_get();
+            x.1.cascade_visibility_self(visibility);
+        }
+    }
+    pub (in crate) fn cascade_visibility_self (&mut self, visible: bool) {                                                          //This will cascade set parent visible all branches
+        self.parent_visible = visible;
+        self.cascade_visibility()
+    }
+    
     //#LIBRARY MECHANISMS
-    fn new () -> Branch {
+    fn new (depth: f32, parent_visible: bool, name: &str) -> Branch {
         Branch {
-            name: String::new(),
-            level: 0.0,
+            name: name.to_string(),
+            depth,
+            in_focus: false,
+
             container: Container::new(),
             data: Option::None,
+            visible: true,
+            parent_visible,
 
             pernament: Vec::new(),
             removable: HashMap::new(),
@@ -199,10 +261,10 @@ impl Branch {
         }
     }
 
-    pub (in crate) fn create_simple (&mut self, removable: bool, position: PositionLayout) -> String {                              //This creates unnamed Branch in one of the 2 registers and return string with ABSOLUTE local path
+    pub (in crate) fn create_simple (&mut self, removable: bool, position: PositionLayout, name: &str) -> String {                  //This creates unnamed Branch in one of the 2 registers and return string with ABSOLUTE local path
         if !removable {
             let ukey = self.pernament.len();
-            let mut branch = Branch::new();
+            let mut branch = Branch::new(self.depth + 1.0, self.is_visible(), "nameless");
             branch.container.position_layout_set(position);
             self.pernament.push(branch);
             String::from("#p") + &ukey.to_string()
@@ -212,7 +274,7 @@ impl Branch {
                 if !self.removable.contains_key(&ukey) {break;};
                 ukey += 1;
             };
-            let mut branch = Branch::new();
+            let mut branch = Branch::new(self.depth + 1.0, self.is_visible(), name);
             branch.container.position_layout_set(position);
             self.removable.insert(ukey, branch);
             String::from("#r") + &ukey.to_string()
@@ -220,11 +282,11 @@ impl Branch {
     }
     pub (in crate) fn create_simple_checked (&mut self, key: &str, position: PositionLayout) -> Result<String, String> {            //This decides if Branch should be removable or not and also checks for key collision and returns ABSOLUTE/RELATIVE local path
         if key.is_empty() {
-            Result::Ok(self.create_simple(false, position))
+            Result::Ok(self.create_simple(false, position, "nameless"))
         } else {
             match self.register.get(key){
                 None => {
-                    let path = self.create_simple(true, position);
+                    let path = self.create_simple(true, position, key);
                     self.register_path(String::from(key), path);
                     Result::Ok(String::from(key))
                 },
