@@ -20,7 +20,7 @@ pub struct Hierarchy {
 }
 impl Hierarchy {
     pub fn new () -> Hierarchy {
-        let mut branch = Branch::new(0.0, true, "ROOT");
+        let mut branch = Branch::new(0.0, true, "ROOT", "".to_string());
         branch.container.position_layout_set(Layout::Relative {
             relative_1: Vec2 { x: 0.0, y: 0.0 },
             relative_2: Vec2 { x: 100.0, y: 100.0 },
@@ -43,6 +43,10 @@ impl Hierarchy {
     pub fn get_map_debug (&self) -> String {
         let text = String::new();
         format!("{}{}", "#ROOT".purple().bold().underline(), self.branch.cascade_map_debug(text, 0))
+    }
+
+    pub fn get_all_paths (&self) -> Vec<String> {
+        self.branch.get_all_paths()
     }
     
     pub (in crate) fn root_get (&self) -> & Branch {
@@ -72,6 +76,7 @@ pub fn hierarchy_update(mut query: Query<&mut Hierarchy>, mut windows: Query<&mu
 pub struct Branch {
     name: String,                                                                                                                           //Caches name for debug
     depth: f32,                                                                                                                             //How deep it is located (For highlighting)
+    path: String,                                                                                                                           //Path on creation
     in_focus: bool,
 
     container: Container,
@@ -114,6 +119,15 @@ impl Branch {
     pub fn get_depth (&self) -> f32 {
         if self.in_focus {self.depth + 0.5} else {self.depth}
     }
+    pub fn get_path (&self) -> String {
+        if self.depth == 0.0 {
+            "".to_string()
+        } else if !self.path.is_empty(){
+            format!("{}/{}", self.path, self.name)
+        } else {
+            String::from(&self.name)
+        }
+    }
     pub fn get_focus (&self) -> bool {
         self.in_focus
     }
@@ -143,6 +157,12 @@ impl Branch {
     pub fn get_map_debug (&self) -> String {
         let text = String::new();
         format!("{}{}", self.name.purple().bold().underline(), self.cascade_map_debug(text, 0))
+    }
+
+    pub fn get_all_paths (&self) -> Vec<String> {
+        let mut list = Vec::new();
+        self.cascade_path_iter_self(&mut list);
+        list
     }
 
     //#LIBRARY RECURSION CALLS
@@ -243,11 +263,27 @@ impl Branch {
         self.cascade_visibility()
     }
     
+    pub (in crate) fn cascade_path_iter (&self, list: &mut Vec<String>) {                                                           //This will cascade get all branches paths
+        for i in 0..self.pernament.len() {
+            self.pernament[i].cascade_path_iter_self(list);
+        }
+        for x in self.removable.iter(){
+            let pos = self.container.position_get();
+            x.1.cascade_path_iter_self(list);
+        }
+    }
+    pub (in crate) fn cascade_path_iter_self (&self, list: &mut Vec<String>) {                                                      //This will cascade get all branches paths
+        let path = self.get_path();
+        if !path.is_empty(){ list.push(path)}
+        self.cascade_path_iter(list);
+    }
+
     //#LIBRARY MECHANISMS
-    fn new (depth: f32, parent_visible: bool, name: &str) -> Branch {
+    fn new (depth: f32, parent_visible: bool, name: &str, path: String) -> Branch {
         Branch {
             name: name.to_string(),
             depth,
+            path,
             in_focus: false,
 
             container: Container::new(),
@@ -264,7 +300,7 @@ impl Branch {
     pub (in crate) fn create_simple (&mut self, removable: bool, position: PositionLayout, name: &str) -> String {                  //This creates unnamed Branch in one of the 2 registers and return string with ABSOLUTE local path
         if !removable {
             let ukey = self.pernament.len();
-            let mut branch = Branch::new(self.depth + 1.0, self.is_visible(), "nameless");
+            let mut branch = Branch::new(self.depth + 1.0, self.is_visible(), &(String::from("#p") + &ukey.to_string()), self.get_path());
             branch.container.position_layout_set(position);
             self.pernament.push(branch);
             String::from("#p") + &ukey.to_string()
@@ -274,7 +310,7 @@ impl Branch {
                 if !self.removable.contains_key(&ukey) {break;};
                 ukey += 1;
             };
-            let mut branch = Branch::new(self.depth + 1.0, self.is_visible(), name);
+            let mut branch = Branch::new(self.depth + 1.0, self.is_visible(), name, self.get_path());
             branch.container.position_layout_set(position);
             self.removable.insert(ukey, branch);
             String::from("#r") + &ukey.to_string()

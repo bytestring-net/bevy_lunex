@@ -163,28 +163,6 @@ impl Widget {
     }
     
 
-    /*fn map (&self, system: & Hierarchy) -> Result<String, String> {
-        match system.root_get().borrow_chain_checked(&self.path){
-            Ok (reference) => {
-                let list: Vec<&str> =  self.path.split('/').collect();
-                let mut string = String::from(list[list.len()-1]);
-                string = reference.map(string, 0);
-                Ok(string)
-            },
-            Err (message) => Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
-        }
-    }*/
-    /*fn map_debug (&self, system: & Hierarchy) -> Result<String, String> {
-        match system.root_get().borrow_chain_checked(&self.path){
-            Ok (reference) => {
-                let list: Vec<&str> =  self.path.split('/').collect();
-                let mut string = String::from(list[list.len()-1]);
-                string = reference.map_debug(string, 0);
-                Ok(string)
-            },
-            Err (message) => Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
-        }
-    }*/
     pub fn destroy (&self, system: &mut Hierarchy, path : &str) -> Result<(), String> {
         match system.root_get_mut().borrow_chain_checked_mut(&self.path){
             Ok (reference) => {

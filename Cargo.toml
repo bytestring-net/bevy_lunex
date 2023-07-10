@@ -6,5 +6,5 @@ edition = "2021"
 
 [dependencies]
 ahash = "0.8.3"
-bevy = "0.10.1"
+bevy = "0.11"
 colored = "2.0.0"
