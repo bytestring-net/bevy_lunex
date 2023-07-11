@@ -45,8 +45,8 @@ impl Hierarchy {
         format!("{}{}", "#ROOT".purple().bold().underline(), self.branch.cascade_map_debug(text, 0))
     }
 
-    pub fn get_all_paths (&self) -> Vec<String> {
-        self.branch.get_all_paths()
+    pub fn collect_paths (&self) -> Vec<String> {
+        self.branch.collect_paths()
     }
     
     pub (in crate) fn root_get (&self) -> & Branch {
@@ -75,8 +75,9 @@ pub fn hierarchy_update(mut query: Query<&mut Hierarchy>, mut windows: Query<&mu
 #[derive(Default)]
 pub struct Branch {
     name: String,                                                                                                                           //Caches name for debug
-    depth: f32,                                                                                                                             //How deep it is located (For highlighting)
+    level: f32,                                                                                                                             //How deep it is located (For highlighting)
     path: String,                                                                                                                           //Path on creation
+    depth: f32,                                                                                                                             //Custom depth
     in_focus: bool,
 
     container: Container,
@@ -116,11 +117,23 @@ impl Branch {
     }
 
     //Fn calls
-    pub fn get_depth (&self) -> f32 {
-        if self.in_focus {self.depth + 0.5} else {self.depth}
+
+    pub fn get_name (&self) -> &String {
+        &self.name
     }
+
+    pub fn get_depth (&self) -> f32 {
+        if self.in_focus {self.level + self.depth + 0.5} else {self.level + self.depth}
+    }
+    pub fn set_depth (&mut self, depth: f32) {
+        self.cascade_depth_self(depth);
+    }
+    pub fn set_depth_self_only (&mut self, depth: f32) {
+        self.cascade_depth(depth);
+    }
+    
     pub fn get_path (&self) -> String {
-        if self.depth == 0.0 {
+        if self.level == 0.0 {
             "".to_string()
         } else if !self.path.is_empty(){
             format!("{}/{}", self.path, self.name)
@@ -128,6 +141,7 @@ impl Branch {
             String::from(&self.name)
         }
     }
+    
     pub fn get_focus (&self) -> bool {
         self.in_focus
     }
@@ -159,9 +173,9 @@ impl Branch {
         format!("{}{}", self.name.purple().bold().underline(), self.cascade_map_debug(text, 0))
     }
 
-    pub fn get_all_paths (&self) -> Vec<String> {
+    pub fn collect_paths (&self) -> Vec<String> {
         let mut list = Vec::new();
-        self.cascade_path_iter_self(&mut list);
+        self.cascade_collect_paths(&mut list, "".to_string());
         list
     }
 
@@ -185,7 +199,7 @@ impl Branch {
     }
     pub (in crate) fn cascade_map_debug (&self, mut string: String, level: u32) -> String {                                              
         let mut done_widgets: HashMap<String, bool> = HashMap::new();
-        string = format!("{}{}", string, format!(" - [{}] [{}] | ({}/{})", self.name, self.depth, self.visible, self.parent_visible).black().italic());
+        string = format!("{}{}", string, format!(" - [{}] [{}/{}] | ({}/{})", self.name, self.level, self.get_depth(), self.visible, self.parent_visible).black().italic());
         
         for (name, path) in self.register.iter(){
             match self.borrow_chain_checked(&path){
@@ -234,6 +248,56 @@ impl Branch {
         string
     }
 
+    pub (in crate) fn cascade_collect_paths (&self, list: &mut Vec<String>, directory: String) {                                              
+        let mut done_widgets: HashMap<String, bool> = HashMap::new();
+        
+        for (name, path) in self.register.iter(){
+            match self.borrow_chain_checked(&path){
+                Ok (widget) => {
+
+                    let dir = if directory.is_empty() {
+                        String::from(name)
+                    } else {
+                        format!("{}/{}", directory, name)
+                    };
+                    list.push(dir.clone());
+                    widget.cascade_collect_paths(list, dir);
+
+                    done_widgets.insert(path.to_string(), true);
+                },
+                Err(..) => {},
+            }
+        }
+        for i in 0..self.pernament.len() {
+            if done_widgets.contains_key( &("#p".to_string() + &i.to_string())) {
+                continue;
+            }
+
+            let dir = if directory.is_empty() {
+                String::from(format!("#p{}", i))
+            } else {
+                format!("{}/{}", directory, format!("#p{}", i))
+            };
+            list.push(dir.clone());
+            self.pernament[i].cascade_collect_paths(list, dir);
+
+        }
+        for x in self.removable.iter(){
+            if done_widgets.contains_key( &("#r".to_string() + &x.0.to_string())) {
+                continue;
+            }
+            
+            let dir = if directory.is_empty() {
+                String::from(format!("#r{}", x.0))
+            } else {
+                format!("{}/{}", directory, format!("#r{}", x.0))
+            };
+            list.push(dir.clone());
+            x.1.cascade_collect_paths(list, dir);
+
+        }
+    }
+
     pub (in crate) fn cascade_update_self (&mut self, point: Vec2, width: f32, height: f32) {                                       //This will cascade update all branches
         self.container.update(point, width, height);
         for i in 0..self.pernament.len() {
@@ -263,6 +327,8 @@ impl Branch {
         self.cascade_visibility()
     }
     
+    //PATH CRAWLER CAN RETURN INVALID DATA
+    //DISCONTINUED!!!
     pub (in crate) fn cascade_path_iter (&self, list: &mut Vec<String>) {                                                           //This will cascade get all branches paths
         for i in 0..self.pernament.len() {
             self.pernament[i].cascade_path_iter_self(list);
@@ -271,6 +337,22 @@ impl Branch {
             let pos = self.container.position_get();
             x.1.cascade_path_iter_self(list);
         }
+
+        for (name, path) in self.register.iter(){
+            match self.borrow_chain_checked(&path){
+                Ok (widget) => {
+                    let path = self.get_path();
+                    if !path.is_empty() {
+                        let entry = format!("{}/{}", path, name);
+                        if !list.contains(&entry) {list.push(entry)}
+                    } else {
+                        if !list.contains(&name) {list.push(name.to_string())}
+                    }
+                },
+                Err(..) => {},
+            }
+        }
+
     }
     pub (in crate) fn cascade_path_iter_self (&self, list: &mut Vec<String>) {                                                      //This will cascade get all branches paths
         let path = self.get_path();
@@ -278,12 +360,28 @@ impl Branch {
         self.cascade_path_iter(list);
     }
 
+    pub (in crate) fn cascade_depth (&mut self, depth: f32) {                                                                       //This will cascade set parent visible all branches
+        for i in 0..self.pernament.len() {
+            let pos = self.container.position_get();
+            self.pernament[i].cascade_depth_self(depth);
+        }
+        for x in self.removable.iter_mut(){
+            let pos = self.container.position_get();
+            x.1.cascade_depth_self(depth);
+        }
+    }
+    pub (in crate) fn cascade_depth_self (&mut self, depth: f32) {                                                                  //This will cascade set parent visible all branches
+        self.depth = depth;
+        self.cascade_depth(depth);
+    }
+
     //#LIBRARY MECHANISMS
-    fn new (depth: f32, parent_visible: bool, name: &str, path: String) -> Branch {
+    fn new (level: f32, parent_visible: bool, name: &str, path: String) -> Branch {
         Branch {
             name: name.to_string(),
-            depth,
+            level,
             path,
+            depth: 100.0,
             in_focus: false,
 
             container: Container::new(),
@@ -300,7 +398,7 @@ impl Branch {
     pub (in crate) fn create_simple (&mut self, removable: bool, position: PositionLayout, name: &str) -> String {                  //This creates unnamed Branch in one of the 2 registers and return string with ABSOLUTE local path
         if !removable {
             let ukey = self.pernament.len();
-            let mut branch = Branch::new(self.depth + 1.0, self.is_visible(), &(String::from("#p") + &ukey.to_string()), self.get_path());
+            let mut branch = Branch::new(self.level + 1.0, self.is_visible(), &(String::from("#p") + &ukey.to_string()), self.get_path());
             branch.container.position_layout_set(position);
             self.pernament.push(branch);
             String::from("#p") + &ukey.to_string()
@@ -310,7 +408,7 @@ impl Branch {
                 if !self.removable.contains_key(&ukey) {break;};
                 ukey += 1;
             };
-            let mut branch = Branch::new(self.depth + 1.0, self.is_visible(), name, self.get_path());
+            let mut branch = Branch::new(self.level + 1.0, self.is_visible(), name, self.get_path());
             branch.container.position_layout_set(position);
             self.removable.insert(ukey, branch);
             String::from("#r") + &ukey.to_string()

@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 
 pub use crate::ui_widget::Widget;
+pub use crate::ui_widget::WidgetListStyle;
 
 pub use crate::ui_core::Data;
 pub use crate::ui_core::tween;
@@ -20,6 +21,11 @@ pub mod Layout {
     pub use crate::ui_container::Solid;
 }
 
+pub use crate::general::vec_convert;
+pub use crate::general::lunex_setup_debug;
+pub use crate::general::lunex_update_debug;
+pub use crate::general::lunex_camera_move_debug;
+pub use crate::general::LunexDebugPlugin;
 
 
 pub (in crate) use crate::general::MString;

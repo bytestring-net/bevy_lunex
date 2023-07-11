@@ -206,6 +206,17 @@ pub struct Position {
     pub height: f32,
     pub depth: f32,
 }
+impl Position {
+    pub fn invert_y(&self) -> Position {
+        Position {
+            point_1: Vec2::new(self.point_1.x, -self.point_1.y),
+            point_2: Vec2::new(self.point_2.x, -self.point_2.y),
+            width: self.width,
+            height: self.height,
+            depth: self.depth,
+        }
+    }
+}
 
 
 //===========================================================================
