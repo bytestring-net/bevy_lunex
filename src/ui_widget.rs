@@ -9,9 +9,10 @@ use super::ui_core::Branch;
 
 //===========================================================================
 
-#[derive(Component, Default, Clone, PartialEq)]
+#[derive(Component, Default, Debug, Clone, PartialEq)]
 pub struct Widget {
-    pub path: String,
+    path: String,
+    key: String,
 }
 impl Widget {
 
@@ -68,6 +69,7 @@ impl Widget {
             Err (message) => Result::Err(message),
         }
     }
+    
     pub fn is_within (&self, system: &Hierarchy, key: &str, point: &Vec2) -> Result<bool, String> {
         match self.fetch_position(&system, key) {
             Ok (position) => Result::Ok((point.x > position.point_1.x && point.x < position.point_2.x) && (point.y > position.point_1.y && point.y < position.point_2.y)),
@@ -76,13 +78,16 @@ impl Widget {
     }
     //add is cursor_within + depth
 
-
-    fn from_path (path: &str) -> Widget {
+    pub fn get_path (&self) -> &String {
+        &self.path
+    }
+    pub fn from_path (path: &str) -> Widget {
         Widget { 
             path: path.to_string(),
+            key: MString::split_last(path, "/").1,
         }
     }
-
+    /*
     pub fn new(system: &mut Hierarchy, key: &str, position: PositionLayout) -> Result<Widget, String> {
         match system.root_get_mut().create_simple_checked(key, position) {
             Ok (new_key) => {
@@ -161,8 +166,11 @@ impl Widget {
             },
         }
     }
-    
+    */
 
+    pub fn chain_str (&self, str: &str) -> String {
+        format!("{}/{}", self.path, str)
+    }
 
     pub fn destroy (&self, system: &mut Hierarchy, path : &str) -> Result<(), String> {
         match system.root_get_mut().borrow_chain_checked_mut(&self.path){
@@ -182,7 +190,8 @@ impl Widget {
     }
 
 
-    pub fn generate_grid (system: &mut Hierarchy, widget: &Widget, name : &str, grid: &Vec<Vec<&str>>, relative: Vec2, style: &WidgetListStyle) -> Result<Widget, String>{
+
+    pub fn generate_grid (system: &mut Hierarchy, path: &String, grid: &Vec<Vec<&str>>, relative: Vec2, style: &WidgetListStyle) -> Result<Widget, String>{
         let xx = grid.len();
         let yy = grid[0].len();
     
@@ -198,8 +207,8 @@ impl Widget {
         let container_width = total_width + total_wgap;
         let container_height = total_height + total_hgap;
     
-        let _container = match Widget::new_in(system, widget, name, Layout::Window {
-            relative: relative,
+        let widget = match Widget::create(system, path, Layout::Window {
+            relative,
             width_relative: container_width,
             height_relative: container_height,
             ..Default::default()
@@ -215,8 +224,8 @@ impl Widget {
         let hgap = (100.0 * total_hgap/container_height)/(yy as f32 + xi);
     
         for x in 0..xx {
-            for y in 0..yy{
-                match Widget::new_in(system, widget, grid[x][y], Layout::Window {
+            for y in 0..yy {
+                match Widget::create(system, &widget.end(grid[x][y]), Layout::Window {
                     relative: Vec2::new(
                         width*x as f32 + wgap*x as f32 + if style.width_padding_gap == true {wgap} else {0.0},
                         height*y as f32 + hgap*y as f32 + if style.height_padding_gap == true {hgap} else {0.0},
@@ -230,11 +239,11 @@ impl Widget {
                 };
             }
         }
-        Result::Ok(_container)
+        Result::Ok(widget)
     }
     
     //FIX DISABLING GAP ISSUES
-    pub fn generate_grid_in_solid (system: &mut Hierarchy, widget: &Widget, name : &str, grid: &Vec<Vec<&str>>, anchor: Vec2, style: &WidgetListStyle) -> Result<Widget, String>{
+    pub fn generate_grid_in_solid (system: &mut Hierarchy, path: &str, grid: &Vec<Vec<&str>>, anchor: Vec2, style: &WidgetListStyle) -> Result<Widget, String>{
         let xx = grid.len();
         let yy = grid[0].len();
     
@@ -251,7 +260,7 @@ impl Widget {
         let container_height = total_height + total_hgap;
         
 
-        let _container = match Widget::new_in(system, widget, name, Layout::Solid {
+        let widget = match Widget::create(system, path, Layout::Solid {
             horizontal_anchor: anchor.x,
             vertical_anchor: anchor.y,
             width: (container_width*10.0) as u32,
@@ -271,7 +280,7 @@ impl Widget {
     
         for x in 0..xx {
             for y in 0..yy{
-                match Widget::new_in(system, widget, grid[x][y], Layout::Window {
+                match Widget::create(system, &widget.end(grid[x][y]), Layout::Window {
                     relative: Vec2::new(
                         width*x as f32 + wgap*x as f32 + if style.width_padding_gap == true {wgap} else {0.0},
                         height*y as f32 + hgap*y as f32 + if style.height_padding_gap == true {hgap} else {0.0},
@@ -285,10 +294,10 @@ impl Widget {
                 };
             }
         }
-        Result::Ok(_container)
+        Result::Ok(widget)
     }
 
-    pub fn generate_grid_inside (system: &mut Hierarchy, widget: &Widget, name : &str, grid: &Vec<Vec<&str>>, style: &WidgetListStyle) -> Result<(), String>{
+    pub fn generate_grid_inside (system: &mut Hierarchy, widget: &Widget, grid: &Vec<Vec<&str>>, style: &WidgetListStyle) -> Result<(), String>{
         let xx = grid.len();
         let yy = grid[0].len();
     
@@ -312,7 +321,7 @@ impl Widget {
     
         for x in 0..xx {
             for y in 0..yy{
-                match Widget::new_in(system, widget, grid[x][y], Layout::Window {
+                match Widget::create(system, &widget.end(grid[x][y]), Layout::Window {
                     relative: Vec2::new(
                         width*x as f32 + wgap*x as f32 + if style.width_padding_gap == true {wgap} else {0.0},
                         height*y as f32 + hgap*y as f32 + if style.height_padding_gap == true {hgap} else {0.0},
@@ -329,6 +338,113 @@ impl Widget {
         Result::Ok(())
     }
 
+
+
+    //REFACTORED
+    pub fn create (system: &mut Hierarchy, path: &str, position: PositionLayout) -> Result <Widget, String> {
+
+        let str_list: Vec<&str> =  path.split('/').collect();
+        let str_list_len = str_list.len();
+
+        let mut parent_path = String::new();
+        let name = String::from(str_list[str_list_len-1]);
+        
+        let mut n = if str_list_len != 0 { str_list_len - 1} else {0};
+
+        //# This will check for skippable paths (Menu/#0/#0/Display -> Menu/Display)
+        let mut absolute = String::new(); // => #0/#0
+        if !name.is_empty() && !is_absolute(&name) && str_list_len > 1 {
+            let mut i = str_list_len - 2;
+            while is_absolute(str_list[i]) && i > 0 {
+                absolute = format!("{}/{}", str_list[i], absolute);
+                i -= 1;
+            }
+            if absolute.contains("/") { absolute = absolute[..absolute.len() - 1].to_string()}
+            n = i+1;
+        }
+
+        //# Collect the remaining iterator into path
+        for ii in 0..n {
+            if ii != 0 {parent_path += "/"}
+            parent_path += str_list[ii];
+        }
+        
+
+
+        //# Create branch in ROOT
+        if parent_path.is_empty() {
+            let parent_branch = system.root_get_mut();
+            match parent_branch.create_simple_checked(&name, position) {
+                Result::Ok (absolute_key) => {
+                    let widget = if name.is_empty() { Widget::from_path(&absolute_key) } else { Widget::from_path(path) };
+                    widget.fetch_mut(system, "").unwrap().set_visibility(false);
+                    Result::Ok (widget)
+                },
+                Result::Err (message) => Result::Err(message),
+            }
+        
+        //# Create branch in branch
+        } else {
+            match Widget::from_path(&parent_path).fetch_mut(system, "") {
+                Result::Ok (parent_branch) => {
+                    if !absolute.is_empty() == true {
+
+                        //println!("Name: {}, Path: {}, PPath: {}, obs: {}/###", name, path, parent_path, absolute);
+                        
+                        //# Create branch with skip
+                        let absolute_key = match parent_branch.borrow_chain_checked_mut(&absolute){
+                            Result::Ok (nameless_branch) => match nameless_branch.create_simple_checked(&name, position) {
+                                Result::Ok (absolute_key) => absolute_key,
+                                Result::Err (message) => return Result::Err(message),
+                            },
+                            Result::Err (message) => return Result::Err(message),
+                        };
+                        match parent_branch.register_path(name, format!("{}/{}", absolute, absolute_key)) {
+                            Result::Ok (..) => Result::Ok (Widget::from_path(&format!("{}/{}", parent_path, absolute_key))),
+                            Result::Err(message) => Result::Err(message),
+                        }
+
+                    } else {
+
+                        //# Create direct branch without skipping
+                        match parent_branch.create_simple_checked(&name, position) {
+                            Result::Ok (absolute_key) => {
+                                if name.is_empty() {
+                                    Result::Ok (Widget::from_path(&format!("{}/{}", parent_path, absolute_key)))
+                                } else {
+                                    Result::Ok (Widget::from_path(path))
+                                }
+                            },
+                            Result::Err (message) => Result::Err(message),
+                        }
+
+                    }
+                },
+                Result::Err (message) => Result::Err(message),
+            }
+        }
+    }
+
+    pub fn add (&self, w: &Widget) -> Widget {
+        Widget::from_path(&format!("{}/{}", self.path, w.key))
+    }
+    pub fn add_str (&self, s: &str) -> Widget {
+        Widget::from_path(&format!("{}/{}", self.path, s))
+    }
+    pub fn end (&self, s: &str) -> String {
+        format!("{}/{}", self.path, s)
+    }
+
+
+}
+
+fn is_absolute (str: &str) -> bool {
+    match str.chars().nth(0) {
+        Some (value) => {
+            value == '#'
+        },
+        None => false,
+    }
 }
 
 #[derive(Default)]

@@ -77,7 +77,7 @@ struct DebugImage ();
 pub fn lunex_setup_debug (mut commands: Commands, asset_server: Res<AssetServer>, systems: Query<&Hierarchy>) {
     for system in systems.iter() {
         for x in system.collect_paths(){
-            let widget = Widget {path: x.to_string()};
+            let widget = Widget::from_path(&x);
             match widget.fetch(system, ""){
                 Result::Err(..) => {},
                 Result::Ok(..) => {

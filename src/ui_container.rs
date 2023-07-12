@@ -216,6 +216,12 @@ impl Position {
             depth: self.depth,
         }
     }
+    pub fn get_pos(&self, relative: Vec2) -> Vec2 {
+        Vec2::new( self.point_1.x + self.width*relative.x/100.0, self.point_1.y + self.height*relative.y/100.0)
+    }
+    pub fn get_pos_y_inverted(&self, relative: Vec2) -> Vec2 {
+        Vec2::new( self.point_1.x + self.width*relative.x/100.0, self.point_1.y + self.height*-relative.y/100.0)
+    }
 }
 
 

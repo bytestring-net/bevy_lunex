@@ -12,6 +12,9 @@ pub use crate::ui_core::hierarchy_update;
 pub use crate::ui_cursor::Cursor;
 pub use crate::ui_cursor::cursor_update;
 
+pub use crate::ui_element::Element;
+pub use crate::ui_element::ElementBundle;
+
 
 pub use crate::ui_container::Scale;
 

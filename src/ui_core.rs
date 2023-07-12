@@ -416,7 +416,7 @@ impl Branch {
     }
     pub (in crate) fn create_simple_checked (&mut self, key: &str, position: PositionLayout) -> Result<String, String> {            //This decides if Branch should be removable or not and also checks for key collision and returns ABSOLUTE/RELATIVE local path
         if key.is_empty() {
-            Result::Ok(self.create_simple(false, position, "nameless"))
+            Result::Ok(self.create_simple(false, position, ""))
         } else {
             match self.register.get(key){
                 None => {
@@ -429,8 +429,10 @@ impl Branch {
         }
     }
 
-    pub (in crate) fn register_path (&mut self, key: String, path: String){                                                         //This registers ABSOLUTE PATH for a key
+    pub (in crate) fn register_path (&mut self, key: String, path: String) -> Result<(), String> {                                                         //This registers ABSOLUTE PATH for a key
+        if self.register.contains_key(&key) {return Result::Err(format!("Branch already contains a path for name {}", &key));}
         self.register.insert(key, path);
+        Result::Ok(())
     }
 
     pub (in crate) fn translate_simple (&self, key: &str) -> Result<String, String> {                                               //This can take ONLY RELATIVE and return ABSOLUTE
