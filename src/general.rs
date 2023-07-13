@@ -74,7 +74,7 @@ impl Plugin for LunexDebugPlugin {
 //# GENERAL USE
 
 
-/// # Description
+/// ## Description
 /// This function is used for translating Vec2 from Bevy 2D coordinate system to Lunex coordinate system.
 /// It is necessary to go through this step if you want entities to be able to interact with Lunex.
 /// 
@@ -84,7 +84,7 @@ impl Plugin for LunexDebugPlugin {
 /// * This function will invert the Y component.
 /// * In addition it will offset the values because Lunex always starts at 0.
 ///
-/// # Examples
+/// ## Examples
 /// ```
 /// let system = Hierarchy::new();
 /// let offset = Vec2::new( -window.size.x / 2.0, window.size.y / 2.0 );
@@ -93,7 +93,6 @@ impl Plugin for LunexDebugPlugin {
 /// //Returns bool
 /// widget.is_within(&system, "", &vec_convert(cursor_position, &offset)).unwrap();
 /// ```
-///
 pub fn vec_convert (vec2: &Vec2, offset: &Vec2) -> Vec2 {
     Vec2::new(vec2.x - offset.x, offset.y - vec2.y)
 }
