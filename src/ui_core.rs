@@ -74,18 +74,22 @@ pub fn hierarchy_update(mut query: Query<&mut Hierarchy>, mut windows: Query<&mu
 
 #[derive(Default)]
 pub struct Branch {
-    name: String,                                                                                                                           //Caches name for debug
+
+    //# Cache only (not synchronized)
+    name: String,
+    //id: usize,
+    path: String,
+
+    
     level: f32,                                                                                                                             //How deep it is located (For highlighting)
-    path: String,                                                                                                                           //Path on creation
     depth: f32,                                                                                                                             //Custom depth
     in_focus: bool,
+    visible: bool,
+    //active: bool,
+    parent_visible: bool,
 
     container: Container,
     data: Option<Data>,
-    visible: bool,
-    
-    parent_visible: bool,
-    //active: bool,
 
     pernament: Vec<Branch>,
     removable: HashMap<usize, Branch>,
@@ -117,7 +121,6 @@ impl Branch {
     }
 
     //Fn calls
-
     pub fn get_name (&self) -> &String {
         &self.name
     }
@@ -126,10 +129,10 @@ impl Branch {
         if self.in_focus {self.level + self.depth + 0.5} else {self.level + self.depth}
     }
     pub fn set_depth (&mut self, depth: f32) {
-        self.cascade_depth_self(depth);
+        self.cascade_set_depth_self(depth);
     }
     pub fn set_depth_self_only (&mut self, depth: f32) {
-        self.cascade_depth(depth);
+        self.cascade_set_depth(depth);
     }
     
     pub fn get_path (&self) -> String {
@@ -160,7 +163,7 @@ impl Branch {
         self.visible = visible;
         let new = self.is_visible();
         if new != old {
-            self.cascade_visibility()
+            self.cascade_set_visibility()
         }
     }
 
@@ -310,69 +313,36 @@ impl Branch {
         }
     }
 
-    pub (in crate) fn cascade_visibility (&mut self) {                                                                              //This will cascade set parent visible all branches
+    pub (in crate) fn cascade_set_visibility (&mut self) {                                                                              //This will cascade set parent visible all branches
         let visibility = self.is_visible();
 
         for i in 0..self.pernament.len() {
             let pos = self.container.position_get();
-            self.pernament[i].cascade_visibility_self(visibility);
+            self.pernament[i].cascade_set_visibility_self(visibility);
         }
         for x in self.removable.iter_mut(){
             let pos = self.container.position_get();
-            x.1.cascade_visibility_self(visibility);
+            x.1.cascade_set_visibility_self(visibility);
         }
     }
-    pub (in crate) fn cascade_visibility_self (&mut self, visible: bool) {                                                          //This will cascade set parent visible all branches
+    pub (in crate) fn cascade_set_visibility_self (&mut self, visible: bool) {                                                          //This will cascade set parent visible all branches
         self.parent_visible = visible;
-        self.cascade_visibility()
+        self.cascade_set_visibility()
     }
     
-    //PATH CRAWLER CAN RETURN INVALID DATA
-    //DISCONTINUED!!!
-    pub (in crate) fn cascade_path_iter (&self, list: &mut Vec<String>) {                                                           //This will cascade get all branches paths
-        for i in 0..self.pernament.len() {
-            self.pernament[i].cascade_path_iter_self(list);
-        }
-        for x in self.removable.iter(){
-            let pos = self.container.position_get();
-            x.1.cascade_path_iter_self(list);
-        }
-
-        for (name, path) in self.register.iter(){
-            match self.borrow_chain_checked(&path){
-                Ok (widget) => {
-                    let path = self.get_path();
-                    if !path.is_empty() {
-                        let entry = format!("{}/{}", path, name);
-                        if !list.contains(&entry) {list.push(entry)}
-                    } else {
-                        if !list.contains(&name) {list.push(name.to_string())}
-                    }
-                },
-                Err(..) => {},
-            }
-        }
-
-    }
-    pub (in crate) fn cascade_path_iter_self (&self, list: &mut Vec<String>) {                                                      //This will cascade get all branches paths
-        let path = self.get_path();
-        if !path.is_empty(){ list.push(path)}
-        self.cascade_path_iter(list);
-    }
-
-    pub (in crate) fn cascade_depth (&mut self, depth: f32) {                                                                       //This will cascade set parent visible all branches
+    pub (in crate) fn cascade_set_depth (&mut self, depth: f32) {                                                                       //This will cascade set parent visible all branches
         for i in 0..self.pernament.len() {
             let pos = self.container.position_get();
-            self.pernament[i].cascade_depth_self(depth);
+            self.pernament[i].cascade_set_depth_self(depth);
         }
         for x in self.removable.iter_mut(){
             let pos = self.container.position_get();
-            x.1.cascade_depth_self(depth);
+            x.1.cascade_set_depth_self(depth);
         }
     }
-    pub (in crate) fn cascade_depth_self (&mut self, depth: f32) {                                                                  //This will cascade set parent visible all branches
+    pub (in crate) fn cascade_set_depth_self (&mut self, depth: f32) {                                                                  //This will cascade set parent visible all branches
         self.depth = depth;
-        self.cascade_depth(depth);
+        self.cascade_set_depth(depth);
     }
 
     //#LIBRARY MECHANISMS
