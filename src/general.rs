@@ -6,78 +6,14 @@ use bevy::sprite::Anchor;
 use colored::Colorize;
 use crate::prelude::*;
 
-use crate::prelude::HashMap;
-
-pub struct MString {}
-impl MString {
-    pub fn construct_from (template: &str, data: HashMap<String, String>) -> Result<String, String> {
-        let mut level = 0;
-        let mut name = String::new();
-        let mut result = String::new();
-        for character in template.chars() {
-            if character == '}' {
-                level -= 1;
-                match data.get(&name){
-                    None => return Err(String::from("Error while constructing MString - '") + &name + "' is not defined!"),
-                    Some (value) => result += value,
-                }
-                name.clear();
-            }
-            if level == 1 {name.push(character);}
-            if character == '{' {level += 1;}
-
-            if level == 0 && character != '}'{
-                result.push(character);
-            }
-        }
-        if level != 0 {return Err(String::from("Error while constructing MString - wrong use of brackets!"));}
-        Ok(result)
-    }
-    pub fn split_last (string: &str, delimiter: &str ) -> (String, String) {
-        let str_list: Vec<&str> =  string.split(delimiter).collect();
-        let mut output = String::new();
-        let mut is_first = true;
-        for x in str_list.iter().take(str_list.len() - 1){
-            if !is_first {output += delimiter} else {is_first = false};
-            output += x;
-        }
-        (output, String::from(str_list[str_list.len() - 1]))
-    }
-    pub fn subtract (string: &str, substring: &str) -> String {             // ABCDE - ABG = CDE
-        let mut strip = string.chars();
-        let mut substrip = substring.chars();
-        for i in 0..strip.clone().count() {
-            let char = strip.next();
-            if char != substrip.next() {
-                return String::from(char.unwrap_or('\0')) + strip.as_str();
-            }
-        }
-        return String::from(strip.as_str());
-    }
-    pub fn subtract_void (string: &str, substring: &str) -> String {   // ABCDE - ABG = DE
-        let mut strip = string.chars();
-        let mut substrip = substring.chars();
-        for i in 0..strip.clone().count() {
-            if strip.next() != substrip.next() {
-                return String::from(strip.as_str());
-            }
-        }
-        return String::from(strip.as_str());
-    }
-}
-
-pub fn vec_convert (vec2: &Vec2, offset: &Vec2) -> Vec2 {
-    Vec2::new(vec2.x - offset.x, offset.y - vec2.y)
-}
-
-
+//===========================================================================
 
 #[derive(Component)]
 struct DebugImage ();
 pub fn lunex_setup_debug (mut commands: Commands, asset_server: Res<AssetServer>, systems: Query<&Hierarchy>) {
     for system in systems.iter() {
         for x in system.collect_paths(){
-            let widget = Widget::from_path(&x);
+            let widget = Widget::new(&x);
             match widget.fetch(system, ""){
                 Result::Err(..) => {},
                 Result::Ok(..) => {
@@ -131,4 +67,60 @@ impl Plugin for LunexDebugPlugin {
             .add_systems(Update, lunex_update_debug)
             .add_systems(Update, lunex_camera_move_debug.before(cursor_update));
     }
+}
+
+
+
+//# GENERAL USE
+
+
+/// # Description
+/// This function is used for translating Vec2 from Bevy 2D coordinate system to Lunex coordinate system.
+/// It is necessary to go through this step if you want entities to be able to interact with Lunex.
+/// 
+/// Example of this is the cursor entity which has an unmodified [`Transform`] component.
+/// Due to the nature of Bevy 2D, the y+ direction is upwards instead of downwards.
+/// 
+/// * This function will invert the Y component.
+/// * In addition it will offset the values because Lunex always starts at 0.
+///
+/// # Examples
+/// ```
+/// let system = Hierarchy::new();
+/// let offset = Vec2::new( -window.size.x / 2.0, window.size.y / 2.0 );
+/// let cursor_position = Vec2::new(40.0, 20.0);    //Extracted from transform.translation.x, y
+///
+/// //Returns bool
+/// widget.is_within(&system, "", &vec_convert(cursor_position, &offset)).unwrap();
+/// ```
+///
+pub fn vec_convert (vec2: &Vec2, offset: &Vec2) -> Vec2 {
+    Vec2::new(vec2.x - offset.x, offset.y - vec2.y)
+}
+
+pub fn tween (value_1: f32, value_2: f32, slide: f32) -> f32 {
+    let diff = value_2 - value_1;
+    value_1 + diff * slide
+}
+
+
+//# CRATE USE ONLY
+pub fn is_absolute (str: &str) -> bool {
+    match str.chars().nth(0) {
+        Some (value) => {
+            value == '#'
+        },
+        None => false,
+    }
+}
+
+pub fn split_last (string: &str, delimiter: &str ) -> (String, String) {
+    let str_list: Vec<&str> =  string.split(delimiter).collect();
+    let mut output = String::new();
+    let mut is_first = true;
+    for x in str_list.iter().take(str_list.len() - 1){
+        if !is_first {output += delimiter} else {is_first = false};
+        output += x;
+    }
+    (output, String::from(str_list[str_list.len() - 1]))
 }

@@ -4,8 +4,6 @@ pub use crate::ui_widget::Widget;
 pub use crate::ui_widget::WidgetListStyle;
 
 pub use crate::ui_core::Data;
-pub use crate::ui_core::tween;
-
 pub use crate::ui_core::Hierarchy;
 pub use crate::ui_core::hierarchy_update;
 
@@ -24,6 +22,7 @@ pub mod Layout {
     pub use crate::ui_container::Solid;
 }
 
+pub use crate::general::tween;
 pub use crate::general::vec_convert;
 pub use crate::general::lunex_setup_debug;
 pub use crate::general::lunex_update_debug;
@@ -31,5 +30,7 @@ pub use crate::general::lunex_camera_move_debug;
 pub use crate::general::LunexDebugPlugin;
 
 
-pub (in crate) use crate::general::MString;
+//# ONLY FOR USE INSIDE THE LIBRARY
 pub (in crate) use ahash::AHashMap as HashMap;
+pub (in crate) use crate::general::is_absolute;
+pub (in crate) use crate::general::split_last;

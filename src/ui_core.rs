@@ -20,7 +20,8 @@ pub struct Hierarchy {
 }
 impl Hierarchy {
     pub fn new () -> Hierarchy {
-        let mut branch = Branch::new(0.0, true, "ROOT", "".to_string());
+        //let mut branch = Branch::new(0.0, true, "ROOT", "".to_string());
+        let mut branch = Branch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
         branch.container.position_layout_set(Layout::Relative {
             relative_1: Vec2 { x: 0.0, y: 0.0 },
             relative_2: Vec2 { x: 100.0, y: 100.0 },
@@ -75,25 +76,27 @@ pub fn hierarchy_update(mut query: Query<&mut Hierarchy>, mut windows: Query<&mu
 #[derive(Default)]
 pub struct Branch {
 
-    //# Cache only (not synchronized)
+    //# CACHING =======
     name: String,
-    //id: usize,
+    id: usize,
     path: String,
 
-    
-    level: f32,                                                                                                                             //How deep it is located (For highlighting)
-    depth: f32,                                                                                                                             //Custom depth
-    in_focus: bool,
+    //# RENDERING =======
+    level: f32,
+    depth: f32,
+    active: bool,
     visible: bool,
-    //active: bool,
+    in_focus: bool,
     parent_visible: bool,
 
+    //# MOUNTED DATA =======
     container: Container,
     data: Option<Data>,
 
-    pernament: Vec<Branch>,
-    removable: HashMap<usize, Branch>,
-    register: HashMap<String, String>,
+    //# RECURSION =======
+    inventory: HashMap<usize, Branch>,
+    shortcuts: HashMap<String, String>,
+
 }
 impl Branch {
     //#USER EXPOSED CONTROL
@@ -184,8 +187,8 @@ impl Branch {
 
     //#LIBRARY RECURSION CALLS
     pub (in crate) fn cascade_map (&self, mut string: String, level: u32) -> String {                                                
-        for (name, path) in self.register.iter(){
-            match self.borrow_chain_checked(&path){
+        for (name, path) in self.shortcuts.iter(){
+            match self.borrow_linked_checked(&path){
                 Ok (widget) => {
 
                     let mut text = String::from("\n  ");
@@ -202,10 +205,10 @@ impl Branch {
     }
     pub (in crate) fn cascade_map_debug (&self, mut string: String, level: u32) -> String {                                              
         let mut done_widgets: HashMap<String, bool> = HashMap::new();
-        string = format!("{}{}", string, format!(" - [{}] [{}/{}] | ({}/{})", self.name, self.level, self.get_depth(), self.visible, self.parent_visible).black().italic());
+        string = format!("{}{}", string, format!(" - [{}-#{}] [{}/{}] | ({}/{})", self.name, self.id, self.level, self.get_depth(), self.visible, self.parent_visible).black().italic());
         
-        for (name, path) in self.register.iter(){
-            match self.borrow_chain_checked(&path){
+        for (name, path) in self.shortcuts.iter(){
+            match self.borrow_linked_checked(&path){
                 Ok (widget) => {
 
                     let mut text = String::from("\n  ");
@@ -224,27 +227,15 @@ impl Branch {
                 },
             }
         }
-        for i in 0..self.pernament.len() {
-            if done_widgets.contains_key( &("#p".to_string() + &i.to_string())) {
-                continue;
-            }
-
-            let mut text = String::from("\n  ");
-            for _ in 0..level {text += "|    "}
-            text += "|-> ";
-            string = format!("{}{}{}", string, text.black(), format!("#p{}", i).bold().truecolor(255, 185, 165));
-
-            string = self.pernament[i].cascade_map_debug(string, level + 1);
-        }
-        for x in self.removable.iter(){
-            if done_widgets.contains_key( &("#r".to_string() + &x.0.to_string())) {
+        for x in self.inventory.iter(){
+            if done_widgets.contains_key( &("#".to_string() + &x.0.to_string())) {
                 continue;
             }
             
             let mut text = String::from("\n  ");
             for _ in 0..level {text += "|    "}
             text += "|-> ";
-            string = format!("{}{}{}", string, text.black(), format!("#r{}", x.0).bold().truecolor(255, 165, 214));
+            string = format!("{}{}{}", string, text.black(), format!("#{}", x.0).bold().truecolor(255, 165, 214));
 
             string = x.1.cascade_map_debug(string, level + 1);
         }
@@ -254,8 +245,8 @@ impl Branch {
     pub (in crate) fn cascade_collect_paths (&self, list: &mut Vec<String>, directory: String) {                                              
         let mut done_widgets: HashMap<String, bool> = HashMap::new();
         
-        for (name, path) in self.register.iter(){
-            match self.borrow_chain_checked(&path){
+        for (name, path) in self.shortcuts.iter(){
+            match self.borrow_linked_checked(&path){
                 Ok (widget) => {
 
                     let dir = if directory.is_empty() {
@@ -271,29 +262,15 @@ impl Branch {
                 Err(..) => {},
             }
         }
-        for i in 0..self.pernament.len() {
-            if done_widgets.contains_key( &("#p".to_string() + &i.to_string())) {
-                continue;
-            }
-
-            let dir = if directory.is_empty() {
-                String::from(format!("#p{}", i))
-            } else {
-                format!("{}/{}", directory, format!("#p{}", i))
-            };
-            list.push(dir.clone());
-            self.pernament[i].cascade_collect_paths(list, dir);
-
-        }
-        for x in self.removable.iter(){
-            if done_widgets.contains_key( &("#r".to_string() + &x.0.to_string())) {
+        for x in self.inventory.iter(){
+            if done_widgets.contains_key( &("#".to_string() + &x.0.to_string())) {
                 continue;
             }
             
             let dir = if directory.is_empty() {
-                String::from(format!("#r{}", x.0))
+                String::from(format!("#{}", x.0))
             } else {
-                format!("{}/{}", directory, format!("#r{}", x.0))
+                format!("{}/{}", directory, format!("#{}", x.0))
             };
             list.push(dir.clone());
             x.1.cascade_collect_paths(list, dir);
@@ -303,11 +280,7 @@ impl Branch {
 
     pub (in crate) fn cascade_update_self (&mut self, point: Vec2, width: f32, height: f32) {                                       //This will cascade update all branches
         self.container.update(point, width, height);
-        for i in 0..self.pernament.len() {
-            let pos = self.container.position_get();
-            self.pernament[i].cascade_update_self(pos.point_1, pos.width, pos.height);
-        }
-        for x in self.removable.iter_mut(){
+        for x in self.inventory.iter_mut(){
             let pos = self.container.position_get();
             x.1.cascade_update_self(pos.point_1, pos.width, pos.height);
         }
@@ -315,12 +288,7 @@ impl Branch {
 
     pub (in crate) fn cascade_set_visibility (&mut self) {                                                                              //This will cascade set parent visible all branches
         let visibility = self.is_visible();
-
-        for i in 0..self.pernament.len() {
-            let pos = self.container.position_get();
-            self.pernament[i].cascade_set_visibility_self(visibility);
-        }
-        for x in self.removable.iter_mut(){
+        for x in self.inventory.iter_mut(){
             let pos = self.container.position_get();
             x.1.cascade_set_visibility_self(visibility);
         }
@@ -331,11 +299,7 @@ impl Branch {
     }
     
     pub (in crate) fn cascade_set_depth (&mut self, depth: f32) {                                                                       //This will cascade set parent visible all branches
-        for i in 0..self.pernament.len() {
-            let pos = self.container.position_get();
-            self.pernament[i].cascade_set_depth_self(depth);
-        }
-        for x in self.removable.iter_mut(){
+        for x in self.inventory.iter_mut(){
             let pos = self.container.position_get();
             x.1.cascade_set_depth_self(depth);
         }
@@ -346,320 +310,144 @@ impl Branch {
     }
 
     //#LIBRARY MECHANISMS
-    fn new (level: f32, parent_visible: bool, name: &str, path: String) -> Branch {
+    fn new (name: String, id: usize, path: String, level: f32, parent_visible: bool) -> Branch {
         Branch {
-            name: name.to_string(),
-            level,
+            name,
+            id,
             path,
+
+            level,
             depth: 100.0,
+            active: true,
+            visible: true,
             in_focus: false,
+            parent_visible,
 
             container: Container::new(),
             data: Option::None,
-            visible: true,
-            parent_visible,
 
-            pernament: Vec::new(),
-            removable: HashMap::new(),
-            register: HashMap::new(),
+            inventory: HashMap::new(),
+            shortcuts: HashMap::new(),
         }
     }
 
-    pub (in crate) fn create_simple (&mut self, removable: bool, position: PositionLayout, name: &str) -> String {                  //This creates unnamed Branch in one of the 2 registers and return string with ABSOLUTE local path
-        if !removable {
-            let ukey = self.pernament.len();
-            let mut branch = Branch::new(self.level + 1.0, self.is_visible(), &(String::from("#p") + &ukey.to_string()), self.get_path());
-            branch.container.position_layout_set(position);
-            self.pernament.push(branch);
-            String::from("#p") + &ukey.to_string()
-        } else {
-            let mut ukey = 0;
-            loop {
-                if !self.removable.contains_key(&ukey) {break;};
-                ukey += 1;
-            };
-            let mut branch = Branch::new(self.level + 1.0, self.is_visible(), name, self.get_path());
-            branch.container.position_layout_set(position);
-            self.removable.insert(ukey, branch);
-            String::from("#r") + &ukey.to_string()
-        }
+    pub (in crate) fn create_simple (&mut self, name: &str, position: PositionLayout) -> String {
+        
+        let mut id = 0;
+        loop {if !self.inventory.contains_key(&id) {break} else {id += 1}}
+
+        let path = if name.is_empty() {format!("{}/#{}", self.get_path(), id)} else {format!("{}/{}", self.get_path(), name)};
+        let mut branch = Branch::new(name.to_string(), id, path, self.level + 1.0, self.is_visible());
+
+        branch.container.position_layout_set(position);
+
+        self.inventory.insert(id, branch);
+        format!("#{}", id)
+
     }
-    pub (in crate) fn create_simple_checked (&mut self, key: &str, position: PositionLayout) -> Result<String, String> {            //This decides if Branch should be removable or not and also checks for key collision and returns ABSOLUTE/RELATIVE local path
-        if key.is_empty() {
-            Result::Ok(self.create_simple(false, position, ""))
+    pub (in crate) fn create_linked (&mut self, name: &str, position: PositionLayout) -> Result<String, String> {
+        if name.is_empty() {
+            Result::Ok(self.create_simple("", position))
         } else {
-            match self.register.get(key){
-                None => {
-                    let path = self.create_simple(true, position, key);
-                    self.register_path(String::from(key), path);
-                    Result::Ok(String::from(key))
-                },
-                Some (..) => Result::Err(format!("The key '{}' is already in use!", &key).to_string()),
+            if !self.shortcuts.contains_key(name) {
+
+                let path = self.create_simple(name, position);
+                self.shortcuts.insert(name.to_string(), path);
+                Result::Ok(name.to_string())
+
+            } else {
+                Result::Err(format!("The name '{}' is already in use!", name))
             }
         }
     }
 
-    pub (in crate) fn register_path (&mut self, key: String, path: String) -> Result<(), String> {                                                         //This registers ABSOLUTE PATH for a key
-        if self.register.contains_key(&key) {return Result::Err(format!("Branch already contains a path for name {}", &key));}
-        self.register.insert(key, path);
+    pub (in crate) fn register_path (&mut self, name: String, path: String) -> Result<(), String> {                                                         //This registers ABSOLUTE PATH for a key
+        if self.shortcuts.contains_key(&name) {return Result::Err(format!("Branch already contains a path for name {}", &name));}
+        self.shortcuts.insert(name, path);
         Result::Ok(())
     }
-
-    pub (in crate) fn translate_simple (&self, key: &str) -> Result<String, String> {                                               //This can take ONLY RELATIVE and return ABSOLUTE
-        match self.register.get(key) {
-            Some (value) => Result::Ok(String::from(value)),
-            None => Result::Err(format!("The key '{}' is not in the register!", &key).to_string()),
-        }
-    }
-    pub (in crate) fn translate_simple_checked (&self, key: &str) -> Result<String, String> {                                       //This can take RELATIVE/ABSOLUTE and return ABSOLUTE
-        match key.chars().next() {
-            Some (_char) => match _char {
-                '#' => Result::Ok(key.to_owned()),
-                _ => self.translate_simple(key),
-            }
-            None => Result::Err(String::from("There is no key!")),
-        }
-    }
-    pub (in crate) fn translate_chain (&self, keypath: &str) -> Result<String, String> {                                            //This can take chained RELATIVE path and return ABSOLUTE
-        match keypath.split_once('/') {
-            None => {
-                self.translate_simple(keypath)
-            },
-            Some (tuple) => match self.translate_simple(tuple.0) {
-                Ok (new_key) => match self.borrow_simple(&new_key) {
-                    Ok (borrowed_widget) => match borrowed_widget.translate_chain(tuple.1) {
-                        Ok (path_result) => Result::Ok(new_key.to_owned() + "/" + &path_result),
-                        Err (message) => Result::Err(message),
-                    },
-                    Err (message) => Result::Err(message),
-                },
-                Err (message) => Result::Err(message),
-            },
-        }
-    }
-    pub (in crate) fn translate_chain_checked (&self, keypath: &str) -> Result<String, String> {                                    //This can take chained RELATIVE/ABSOLUTE path and return ABSOLUTE
-        match keypath.split_once('/') {
-            None => {
-                self.translate_simple_checked(keypath)
-            },
-            Some (tuple) => match self.translate_simple_checked(tuple.0) {
-                Ok (new_key) => match self.borrow_simple_checked(&new_key) {
-                    Ok (borrowed_widget) => match borrowed_widget.translate_chain_checked(tuple.1) {
-                        Ok (path_result) => Result::Ok(new_key.to_owned() + "/" + &path_result),
-                        Err (message) => Result::Err(message),
-                    },
-                    Err (message) => Result::Err(message),
-                },
-                Err (message) => Result::Err(message),
-            },
+    pub (in crate) fn translate_simple (&self, name: &str) -> Result<String, String> {                                               //This can take ONLY RELATIVE and return ABSOLUTE
+        match self.shortcuts.get(name) {
+            Some (absolute) => Result::Ok(absolute.to_string()),
+            None => Result::Err(format!("There is no shortcut for '{}'!", &name)),
         }
     }
 
     pub (in crate) fn borrow_simple (&self, path: &str) -> Result<&Branch, String> {                                                //This can take ONLY ABSOLUTE and return reference
-        match path.chars().nth(1) {
-            Some (value) => {
-                match value {
-                    'p' => {
-                        match str::parse::<usize>(&path[2..]) {
-                            Ok (index) => {
-                                if index >= self.pernament.len() {
-                                    return Result::Err(format!("Pernament branch with index '{}' does not exist!", &index).to_string());
-                                };
-                                Result::Ok(&self.pernament[index])
-                            },
-                            Err (..) => Result::Err(format!("The path '{}' is not a valid number!", &path).to_string()),
-                        }
+        match str::parse::<usize>(&path[1..]) {
+            Result::Ok (id) => {
+                match self.inventory.get(&id) {
+                    Option::Some (branch) => {
+                        Result::Ok(branch)
                     },
-                    'r' => {
-                        match str::parse::<usize>(&path[2..]) {
-                            Ok (index) => {
-                                match self.removable.get(&index) {
-                                    Some (widget) => {
-                                        Result::Ok(widget)
-                                    },
-                                    None => Result::Err(format!("Removable branch with path '{}' does not exist!", &index).to_string()),
-                                }
-                            },
-                            Err (..) => Result::Err(format!("The path '{}' is not a valid number!", &path).to_string()),
-                        }
-                    },
-                    _ => Result::Err(format!("The second character '{}' in '{}' needs to be either 'r' or 'p' (Stands for storage stack)!", &value, &path).to_string()),
+                    Option::None => Result::Err(format!("Branch with id '#{}' doesn't exist!", &id)),
                 }
             },
-            None => Result::Err(format!("Path '{}' is missing information (Example: #r12)!", &path).to_string()),
+            Result::Err (..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
         }
     }
-    pub (in crate) fn borrow_simple_checked (&self, key: &str) -> Result<&Branch, String> {                                         //This can take RELATIVE/ABSOLUTE and return reference
-        match key.chars().next() {
-            Some (_char) => match _char {
-                '#' => self.borrow_simple(key),
-                _ => match self.translate_simple(key){
-                    Ok (new_key) => self.borrow_chain_checked(&new_key),
+    pub (in crate) fn borrow_simple_checked (&self, name: &str) -> Result<&Branch, String> {                                         //This can take RELATIVE/ABSOLUTE and return reference
+        if !name.is_empty() {
+            if is_absolute(name){
+                self.borrow_simple(name)
+            } else {
+                match self.translate_simple(name){
+                    Ok (path) => self.borrow_linked_checked(&path),
                     Err (message) => Result::Err(message),
-                },
+                }
             }
-            None => Result::Err(String::from("There is no key!")),
+        } else {
+            Result::Err("Cannot borrow branch with no name!".to_string())
         }
     }
-    pub (in crate) fn borrow_chain (&self, path: &str) -> Result<&Branch, String> {                                                 //This can take chained ABSOLUTE path and return reference
+    pub (in crate) fn borrow_linked_checked (&self, path: &str) -> Result<&Branch, String> {                                      //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
-            None => {
-                self.borrow_simple(path)
-            },
-            Some (tuple) => match self.borrow_simple(tuple.0) {
-                Ok (borrowed_widget) => borrowed_widget.borrow_chain(tuple.1),
-                Err (message) => Result::Err(message),
-            },
-        }
-    }
-    pub (in crate) fn borrow_chain_checked (&self, keypath: &str) -> Result<&Branch, String> {                                      //This can take chained ABSOLUTE/RELATIVE path and return reference
-        match keypath.split_once('/') {
-            None => {
-                self.borrow_simple_checked(keypath)
-            },
-            Some (tuple) => match self.borrow_simple_checked(tuple.0) {
-                Ok (borrowed_widget) => borrowed_widget.borrow_chain_checked(tuple.1),
+            None => self.borrow_simple_checked(path),
+            Some ((branch, remaining_path)) => match self.borrow_simple_checked(branch) {
+                Ok (borrowed_widget) => borrowed_widget.borrow_linked_checked(remaining_path),
                 Err (message) => Result::Err(message),
             },
         }
     }
 
-    pub (in crate) fn borrow_simple_mut (&mut self, path: &str) -> Result<&mut Branch, String> {                                    //This can take ONLY ABSOLUTE and return MUT reference
-        match path.chars().nth(1) {
-            Some (value) => {
-                match value {
-                    'p' => {
-                        match str::parse::<usize>(&path[2..]) {
-                            Ok (index) => {
-                                if index >= self.pernament.len() {
-                                    return Result::Err(format!("Pernament branch with index '{}' does not exist!", &index).to_string());
-                                };
-                                Result::Ok(&mut self.pernament[index])
-                            },
-                            Err (..) => Result::Err(format!("The path '{}' is not a valid number!", &path).to_string()),
-                        }
+    pub (in crate) fn borrow_simple_mut (&mut self, path: &str) -> Result<&mut Branch, String> {                                                //This can take ONLY ABSOLUTE and return reference
+        match str::parse::<usize>(&path[1..]) {
+            Result::Ok (id) => {
+                match self.inventory.get_mut(&id) {
+                    Option::Some (branch) => {
+                        Result::Ok(branch)
                     },
-                    'r' => {
-                        match str::parse::<usize>(&path[2..]) {
-                            Ok (index) => {
-                                match self.removable.get_mut(&index) {
-                                    Some (widget) => {
-                                        Result::Ok(widget)
-                                    },
-                                    None => Result::Err(format!("Removable branch with path '{}' does not exist!", &index).to_string()),
-                                }
-                            },
-                            Err (..) => Result::Err(format!("The path '{}' is not a valid number!", &path).to_string()),
-                        }
-                    },
-                    _ => Result::Err(format!("The second character '{}' in '{}' needs to be either 'r' or 'p' (Stands for storage stack)!", &value, &path).to_string()),
+                    Option::None => Result::Err(format!("Branch with id '#{}' doesn't exist!", &id)),
                 }
             },
-            None => Result::Err(format!("Path '{}' is missing information (Example: #r12)!", &path).to_string()),
+            Result::Err (..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
         }
     }
-    pub (in crate) fn borrow_simple_checked_mut (&mut self, key: &str) -> Result<&mut Branch, String> {                             //This can take RELATIVE/ABSOLUTE and return MUT reference
-        match key.chars().next() {
-            Some (_char) => match _char {
-                '#' => self.borrow_simple_mut(key),
-                _ => match self.translate_simple(key){
-                    Ok (new_key) => self.borrow_chain_checked_mut(&new_key),
+    pub (in crate) fn borrow_simple_checked_mut (&mut self, name: &str) -> Result<&mut Branch, String> {                                         //This can take RELATIVE/ABSOLUTE and return reference
+        if !name.is_empty() {
+            if is_absolute(name){
+                self.borrow_simple_mut(name)
+            } else {
+                match self.translate_simple(name){
+                    Ok (path) => self.borrow_linked_checked_mut(&path),
                     Err (message) => Result::Err(message),
-                },
-            }
-            None => Result::Err(String::from("There is no key!")),
-        }
-    }
-    pub (in crate) fn borrow_chain_mut (&mut self, path: &str) -> Result<&mut Branch, String> {                                     //This can take chained ABSOLUTE path and return MUT reference
-        match path.split_once('/') {
-            None => {
-                self.borrow_simple_mut(path)
-            },
-            Some (tuple) => match self.borrow_simple_mut(tuple.0) {
-                Ok (borrowed_widget) => borrowed_widget.borrow_chain_mut(tuple.1),
-                Err (message) => Result::Err(message),
-            },
-        }
-    }
-    pub (in crate) fn borrow_chain_checked_mut (&mut self, keypath: &str) -> Result<&mut Branch, String> {                          //This can take chained ABSOLUTE/RELATIVE path and return MUT reference
-        match keypath.split_once('/') {
-            None => {
-                self.borrow_simple_checked_mut(keypath)
-            },
-            Some (tuple) => match self.borrow_simple_checked_mut(tuple.0) {
-                Ok (borrowed_widget) => borrowed_widget.borrow_chain_checked_mut(tuple.1),
-                Err (message) => Result::Err(message),
-            },
-        }
-    }
-
-    pub (in crate) fn check_simple (&self, path: &str) -> bool {                                                                    //This can take ONLY ABSOLUTE and return reference
-        match path.chars().nth(1) {
-            Some (value) => {
-                match value {
-                    'p' => {
-                        match str::parse::<usize>(&path[2..]) {
-                            Ok (index) => {
-                                if index >= self.pernament.len() {
-                                    return false;
-                                };
-                                true
-                            },
-                            Err (..) => false,
-                        }
-                    },
-                    'r' => {
-                        match str::parse::<usize>(&path[2..]) {
-                            Ok (index) => {
-                                match self.removable.get(&index) {
-                                    Some (widget) => true,
-                                    None => false,
-                                }
-                            },
-                            Err (..) => false,
-                        }
-                    },
-                    _ => false,
                 }
-            },
-            None => false,
-        }
-    }
-    pub (in crate) fn check_simple_checked (&self, key: &str) -> bool {                                                             //This can take RELATIVE/ABSOLUTE and return reference
-        match key.chars().next() {
-            Some (_char) => match _char {
-                '#' => self.check_simple(key),
-                _ => match self.translate_simple(key){
-                    Ok (new_key) => self.check_chain_checked(&new_key),
-                    Err (message) => false,
-                },
             }
-            None => false,
+        } else {
+            Result::Err("Cannot borrow branch with no name!".to_string())
         }
     }
-    pub (in crate) fn check_chain (&self, path: &str) -> bool {                                                                     //This can take chained ABSOLUTE path and return reference
+    pub (in crate) fn borrow_linked_checked_mut (&mut self, path: &str) -> Result<&mut Branch, String> {                                      //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
-            None => {
-                self.check_simple(path)
-            },
-            Some (tuple) => match self.borrow_simple(tuple.0) {
-                Ok (borrowed_widget) => borrowed_widget.check_chain(tuple.1),
-                Err (..) => false,
-            },
-        }
-    }
-    pub (in crate) fn check_chain_checked (&self, keypath: &str) -> bool {                                                          //This can take chained ABSOLUTE/RELATIVE path and return reference
-        match keypath.split_once('/') {
-            None => {
-                self.check_simple_checked(keypath)
-            },
-            Some (tuple) => match self.borrow_simple_checked(tuple.0) {
-                Ok (borrowed_widget) => borrowed_widget.check_chain_checked(tuple.1),
-                Err (..) => false,
+            None => self.borrow_simple_checked_mut(path),
+            Some ((branch, remaining_path)) => match self.borrow_simple_checked_mut(branch) {
+                Ok (borrowed_widget) => borrowed_widget.borrow_linked_checked_mut(remaining_path),
+                Err (message) => Result::Err(message),
             },
         }
     }
 
+/*
     pub (in crate) fn destroy_simple (&mut self, path: &str) -> Result<(), String> {                                                       //This can take ONLY ABSOLUTE and return Option if the destruction succeded
         match path.chars().nth(1) {
             Some (value) => {
@@ -731,15 +519,12 @@ impl Branch {
             Result::Err(format!("Widget registered as '{}' does not exist!", &key).to_string())
         }
     }
-    
+    */
 }
 
 
 //===========================================================================
-pub fn tween (value_1: f32, value_2: f32, slide: f32) -> f32 {
-    let diff = value_2 - value_1;
-    value_1 + diff * slide
-}
+
 
 pub struct Data {
     pub f32s: HashMap<String, f32>,
