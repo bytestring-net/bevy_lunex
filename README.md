@@ -12,11 +12,11 @@ A novel ***path*** based ***modular layout system*** built on top of **Bevy ECS*
 
 ## === Table of Contents ===
 
-- [Description](#description)
-- [Workflow](#workflow)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [Licensing](#licensing)
+- [Description](#===description===)
+- [Workflow](#===workflow===)
+- [Usage](#===usage===)
+- [Contributing](#===contributing===)
+- [Licensing](#===licensing===)
 
 ## === Description ===
 
