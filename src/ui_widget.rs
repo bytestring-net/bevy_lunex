@@ -83,7 +83,7 @@ impl Widget {
     /// This function by itself does NOTHING except creating a pointer from provided path.
     /// It does NOT SYNCHRONIZE with any hierarchy and doesn't change anything.
     /// 
-    /// If you want to actually create new widget, use ```Widget::Create```
+    /// If you want to actually create new widget, use ``Widget::Create``
     /// 
     /// This is just a pointer to call on more advanced methods later.
     ///
@@ -111,7 +111,6 @@ impl Widget {
     /// //This is only a pointer
     /// let menu_pointer = Widget::create(&mut system, "Menu", PositionLayout::Default);
     /// let button_pointer = Widget::create(&mut system, &menu_pointer.end("Button"), PositionLayout::Default);
-    ///                                                 //      Menu/Button       //
     /// 
     /// //This is the actual 'widget' that you can manipulate
     /// let menu: &Branch = menu_pointer.fetch(&system, "").unwrap();   //Leave blank for self
@@ -158,19 +157,33 @@ impl Widget {
     //# SIMPLE CREATION
 
     /// ## Description
-    /// This function is the one you create new widgets with
+    /// This function is the one you create new widgets with. It creates a [`Widget`] on the path specified inside the hierarchy.
     /// 
-    /// If you want to interact with the Hierarchy, you use this to get a borrow.
+    /// Paths:
+    /// * ``Menu`` -> Create widget ``Menu`` in ``#ROOT``
+    /// * ``Menu/Category`` -> Create widget ``Category`` in ``Menu``
+    /// * ``Menu/Category/Button`` -> Create widget ``Button`` in ``Category`` (Located at ``Menu/Category``)
     ///
-    /// ## Examples
+    /// ## Example
     /// ```
-    /// let system = Hierarchy::new();
-    /// 
-    /// //This is only a pointer
     /// let menu_pointer = Widget::create(&mut system, "Menu", PositionLayout::Default);
-    /// let button_pointer = Widget::create(&mut system, &menu_pointer.end("Button"), PositionLayout::Default);
-    ///                                                 //      Menu/Button       //
+    /// let button_pointer = Widget::create(&mut system, "Menu/Button", PositionLayout::Default); //Not recommended way of defining path
     /// ```
+    /// 
+    /// The string after the last '/' is the name of the [`Widget`] and the rest is path to the parent [`Widget`].
+    /// Note that manually setting path is bad practice, it is recommended to use `.end()` method on [`Widget`]
+    /// 
+    /// ## Nameless widgets
+    /// You are also able to create 'nameless' widgets. They are good for non-important widgets like
+    /// one time use or used only for layout purposes. (Don't require interactivity).
+    /// Leave an empty string for name to create nameless [`Widget`]. Their name will be generated.
+    /// 
+    /// ```
+    /// let menu_pointer = Widget::create(&mut system, "", PositionLayout::Default);
+    /// let button_pointer = Widget::create(&mut system, &menu_pointer.end(""), PositionLayout::Default);
+    /// ```
+    /// In this case the path of ``button_pointer`` is `` #0/#0 `` (The number stands for an order they were created in)
+    /// 
     pub fn create (system: &mut Hierarchy, path: &str, position: PositionLayout) -> Result <Widget, String> {
 
         let str_list: Vec<&str> =  path.split('/').collect();
@@ -256,6 +269,24 @@ impl Widget {
     }
 
     //# PATHING SYSTEM
+
+    /// ## Description
+    /// This method is used to create dynamic path to widgets.
+    /// It is used in combination of ``.add_str()`` and ``.end()``.
+    /// 
+    /// ## Examples
+    /// ```
+    /// use bevy_lunex::prelude::*;
+    /// 
+    /// let mut system = Hierarchy::new();
+    /// 
+    /// let menu = Widget::create(&mut system, "Menu", PositionLayout::Default).unwrap();
+    /// let category = Widget::create(&mut system, &menu.end("Category"), PositionLayout::Default).unwrap();
+    /// 
+    /// let path = menu.add(&category).end("Button");
+    /// assert_eq!("Menu/Category/Button", path);
+    /// 
+    /// ```
     pub fn add (&self, w: &Widget) -> Widget {
         Widget::new(&format!("{}/{}", self.path, w.name))
     }
