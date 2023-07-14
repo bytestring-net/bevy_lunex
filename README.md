@@ -1,4 +1,7 @@
 <h1 align="left">Bevy Lunex</h1>
+
+![License](https://img.shields.io/badge/License-MIT%20or%20Apache%202-blue.svg?label=license)
+
 <p align="left">A novel path-based approach to UI built on top of existing Bevy features.</p>
 
 ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
@@ -8,7 +11,6 @@
 
 - [Description](#description)
 - [Usage](#usage)
-- [License](#license)
 
 ## Description
 
@@ -87,6 +89,3 @@ There are multiple layout options to choose from. With their combination and sma
 
 ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/180b773d-cbd3-4b3e-8d97-fbedde011e10)
 
-## License
-
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
