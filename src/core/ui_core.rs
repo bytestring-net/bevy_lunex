@@ -1,16 +1,10 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
-
 use bevy::prelude::*;
 use colored::Colorize;
+use super::export::*;
+use super::ui_container::{Container, Layout};
 
-use crate::prelude::*;
-
-use super::ui_container::{Container, PositionLayout};
-
-
-//===========================================================================
-
+// ===========================================================
+// === HIERARCHY STRUCT ===
 
 #[derive(Component, Default)]
 pub struct Hierarchy {
@@ -22,11 +16,11 @@ impl Hierarchy {
     pub fn new () -> Hierarchy {
         //let mut branch = Branch::new(0.0, true, "ROOT", "".to_string());
         let mut branch = Branch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
-        branch.container.position_layout_set(Layout::Relative {
+        branch.container.position_layout_set(Box::Relative {
             relative_1: Vec2 { x: 0.0, y: 0.0 },
             relative_2: Vec2 { x: 100.0, y: 100.0 },
             ..Default::default()
-        }.wrap());
+        }.pack());
 
         Hierarchy {
             width: 0.0,
@@ -50,10 +44,10 @@ impl Hierarchy {
         self.branch.collect_paths()
     }
     
-    pub (in crate) fn root_get (&self) -> & Branch {
+    pub (in super) fn root_get (&self) -> & Branch {
         &self.branch
     }
-    pub (in crate) fn root_get_mut (&mut self) -> &mut Branch {
+    pub (in super) fn root_get_mut (&mut self) -> &mut Branch {
         &mut self.branch
     }
     
@@ -70,8 +64,8 @@ pub fn hierarchy_update(mut query: Query<&mut Hierarchy>, mut windows: Query<&mu
 }
 
 
-//===========================================================================
-
+// ===========================================================
+// === BRANCH STRUCT ===
 
 #[derive(Default)]
 pub struct Branch {
@@ -109,10 +103,10 @@ impl Branch {
         &mut self.data
     }
     
-    pub fn layout_get (&self) -> &PositionLayout {                                                                
+    pub fn layout_get (&self) -> &Layout {                                                                
         self.container.position_layout_get()
     }
-    pub fn layout_get_mut (&mut self) -> &mut PositionLayout {                                                                
+    pub fn layout_get_mut (&mut self) -> &mut Layout {                                                                
         self.container.position_layout_get_mut()
     }
     
@@ -186,7 +180,7 @@ impl Branch {
     }
 
     //#LIBRARY RECURSION CALLS
-    pub (in crate) fn cascade_map (&self, mut string: String, level: u32) -> String {                                                
+    pub (in super) fn cascade_map (&self, mut string: String, level: u32) -> String {                                                
         for (name, path) in self.shortcuts.iter(){
             match self.borrow_linked_checked(&path){
                 Ok (widget) => {
@@ -203,7 +197,7 @@ impl Branch {
         }
         string
     }
-    pub (in crate) fn cascade_map_debug (&self, mut string: String, level: u32) -> String {                                              
+    pub (in super) fn cascade_map_debug (&self, mut string: String, level: u32) -> String {                                              
         let mut done_widgets: HashMap<String, bool> = HashMap::new();
         string = format!("{}{}", string, format!(" - [{}-#{}] [{}/{}] | ({}/{})", self.name, self.id, self.level, self.get_depth(), self.visible, self.parent_visible).black().italic());
         
@@ -242,7 +236,7 @@ impl Branch {
         string
     }
 
-    pub (in crate) fn cascade_collect_paths (&self, list: &mut Vec<String>, directory: String) {                                              
+    pub (in super) fn cascade_collect_paths (&self, list: &mut Vec<String>, directory: String) {                                              
         let mut done_widgets: HashMap<String, bool> = HashMap::new();
         
         for (name, path) in self.shortcuts.iter(){
@@ -278,7 +272,7 @@ impl Branch {
         }
     }
 
-    pub (in crate) fn cascade_update_self (&mut self, point: Vec2, width: f32, height: f32) {                                       //This will cascade update all branches
+    pub (in super) fn cascade_update_self (&mut self, point: Vec2, width: f32, height: f32) {                                       //This will cascade update all branches
         self.container.update(point, width, height);
         for x in self.inventory.iter_mut(){
             let pos = self.container.position_get();
@@ -286,25 +280,23 @@ impl Branch {
         }
     }
 
-    pub (in crate) fn cascade_set_visibility (&mut self) {                                                                              //This will cascade set parent visible all branches
+    pub (in super) fn cascade_set_visibility (&mut self) {                                                                              //This will cascade set parent visible all branches
         let visibility = self.is_visible();
         for x in self.inventory.iter_mut(){
-            let pos = self.container.position_get();
             x.1.cascade_set_visibility_self(visibility);
         }
     }
-    pub (in crate) fn cascade_set_visibility_self (&mut self, visible: bool) {                                                          //This will cascade set parent visible all branches
+    pub (in super) fn cascade_set_visibility_self (&mut self, visible: bool) {                                                          //This will cascade set parent visible all branches
         self.parent_visible = visible;
         self.cascade_set_visibility()
     }
     
-    pub (in crate) fn cascade_set_depth (&mut self, depth: f32) {                                                                       //This will cascade set parent visible all branches
+    pub (in super) fn cascade_set_depth (&mut self, depth: f32) {                                                                       //This will cascade set parent visible all branches
         for x in self.inventory.iter_mut(){
-            let pos = self.container.position_get();
             x.1.cascade_set_depth_self(depth);
         }
     }
-    pub (in crate) fn cascade_set_depth_self (&mut self, depth: f32) {                                                                  //This will cascade set parent visible all branches
+    pub (in super) fn cascade_set_depth_self (&mut self, depth: f32) {                                                                  //This will cascade set parent visible all branches
         self.depth = depth;
         self.cascade_set_depth(depth);
     }
@@ -331,7 +323,7 @@ impl Branch {
         }
     }
 
-    pub (in crate) fn create_simple (&mut self, name: &str, position: PositionLayout) -> String {
+    pub (in super) fn create_simple (&mut self, name: &str, position: Layout) -> String {
         
         let mut id = 0;
         loop {if !self.inventory.contains_key(&id) {break} else {id += 1}}
@@ -345,7 +337,7 @@ impl Branch {
         format!("#{}", id)
 
     }
-    pub (in crate) fn create_linked (&mut self, name: &str, position: PositionLayout) -> Result<String, String> {
+    pub (in super) fn create_linked (&mut self, name: &str, position: Layout) -> Result<String, String> {
         if name.is_empty() {
             Result::Ok(self.create_simple("", position))
         } else {
@@ -361,19 +353,19 @@ impl Branch {
         }
     }
 
-    pub (in crate) fn register_path (&mut self, name: String, path: String) -> Result<(), String> {                                                         //This registers ABSOLUTE PATH for a key
+    pub (in super) fn register_path (&mut self, name: String, path: String) -> Result<(), String> {                                                         //This registers ABSOLUTE PATH for a key
         if self.shortcuts.contains_key(&name) {return Result::Err(format!("Branch already contains a path for name {}", &name));}
         self.shortcuts.insert(name, path);
         Result::Ok(())
     }
-    pub (in crate) fn translate_simple (&self, name: &str) -> Result<String, String> {                                               //This can take ONLY RELATIVE and return ABSOLUTE
+    pub (in super) fn translate_simple (&self, name: &str) -> Result<String, String> {                                               //This can take ONLY RELATIVE and return ABSOLUTE
         match self.shortcuts.get(name) {
             Some (absolute) => Result::Ok(absolute.to_string()),
             None => Result::Err(format!("There is no shortcut for '{}'!", &name)),
         }
     }
 
-    pub (in crate) fn borrow_simple (&self, path: &str) -> Result<&Branch, String> {                                                //This can take ONLY ABSOLUTE and return reference
+    pub (in super) fn borrow_simple (&self, path: &str) -> Result<&Branch, String> {                                                //This can take ONLY ABSOLUTE and return reference
         match str::parse::<usize>(&path[1..]) {
             Result::Ok (id) => {
                 match self.inventory.get(&id) {
@@ -386,7 +378,7 @@ impl Branch {
             Result::Err (..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
         }
     }
-    pub (in crate) fn borrow_simple_checked (&self, name: &str) -> Result<&Branch, String> {                                         //This can take RELATIVE/ABSOLUTE and return reference
+    pub (in super) fn borrow_simple_checked (&self, name: &str) -> Result<&Branch, String> {                                         //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
             if is_absolute(name){
                 self.borrow_simple(name)
@@ -400,7 +392,7 @@ impl Branch {
             Result::Err("Cannot borrow branch with no name!".to_string())
         }
     }
-    pub (in crate) fn borrow_linked_checked (&self, path: &str) -> Result<&Branch, String> {                                      //This can take chained ABSOLUTE/RELATIVE path and return reference
+    pub (in super) fn borrow_linked_checked (&self, path: &str) -> Result<&Branch, String> {                                      //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked(path),
             Some ((branch, remaining_path)) => match self.borrow_simple_checked(branch) {
@@ -410,7 +402,7 @@ impl Branch {
         }
     }
 
-    pub (in crate) fn borrow_simple_mut (&mut self, path: &str) -> Result<&mut Branch, String> {                                                //This can take ONLY ABSOLUTE and return reference
+    pub (in super) fn borrow_simple_mut (&mut self, path: &str) -> Result<&mut Branch, String> {                                                //This can take ONLY ABSOLUTE and return reference
         match str::parse::<usize>(&path[1..]) {
             Result::Ok (id) => {
                 match self.inventory.get_mut(&id) {
@@ -423,7 +415,7 @@ impl Branch {
             Result::Err (..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
         }
     }
-    pub (in crate) fn borrow_simple_checked_mut (&mut self, name: &str) -> Result<&mut Branch, String> {                                         //This can take RELATIVE/ABSOLUTE and return reference
+    pub (in super) fn borrow_simple_checked_mut (&mut self, name: &str) -> Result<&mut Branch, String> {                                         //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
             if is_absolute(name){
                 self.borrow_simple_mut(name)
@@ -437,7 +429,7 @@ impl Branch {
             Result::Err("Cannot borrow branch with no name!".to_string())
         }
     }
-    pub (in crate) fn borrow_linked_checked_mut (&mut self, path: &str) -> Result<&mut Branch, String> {                                      //This can take chained ABSOLUTE/RELATIVE path and return reference
+    pub (in super) fn borrow_linked_checked_mut (&mut self, path: &str) -> Result<&mut Branch, String> {                                      //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked_mut(path),
             Some ((branch, remaining_path)) => match self.borrow_simple_checked_mut(branch) {
@@ -523,8 +515,8 @@ impl Branch {
 }
 
 
-//===========================================================================
-
+// ===========================================================
+// === DATA MOUNTED ON BRANCH ===
 
 pub struct Data {
     pub f32s: HashMap<String, f32>,

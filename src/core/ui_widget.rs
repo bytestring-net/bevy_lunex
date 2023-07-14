@@ -1,13 +1,9 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
-
-use crate::prelude::*;
+use super::export::*;
 use bevy::prelude::*;
-
-use super::ui_container::PositionLayout;
 use super::ui_core::Branch;
 
-//===========================================================================
+// ===========================================================
+// === MAIN WIDGET STRUCT ===
 
 #[derive(Component, Default, Debug, Clone, PartialEq)]
 pub struct Widget {
@@ -184,7 +180,7 @@ impl Widget {
     /// ```
     /// In this case the path of ``button_pointer`` is `` #0/#0 `` (The number stands for an order they were created in)
     /// 
-    pub fn create (system: &mut Hierarchy, path: &str, position: PositionLayout) -> Result <Widget, String> {
+    pub fn create (system: &mut Hierarchy, path: &str, position: Layout) -> Result <Widget, String> {
 
         let str_list: Vec<&str> =  path.split('/').collect();
         let str_list_len = str_list.len();
@@ -314,12 +310,12 @@ impl Widget {
         let container_width = total_width + total_wgap;
         let container_height = total_height + total_hgap;
     
-        let widget = match Widget::create(system, path, Layout::Window {
+        let widget = match Widget::create(system, path, Box::Window {
             relative,
             width_relative: container_width,
             height_relative: container_height,
             ..Default::default()
-        }.wrap()) {
+        }.pack()) {
             Result::Ok (widget) => widget,
             Result::Err(message) => return Result::Err(message),
         };
@@ -332,7 +328,7 @@ impl Widget {
     
         for x in 0..xx {
             for y in 0..yy {
-                match Widget::create(system, &widget.end(grid[x][y]), Layout::Window {
+                match Widget::create(system, &widget.end(grid[x][y]), Box::Window {
                     relative: Vec2::new(
                         width*x as f32 + wgap*x as f32 + if style.width_padding_gap == true {wgap} else {0.0},
                         height*y as f32 + hgap*y as f32 + if style.height_padding_gap == true {hgap} else {0.0},
@@ -340,7 +336,7 @@ impl Widget {
                     width_relative: width,
                     height_relative: height,
                     ..Default::default()
-                }.wrap()) {
+                }.pack()) {
                         Result::Ok (..) => (),
                         Result::Err(message) => return Result::Err(message),
                 };
@@ -372,7 +368,7 @@ impl Widget {
     
         for x in 0..xx {
             for y in 0..yy{
-                match Widget::create(system, &widget.end(grid[x][y]), Layout::Window {
+                match Widget::create(system, &widget.end(grid[x][y]), Box::Window {
                     relative: Vec2::new(
                         width*x as f32 + wgap*x as f32 + if style.width_padding_gap == true {wgap} else {0.0},
                         height*y as f32 + hgap*y as f32 + if style.height_padding_gap == true {hgap} else {0.0},
@@ -380,7 +376,7 @@ impl Widget {
                     width_relative: width,
                     height_relative: height,
                     ..Default::default()
-                }.wrap()) {
+                }.pack()) {
                         Result::Ok (..) => (),
                         Result::Err(message) => return Result::Err(message),
                 };
@@ -403,6 +399,8 @@ impl Widget {
 }
 
 
+// ===========================================================
+// === EXTENDED FUNCTIONALITY AND SCRIPTS ===
 
 #[derive(Default)]
 pub struct WidgetListStyle {
