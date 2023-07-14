@@ -1,6 +1,6 @@
 <h1 align="left">Bevy Lunex</h1>
 
-![License](https://img.shields.io/badge/License-MIT%20or%20Apache%202-blue.svg?label=license)
+[![License](https://img.shields.io/badge/License-MIT%20or%20Apache%202-blue.svg?label=license)](./LICENSE-MIT)
 
 <p align="left">A novel path-based approach to UI built on top of existing Bevy features.</p>
 
