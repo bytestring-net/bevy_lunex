@@ -5,18 +5,10 @@
 [![Released API docs](https://docs.rs/bevy_lunex/badge.svg)](https://docs.rs/bevy_lunex)
 
 A novel ***path*** based ***modular layout system*** built on top of **Bevy ECS**. It positions rectangles with user defined relations to achieve dynamic layout.
-
+## === Showcase ===
 ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
 
 *^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. It aligns SpriteBundles to values returned from Lunex achieving AAA level layout capabilites and modularity.*
-
-## === Table of Contents ===
-
-- [Description](#===description===)
-- [Workflow](#===workflow===)
-- [Usage](#===usage===)
-- [Contributing](#===contributing===)
-- [Licensing](#===licensing===)
 
 ## === Description ===
 
