@@ -14,7 +14,6 @@ pub use super::ui_container::SolidScale;
 
 //# WIDGETS
 pub use super::ui_widget::Widget;
-pub use super::ui_widget::WidgetListStyle;
 
 //# CORE
 pub use super::ui_core::Data;

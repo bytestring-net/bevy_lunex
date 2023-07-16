@@ -6,7 +6,7 @@ use super::ui_container::{Container, Layout};
 // ===========================================================
 // === HIERARCHY STRUCT ===
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Clone, Debug, PartialEq)]
 pub struct Hierarchy {
     pub width: f32,
     pub height: f32,
@@ -67,7 +67,7 @@ pub fn hierarchy_update(mut query: Query<&mut Hierarchy>, mut windows: Query<&mu
 // ===========================================================
 // === BRANCH STRUCT ===
 
-#[derive(Default)]
+#[derive(Default, Clone, Debug, PartialEq)]
 pub struct Branch {
 
     //# CACHING =======
@@ -518,6 +518,7 @@ impl Branch {
 // ===========================================================
 // === DATA MOUNTED ON BRANCH ===
 
+#[derive(Default, Clone, Debug, PartialEq)]
 pub struct Data {
     pub f32s: HashMap<String, f32>,
     pub vec2s: HashMap<String, Vec2>,

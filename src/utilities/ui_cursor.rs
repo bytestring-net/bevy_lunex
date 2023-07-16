@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
-//===========================================================================
+// ===========================================================
+// === CURSOR FUNCTIONALITY ===
 
 #[derive(Component, Default)]
 pub struct Cursor {
@@ -15,6 +16,12 @@ impl Cursor {
             offset,
             ..Default::default()
         }
+    }
+    pub fn get_depth (&self) -> &f32 {
+        &self.depth
+    }
+    pub fn get_depth_mut (&mut self) -> &mut f32 {
+        &mut self.depth
     }
     pub fn position_world (&self) -> &Vec2 {
         &self.cursor_world
@@ -38,6 +45,7 @@ pub fn cursor_update(mut windows: Query<&mut Window>, cameras: Query<(&Camera, &
 
                 cursorinfo.cursor_screen = Vec2 {x: cursor.x, y: cursor.y};
                 cursorinfo.cursor_world = Vec2 {x: cursor.x - offset_x + camera.translation.x, y: window.resolution.height() - cursor.y - offset_y + camera.translation.y};
+                cursorinfo.depth = 0.0;
 
                 transform.translation.x = cursorinfo.cursor_world.x;
                 transform.translation.y = cursorinfo.cursor_world.y;

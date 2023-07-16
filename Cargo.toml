@@ -7,4 +7,5 @@ edition = "2021"
 [dependencies]
 ahash = "0.8.3"
 bevy = "0.11"
+#bevy = { git = "https://github.com/bevyengine/bevy" }
 colored = "2.0.0"

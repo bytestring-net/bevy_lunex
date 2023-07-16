@@ -7,9 +7,15 @@ pub use super::ui_cursor::cursor_update;
 
 pub use super::ui_element::Element;
 pub use super::ui_element::ElementBundle;
+pub use super::ui_element::ImageElementBundle;
+pub use super::ui_element::TextElementBundle;
+pub use super::ui_element::text_compute_size_simple;
 
 //# DEBUG
 pub use super::ui_debug::lunex_setup_debug;
 pub use super::ui_debug::lunex_update_debug;
 pub use super::ui_debug::lunex_camera_move_debug;
 pub use super::ui_debug::LunexDebugPlugin;
+
+//# GRID GENERATION
+pub use super::ui_grid::Grid;
