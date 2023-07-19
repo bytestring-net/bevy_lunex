@@ -8,7 +8,7 @@ A novel ***path*** based ***modular layout system*** built on top of **Bevy ECS*
 ## === Showcase ===
 ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
 
-*^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. It aligns SpriteBundles to values returned from Lunex achieving AAA level layout capabilites and modularity.*
+*^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. It aligns SpriteBundles to values returned from Lunex achieving AAA level layout capabilites and modularity. [Source code here](https://github.com/IDEDARY/bevy-lunex-cyberpunk).*
 
 ## === Description ===
 
