@@ -21,5 +21,9 @@ pub use super::ui_core::Hierarchy;
 pub use super::ui_core::hierarchy_update;
 
 //# GENERAL
+pub use super::general::blend_color;
 pub use super::general::tween;
+pub use super::general::tween_color_rgba;
+pub use super::general::tween_color_hsla_short;
+pub use super::general::tween_color_hsla_long;
 pub use super::general::vec_convert;

@@ -7,6 +7,7 @@ use crate::prelude::*;
 #[derive(Component, Clone, Debug, Default)]
 pub struct Element {
     pub relative: Vec2,
+    pub absolute: Vec2,
     pub boundary: Vec2,
     pub scale: f32,
 }
