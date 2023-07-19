@@ -12,7 +12,7 @@ A novel ***path*** based ***modular layout system*** built on top of **Bevy ECS*
 
 ## === Description ===
 
-**Bevy_Lunex** is an layout framework with *endless amount of use cases*. The most prominet one is to use it as a *"building brick"* for **user interaface**.
+**Bevy-Lunex** is a layout framework with *endless amount of use cases*. The most prominet one is to use it as a *"building brick"* for **user interaface**.
 
 However it can be used in **ANY** scenario where ***dynamic positioning is required***. For example:
 
@@ -74,6 +74,7 @@ commands.spawn ((
     }
 ));
 ```
+*The library features custom bundles to make it easier to create entities, like 'TextElementBundle' or 'ImageElementBundle'. The example above only shows the main idea of widgets being components.*
 ### Querying for widgets
 To add logic to your containers, you use bevy systems and query for your widgets. This function for example checks if cursor is inside a widget or not.
 ```rust
