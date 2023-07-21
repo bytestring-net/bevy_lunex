@@ -3,6 +3,10 @@ use colored::Colorize;
 use super::export::*;
 use super::ui_container::{Container, Layout};
 
+const ROOT_STARTING_DEPTH: f32 = 100.0;
+const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
+const HIGHLIGHT_DEPTH_ADDED: f32 = 5.0;
+
 // ===========================================================
 // === HIERARCHY STRUCT ===
 
@@ -123,7 +127,7 @@ impl Branch {
     }
 
     pub fn get_depth (&self) -> f32 {
-        if self.in_focus {self.level + self.depth + 0.5} else {self.level + self.depth}
+        if self.in_focus {self.level*LEVEL_DEPTH_DIFFERENCE + self.depth + HIGHLIGHT_DEPTH_ADDED} else {self.level*LEVEL_DEPTH_DIFFERENCE + self.depth}
     }
     pub fn set_depth (&mut self, depth: f32) {
         self.cascade_set_depth_self(depth);
@@ -309,7 +313,7 @@ impl Branch {
             path,
 
             level,
-            depth: 100.0,
+            depth: ROOT_STARTING_DEPTH,
             active: true,
             visible: true,
             in_focus: false,

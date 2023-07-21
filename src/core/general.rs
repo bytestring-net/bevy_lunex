@@ -82,10 +82,10 @@ pub fn periodical_difference_long (period: f32, x1: f32, x2: f32) -> f32 {
     if difference < 0.0 { difference + period } else if difference <= period / 2.0 { difference - period } else { difference }
 }
 
+
 pub fn periodical_tween_short(period: f32, x1: f32, x2: f32, slider: f32) -> f32 {
     let start = periodical(period, x1);
-    let difference = periodical_difference_short(period, x1, x2);
-    periodical(period, start + difference * slider)
+    periodical(period, start + periodical_difference_short(period, x1, x2) * slider)
 }
 
 pub fn periodical_tween_long(period: f32, x1: f32, x2: f32, slider: f32) -> f32 {
@@ -106,11 +106,6 @@ pub fn tween_color_rgba(color1: Color, color2: Color, slide: f32) -> Color {
 }
 
 pub fn tween_color_hsla_short(color1: Color, color2: Color, slide: f32) -> Color {
-    let period = 360.0;
-    assert_eq!(-240.0, periodical_difference_long(period, 0.0, 120.0)); //Always returns the outer angle
-    assert_eq!(270.0, periodical_difference_long(period, 0.0, 270.0));
-    assert_eq!(-315.0, periodical_difference_long(period, 45.0, 90.0));
-    assert_eq!(315.0, periodical_difference_long(period, 90.0, 45.0));
     Color::hsla (
         periodical_tween_short(360.0, color1.h(), color2.h(), slide),
         tween(color1.s(), color2.s(), slide),

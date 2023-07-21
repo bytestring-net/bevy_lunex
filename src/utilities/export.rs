@@ -11,11 +11,11 @@ pub use super::ui_element::ImageElementBundle;
 pub use super::ui_element::TextElementBundle;
 pub use super::ui_element::text_compute_size_simple;
 
-pub use super::ui_interface::ImageParams;
-pub use super::ui_interface::TextParams;
-pub use super::ui_interface::spawn_image;
-pub use super::ui_interface::spawn_text;
-pub use super::ui_interface::spawn_image_with_text;
+pub use super::ui_element::ImageParams;
+pub use super::ui_element::TextParams;
+pub use crate::image_element_spawn;
+pub use crate::text_element_spawn;
+pub use crate::widget_spawn;
 
 //# DEBUG
 pub use super::ui_debug::lunex_setup_debug;
