@@ -149,6 +149,140 @@ impl Widget {
         }
     }
 
+    pub fn fetch_data<'a> (&'a self, system: &'a  Hierarchy, path: &str) -> Result<&Option<Data>, String> {
+        match self.fetch(system, path){
+            Ok (branch) => Result::Ok(branch.data_get()),
+            Err (message) => Err(message),
+        }
+    }
+    pub fn fetch_data_mut<'a> (&'a self, system: &'a mut Hierarchy, path: &str) -> Result<&mut Option<Data>, String> {
+        match self.fetch_mut(system, path){
+            Ok (branch) => Result::Ok(branch.data_get_mut()),
+            Err (message) => Err(message),
+        }
+    }
+
+    pub fn fetch_data_set_f32<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: f32) -> Result<(), String> {
+        match self.fetch_mut(system, path){
+            Ok (branch) => {
+                let data_option = branch.data_get_mut();
+                match data_option {
+                    Some (data) => {
+                        data.f32s.insert(key.to_string(), value);
+                        Ok(())
+                    },
+                    None => {
+                        let mut data = Data::new();
+                        data.f32s.insert(key.to_string(), value);
+                        *data_option = Option::Some(data);
+                        Ok(())
+                    },
+                }
+            },
+            Err (message) => Err(message),
+        }
+    }
+    pub fn fetch_data_set_string<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: String) -> Result<(), String> {
+        match self.fetch_mut(system, path){
+            Ok (branch) => {
+                let data_option = branch.data_get_mut();
+                match data_option {
+                    Some (data) => {
+                        data.strings.insert(key.to_string(), value);
+                        Ok(())
+                    },
+                    None => {
+                        let mut data = Data::new();
+                        data.strings.insert(key.to_string(), value);
+                        *data_option = Option::Some(data);
+                        Ok(())
+                    },
+                }
+            },
+            Err (message) => Err(message),
+        }
+    }
+    pub fn fetch_data_set_bool<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: bool) -> Result<(), String> {
+        match self.fetch_mut(system, path){
+            Ok (branch) => {
+                let data_option = branch.data_get_mut();
+                match data_option {
+                    Some (data) => {
+                        data.bools.insert(key.to_string(), value);
+                        Ok(())
+                    },
+                    None => {
+                        let mut data = Data::new();
+                        data.bools.insert(key.to_string(), value);
+                        *data_option = Option::Some(data);
+                        Ok(())
+                    },
+                }
+            },
+            Err (message) => Err(message),
+        }
+    }
+    pub fn fetch_data_set_vec2<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: Vec2) -> Result<(), String> {
+        match self.fetch_mut(system, path){
+            Ok (branch) => {
+                let data_option = branch.data_get_mut();
+                match data_option {
+                    Some (data) => {
+                        data.vec2s.insert(key.to_string(), value);
+                        Ok(())
+                    },
+                    None => {
+                        let mut data = Data::new();
+                        data.vec2s.insert(key.to_string(), value);
+                        *data_option = Option::Some(data);
+                        Ok(())
+                    },
+                }
+            },
+            Err (message) => Err(message),
+        }
+    }
+    pub fn fetch_data_set_vec3<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: Vec3) -> Result<(), String> {
+        match self.fetch_mut(system, path){
+            Ok (branch) => {
+                let data_option = branch.data_get_mut();
+                match data_option {
+                    Some (data) => {
+                        data.vec3s.insert(key.to_string(), value);
+                        Ok(())
+                    },
+                    None => {
+                        let mut data = Data::new();
+                        data.vec3s.insert(key.to_string(), value);
+                        *data_option = Option::Some(data);
+                        Ok(())
+                    },
+                }
+            },
+            Err (message) => Err(message),
+        }
+    }
+    pub fn fetch_data_set_vec4<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: Vec4) -> Result<(), String> {
+        match self.fetch_mut(system, path){
+            Ok (branch) => {
+                let data_option = branch.data_get_mut();
+                match data_option {
+                    Some (data) => {
+                        data.vec4s.insert(key.to_string(), value);
+                        Ok(())
+                    },
+                    None => {
+                        let mut data = Data::new();
+                        data.vec4s.insert(key.to_string(), value);
+                        *data_option = Option::Some(data);
+                        Ok(())
+                    },
+                }
+            },
+            Err (message) => Err(message),
+        }
+    }
+
 
     //# SIMPLE CREATION
 

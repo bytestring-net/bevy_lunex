@@ -25,3 +25,5 @@ pub use super::ui_debug::LunexDebugPlugin;
 
 //# GRID GENERATION
 pub use super::ui_grid::Grid;
+pub use crate::textgrid;
+pub use crate::textrow;

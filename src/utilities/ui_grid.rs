@@ -13,7 +13,7 @@ pub struct Grid {
     pub height_padding_gap: bool,
 }
 impl Grid {
-    pub fn create (&self, system: &mut Hierarchy, path: &String, grid: &Vec<Vec<&str>>, relative: Vec2) -> Result<Widget, String>{
+    pub fn create (&self, system: &mut Hierarchy, path: &String, grid: &Vec<Vec<String>>, relative: Vec2) -> Result<Widget, String>{
         let xx = grid.len();
         let yy = grid[0].len();
 
@@ -53,7 +53,7 @@ impl Grid {
     
         for x in 0..xx {
             for y in 0..yy {
-                match Widget::create(system, &widget.end(grid[x][y]), Box::Window {
+                match Widget::create(system, &widget.end(&grid[x][y]), Box::Window {
                     relative: Vec2::new(
                         width*x as f32 + wgap*x as f32 + if self.width_padding_gap == true {wgap} else {0.0},
                         height*y as f32 + hgap*y as f32 + if self.height_padding_gap == true {hgap} else {0.0},
@@ -69,7 +69,7 @@ impl Grid {
         }
         Result::Ok(widget)
     }
-    pub fn create_inside (&self, system: &mut Hierarchy, widget: &Widget, grid: &Vec<Vec<&str>>) -> Result<(), String>{
+    pub fn create_inside (&self, system: &mut Hierarchy, widget: &Widget, grid: &Vec<Vec<String>>) -> Result<(), String>{
         let xx = grid.len();
         let yy = grid[0].len();
         
@@ -99,7 +99,7 @@ impl Grid {
     
         for x in 0..xx {
             for y in 0..yy{
-                match Widget::create(system, &widget.end(grid[x][y]), Box::Window {
+                match Widget::create(system, &widget.end(&grid[x][y]), Box::Window {
                     relative: Vec2::new(
                         width*x as f32 + wgap*x as f32 + if self.width_padding_gap == true {wgap} else {0.0},
                         height*y as f32 + hgap*y as f32 + if self.height_padding_gap == true {hgap} else {0.0},
@@ -116,3 +116,26 @@ impl Grid {
         Result::Ok(())
     }
 }
+
+
+#[macro_export]
+macro_rules! textrow {
+    [$($element:expr),*] => {{
+        vec![$($element.to_string()),*]
+    }};
+}
+
+
+#[macro_export]
+macro_rules! textgrid {
+    ($([$($element:expr),*]),*) => {
+        vec![
+            $(
+                vec![
+                    $($element.to_string()),*
+                ]
+            ),*
+        ]
+    };
+}
+

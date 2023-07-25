@@ -8,7 +8,7 @@ pub mod Box {
     use bevy::prelude::Vec2;
     use super::{Layout, SolidScale};
 
-    #[derive(Clone, Debug, PartialEq, Default)]
+    #[derive(Clone, Debug, PartialEq)]
     pub struct Window {
         pub absolute: Vec2,
         pub relative: Vec2,
@@ -41,9 +41,20 @@ pub mod Box {
             )
         }
     }
+    impl Default for Window  {
+        fn default() -> Self {
+            Window {
+                absolute: Vec2::default(),
+                relative: Vec2::default(),
+                width_absolute: 0.0,
+                width_relative: 100.0,
+                height_absolute: 0.0,
+                height_relative: 100.0,
+            }
+        }
+    }
 
-
-    #[derive(Clone, Debug, PartialEq, Default)]
+    #[derive(Clone, Debug, PartialEq)]
     pub struct Relative {
         pub absolute_1: Vec2,
         pub absolute_2: Vec2,
@@ -71,9 +82,19 @@ pub mod Box {
             ]
         }
     }
+    impl Default for Relative  {
+        fn default() -> Self {
+            Relative {
+                absolute_1: Vec2::default(),
+                absolute_2: Vec2::default(),
+                relative_1: Vec2::default(),
+                relative_2: Vec2::new(100.0, 100.0),
+            }
+        }
+    }
 
 
-    #[derive(Clone, Debug, PartialEq, Default)]
+    #[derive(Clone, Debug, PartialEq)]
     pub struct Solid {
         pub width: u32,
         pub height: u32,
@@ -110,6 +131,17 @@ pub mod Box {
                 vanilla_width,
                 vanilla_height,
             )
+        }
+    }
+    impl Default for Solid  {
+        fn default() -> Self {
+            Solid {
+                width: 1,
+                height: 1,
+                horizontal_anchor: 0.0,
+                vertical_anchor: 0.0,
+                scaling: SolidScale::default()
+            }
         }
     }
 
