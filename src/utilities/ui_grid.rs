@@ -4,6 +4,13 @@ use crate::prelude::*;
 // ===========================================================
 // === GRID GENERATION ===
 
+pub struct GridParams {
+    
+}
+
+
+
+
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct Grid {
     pub gap_relative: Vec2,
@@ -117,7 +124,11 @@ impl Grid {
     }
 }
 
-
+/// ## Text Row
+/// Attempts to construct 1D vector from given elements, useful when you don't want to type .to_string() every time.
+/// ```
+/// let row: Vec<String> = textrow!["item 1", "item 2", "item3"];
+/// ```
 #[macro_export]
 macro_rules! textrow {
     [$($element:expr),*] => {{
@@ -125,7 +136,11 @@ macro_rules! textrow {
     }};
 }
 
-
+/// ## Text Grid
+/// Attempts to construct 2D vector from given elements, useful when you don't want to type .to_string() every time.
+/// ```
+/// let grid: Vec<Vec<String>> = textgrid![["item 1", "item 2"], ["item3", "item 4"]];
+/// ```
 #[macro_export]
 macro_rules! textgrid {
     ($([$($element:expr),*]),*) => {

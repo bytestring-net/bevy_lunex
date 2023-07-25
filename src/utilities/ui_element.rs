@@ -238,7 +238,7 @@ pub struct TextElementBundle {
 /// The fields are then transfered to the [`Element`] struct inside the macro.
 /// ### Example:
 /// ```
-/// let params = TextParams::centerleft().at(20.0, 50.0).with_height(80.0);
+///  let params = TextParams::centerleft().at(20.0, 50.0).with_height(80.0);
 /// ```
 /// ### Fields
 /// * `relative` = position in % relative to the widget.

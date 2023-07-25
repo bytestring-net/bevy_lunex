@@ -3,79 +3,84 @@ use bevy::prelude::*;
 // ===========================================================
 // === GENERAL ===
 
-/// ## Description
-/// This function is used for translating Vec2 from Bevy 2D coordinate system to Lunex coordinate system.
+/// ### Vec convert
+/// This function is used for translating Vec2 from Bevy coordinate system to Lunex coordinate system.
 /// It is necessary to go through this step if you want entities to be able to interact with Lunex.
 /// 
-/// Example of this is the cursor entity which has an unmodified [`Transform`] component.
-/// Due to the nature of Bevy 2D, the y+ direction is upwards instead of downwards.
-/// 
+/// Example of this is the cursor entity which has [`Transform`] component.
+/// Due to the nature of Bevy, the y+ direction is upwards instead of downwards. This is extremely counterintuitive, especially for UI.
 /// * This function will invert the Y component.
-/// * In addition it will offset the values because Lunex always starts at 0.
-///
-/// ## Examples
+/// * In addition it will offset the values because Bevy-Lunex always starts at 0.
+/// ### Example
 /// ```
-/// let system = Hierarchy::new();
-/// let offset = Vec2::new( -window.size.x / 2.0, window.size.y / 2.0 );
-/// let cursor_position = Vec2::new(40.0, 20.0);    //Extracted from transform.translation.x, y
+///  let offset = Vec2::new( -window.size.x / 2.0, window.size.y / 2.0 );
+///  let cursor_position = Vec2::new(40.0, 20.0);
 ///
-/// //Returns bool
-/// widget.is_within(&system, "", &vec_convert(cursor_position, &offset)).unwrap();
+///  let inside:bool = widget.is_within(&system, "", &vec_convert(cursor_position, &offset)).unwrap();
 /// ```
 pub fn vec_convert (vec2: &Vec2, offset: &Vec2) -> Vec2 {
     Vec2::new(vec2.x - offset.x, offset.y - vec2.y)
 }
 
+/// ### Tween
+/// Very simple function for linear interpolation between 2 values.
+/// * `slide` ranges from 0.0 to 1.0
 pub fn tween (value_1: f32, value_2: f32, slide: f32) -> f32 {
     let diff = value_2 - value_1;
     value_1 + diff * slide
 }
 
 
+/// ### Periodical
 /// Returns value that is normalized into a given period.
 /// Allows you to easily clamp values with overflow.
 /// 
 /// The most common example would be normalizing degrees between 0 and 360.
+/// ### Example
 /// ```
-/// let period = 360.0;
-/// assert_eq!(315.0, periodical(period, -45.0));
-/// assert_eq!(45.0, periodical(period, 45.0));
-/// assert_eq!(0.0, periodical(period, 360.0));
-/// assert_eq!(90.0, periodical(period, 450.0));
+///  let period = 360.0;
+///  assert_eq!(315.0, periodical(period, -45.0));
+///  assert_eq!(45.0, periodical(period, 45.0));
+///  assert_eq!(0.0, periodical(period, 360.0));
+///  assert_eq!(90.0, periodical(period, 450.0));
 /// ```
 pub fn periodical (period: f32, x: f32) -> f32 {
     let value = x % period;
     if value < 0.0 { value + period } else { value }
 }
 
+/// ### Periodical difference short
 /// Returns a difference between 2 periodical values.
 /// Uses the shortest path.
 /// 
 /// The most common example would be getting a difference between 2 angles in degrees.
 /// Because of the nature of trigonometry, you can sometimes get inner or outer angle depending on use case. This function will always return the INNER angle.
+/// ### Example
 /// ```
-/// let period = 360.0;
-/// assert_eq!(120.0, periodical_difference_short(period, 0.0, 120.0));
-/// assert_eq!(-90.0, periodical_difference_short(period, 0.0, 270.0)); //Always returns the inner angle
-/// assert_eq!(45.0, periodical_difference_short(period, 45.0, 90.0));
-/// assert_eq!(-45.0, periodical_difference_short(period, 90.0, 45.0));
+///  let period = 360.0;
+///  assert_eq!(120.0, periodical_difference_short(period, 0.0, 120.0));
+///  assert_eq!(-90.0, periodical_difference_short(period, 0.0, 270.0)); //Always returns the inner angle
+///  assert_eq!(45.0, periodical_difference_short(period, 45.0, 90.0));
+///  assert_eq!(-45.0, periodical_difference_short(period, 90.0, 45.0));
 /// ```
 pub fn periodical_difference_short (period: f32, x1: f32, x2: f32) -> f32 {
     let difference = (periodical(period, x2) - periodical(period, x1)) % period;
     if difference > period / 2.0 { difference - period } else if difference < -period / 2.0 { difference + period } else { difference }
 }
 
+/// ### Periodical difference short
 /// Returns a difference between 2 periodical values.
 /// Uses the longest path.
 /// 
 /// The most common example would be getting a difference between 2 angles in degrees.
 /// Because of the nature of trigonometry, you can sometimes get inner or outer angle depending on use case. This function will always return the OUTER angle.
+/// ### Example
 /// ```
-/// let period = 360.0;
-/// assert_eq!(-240.0, periodical_difference_long(period, 0.0, 120.0)); //Always returns the outer angle
-/// assert_eq!(270.0, periodical_difference_long(period, 0.0, 270.0));
-/// assert_eq!(-315.0, periodical_difference_long(period, 45.0, 90.0));
-/// assert_eq!(315.0, periodical_difference_long(period, 90.0, 45.0));
+///  let period = 360.0;
+///  assert_eq!(-240.0, periodical_difference_long(period, 0.0, 120.0)); //Always returns the outer angle
+///  assert_eq!(270.0, periodical_difference_long(period, 0.0, 270.0));
+///  assert_eq!(-315.0, periodical_difference_long(period, 45.0, 90.0));
+///  assert_eq!(315.0, periodical_difference_long(period, 90.0, 45.0));
 /// ```
 pub fn periodical_difference_long (period: f32, x1: f32, x2: f32) -> f32 {
     let difference = (periodical(period, x2) - periodical(period, x1)) % period;
