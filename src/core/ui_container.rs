@@ -4,9 +4,9 @@ use bevy::prelude::Vec2;
 // ===========================================================
 // === DIFFERENT LAYOUT VARIATIONS ===
 
-pub mod Box {
+pub mod Layout {
     use bevy::prelude::Vec2;
-    use super::{Layout, SolidScale};
+    use super::{LayoutPackage, SolidScale};
 
     #[derive(Clone, Debug, PartialEq)]
     pub struct Window {
@@ -21,8 +21,8 @@ pub mod Box {
         pub fn new () -> Window {
             Window::default()
         }
-        pub fn pack (self) -> Layout {
-            Layout::Window(self)
+        pub fn pack (self) -> LayoutPackage {
+            LayoutPackage::Window(self)
         }
         pub (in super) fn calculate (&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let xs = width / 100.0;
@@ -58,8 +58,8 @@ pub mod Box {
         pub fn new () -> Relative {
             Relative::default()
         }
-        pub fn pack (self) -> Layout {
-            Layout::Relative(self)
+        pub fn pack (self) -> LayoutPackage {
+            LayoutPackage::Relative(self)
         }
         pub (in super) fn calculate (&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let xs = width / 100.0;
@@ -95,8 +95,8 @@ pub mod Box {
         pub fn new () -> Solid {
             Solid::default()
         }
-        pub fn pack (self) -> Layout {
-            Layout::Solid(self)
+        pub fn pack (self) -> LayoutPackage {
+            LayoutPackage::Solid(self)
         }
         pub (in super) fn calculate (&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let scale = match self.scaling {
@@ -141,79 +141,79 @@ pub enum SolidScale {
 // === COMMON ENUM AND STRUCT WRAPS ===
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Layout {
-    Window (Box::Window),
-    Relative (Box::Relative),
-    Solid (Box::Solid),
+pub enum LayoutPackage {
+    Window (Layout::Window),
+    Relative (Layout::Relative),
+    Solid (Layout::Solid),
 }
-impl Layout {
-    pub fn expect_window_ref (&self) -> &Box::Window {
+impl LayoutPackage {
+    pub fn expect_window_ref (&self) -> &Layout::Window {
         match self {
-            Layout::Window (window) => window,
-            Layout::Relative(..) => panic!("Layout window expected!"),
-            Layout::Solid(..) => panic!("Layout window expected!"),
+            LayoutPackage::Window (window) => window,
+            LayoutPackage::Relative(..) => panic!("LayoutPackage window expected!"),
+            LayoutPackage::Solid(..) => panic!("LayoutPackage window expected!"),
         }
     }
-    pub fn expect_relative_ref (&self) -> &Box::Relative {
+    pub fn expect_relative_ref (&self) -> &Layout::Relative {
         match self {
-            Layout::Window (..) => panic!("Layout relative expected!"),
-            Layout::Relative(relative) => relative,
-            Layout::Solid(..) => panic!("Layout relative expected!"),
+            LayoutPackage::Window (..) => panic!("LayoutPackage relative expected!"),
+            LayoutPackage::Relative(relative) => relative,
+            LayoutPackage::Solid(..) => panic!("LayoutPackage relative expected!"),
         }
     }
-    pub fn expect_solid_ref (&self) -> &Box::Solid {
+    pub fn expect_solid_ref (&self) -> &Layout::Solid {
         match self {
-            Layout::Window (..) => panic!("Layout solid expected!"),
-            Layout::Relative(..) => panic!("Layout solid expected!"),
-            Layout::Solid(solid) => solid,
+            LayoutPackage::Window (..) => panic!("LayoutPackage solid expected!"),
+            LayoutPackage::Relative(..) => panic!("LayoutPackage solid expected!"),
+            LayoutPackage::Solid(solid) => solid,
         }
     }
-    pub fn expect_window_mut (&mut self) -> &mut Box::Window {
+    pub fn expect_window_mut (&mut self) -> &mut Layout::Window {
         match self {
-            Layout::Window (window) => window,
-            Layout::Relative(..) => panic!("Layout window expected!"),
-            Layout::Solid(..) => panic!("Layout window expected!"),
+            LayoutPackage::Window (window) => window,
+            LayoutPackage::Relative(..) => panic!("LayoutPackage window expected!"),
+            LayoutPackage::Solid(..) => panic!("LayoutPackage window expected!"),
         }
     }
-    pub fn expect_relative_mut (&mut self) -> &mut Box::Relative {
+    pub fn expect_relative_mut (&mut self) -> &mut Layout::Relative {
         match self {
-            Layout::Window (..) => panic!("Layout relative expected!"),
-            Layout::Relative(relative) => relative,
-            Layout::Solid(..) => panic!("Layout relative expected!"),
+            LayoutPackage::Window (..) => panic!("LayoutPackage relative expected!"),
+            LayoutPackage::Relative(relative) => relative,
+            LayoutPackage::Solid(..) => panic!("LayoutPackage relative expected!"),
         }
     }
-    pub fn expect_solid_mut (&mut self) -> &mut Box::Solid {
+    pub fn expect_solid_mut (&mut self) -> &mut Layout::Solid {
         match self {
-            Layout::Window (..) => panic!("Layout solid expected!"),
-            Layout::Relative(..) => panic!("Layout solid expected!"),
-            Layout::Solid(solid) => solid,
+            LayoutPackage::Window (..) => panic!("LayoutPackage solid expected!"),
+            LayoutPackage::Relative(..) => panic!("LayoutPackage solid expected!"),
+            LayoutPackage::Solid(solid) => solid,
         }
     }
-    pub fn expect_window (self) -> Box::Window {
+    pub fn expect_window (self) -> Layout::Window {
         match self {
-            Layout::Window (window) => window,
-            Layout::Relative(..) => panic!("Layout window expected!"),
-            Layout::Solid(..) => panic!("Layout window expected!"),
+            LayoutPackage::Window (window) => window,
+            LayoutPackage::Relative(..) => panic!("LayoutPackage window expected!"),
+            LayoutPackage::Solid(..) => panic!("LayoutPackage window expected!"),
         }
     }
-    pub fn expect_relative (self) -> Box::Relative {
+    pub fn expect_relative (self) -> Layout::Relative {
         match self {
-            Layout::Window (..) => panic!("Layout relative expected!"),
-            Layout::Relative(relative) => relative,
-            Layout::Solid(..) => panic!("Layout relative expected!"),
+            LayoutPackage::Window (..) => panic!("LayoutPackage relative expected!"),
+            LayoutPackage::Relative(relative) => relative,
+            LayoutPackage::Solid(..) => panic!("LayoutPackage relative expected!"),
         }
     }
-    pub fn expect_solid (self) -> Box::Solid {
+    pub fn expect_solid (self) -> Layout::Solid {
         match self {
-            Layout::Window (..) => panic!("Layout solid expected!"),
-            Layout::Relative(..) => panic!("Layout solid expected!"),
-            Layout::Solid(solid) => solid,
+            LayoutPackage::Window (..) => panic!("LayoutPackage solid expected!"),
+            LayoutPackage::Relative(..) => panic!("LayoutPackage solid expected!"),
+            LayoutPackage::Solid(solid) => solid,
         }
     }
 }
-impl Default for Layout {
+impl Default for LayoutPackage {
     fn default() -> Self {
-        Layout::Relative(Box::Relative {..Default::default()})
+        LayoutPackage::Relative(Layout::Relative {..Default::default()})
     }
 }
 
@@ -261,20 +261,20 @@ impl Position {
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Container {
     position_cached: Position,
-    position_layout: Layout,
+    position_layout: LayoutPackage,
 }
 impl Container {
     pub fn new () -> Container {
         Container {
             position_cached: Position::default(),
-            position_layout: Layout::default(),
+            position_layout: LayoutPackage::default(),
         }
     }
     pub fn update (&mut self, point: Vec2, width: f32, height: f32) {
         let values = match &self.position_layout {
-            Layout::Window(container) => container.calculate(point, width, height),
-            Layout::Relative(container) => container.calculate(point, width, height),
-            Layout::Solid(container) => container.calculate(point, width, height),
+            LayoutPackage::Window(container) => container.calculate(point, width, height),
+            LayoutPackage::Relative(container) => container.calculate(point, width, height),
+            LayoutPackage::Solid(container) => container.calculate(point, width, height),
         };
         self.position_cached.point_1 = values.0;
         self.position_cached.width = values.1;
@@ -290,13 +290,13 @@ impl Container {
     pub fn position_get_mut (&mut self) -> &mut Position {
         &mut self.position_cached
     }
-    pub fn position_layout_set (&mut self, position: Layout) {
+    pub fn position_layout_set (&mut self, position: LayoutPackage) {
         self.position_layout = position;
     }
-    pub fn position_layout_get (&self) -> &Layout {
+    pub fn position_layout_get (&self) -> &LayoutPackage {
         &self.position_layout
     }
-    pub fn position_layout_get_mut (&mut self) -> &mut Layout {
+    pub fn position_layout_get_mut (&mut self) -> &mut LayoutPackage {
         &mut self.position_layout
     }
 }

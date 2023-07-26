@@ -118,7 +118,7 @@ pub fn grid_generate (system: &mut Hierarchy, path: &String, relative: Vec2, gri
     let container_width = total_width + total_wgap;
     let container_height = total_height + total_hgap;
 
-    let widget = match Widget::create(system, path, Box::Window {
+    let widget = match Widget::create(system, path, Layout::Window {
         relative,
         width_relative: container_width,
         height_relative: container_height,
@@ -136,7 +136,7 @@ pub fn grid_generate (system: &mut Hierarchy, path: &String, relative: Vec2, gri
 
     for x in 0..xx {
         for y in 0..yy {
-            match Widget::create(system, &widget.end(&grid_params.grid[x][y]), Box::Window {
+            match Widget::create(system, &widget.end(&grid_params.grid[x][y]), Layout::Window {
                 relative: Vec2::new(
                     width*x as f32 + wgap*x as f32 + if grid_params.width_border_gap == true {wgap} else {0.0},
                     height*y as f32 + hgap*y as f32 + if grid_params.height_border_gap == true {hgap} else {0.0},
@@ -188,7 +188,7 @@ pub fn grid_generate_inside (system: &mut Hierarchy, widget: &Widget, grid_param
 
     for x in 0..xx {
         for y in 0..yy{
-            match Widget::create(system, &widget.end(&grid_params.grid[x][y]), Box::Window {
+            match Widget::create(system, &widget.end(&grid_params.grid[x][y]), Layout::Window {
                 relative: Vec2::new(
                     width*x as f32 + wgap*x as f32 + if grid_params.width_border_gap == true {wgap} else {0.0},
                     height*y as f32 + hgap*y as f32 + if grid_params.height_border_gap == true {hgap} else {0.0},

@@ -53,7 +53,7 @@ let mut system = Hierarchy::new();
 ### Creating widgets
 To create a new widget in root directory you pass in the hierarchy, specify widget properties and the function returns a pointer. 
 ```rust
-let widget_pointer = Widget::create(&mut system, "Widget", Box::Relative {
+let widget_pointer = Widget::create(&mut system, "Widget", Layout::Relative {
     relative_1: Vec2::new(0.0, 0.0),
     relative_2: Vec2::new(100.0, 100.0),
     ..Default::default()

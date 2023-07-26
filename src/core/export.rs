@@ -8,8 +8,8 @@ pub (in super) use super::general::split_last;
 
 
 //# CONTAINERS
-pub use super::ui_container::Box;
 pub use super::ui_container::Layout;
+pub use super::ui_container::LayoutPackage;
 pub use super::ui_container::SolidScale;
 
 //# WIDGETS

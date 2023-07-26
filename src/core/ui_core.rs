@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use colored::Colorize;
 use super::export::*;
-use super::ui_container::{Container, Layout};
+use super::ui_container::{Container, LayoutPackage};
 
 const ROOT_STARTING_DEPTH: f32 = 100.0;
 const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
@@ -20,7 +20,7 @@ impl Hierarchy {
     pub fn new () -> Hierarchy {
         //let mut branch = Branch::new(0.0, true, "ROOT", "".to_string());
         let mut branch = Branch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
-        branch.container.position_layout_set(Box::Relative {
+        branch.container.position_layout_set(Layout::Relative {
             relative_1: Vec2 { x: 0.0, y: 0.0 },
             relative_2: Vec2 { x: 100.0, y: 100.0 },
             ..Default::default()
@@ -107,10 +107,10 @@ impl Branch {
         &mut self.data
     }
     
-    pub fn layout_get (&self) -> &Layout {                                                                
+    pub fn layout_get (&self) -> &LayoutPackage {                                                                
         self.container.position_layout_get()
     }
-    pub fn layout_get_mut (&mut self) -> &mut Layout {                                                                
+    pub fn layout_get_mut (&mut self) -> &mut LayoutPackage {                                                                
         self.container.position_layout_get_mut()
     }
     
@@ -327,7 +327,7 @@ impl Branch {
         }
     }
 
-    pub (in super) fn create_simple (&mut self, name: &str, position: Layout) -> String {
+    pub (in super) fn create_simple (&mut self, name: &str, position: LayoutPackage) -> String {
         
         let mut id = 0;
         loop {if !self.inventory.contains_key(&id) {break} else {id += 1}}
@@ -341,7 +341,7 @@ impl Branch {
         format!("#{}", id)
 
     }
-    pub (in super) fn create_linked (&mut self, name: &str, position: Layout) -> Result<String, String> {
+    pub (in super) fn create_linked (&mut self, name: &str, position: LayoutPackage) -> Result<String, String> {
         if name.is_empty() {
             Result::Ok(self.create_simple("", position))
         } else {

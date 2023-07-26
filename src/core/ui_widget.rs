@@ -314,7 +314,7 @@ impl Widget {
     /// ```
     /// In this case the path of ``button_pointer`` is `` #0/#0 `` (The number stands for an order they were created in)
     /// 
-    pub fn create (system: &mut Hierarchy, path: &str, position: Layout) -> Result <Widget, String> {
+    pub fn create (system: &mut Hierarchy, path: &str, position: LayoutPackage) -> Result <Widget, String> {
 
         let str_list: Vec<&str> =  path.split('/').collect();
         let str_list_len = str_list.len();
