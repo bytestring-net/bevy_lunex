@@ -24,6 +24,9 @@ pub use super::ui_debug::lunex_camera_move_debug;
 pub use super::ui_debug::LunexDebugPlugin;
 
 //# GRID GENERATION
-pub use super::ui_grid::Grid;
+//pub use super::ui_grid::Grid;
 pub use crate::textgrid;
 pub use crate::textrow;
+pub use super::ui_grid::GridParams;
+pub use super::ui_grid::grid_generate;
+pub use super::ui_grid::grid_generate_inside;

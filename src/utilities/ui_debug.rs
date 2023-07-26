@@ -5,8 +5,13 @@ use crate::prelude::*;
 // ===========================================================
 // === DEBUGGING FUNCTIONALITY ===
 
+/// ### Debug Image
+/// A marker for ImageBundles spawned by debug functions, ***NOT INTENDED*** to be used by user!
 #[derive(Component)]
-struct DebugImage ();
+pub struct DebugImage ();
+
+/// ### Lunex setup debug
+/// A system that will create debug sprites for all valid widgets
 pub fn lunex_setup_debug (mut commands: Commands, asset_server: Res<AssetServer>, systems: Query<&Hierarchy>) {
     for system in systems.iter() {
         for x in system.collect_paths(){
@@ -33,9 +38,12 @@ pub fn lunex_setup_debug (mut commands: Commands, asset_server: Res<AssetServer>
         }
     }
 }
-pub fn lunex_update_debug( systems: Query<&Hierarchy>, mut query: Query<(&mut Widget, &mut Transform)>) {
+
+/// ### Lunex setup debug
+/// A system that will update debug sprites to have + 400 Z
+pub fn lunex_update_debug( systems: Query<&Hierarchy>, mut query: Query<(&mut Widget, &mut Transform, &DebugImage)>) {
     let system = systems.get_single().unwrap();
-    for (widget, mut transform) in &mut query {
+    for (widget, mut transform, _) in &mut query {
         match widget.fetch(&system, "") {
             Result::Err(..) => {
                 transform.translation.x = -10000.0;
@@ -47,6 +55,9 @@ pub fn lunex_update_debug( systems: Query<&Hierarchy>, mut query: Query<(&mut Wi
         };
     }
 }
+
+/// ### Lunex setup debug
+/// A system that will allow the camera to move out of view by WASD.
 pub fn lunex_camera_move_debug (mut query: Query<(&Camera, &mut Transform)>, keyboard_input: Res<Input<KeyCode>>) {
     for (_, mut transform) in &mut query {
         transform.translation.x += (keyboard_input.pressed(KeyCode::A) as i32) as f32 * -10.0;
@@ -56,6 +67,12 @@ pub fn lunex_camera_move_debug (mut query: Query<(&Camera, &mut Transform)>, key
     }
 }
 
+/// ### Lunex Debug Plugin
+/// A plugin holding all systems used for debugging Bevy-Lunex.
+/// ### Systems
+/// * `lunex_setup_debug` = queries and initiates debug sprites for all valid widgets.
+/// * `lunex_update_debug` = updates the debug sprites Z coordinate to be Z + 400.
+/// * `lunex_camera_move_debug` = adds WASD movement to the camera so you can see widgets out of view. 
 pub struct LunexDebugPlugin;
 impl Plugin for LunexDebugPlugin {
     fn build(&self, app: &mut App) {

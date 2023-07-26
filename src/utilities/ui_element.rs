@@ -271,7 +271,7 @@ impl Default for TextParams {
             alignment: TextAlignment::Left,
             anchor: bevy::sprite::Anchor::CenterLeft,
             scale: 100.0,
-            depth: 1.0,
+            depth: 3.0,
             width: Option::None,
             height: Option::None,
         }
