@@ -2,12 +2,38 @@
 use bevy::prelude::Vec2;
 
 // ===========================================================
-// === DIFFERENT LAYOUT VARIATIONS ===
+// === LAYOUT VARIATIONS ===
 
+/// ### Layout
+/// A module holding all possible layouts widget can have.
+/// ### Types
+/// * [`Window`] = used for pop-up display.
+/// * [`Relative`] = used as the standart layout.
+/// * [`Solid`] = used for holding aspect ratio.
 pub mod Layout {
     use bevy::prelude::Vec2;
     use super::{LayoutPackage, SolidScale};
 
+    /// ### Window Layout
+    /// Under the hood it works the exact same way as [`Relative`] layout, but is defined in a way that makes it easier to animate.
+    /// 
+    /// It is defined by a **`position`**, **`width`** and **`height`**.
+    /// All fields come in 2 variations, *relative* and *absolute*.
+    /// 
+    /// Relative fields range from `0.0` to `100.0` % of parent widget.
+    /// Absolute fields are defined as pixels.
+    /// 
+    /// You are allowed to go out of bounds (-5.0, 120.0, etc..)
+    /// 
+    /// The final rectangle is the **sum** of these 2 values.
+    /// 
+    /// ### Fields
+    /// * `absolute` = position of **top left** corner of the widget in pixels.
+    /// * `relative` = position of **top left** corner of the widget in % of parent widget.
+    /// * `width_absolute` = width of the widget in pixels.
+    /// * `width_relative` = width of the widget in % of parent widget.
+    /// * `height_absolute` = height of the widget in pixels.
+    /// * `height_relative` = height of the widget in % of parent widget.
     #[derive(Clone, Debug, PartialEq)]
     pub struct Window {
         pub absolute: Vec2,
@@ -18,12 +44,15 @@ pub mod Layout {
         pub height_relative: f32,
     }
     impl Window {
+        /// Creates new window layout from default.
         pub fn new () -> Window {
             Window::default()
         }
+        /// This method will package the struct into LayoutPackage for further processing.
         pub fn pack (self) -> LayoutPackage {
             LayoutPackage::Window(self)
         }
+        /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
         pub (in super) fn calculate (&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let xs = width / 100.0;
             let ys = height / 100.0;
@@ -47,6 +76,24 @@ pub mod Layout {
         }
     }
 
+    /// ### Relative Layout
+    /// Under the hood it works the exact same way as [`Window`] layout, but is defined in a way that makes it easier to define boundaries.
+    /// 
+    /// It is defined by 2 **`positions`**.
+    /// All fields come in 2 variations, *relative* and *absolute*.
+    /// 
+    /// Relative fields range from `0.0` to `100.0` % of parent widget.
+    /// Absolute fields are defined as pixels.
+    /// 
+    /// You are allowed to go out of bounds (-5.0, 120.0, etc..)
+    /// 
+    /// The final rectangle is the **sum** of these 2 values.
+    /// 
+    /// ### Fields
+    /// * `absolute_1` = position of **top left** corner of the widget in pixels.
+    /// * `absolute_2` = position of **bottom right** corner of the widget in pixels.
+    /// * `relative_1` = position of **top left** corner of the widget in % of parent widget.
+    /// * `relative_2` = position of **bottom right** corner of the widget in % of parent widget.
     #[derive(Clone, Debug, PartialEq)]
     pub struct Relative {
         pub absolute_1: Vec2,
@@ -55,12 +102,15 @@ pub mod Layout {
         pub relative_2: Vec2,
     }
     impl Relative {
+        /// Creates new relative layout from default.
         pub fn new () -> Relative {
             Relative::default()
         }
+        /// This method will package the struct into LayoutPackage for further processing.
         pub fn pack (self) -> LayoutPackage {
             LayoutPackage::Relative(self)
         }
+        /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
         pub (in super) fn calculate (&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let xs = width / 100.0;
             let ys = height / 100.0;
@@ -82,22 +132,47 @@ pub mod Layout {
         }
     }
 
-
+    /// ### Solid Layout
+    /// This is a special layout that will **ALWAYS** keep size ratio.
+    /// 
+    /// It is defined by a size ratio. Meaning that `10.0/10.0` is the same as `1000.0/1000.0`.
+    /// Both will be perfect square.
+    /// 
+    /// Default scaling is `Fit`, meaning that the widget will always be **INSIDE** the parenting widget and will **NEVER** leave the bounds.
+    /// In most cases you want to use this scaling.
+    /// 
+    /// Scaling `Fill` means that the parenting container will be **COVERED** by this widget and the bounds will **OVERFLOW**. But the size ratio will stay the same.
+    /// This is useful for example when adding **background**. This scaling will ensure the background covers 100% of the parenting widget.
+    /// 
+    /// Always put **images** inside a solid widget so that no matter the window size, no images will be deformed.
+    /// 
+    /// Anchoring ensures that widget will try to move to that side if there is space.
+    /// It is hard to explain, so just experiment with it, you will quickly understand what it does.
+    /// 
+    /// ### Fields
+    /// * `width` = width size ratio.
+    /// * `height` = height size ratio.
+    /// * `horizontal_anchor` = where should it align on x-axis, range from -1.0 to 1.0, default is 0.0.
+    /// * `vertical_anchor` = where should it align on y-axis, range from -1.0 to 1.0, default is 0.0.
+    /// * `scaling` = should the widget **fit** the parenting container or **fill** the parenting container.
     #[derive(Clone, Debug, PartialEq)]
     pub struct Solid {
         pub width: f32,
         pub height: f32,
-        pub horizontal_anchor: f32,     // (-1.0 to 1.0)
-        pub vertical_anchor: f32,       // (-1.0 to 1.0)
+        pub horizontal_anchor: f32,
+        pub vertical_anchor: f32,
         pub scaling: SolidScale,
     }
     impl Solid {
+        /// Creates new solid layout from default.
         pub fn new () -> Solid {
             Solid::default()
         }
+        /// This method will package the struct into LayoutPackage for further processing.
         pub fn pack (self) -> LayoutPackage {
             LayoutPackage::Solid(self)
         }
+        /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
         pub (in super) fn calculate (&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let scale = match self.scaling {
                 SolidScale::Fill => f32::max(width/width, height/height),
@@ -129,6 +204,13 @@ pub mod Layout {
     }
 
 }
+
+
+/// ### Solid Scale
+/// Enum for 2 options on how to scale [`Layout::Solid`] container.
+/// ### Variants
+/// * `Fit` = Fit the parent container.
+/// * `Fill` = Fill the parent contaier.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub enum SolidScale {
     #[default]
@@ -138,8 +220,16 @@ pub enum SolidScale {
 
 
 // ===========================================================
-// === COMMON ENUM AND STRUCT WRAPS ===
+// === ENUM PACKAGE AND STRUCT ABSTRACTIONS ===
 
+/// ### Layout Package
+/// Enum holding one of the possible layouts widget can have.
+/// 
+/// It is necessary to wrap new layouts into this enum for further processing.
+/// ### Types
+/// * `Window`
+/// * `Relative`
+/// * `Solid`
 #[derive(Clone, Debug, PartialEq)]
 pub enum LayoutPackage {
     Window (Layout::Window),
@@ -147,25 +237,23 @@ pub enum LayoutPackage {
     Solid (Layout::Solid),
 }
 impl LayoutPackage {
+    /// Unwrap package into `&Window` layout, panic if this is not window.
     pub fn expect_window_ref (&self) -> &Layout::Window {
         match self {
             LayoutPackage::Window (window) => window,
-            LayoutPackage::Relative(..) => panic!("LayoutPackage window expected!"),
-            LayoutPackage::Solid(..) => panic!("LayoutPackage window expected!"),
+            _ => panic!("Window layout was expected!"),
         }
     }
     pub fn expect_relative_ref (&self) -> &Layout::Relative {
         match self {
-            LayoutPackage::Window (..) => panic!("LayoutPackage relative expected!"),
-            LayoutPackage::Relative(relative) => relative,
-            LayoutPackage::Solid(..) => panic!("LayoutPackage relative expected!"),
+            LayoutPackage::Relative (relative) => relative,
+            _ => panic!("Relative layout was expected!"),
         }
     }
     pub fn expect_solid_ref (&self) -> &Layout::Solid {
         match self {
-            LayoutPackage::Window (..) => panic!("LayoutPackage solid expected!"),
-            LayoutPackage::Relative(..) => panic!("LayoutPackage solid expected!"),
-            LayoutPackage::Solid(solid) => solid,
+            LayoutPackage::Solid (solid) => solid,
+            _ => panic!("Solid layout was expected!"),
         }
     }
     pub fn expect_window_mut (&mut self) -> &mut Layout::Window {
@@ -213,20 +301,10 @@ impl LayoutPackage {
 }
 impl Default for LayoutPackage {
     fn default() -> Self {
-        LayoutPackage::Relative(Layout::Relative {..Default::default()})
+        LayoutPackage::Relative(Layout::Relative::default())
     }
 }
 
-    /// ### Element
-    /// Struct holding all necessary information for binding an entity to a [`Widget`].
-    /// ### Fields
-    /// * `relative` = position in % relative to the widget.
-    /// * `absolute` = position in pixels, always the same.
-    /// * `boundary` = width and height, for example image dimensions or text size. 
-    /// * `scale` = size of the element in % of parent widget.
-    /// * `depth` = local depth of the element, starts at 0.0, usefull when you have 2 elements overlapping (image and text)
-    /// * `width` = optional, will force the width of the element in % of parent widget.
-    /// * `height` = optional, will force the height of the element in % of parent widget.
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Position {
