@@ -68,7 +68,7 @@ pub fn periodical_difference_short (period: f32, x1: f32, x2: f32) -> f32 {
     if difference > period / 2.0 { difference - period } else if difference < -period / 2.0 { difference + period } else { difference }
 }
 
-/// ### Periodical difference short
+/// ### Periodical difference long
 /// Returns a difference between 2 periodical values.
 /// Uses the longest path.
 /// 
@@ -86,6 +86,7 @@ pub fn periodical_difference_long (period: f32, x1: f32, x2: f32) -> f32 {
     let difference = (periodical(period, x2) - periodical(period, x1)) % period;
     if difference < 0.0 { difference + period } else if difference <= period / 2.0 { difference - period } else { difference }
 }
+
 
 
 pub fn periodical_tween_short(period: f32, x1: f32, x2: f32, slider: f32) -> f32 {
@@ -140,6 +141,8 @@ pub fn blend_color(color1: Color, color2: Color) -> Color {
 // ===========================================================
 // === CRATE ONLY ===
 
+/// ### Is absolute
+/// Returns if a string is absolute path
 pub (in super) fn is_absolute (str: &str) -> bool {
     match str.chars().nth(0) {
         Some (value) => {
@@ -149,6 +152,8 @@ pub (in super) fn is_absolute (str: &str) -> bool {
     }
 }
 
+/// ### Split last
+/// Same as `split_once`, but inverted.
 pub (in super) fn split_last (string: &str, delimiter: &str ) -> (String, String) {
     let str_list: Vec<&str> =  string.split(delimiter).collect();
     let mut output = String::new();
