@@ -2,7 +2,7 @@
 use bevy::prelude::Vec2;
 
 // ===========================================================
-// === DIFFERENT BOX VARIATIONS ===
+// === DIFFERENT LAYOUT VARIATIONS ===
 
 pub mod Box {
     use bevy::prelude::Vec2;
@@ -19,14 +19,7 @@ pub mod Box {
     }
     impl Window {
         pub fn new () -> Window {
-            Window {
-                absolute: Vec2 { x: 0.0, y: 0.0 },
-                relative: Vec2 { x: 0.0, y: 0.0 },
-                width_absolute: 0.0,
-                width_relative: 0.0,
-                height_absolute: 0.0,
-                height_relative: 0.0,
-            }
+            Window::default()
         }
         pub fn pack (self) -> Layout {
             Layout::Window(self)
@@ -35,7 +28,7 @@ pub mod Box {
             let xs = width / 100.0;
             let ys = height / 100.0;
             (
-                Vec2 {x: point.x + self.absolute.x + (self.relative.x * xs), y: point.y + self.absolute.y + (self.relative.y * ys)},
+                Vec2::new(point.x + self.absolute.x + (self.relative.x * xs), point.y + self.absolute.y + (self.relative.y * ys)),
                 self.width_absolute + (self.width_relative * xs),
                 self.height_absolute + (self.height_relative * ys),
             )
@@ -63,23 +56,19 @@ pub mod Box {
     }
     impl Relative {
         pub fn new () -> Relative {
-            Relative {
-                absolute_1: Vec2 { x: 0.0, y: 0.0 },
-                absolute_2: Vec2 { x: 0.0, y: 0.0 },
-                relative_1: Vec2 { x: 0.0, y: 0.0 },
-                relative_2: Vec2 { x: 0.0, y: 0.0 },
-            }
+            Relative::default()
         }
         pub fn pack (self) -> Layout {
             Layout::Relative(self)
         }
-        pub (in super) fn calculate (&self, point: Vec2, width: f32, height: f32) -> [Vec2; 2] {
+        pub (in super) fn calculate (&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let xs = width / 100.0;
             let ys = height / 100.0;
-            [
-                Vec2 {x: point.x + self.absolute_1.x + (self.relative_1.x * xs), y: point.y + self.absolute_1.y + (self.relative_1.y * ys)},
-                Vec2 {x: point.x + self.absolute_2.x + (self.relative_2.x * xs), y: point.y + self.absolute_2.y + (self.relative_2.y * ys)},
-            ]
+            let v1 = Vec2::new(point.x + self.absolute_1.x + (self.relative_1.x * xs), point.y + self.absolute_1.y + (self.relative_1.y * ys));
+            let v2 = Vec2::new(point.x + self.absolute_2.x + (self.relative_2.x * xs), point.y + self.absolute_2.y + (self.relative_2.y * ys));
+            let _width = v2.x - v1.x;
+            let _height = v2.y - v1.y;
+            (v1, _width, _width)
         }
     }
     impl Default for Relative  {
@@ -96,38 +85,32 @@ pub mod Box {
 
     #[derive(Clone, Debug, PartialEq)]
     pub struct Solid {
-        pub width: u32,
-        pub height: u32,
+        pub width: f32,
+        pub height: f32,
         pub horizontal_anchor: f32,     // (-1.0 to 1.0)
         pub vertical_anchor: f32,       // (-1.0 to 1.0)
         pub scaling: SolidScale,
     }
     impl Solid {
         pub fn new () -> Solid {
-            Solid {
-                width: 0,
-                height: 0,
-                horizontal_anchor: 0.0,
-                vertical_anchor: 0.0,
-                scaling: SolidScale::Fit,
-            }
+            Solid::default()
         }
         pub fn pack (self) -> Layout {
             Layout::Solid(self)
         }
         pub (in super) fn calculate (&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let scale = match self.scaling {
-                SolidScale::Fill => f32::max(width/self.width as f32, height/self.height as f32),
-                SolidScale::Fit => f32::min(width/self.width as f32, height/self.height as f32),
+                SolidScale::Fill => f32::max(width/width, height/height),
+                SolidScale::Fit => f32::min(width/width, height/height),
             };
 
             let center = [point.x + width/2.0, point.y + height/2.0];
-            let vanilla_width = self.width as f32*scale;
-            let vanilla_height = self.height as f32*scale;
+            let vanilla_width = width*scale;
+            let vanilla_height = height*scale;
             let vanilla_point = [center[0] - vanilla_width/2.0, center[1] - vanilla_height/2.0];
 
             (
-                Vec2 {x: (vanilla_point[0] + (vanilla_point[0] - point[0])*self.horizontal_anchor), y: (vanilla_point[1] + (vanilla_point[1] - point[1])*self.vertical_anchor)},
+                Vec2::new(vanilla_point[0] + (vanilla_point[0] - point[0])*self.horizontal_anchor, vanilla_point[1] + (vanilla_point[1] - point[1])*self.vertical_anchor),
                 vanilla_width,
                 vanilla_height,
             )
@@ -136,8 +119,8 @@ pub mod Box {
     impl Default for Solid  {
         fn default() -> Self {
             Solid {
-                width: 1,
-                height: 1,
+                width: 1.0,
+                height: 1.0,
                 horizontal_anchor: 0.0,
                 vertical_anchor: 0.0,
                 scaling: SolidScale::default()
@@ -233,6 +216,18 @@ impl Default for Layout {
         Layout::Relative(Box::Relative {..Default::default()})
     }
 }
+
+    /// ### Element
+    /// Struct holding all necessary information for binding an entity to a [`Widget`].
+    /// ### Fields
+    /// * `relative` = position in % relative to the widget.
+    /// * `absolute` = position in pixels, always the same.
+    /// * `boundary` = width and height, for example image dimensions or text size. 
+    /// * `scale` = size of the element in % of parent widget.
+    /// * `depth` = local depth of the element, starts at 0.0, usefull when you have 2 elements overlapping (image and text)
+    /// * `width` = optional, will force the width of the element in % of parent widget.
+    /// * `height` = optional, will force the height of the element in % of parent widget.
+
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Position {
     pub point_1: Vec2,
@@ -276,29 +271,15 @@ impl Container {
         }
     }
     pub fn update (&mut self, point: Vec2, width: f32, height: f32) {
-        match &self.position_layout {
-            Layout::Window(container) => {
-                let values = container.calculate(point, width, height);
-                self.position_cached.point_1 = values.0;
-                self.position_cached.width = values.1;
-                self.position_cached.height = values.2;
-                self.position_cached.point_2 = Vec2 {x: self.position_cached.point_1.x + self.position_cached.width, y: self.position_cached.point_1.y + self.position_cached.height};
-            },
-            Layout::Relative(container) => {
-                let values = container.calculate(point, width, height);
-                self.position_cached.point_1 = values[0];
-                self.position_cached.width = values[1][0] - values[0][0];
-                self.position_cached.height = values[1][1] - values[0][1];
-                self.position_cached.point_2 = Vec2 {x: self.position_cached.point_1.x + self.position_cached.width, y: self.position_cached.point_1.y + self.position_cached.height};
-            },
-            Layout::Solid(container) => {
-                let values = container.calculate(point, width, height);
-                self.position_cached.point_1 = values.0;
-                self.position_cached.width = values.1;
-                self.position_cached.height = values.2;
-                self.position_cached.point_2 = Vec2 {x: self.position_cached.point_1.x + self.position_cached.width, y: self.position_cached.point_1.y + self.position_cached.height};
-            },
-        }   
+        let values = match &self.position_layout {
+            Layout::Window(container) => container.calculate(point, width, height),
+            Layout::Relative(container) => container.calculate(point, width, height),
+            Layout::Solid(container) => container.calculate(point, width, height),
+        };
+        self.position_cached.point_1 = values.0;
+        self.position_cached.width = values.1;
+        self.position_cached.height = values.2;
+        self.position_cached.point_2 = Vec2::new(self.position_cached.point_1.x + self.position_cached.width, self.position_cached.point_1.y + self.position_cached.height);
     }
     pub fn position_set (&mut self, position: Position) {
         self.position_cached = position;
