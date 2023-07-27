@@ -20,7 +20,7 @@ impl Hierarchy {
     pub fn new () -> Hierarchy {
         //let mut branch = Branch::new(0.0, true, "ROOT", "".to_string());
         let mut branch = Branch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
-        branch.container.position_layout_set(Layout::Relative {
+        branch.container.layout_set(Layout::Relative {
             relative_1: Vec2 { x: 0.0, y: 0.0 },
             relative_2: Vec2 { x: 100.0, y: 100.0 },
             ..Default::default()
@@ -108,10 +108,10 @@ impl Branch {
     }
     
     pub fn layout_get (&self) -> &LayoutPackage {                                                                
-        self.container.position_layout_get()
+        self.container.layout_get()
     }
     pub fn layout_get_mut (&mut self) -> &mut LayoutPackage {                                                                
-        self.container.position_layout_get_mut()
+        self.container.layout_get_mut()
     }
     
     pub fn container_get (&self) -> &Container {                                                                
@@ -277,7 +277,7 @@ impl Branch {
     }
 
     pub (in super) fn cascade_update_self (&mut self, point: Vec2, width: f32, height: f32) {                                       //This will cascade update all branches
-        self.container.update(point, width, height);
+        self.container.calculate(point, width, height);
         for x in self.inventory.iter_mut(){
             let pos = self.container.position_get();
             x.1.cascade_update_self(pos.point_1, pos.width, pos.height);
@@ -335,7 +335,7 @@ impl Branch {
         let path = if name.is_empty() {format!("{}/#{}", self.get_path(), id)} else {format!("{}/{}", self.get_path(), name)};
         let mut branch = Branch::new(name.to_string(), id, path, self.level + 1.0, self.is_visible());
 
-        branch.container.position_layout_set(position);
+        branch.container.layout_set(position);
 
         self.inventory.insert(id, branch);
         format!("#{}", id)

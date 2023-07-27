@@ -227,9 +227,9 @@ pub enum SolidScale {
 /// 
 /// It is necessary to wrap new layouts into this enum for further processing.
 /// ### Types
-/// * `Window`
-/// * `Relative`
-/// * `Solid`
+/// * [`Layout::Window`]
+/// * [`Layout::Relative`]
+/// * [`Layout::Solid`]
 #[derive(Clone, Debug, PartialEq)]
 pub enum LayoutPackage {
     Window (Layout::Window),
@@ -244,58 +244,40 @@ impl LayoutPackage {
             _ => panic!("Window layout was expected!"),
         }
     }
+    /// Unwrap package into `&Relative` layout, panic if this is not window.
     pub fn expect_relative_ref (&self) -> &Layout::Relative {
         match self {
             LayoutPackage::Relative (relative) => relative,
             _ => panic!("Relative layout was expected!"),
         }
     }
+    /// Unwrap package into `&Solid` layout, panic if this is not window.
     pub fn expect_solid_ref (&self) -> &Layout::Solid {
         match self {
             LayoutPackage::Solid (solid) => solid,
             _ => panic!("Solid layout was expected!"),
         }
     }
+    
+    /// Unwrap package into `&Window` layout, panic if this is not window.
     pub fn expect_window_mut (&mut self) -> &mut Layout::Window {
         match self {
             LayoutPackage::Window (window) => window,
-            LayoutPackage::Relative(..) => panic!("LayoutPackage window expected!"),
-            LayoutPackage::Solid(..) => panic!("LayoutPackage window expected!"),
+            _ => panic!("Window layout was expected!"),
         }
     }
+    /// Unwrap package into `&Relative` layout, panic if this is not window.
     pub fn expect_relative_mut (&mut self) -> &mut Layout::Relative {
         match self {
-            LayoutPackage::Window (..) => panic!("LayoutPackage relative expected!"),
-            LayoutPackage::Relative(relative) => relative,
-            LayoutPackage::Solid(..) => panic!("LayoutPackage relative expected!"),
+            LayoutPackage::Relative (relative) => relative,
+            _ => panic!("Relative layout was expected!"),
         }
     }
+    /// Unwrap package into `&Solid` layout, panic if this is not window.
     pub fn expect_solid_mut (&mut self) -> &mut Layout::Solid {
         match self {
-            LayoutPackage::Window (..) => panic!("LayoutPackage solid expected!"),
-            LayoutPackage::Relative(..) => panic!("LayoutPackage solid expected!"),
-            LayoutPackage::Solid(solid) => solid,
-        }
-    }
-    pub fn expect_window (self) -> Layout::Window {
-        match self {
-            LayoutPackage::Window (window) => window,
-            LayoutPackage::Relative(..) => panic!("LayoutPackage window expected!"),
-            LayoutPackage::Solid(..) => panic!("LayoutPackage window expected!"),
-        }
-    }
-    pub fn expect_relative (self) -> Layout::Relative {
-        match self {
-            LayoutPackage::Window (..) => panic!("LayoutPackage relative expected!"),
-            LayoutPackage::Relative(relative) => relative,
-            LayoutPackage::Solid(..) => panic!("LayoutPackage relative expected!"),
-        }
-    }
-    pub fn expect_solid (self) -> Layout::Solid {
-        match self {
-            LayoutPackage::Window (..) => panic!("LayoutPackage solid expected!"),
-            LayoutPackage::Relative(..) => panic!("LayoutPackage solid expected!"),
-            LayoutPackage::Solid(solid) => solid,
+            LayoutPackage::Solid (solid) => solid,
+            _ => panic!("Solid layout was expected!"),
         }
     }
 }
@@ -305,7 +287,15 @@ impl Default for LayoutPackage {
     }
 }
 
-
+/// ### Position
+/// This struct holds the dimensions of the widget, they are updated every step, changing this means nothing.
+/// It is meant as read only.
+/// ### Fields
+/// * `point_1` = top left corner
+/// * `point_2` = bottom right corner
+/// * `width` = width of the widget
+/// * `height` = height of the widget
+/// * `depth` = depth 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Position {
     pub point_1: Vec2,
@@ -315,7 +305,7 @@ pub struct Position {
     pub depth: f32,
 }
 impl Position {
-    pub fn invert_y(&self) -> Position {
+    pub fn invert_y (&self) -> Position {
         Position {
             point_1: Vec2::new(self.point_1.x, -self.point_1.y),
             point_2: Vec2::new(self.point_2.x, -self.point_2.y),
@@ -324,10 +314,10 @@ impl Position {
             depth: self.depth,
         }
     }
-    pub fn get_pos(&self, relative: Vec2) -> Vec2 {
+    pub fn get_pos (&self, relative: Vec2) -> Vec2 {
         Vec2::new( self.point_1.x + self.width*relative.x/100.0, self.point_1.y + self.height*relative.y/100.0)
     }
-    pub fn get_pos_y_inverted(&self, relative: Vec2) -> Vec2 {
+    pub fn get_pos_y_inverted (&self, relative: Vec2) -> Vec2 {
         Vec2::new( self.point_1.x + self.width*relative.x/100.0, self.point_1.y + self.height*-relative.y/100.0)
     }
 }
@@ -336,19 +326,22 @@ impl Position {
 // ===========================================================
 // === MAIN CONTAINER STRUCT ===
 
+/// ### Container
+/// This struct is responsible for all the positioning of the widget.
+/// Through this struct and it's methods you can interact with widgets position.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Container {
     position_cached: Position,
     position_layout: LayoutPackage,
 }
 impl Container {
-    pub fn new () -> Container {
+    pub (in super) fn new () -> Container {
         Container {
             position_cached: Position::default(),
             position_layout: LayoutPackage::default(),
         }
     }
-    pub fn update (&mut self, point: Vec2, width: f32, height: f32) {
+    pub (in super) fn calculate (&mut self, point: Vec2, width: f32, height: f32) {
         let values = match &self.position_layout {
             LayoutPackage::Window(container) => container.calculate(point, width, height),
             LayoutPackage::Relative(container) => container.calculate(point, width, height),
@@ -359,22 +352,16 @@ impl Container {
         self.position_cached.height = values.2;
         self.position_cached.point_2 = Vec2::new(self.position_cached.point_1.x + self.position_cached.width, self.position_cached.point_1.y + self.position_cached.height);
     }
-    pub fn position_set (&mut self, position: Position) {
-        self.position_cached = position;
-    }
     pub fn position_get (&self) -> &Position {
         &self.position_cached
     }
-    pub fn position_get_mut (&mut self) -> &mut Position {
-        &mut self.position_cached
-    }
-    pub fn position_layout_set (&mut self, position: LayoutPackage) {
+    pub fn layout_set (&mut self, position: LayoutPackage) {
         self.position_layout = position;
     }
-    pub fn position_layout_get (&self) -> &LayoutPackage {
+    pub fn layout_get (&self) -> &LayoutPackage {
         &self.position_layout
     }
-    pub fn position_layout_get_mut (&mut self) -> &mut LayoutPackage {
+    pub fn layout_get_mut (&mut self) -> &mut LayoutPackage {
         &mut self.position_layout
     }
 }
