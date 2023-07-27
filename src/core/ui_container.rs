@@ -118,7 +118,7 @@ pub mod Layout {
             let v2 = Vec2::new(point.x + self.absolute_2.x + (self.relative_2.x * xs), point.y + self.absolute_2.y + (self.relative_2.y * ys));
             let _width = v2.x - v1.x;
             let _height = v2.y - v1.y;
-            (v1, _width, _width)
+            (v1, _width, _height)
         }
     }
     impl Default for Relative  {
