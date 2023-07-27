@@ -175,13 +175,13 @@ pub mod Layout {
         /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
         pub (in super) fn calculate (&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let scale = match self.scaling {
-                SolidScale::Fill => f32::max(width/width, height/height),
-                SolidScale::Fit => f32::min(width/width, height/height),
+                SolidScale::Fill => f32::max(width/self.width, height/self.height),
+                SolidScale::Fit => f32::min(width/self.width, height/self.height),
             };
 
             let center = [point.x + width/2.0, point.y + height/2.0];
-            let vanilla_width = width*scale;
-            let vanilla_height = height*scale;
+            let vanilla_width = self.width*scale;
+            let vanilla_height = self.height*scale;
             let vanilla_point = [center[0] - vanilla_width/2.0, center[1] - vanilla_height/2.0];
 
             (
