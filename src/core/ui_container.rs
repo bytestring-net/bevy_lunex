@@ -305,6 +305,7 @@ pub struct Position {
     pub depth: f32,
 }
 impl Position {
+    /// Returns cloned [`Position`], but with inverted Y coordinate, this translation is required so Bevy (Y is up) can properly render Lunex (Y is down).
     pub fn invert_y (&self) -> Position {
         Position {
             point_1: Vec2::new(self.point_1.x, -self.point_1.y),
@@ -314,9 +315,11 @@ impl Position {
             depth: self.depth,
         }
     }
+    /// Returns a position from a custom relative point on this widget.
     pub fn get_pos (&self, relative: Vec2) -> Vec2 {
         Vec2::new( self.point_1.x + self.width*relative.x/100.0, self.point_1.y + self.height*relative.y/100.0)
     }
+    /// Returns a position from a custom relative point on this widget, but Y is inverted due to the same reason as `invert_y` method.
     pub fn get_pos_y_inverted (&self, relative: Vec2) -> Vec2 {
         Vec2::new( self.point_1.x + self.width*relative.x/100.0, self.point_1.y + self.height*-relative.y/100.0)
     }
@@ -328,7 +331,7 @@ impl Position {
 
 /// ### Container
 /// This struct is responsible for all the positioning of the widget.
-/// Through this struct and it's methods you can interact with widgets position.
+/// Through this struct and its methods you can interact with widgets position.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Container {
     position_cached: Position,
