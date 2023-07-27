@@ -4,7 +4,7 @@
 [![crates.io](https://img.shields.io/crates/v/bevy_lunex.svg)](https://crates.io/crates/bevy_lunex)
 [![Released API docs](https://docs.rs/bevy_lunex/badge.svg)](https://docs.rs/bevy_lunex)
 
-A novel ***path*** based ***modular layout system*** built on top of **Bevy ECS**. It positions rectangles with user defined relations to achieve dynamic layout.
+Blazingly fast ***path*** based ***modular layout system*** built on top of **Bevy ECS**. It positions rectangles with user defined relations to achieve dynamic layout.
 ## === Showcase ===
 ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
 
