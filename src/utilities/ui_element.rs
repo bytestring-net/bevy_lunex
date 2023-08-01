@@ -129,6 +129,13 @@ impl Default for ImageParams {
         }
     }
 }
+impl ImageParams {
+    /// Text parameters set to a custom height
+    pub fn with_depth (mut self, depth: f32) -> ImageParams {
+        self.depth = depth;
+        self
+    }
+}
 
 /// ### Image element spawn macro
 /// Simple abstraction for spawning an entity with [`ImageElementBundle`].
