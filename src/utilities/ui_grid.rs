@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::sprite::Anchor;
 use crate::prelude::*;
 
 // ===========================================================
@@ -10,14 +11,16 @@ use crate::prelude::*;
 /// The fields are used to define grid of widgets created inside the function.
 /// ### Fields
 /// * `grid` = 2D Vector of String values, is used to determine rows and columns and to name the grid widgets. Use [`textgrid`] macro here.
+/// * `anchor` = the origin of the grid, useful when you try to position the grid somewhere specific. [`grid_generate_inside`] ignores this field.
 /// * `gap_relative` = width and height of the gaps between widgets in % relative to the parent widget.
 /// * `width_relative` = width of one widget in % relative to the parent widget.
 /// * `height_relative` = height of one widget in % relative to the parent widget.
 /// * `width_border_gap` = if gaps should also be on the outside of the grid.
 /// * `height_border_gap` = if gaps should also be on the outside of the grid.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct GridParams {
     pub grid: Vec<Vec<String>>,
+    pub anchor: Anchor,
     pub gap_relative: Vec2,
     pub width_relative: f32,
     pub height_relative: f32,
@@ -28,6 +31,7 @@ impl Default for GridParams {
     fn default() -> Self {
         GridParams {
             grid: vec![Vec::new()],
+            anchor: Anchor::TopLeft,
             gap_relative: Vec2::new(2.0, 2.0),
             width_relative: 10.0,
             height_relative: 10.0,
@@ -54,6 +58,12 @@ impl GridParams {
         }
     }
     
+    /// Grid parameters set to a custom relative height
+    pub fn with_anchor (mut self, anchor: Anchor) -> GridParams {
+        self.anchor = anchor;
+        self
+    }
+
     /// Grid parameters set to a custom relative width
     pub fn with_width (mut self, width: f32) -> GridParams {
         self.width_relative = width;
@@ -118,8 +128,24 @@ pub fn grid_generate (system: &mut Hierarchy, path: &String, relative: Vec2, gri
     let container_width = total_width + total_wgap;
     let container_height = total_height + total_hgap;
 
+    let anchor_offset = match grid_params.anchor {
+        Anchor::TopCenter => Vec2::new(0.5, 0.0),
+        Anchor::TopLeft => Vec2::new(0.0, 0.0),
+        Anchor::TopRight => Vec2::new(1.0, 0.0),
+
+        Anchor::Center => Vec2::new(0.5, 0.5),
+        Anchor::CenterLeft => Vec2::new(0.0, 0.5),
+        Anchor::CenterRight => Vec2::new(1.0, 0.5),
+
+        Anchor::BottomCenter => Vec2::new(0.5, 1.0),
+        Anchor::BottomLeft => Vec2::new(0.0, 1.0),
+        Anchor::BottomRight => Vec2::new(1.0, 1.0),
+
+        Anchor::Custom( point ) => Vec2::new(point.x + 0.5, -point.y + 0.5),
+    };
+
     let widget = match Widget::create(system, path, Layout::Window {
-        relative,
+        relative: Vec2::new(relative.x - anchor_offset.x*container_width, relative.y - anchor_offset.y*container_height),
         width_relative: container_width,
         height_relative: container_height,
         ..Default::default()
@@ -132,7 +158,7 @@ pub fn grid_generate (system: &mut Hierarchy, path: &String, relative: Vec2, gri
     let height = (100.0 * total_height/container_height)/yy as f32;
 
     let wgap = (100.0 * total_wgap/container_width)/(xx as f32 + if grid_params.width_border_gap == true {1.0} else {0.0});
-    let hgap = (100.0 * total_hgap/container_height)/(yy as f32 + if grid_params.height_border_gap == true {1.0} else {-1.0});
+    let hgap = (100.0 * total_hgap/container_height)/(yy as f32 + if grid_params.height_border_gap == true {1.0} else {0.0});
 
     for x in 0..xx {
         for y in 0..yy {
