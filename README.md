@@ -5,6 +5,8 @@
 [![Released API docs](https://docs.rs/bevy_lunex/badge.svg)](https://docs.rs/bevy_lunex)
 
 Blazingly fast ***path*** based ***modular layout system*** built on top of **Bevy ECS**. It positions rectangles with user defined relations to achieve dynamic layout.
+
+*Note: Currently WIP development. It is not released on crates.io because version 0.1 is still not ready. Once Bevy 0.12 is finished and required PRs in 0.12 milestone are merged, this crate will be officially released.*
 ## === Showcase ===
 ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
 
