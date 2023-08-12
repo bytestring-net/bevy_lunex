@@ -5,26 +5,6 @@ use crate::prelude::*;
 // ===========================================================
 // === ELEMENT ===
 
-/// ### Widget spawn macro
-/// Simple abstraction for spawning an entity with [`Widget`] component.
-/// ### Arguments
-/// * `&mut Commands`
-/// * [`Widget`]
-/// * `Component` (Optional, n)
-#[macro_export]
-macro_rules! widget_spawn {
-    // When additional components $x:expr are provided
-    ($commands:ident, $widget:expr, $( $x:expr ),*) => {
-        let _commands: &mut Commands = $commands;
-        let _widget: Widget = $widget;
-        _commands.spawn((
-            _widget,
-            $(
-                $x,
-            )*
-        ));
-    };
-}
 
 /// ### Element
 /// Struct holding all necessary information for binding an entity to a [`Widget`].
@@ -38,17 +18,32 @@ macro_rules! widget_spawn {
 /// * `height` = optional, will force the height of the element in % of parent widget.
 #[derive(Component, Clone, Debug, Default)]
 pub struct Element {
+    /// ### Relative
+    /// Position in % relative to the widget.
     pub relative: Vec2,
+    /// ### Absolute
+    /// Position in pixels, always the same.
     pub absolute: Vec2,
+    /// ### Boundary
+    /// Width and height, for example image dimensions or text size. 
     pub boundary: Vec2,
+    /// ### Scale
+    /// Size of the element in % of parent widget.
     pub scale: f32,
+    /// ### Depth
+    /// Local depth of the element, starts at 0.0, usefull when you have 2 elements overlapping (image and text)
     pub depth: f32,
+    /// ### Width
+    /// Optional, will force the width of the element in % of parent widget.
     pub width: Option<f32>,
+    /// ### Height
+    /// Optional, will force the height of the element in % of parent widget.
     pub height: Option<f32>,
 }
 
 //# --------------------------------------------------------------------------------------------------------------
 
+/// # DEPRACTED?!
 /// ### Element Bundle
 /// A bundle containing [`Element`] + [`Widget`].
 /// It is recommended to use the [`element_spawn`] macro abstraction.
@@ -73,7 +68,7 @@ pub struct ElementBundle {
 
 /// ### Image Element Bundle
 /// A bundle containing [`Image`] + [`Element`] + [`Widget`].
-/// It is recommended to use the [`image_element_spawn`] macro abstraction.
+/// It is recommended to use the `new` method.
 /// ### Fields
 /// * `widget`
 /// * `element`
@@ -94,6 +89,36 @@ pub struct ImageElementBundle {
     pub global_transform: GlobalTransform,
     pub computed_visibility: ComputedVisibility,
 }
+impl ImageElementBundle {
+    /// ### New
+    /// Creates new [`ImageElementBundle`] from given parameters.
+    /// ### Arguments
+    /// * `widget` = widget to spawn element for.
+    /// * `image_params` = dictates how the element should behave and be located.
+    /// * `texture` = image handle, you can use `asset_server.load("")`.
+    /// * `image_dimension` = `Vec2` with width and height dimensions of the texture.
+    pub fn new (widget: Widget, image_params: &ImageParams, texture: Handle<Image>, image_dimensions: Vec2) -> ImageElementBundle {
+        ImageElementBundle {
+            widget,
+            element: Element {
+                relative: image_params.relative,
+                absolute: image_params.absolute,
+                boundary: image_dimensions,
+                scale: image_params.scale,
+                depth: image_params.depth,
+                width: image_params.width,
+                height: image_params.height,
+                ..default()
+            },
+            texture,
+            sprite: Sprite {
+                anchor: image_params.anchor.clone(),
+                ..default()
+            },
+            ..Default::default()
+        }
+    }
+}
 
 /// ### Image parameters
 /// Struct that is passed to [`image_element_spawn`] macro containing image information.
@@ -108,12 +133,26 @@ pub struct ImageElementBundle {
 /// * `height` = optional, will force the height of the image in % of parent widget.
 #[derive(Clone, Debug)]
 pub struct ImageParams {
+    /// ### Relative
+    /// Position in % relative to the widget.
     pub relative: Vec2,
+    /// ### Absolute
+    /// Position in pixels, always the same.
     pub absolute: Vec2,
+    /// ### Anchor
+    /// Which corner of the image is origin (0.0). 
     pub anchor: bevy::sprite::Anchor,
+    /// ### Scale
+    /// Size of the image in % of parent widget.
     pub scale: f32,
+    /// ### Depth
+    /// Local depth of the image, starts at 0.0, usefull when you have 2 elements overlapping (image and text)
     pub depth: f32,
+    /// ### Width
+    /// Optional, will force the width of the image in % of parent widget.
     pub width: Option<f32>,
+    /// ### Height
+    /// Optional, will force the height of the image in % of parent widget.
     pub height: Option<f32>,
 }
 impl Default for ImageParams {
@@ -137,84 +176,12 @@ impl ImageParams {
     }
 }
 
-/// ### Image element spawn macro
-/// Simple abstraction for spawning an entity with [`ImageElementBundle`].
-/// ### Arguments
-/// * `&mut Commands`
-/// * `&Res<AssetServer>`
-/// * [`Widget`]
-/// * &[`ImageParams`]
-/// * `&str` (Image path)
-/// * `Component` (Optional, n)
-#[macro_export]
-macro_rules! image_element_spawn {
-    // When only the required parameters are provided (without $x:expr)
-    ($commands:ident, $asset_server:ident, $widget:expr, $image_params:expr, $path:expr) => {
-        let _commands: &mut Commands = $commands;
-        let _asset_server: &Res<AssetServer> = $asset_server;
-        let _widget: Widget = $widget;
-        let _image_params: &ImageParams = $image_params;
-        let _path: &str = $path;
-        _commands.spawn((
-            ImageElementBundle {
-                widget: _widget,
-                element: Element {
-                    relative: _image_params.relative,
-                    absolute: _image_params.absolute,
-                    scale: _image_params.scale,
-                    depth: _image_params.depth,
-                    width: _image_params.width,
-                    height: _image_params.height,
-                    ..default()
-                },
-                texture: _asset_server.load(_path),
-                sprite: Sprite {
-                    anchor: _image_params.anchor.clone(),
-                    ..default()
-                },
-                ..Default::default()
-            }
-        ));
-    };
-
-    // When additional components $x:expr are provided
-    ($commands:ident, $asset_server:ident, $widget:expr, $image_params:expr, $path:expr, $( $x:expr ),*) => {
-        let _commands: &mut Commands = $commands;
-        let _asset_server: &Res<AssetServer> = $asset_server;
-        let _widget: Widget = $widget;
-        let _image_params: &ImageParams = $image_params;
-        let _path: &str = $path;
-        _commands.spawn((
-            ImageElementBundle {
-                widget: _widget,
-                element: Element {
-                    relative: _image_params.relative,
-                    absolute: _image_params.absolute,
-                    scale: _image_params.scale,
-                    depth: _image_params.depth,
-                    width: _image_params.width,
-                    height: _image_params.height,
-                    ..default()
-                },
-                texture: _asset_server.load(_path),
-                sprite: Sprite {
-                    anchor: _image_params.anchor.clone(),
-                    ..default()
-                },
-                ..Default::default()
-            },
-            $(
-                $x,
-            )*
-        ));
-    };
-}
 
 //# --------------------------------------------------------------------------------------------------------------
 
 /// ### Text Element Bundle
 /// A bundle containing [`Text`] + [`Element`] + [`Widget`].
-/// It is recommended to use the [`text_element_spawn`] macro abstraction.
+/// It is recommended to use the `new` method.
 /// ### Fields
 /// * `widget`
 /// * `element`
@@ -239,6 +206,32 @@ pub struct TextElementBundle {
     pub global_transform: GlobalTransform,
     pub computed_visibility: ComputedVisibility,
 }
+impl TextElementBundle {
+    /// ### New
+    /// Creates new [`TextElementBundle`] from given parameters.
+    /// ### Arguments
+    /// * `widget` = widget to spawn element for.
+    /// * `text_params` = dictates how the element should behave and be located.
+    /// * `text` = the text you want to display.
+    pub fn new (widget: Widget, text_params: &TextParams, text: &str) -> TextElementBundle {
+        TextElementBundle {
+            widget,
+            element: Element {
+                relative: text_params.relative,
+                absolute: text_params.absolute,
+                boundary: text_compute_size_simple(text, text_params.style.font_size),
+                scale: text_params.scale,
+                width: text_params.width,
+                height: text_params.height,
+                depth: text_params.depth,
+                ..Default::default()
+            },
+            text: Text::from_section(text, text_params.style.clone()).with_alignment(text_params.alignment),
+            text_anchor: text_params.anchor.clone(),
+            ..Default::default()
+        }
+    }
+}
 
 /// ### Text parameters
 /// Struct that is passed to [`text_element_spawn`] macro containing text information.
@@ -259,14 +252,32 @@ pub struct TextElementBundle {
 /// * `height` = optional, will force the height of the text in % of parent widget.
 #[derive(Clone, Debug)]
 pub struct TextParams {
+    /// ### Relative
+    /// Position in % relative to the widget.
     pub relative: Vec2,
+    /// ### Absolute
+    /// Position in pixels, always the same.
     pub absolute: Vec2,
+    /// ### Style
+    /// [`TextStyle`] struct from Bevy.
     pub style: TextStyle,
+    /// ### Alignment
+    /// Where the text is aligned - left/center/right.
     pub alignment: TextAlignment,
+    /// ### Anchor
+    /// Which corner of the text is origin (0.0). 
     pub anchor: bevy::sprite::Anchor,
+    /// ### Scale
+    /// Size of the text in % of parent widget.
     pub scale: f32,
+    /// ### Depth
+    /// Local depth of the text, starts at 0.0, usefull when you have 2 elements overlapping (image and text)
     pub depth: f32,
+    /// ### Width
+    /// Optional, will force the width of the text in % of parent widget.
     pub width: Option<f32>,
+    /// ### Height
+    /// Optional, will force the height of the text in % of parent widget.
     pub height: Option<f32>,
 }
 impl Default for TextParams {
@@ -424,72 +435,6 @@ pub fn text_compute_size_simple (text: &str, font_size: f32) -> Vec2 {
     }
 
     Vec2::new(width * font_size * SYMBOL_WIDTH_WEIGHT, list.len() as f32 * font_size * SYMBOL_HEIGHT_WEIGHT)
-}
-
-/// ### Text element spawn macro
-/// Simple abstraction for spawning an entity with [`TextElementBundle`].
-/// ### Arguments
-/// * `&mut Commands`
-/// * [`Widget`]
-/// * &[`TextParams`]
-/// * `&str` (Text)
-/// * `Component` (Optional, n)
-#[macro_export]
-macro_rules! text_element_spawn {
-    // When only the required parameters are provided (without $x:expr)
-    ($commands:ident, $widget:expr, $text_params:expr, $text:expr) => {
-        let _commands: &mut Commands = $commands;
-        let _widget: Widget = $widget;
-        let _text_params: &TextParams = $text_params;
-        let _text: &str = $text;
-        _commands.spawn((
-            TextElementBundle {
-                widget: _widget,
-                element: Element {
-                    relative: _text_params.relative,
-                    absolute: _text_params.absolute,
-                    boundary: text_compute_size_simple(_text, _text_params.style.font_size),
-                    scale: _text_params.scale,
-                    width: _text_params.width,
-                    height: _text_params.height,
-                    depth: _text_params.depth,
-                    ..Default::default()
-                },
-                text: Text::from_section(_text, _text_params.style.clone()).with_alignment(_text_params.alignment),
-                text_anchor: _text_params.anchor.clone(),
-                ..Default::default()
-            },
-        ));
-    };
-
-    // When additional components $x:expr are provided
-    ($commands:ident, $widget:expr, $text_params:expr, $text:expr, $( $x:expr ),*) => {
-        let _commands: &mut Commands = $commands;
-        let _widget: Widget = $widget;
-        let _text_params: &TextParams = $text_params;
-        let _text: &str = $text;
-        _commands.spawn((
-            TextElementBundle {
-                widget: _widget,
-                element: Element {
-                    relative: _text_params.relative,
-                    absolute: _text_params.absolute,
-                    boundary: text_compute_size_simple(_text, _text_params.style.font_size),
-                    scale: _text_params.scale,
-                    width: _text_params.width,
-                    height: _text_params.height,
-                    depth: _text_params.depth,
-                    ..Default::default()
-                },
-                text: Text::from_section(_text, _text_params.style.clone()).with_alignment(_text_params.alignment),
-                text_anchor: _text_params.anchor.clone(),
-                ..Default::default()
-            },
-            $(
-                $x,
-            )*
-        ));
-    };
 }
 
 //# --------------------------------------------------------------------------------------------------------------

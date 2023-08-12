@@ -21,9 +21,6 @@ pub use super::ui_element::text_compute_size_simple;
 //# MACROS
 pub use super::ui_element::ImageParams;
 pub use super::ui_element::TextParams;
-pub use crate::image_element_spawn;
-pub use crate::text_element_spawn;
-pub use crate::widget_spawn;
 
 //# DEBUG
 pub use super::ui_debug::lunex_setup_debug;
