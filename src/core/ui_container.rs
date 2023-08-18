@@ -190,6 +190,32 @@ pub mod Layout {
                 vanilla_height,
             )
         }
+        
+        /// Solid layout set to a custom width
+        pub fn with_width (mut self, width: f32) -> Solid {
+            self.width = width;
+            self
+        }
+        /// Solid layout set to a custom height
+        pub fn with_height (mut self, height: f32) -> Solid {
+            self.height = height;
+            self
+        }
+        /// Solid layout set to a custom horizontal_anchor
+        pub fn with_horizontal_anchor (mut self, horizontal_anchor: f32) -> Solid {
+            self.horizontal_anchor = horizontal_anchor;
+            self
+        }
+        /// Solid layout set to a custom vertical_anchor
+        pub fn with_vertical_anchor (mut self, vertical_anchor: f32) -> Solid {
+            self.vertical_anchor = vertical_anchor;
+            self
+        }
+        /// Solid layout set to a custom scaling
+        pub fn with_scaling (mut self, scaling: SolidScale) -> Solid {
+            self.scaling = scaling;
+            self
+        }
     }
     impl Default for Solid  {
         fn default() -> Self {

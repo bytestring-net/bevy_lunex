@@ -12,7 +12,7 @@ pub struct DebugImage ();
 
 /// ### Lunex setup debug
 /// A system that will create debug sprites for all valid widgets
-pub fn lunex_setup_debug (mut commands: Commands, asset_server: Res<AssetServer>, systems: Query<&Hierarchy>) {
+pub fn lunex_setup_debug (mut commands: Commands, asset_server: Res<AssetServer>, systems: Query<&UITree>) {
     for system in systems.iter() {
         for x in system.collect_paths(){
             let widget = Widget::new(&x);
@@ -41,7 +41,7 @@ pub fn lunex_setup_debug (mut commands: Commands, asset_server: Res<AssetServer>
 
 /// ### Lunex setup debug
 /// A system that will update debug sprites to have + 400 Z
-pub fn lunex_update_debug( systems: Query<&Hierarchy>, mut query: Query<(&mut Widget, &mut Transform, &DebugImage)>) {
+pub fn lunex_update_debug( systems: Query<&UITree>, mut query: Query<(&mut Widget, &mut Transform, &DebugImage)>) {
     let system = systems.get_single().unwrap();
     for (widget, mut transform, _) in &mut query {
         match widget.fetch(&system, "") {

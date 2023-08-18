@@ -8,16 +8,24 @@ const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
 const HIGHLIGHT_DEPTH_ADDED: f32 = 5.0;
 
 // ===========================================================
-// === HIERARCHY STRUCT ===
+// === UITREE STRUCT ===
 
+/// # UITree
+/// A tree-like data structure holding all UI layout data and information, similar to hierarchy.
+/// 
+/// You can retrieve data from this structure using paths.
+/// * `settings`
+/// * `settings/display`
+/// * `settings/display/button_1`
+/// 
 #[derive(Component, Default, Clone, Debug, PartialEq)]
-pub struct Hierarchy {
+pub struct UITree {
     pub width: f32,
     pub height: f32,
     branch: Branch,
 }
-impl Hierarchy {
-    pub fn new () -> Hierarchy {
+impl UITree {
+    pub fn new () -> UITree {
         //let mut branch = Branch::new(0.0, true, "ROOT", "".to_string());
         let mut branch = Branch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
         branch.container.layout_set(Layout::Relative {
@@ -26,7 +34,7 @@ impl Hierarchy {
             ..Default::default()
         }.pack());
 
-        Hierarchy {
+        UITree {
             width: 0.0,
             height: 0.0,
             branch,
@@ -48,6 +56,11 @@ impl Hierarchy {
         self.branch.collect_paths()
     }
     
+    pub fn merge (&mut self, tree: UITree) -> Result<(), String> {
+        self.branch.merge(tree.branch)
+    }
+
+
     pub (in super) fn root_get (&self) -> & Branch {
         &self.branch
     }
@@ -57,7 +70,7 @@ impl Hierarchy {
     
 }
 
-pub fn hierarchy_update(mut query: Query<&mut Hierarchy>, mut windows: Query<&mut Window>) {
+pub fn hierarchy_update(mut query: Query<&mut UITree>, mut windows: Query<&mut Window>) {
     let window = windows.get_single_mut().unwrap();
     for mut system in &mut query {
         system.width = window.resolution.width();
@@ -80,11 +93,17 @@ pub struct Branch {
     path: String,
 
     //# RENDERING =======
+    /// How deep the branch is in UITree
     level: f32,
+    /// Z index calculated from branch depth
     depth: f32,
+    /// If widget is activated, can be used to check for interactivity
     active: bool,
+    /// If widget has visibility enabled
     visible: bool,
+    /// If widget is currently highligted
     in_focus: bool,
+    /// If the parenting container is visible
     parent_visible: bool,
 
     //# MOUNTED DATA =======
@@ -182,6 +201,59 @@ impl Branch {
         self.cascade_collect_paths(&mut list, "".to_string());
         list
     }
+
+    /// # Merge
+    /// This method will merge another branch into this branch. As long as there are no name collision, the merge will be succesfull.
+    /// 
+    /// ## Important!
+    /// It is worth noting that internal IDs of the merged branches WILL change. That means if there are unnamed branches in the root of
+    /// the merged branch, their paths will become invalid if the preserved branch is not empty.
+    /// 
+    /// To work around this, all branches located in the root of the merging MUST be named and accessed through their names!
+    /// ```
+    /// let mut existing_tree = UITree::new(); //Let's say it contains other widgets...
+    /// 
+    /// let mut merged_tree = UITree::new();    //This is blank new tree, so it's empty...
+    /// let background = Widget::create(&mut merged_tree, "background", Layout::Solid::default().pack())?;  //It's first so ID is '0'
+    /// let image = Widget::create(&mut merged_tree, &background.end(""), Layout::Solid::default().pack())?;  //unnamed widgets not in the root are fine
+    /// 
+    /// existing_tree.merge(merged_tree)?;     //The `background` after merge is no longer ID '0', but is offset by widgets that already existed there.
+    /// ```
+    /// ## Bad practice! Avoid!
+    /// ```
+    /// let mut existing_tree = UITree::new(); //Let's say it contains other widgets...
+    /// 
+    /// let mut merged_tree = UITree::new();    //This is blank new tree, so it's empty...
+    /// let background = Widget::create(&mut merged_tree, "", Layout::Solid::default().pack())?;  //No name but ID is '0'
+    /// 
+    /// existing_tree.merge(merged_tree)?;     //ID changed so we have no way of accessing the widget!!!
+    /// ```
+    /// 
+    pub fn merge (&mut self, branch: Branch) -> Result<(), String> {
+
+        // Check if there is a name collision
+        for (name, path) in branch.shortcuts.iter() {
+            if self.shortcuts.contains_key(name) {
+                return Result::Err(format!("Cannot merge! Duplicate name found: {}!", name))
+            }
+        }
+
+        let new_shortcuts:HashMap<String, String> = HashMap::new();
+
+        // 1. Check if all paths to be merged are free to use
+        for (id, branch) in branch.inventory.iter() {
+            println!("Id: {}", id);
+        }
+
+        for (name, path) in branch.shortcuts.iter() {
+            println!("name: {} = path: {}", name, path);
+        }
+
+        Result::Ok(())
+        // 2. Merge them
+
+    }
+
 
     //#LIBRARY RECURSION CALLS
     pub (in super) fn cascade_map (&self, mut string: String, level: u32) -> String {                                                
@@ -327,6 +399,16 @@ impl Branch {
         }
     }
 
+    //
+    pub (in super) fn append (&mut self, branch: Branch) -> usize {
+        let mut id = 0;
+        loop {if !self.inventory.contains_key(&id) {break} else {id += 1}}
+
+
+        self.inventory.insert(id, branch);
+        id
+    }
+    
     pub (in super) fn create_simple (&mut self, name: &str, position: LayoutPackage) -> String {
         
         let mut id = 0;

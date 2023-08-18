@@ -14,37 +14,37 @@ impl Widget {
 
     
     /*
-    pub fn fetch_layout<'a> (&'a self, system: &'a  Hierarchy, key: &str) -> Result<&PositionLayout, String> {
+    pub fn fetch_layout<'a> (&'a self, system: &'a  UITree, key: &str) -> Result<&PositionLayout, String> {
         match self.fetch(system, key){
             Ok (branch) => Result::Ok(branch.container_get().position_layout_get()),
             Err (message) => Err(message),
         }
     }
-    pub fn fetch_layout_mut<'a> (&'a self, system: &'a mut Hierarchy, key: &str) -> Result<&mut PositionLayout, String> {
+    pub fn fetch_layout_mut<'a> (&'a self, system: &'a mut UITree, key: &str) -> Result<&mut PositionLayout, String> {
         match self.fetch_mut(system, key){
             Ok (branch) => Result::Ok(branch.container_get_mut().position_layout_get_mut()),
             Err (message) => Err(message),
         }
     }
-    pub fn fetch_data<'a> (&'a self, system: &'a  Hierarchy, key: &str) -> Result<&Option<Data>, String> {
+    pub fn fetch_data<'a> (&'a self, system: &'a  UITree, key: &str) -> Result<&Option<Data>, String> {
         match self.fetch(system, key){
             Ok (branch) => Result::Ok(branch.data_get()),
             Err (message) => Err(message),
         }
     }
-    pub fn fetch_data_mut<'a> (&'a self, system: &'a mut Hierarchy, key: &str) -> Result<&mut Option<Data>, String> {
+    pub fn fetch_data_mut<'a> (&'a self, system: &'a mut UITree, key: &str) -> Result<&mut Option<Data>, String> {
         match self.fetch_mut(system, key){
             Ok (branch) => Result::Ok(branch.data_get_mut()),
             Err (message) => Err(message),
         }
     }
-    pub fn fetch_position<'a> (&'a self, system: &'a Hierarchy, key: &str) -> Result<&Position, String> {
+    pub fn fetch_position<'a> (&'a self, system: &'a UITree, key: &str) -> Result<&Position, String> {
         match self.fetch(&system, key) {
             Ok (branch) => Result::Ok(&branch.container_get().position_get()),
             Err (message) => Result::Err(message),
         }
     }
-    pub fn fetch_position_mut<'a> (&'a self, system: &'a mut Hierarchy, key: &str) -> Result<&mut Position, String> {
+    pub fn fetch_position_mut<'a> (&'a self, system: &'a mut UITree, key: &str) -> Result<&mut Position, String> {
         match self.fetch_mut(system, key) {
             Ok (branch) => Result::Ok(branch.container_get_mut().position_get_mut()),
             Err (message) => Result::Err(message),
@@ -54,7 +54,7 @@ impl Widget {
     //add is cursor_within + depth
 
 /* 
-    pub fn destroy (&self, system: &mut Hierarchy, path : &str) -> Result<(), String> {
+    pub fn destroy (&self, system: &mut UITree, path : &str) -> Result<(), String> {
         match system.root_get_mut().borrow_linked_checked_mut(&self.path){
             Ok (reference) => {
                 reference.destroy_chain_checked(path)
@@ -62,7 +62,7 @@ impl Widget {
             Err (message) => Result::Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
         }
     }
-    pub fn remove (&self, system: &mut Hierarchy, key : &str) -> Result<(), String> {
+    pub fn remove (&self, system: &mut UITree, key : &str) -> Result<(), String> {
         match system.root_get_mut().borrow_linked_checked_mut(&self.path){
             Ok (reference) => {
                 reference.remove_simple_checked(key)
@@ -96,13 +96,13 @@ impl Widget {
     }
 
     /// ## Description
-    /// This function will try to return &[`Branch`], located inside [`Hierarchy`] based on the widgets path.
+    /// This function will try to return &[`Branch`], located inside [`UITree`] based on the widgets path.
     /// 
-    /// If you want to interact with the Hierarchy, you use this to get a borrow.
+    /// If you want to interact with the UITree, you use this to get a borrow.
     ///
     /// ## Examples
     /// ```
-    /// let system = Hierarchy::new();
+    /// let system = UITree::new();
     /// 
     /// //This is only a pointer
     /// let menu_pointer = Widget::create(&mut system, "Menu", PositionLayout::Default);
@@ -113,7 +113,7 @@ impl Widget {
     /// let button: &Branch = menu_pointer.fetch(&system, "Button").unwrap(); //You can locate sub-widgets
     /// 
     /// ```
-    pub fn fetch<'a> (&'a self, system: &'a  Hierarchy, path: &str) -> Result<&Branch, String> {
+    pub fn fetch<'a> (&'a self, system: &'a  UITree, path: &str) -> Result<&Branch, String> {
         let mut extra_path = String::from(&self.path);
         if !path.is_empty() { extra_path += "/";extra_path += path;}
         match system.root_get().borrow_linked_checked(&extra_path){
@@ -122,13 +122,13 @@ impl Widget {
         }
     }
     /// ## Description
-    /// This function will try to return &mut [`Branch`], located inside [`Hierarchy`] based on the widgets path.
+    /// This function will try to return &mut [`Branch`], located inside [`UITree`] based on the widgets path.
     /// 
-    /// If you want to interact with the Hierarchy, you use this to get a borrow.
+    /// If you want to interact with the UITree, you use this to get a borrow.
     ///
     /// ## Examples
     /// ```
-    /// let system = Hierarchy::new();
+    /// let system = UITree::new();
     /// 
     /// //This is only a pointer
     /// let menu_pointer = Widget::create(&mut system, "Menu", PositionLayout::Default);
@@ -140,7 +140,7 @@ impl Widget {
     /// let button: &mut Branch = menu_pointer.fetch_mut(&mut system, "Button").unwrap(); //You can locate sub-widgets
     /// 
     /// ```
-    pub fn fetch_mut<'a> (&'a self, system: &'a mut Hierarchy, path: &str) -> Result<&mut Branch, String> {
+    pub fn fetch_mut<'a> (&'a self, system: &'a mut UITree, path: &str) -> Result<&mut Branch, String> {
         let mut extra_path = String::from(&self.path);
         if !path.is_empty() { extra_path += "/";extra_path += path;}
         match system.root_get_mut().borrow_linked_checked_mut(&extra_path){
@@ -149,20 +149,20 @@ impl Widget {
         }
     }
 
-    pub fn fetch_data<'a> (&'a self, system: &'a  Hierarchy, path: &str) -> Result<&Option<Data>, String> {
+    pub fn fetch_data<'a> (&'a self, system: &'a  UITree, path: &str) -> Result<&Option<Data>, String> {
         match self.fetch(system, path){
             Ok (branch) => Result::Ok(branch.data_get()),
             Err (message) => Err(message),
         }
     }
-    pub fn fetch_data_mut<'a> (&'a self, system: &'a mut Hierarchy, path: &str) -> Result<&mut Option<Data>, String> {
+    pub fn fetch_data_mut<'a> (&'a self, system: &'a mut UITree, path: &str) -> Result<&mut Option<Data>, String> {
         match self.fetch_mut(system, path){
             Ok (branch) => Result::Ok(branch.data_get_mut()),
             Err (message) => Err(message),
         }
     }
 
-    pub fn fetch_data_set_f32<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: f32) -> Result<(), String> {
+    pub fn fetch_data_set_f32<'a> (&'a self, system: &'a mut UITree, path: &str, key: &str, value: f32) -> Result<(), String> {
         match self.fetch_mut(system, path){
             Ok (branch) => {
                 let data_option = branch.data_get_mut();
@@ -182,7 +182,7 @@ impl Widget {
             Err (message) => Err(message),
         }
     }
-    pub fn fetch_data_set_string<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: String) -> Result<(), String> {
+    pub fn fetch_data_set_string<'a> (&'a self, system: &'a mut UITree, path: &str, key: &str, value: String) -> Result<(), String> {
         match self.fetch_mut(system, path){
             Ok (branch) => {
                 let data_option = branch.data_get_mut();
@@ -202,7 +202,7 @@ impl Widget {
             Err (message) => Err(message),
         }
     }
-    pub fn fetch_data_set_bool<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: bool) -> Result<(), String> {
+    pub fn fetch_data_set_bool<'a> (&'a self, system: &'a mut UITree, path: &str, key: &str, value: bool) -> Result<(), String> {
         match self.fetch_mut(system, path){
             Ok (branch) => {
                 let data_option = branch.data_get_mut();
@@ -222,7 +222,7 @@ impl Widget {
             Err (message) => Err(message),
         }
     }
-    pub fn fetch_data_set_vec2<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: Vec2) -> Result<(), String> {
+    pub fn fetch_data_set_vec2<'a> (&'a self, system: &'a mut UITree, path: &str, key: &str, value: Vec2) -> Result<(), String> {
         match self.fetch_mut(system, path){
             Ok (branch) => {
                 let data_option = branch.data_get_mut();
@@ -242,7 +242,7 @@ impl Widget {
             Err (message) => Err(message),
         }
     }
-    pub fn fetch_data_set_vec3<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: Vec3) -> Result<(), String> {
+    pub fn fetch_data_set_vec3<'a> (&'a self, system: &'a mut UITree, path: &str, key: &str, value: Vec3) -> Result<(), String> {
         match self.fetch_mut(system, path){
             Ok (branch) => {
                 let data_option = branch.data_get_mut();
@@ -262,7 +262,7 @@ impl Widget {
             Err (message) => Err(message),
         }
     }
-    pub fn fetch_data_set_vec4<'a> (&'a self, system: &'a mut Hierarchy, path: &str, key: &str, value: Vec4) -> Result<(), String> {
+    pub fn fetch_data_set_vec4<'a> (&'a self, system: &'a mut UITree, path: &str, key: &str, value: Vec4) -> Result<(), String> {
         match self.fetch_mut(system, path){
             Ok (branch) => {
                 let data_option = branch.data_get_mut();
@@ -314,7 +314,7 @@ impl Widget {
     /// ```
     /// In this case the path of ``button_pointer`` is `` #0/#0 `` (The number stands for an order they were created in)
     /// 
-    pub fn create (system: &mut Hierarchy, path: &str, position: LayoutPackage) -> Result <Widget, String> {
+    pub fn create (system: &mut UITree, path: &str, position: LayoutPackage) -> Result <Widget, String> {
 
         let str_list: Vec<&str> =  path.split('/').collect();
         let str_list_len = str_list.len();
@@ -408,7 +408,7 @@ impl Widget {
     /// ```
     /// use bevy_lunex::prelude::*;
     /// 
-    /// let mut system = Hierarchy::new();
+    /// let mut system = UITree::new();
     /// 
     /// let menu = Widget::create(&mut system, "Menu", PositionLayout::Default).unwrap();
     /// let category = Widget::create(&mut system, &menu.end("Category"), PositionLayout::Default).unwrap();
@@ -428,7 +428,7 @@ impl Widget {
     }
 
     //# FUNCTIONALITY
-    pub fn is_within (&self, system: &Hierarchy, path: &str, point: &Vec2) -> Result<bool, String> {
+    pub fn is_within (&self, system: &UITree, path: &str, point: &Vec2) -> Result<bool, String> {
         match self.fetch(&system, path) {
             Ok (branch) => {
                 let position = branch.container_get().position_get();

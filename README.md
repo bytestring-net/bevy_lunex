@@ -1,4 +1,4 @@
-# Bevy Lunex
+# Bevy Lunex 🧩
 
 [![License](https://img.shields.io/badge/License-MIT%20or%20Apache%202-blue.svg?label=license)](./LICENSE-MIT)
 [![crates.io](https://img.shields.io/crates/v/bevy_lunex.svg)](https://crates.io/crates/bevy_lunex)
@@ -28,7 +28,7 @@ In shortcut whenever you need to **position anything inside a rectagle** that is
 
 Due to the nature of Rust, we had to come up with a **unique** way on how manage data. We decided to implement **hierarchy tree structure**, which is used in **UNIX file system**.
 
-All data is stored in a master struct, called **Hierarchy**, which manages the inner tree. Custom pointers to these "**Branches**" are then passed to entities as **components**.
+All data is stored in a master struct, called **UITree**, which manages the inner tree. Custom pointers to these "**Branches**" are then passed to entities as **components**.
 
 When needed, the pointers can **locate themselves** inside the tree and modify the data, thus **changing the behaviour** and result of the rectangle calculations taking place.
 ```
@@ -50,7 +50,7 @@ When needed, the pointers can **locate themselves** inside the tree and modify t
 ## === Usage ===
 First create a hierarchy struct that will hold all the recursive data.
 ```rust
-let mut system = Hierarchy::new();
+let mut system = UITree::new();
 ```
 ### Creating widgets
 To create a new widget in root directory you pass in the hierarchy, specify widget properties and the function returns a pointer. 
@@ -81,12 +81,12 @@ commands.spawn ((
 To add logic to your containers, you use bevy systems and query for your widgets. This function for example checks if cursor is inside a widget or not.
 ```rust
 fn button_update(
-    mut systems: Query<(&mut Hierarchy, &UIPlacement)>,
+    mut systems: Query<(&mut UITree, &UIPlacement)>,
     cursors: Query<&Cursor>,
     mut widgets: Query<(&mut Widget)>,
     mouse_button_input: Res<Input<MouseButton>>
 ) {    
-    //# Get Hierarchy and cursor
+    //# Get UITree and cursor
     let (mut system, placement) = systems.get_single_mut().unwrap();
     let cursor = cursors.get_single().unwrap();
 

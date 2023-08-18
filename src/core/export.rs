@@ -17,7 +17,7 @@ pub use super::ui_widget::Widget;
 
 //# CORE
 pub use super::ui_core::Data;
-pub use super::ui_core::Hierarchy;
+pub use super::ui_core::UITree;
 pub use super::ui_core::hierarchy_update;
 
 //# GENERAL

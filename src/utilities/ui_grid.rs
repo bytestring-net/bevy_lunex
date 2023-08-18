@@ -105,11 +105,11 @@ impl GridParams {
 /// 
 /// This function uses a widget to hold the grid, meaning no matter how many columns or rows there are, the grid widgets will have the same size.
 /// ### Arguments
-/// * `system` = Hierarchy in which the grid should be made.
+/// * `system` = UITree in which the grid should be made.
 /// * `path` = Path to a new widget that will hold the grid.
 /// * `relative` = Relative position of the grid in parenting widget.
 /// * `grid_params` = A struct holding all necessary info about the grid.
-pub fn grid_generate (system: &mut Hierarchy, path: &String, relative: Vec2, grid_params: &GridParams) -> Result<Widget, String>{
+pub fn grid_generate (system: &mut UITree, path: &String, relative: Vec2, grid_params: &GridParams) -> Result<Widget, String>{
     let xx = grid_params.grid.len();
     let yy = grid_params.grid[0].len();
 
@@ -184,10 +184,10 @@ pub fn grid_generate (system: &mut Hierarchy, path: &String, relative: Vec2, gri
 /// 
 /// This function generates the grid inside of given widget, meaning with more columns and rows, the size of grid widgets will decrease.
 /// ### Arguments
-/// * `system` = Hierarchy in which the grid should be made.
+/// * `system` = UITree in which the grid should be made.
 /// * `widget` = The widget in which the grid should be made.
 /// * `grid_params` = A struct holding all necessary info about the grid.
-pub fn grid_generate_inside (system: &mut Hierarchy, widget: &Widget, grid_params: &GridParams) -> Result<(), String>{
+pub fn grid_generate_inside (system: &mut UITree, widget: &Widget, grid_params: &GridParams) -> Result<(), String>{
     let xx = grid_params.grid.len();
     let yy = grid_params.grid[0].len();
     
