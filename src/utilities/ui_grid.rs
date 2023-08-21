@@ -1,10 +1,9 @@
+use crate::prelude::*;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
-use crate::prelude::*;
 
 // ===========================================================
 // === GRID GENERATION ===
-
 
 /// ### Grid parameters
 /// Struct that is passed to [`grid_generate`] or [`grid_generate_inside`] function containing grid information.
@@ -40,90 +39,106 @@ impl Default for GridParams {
         }
     }
 }
+
 impl GridParams {
     /// Blank new grid parameters from 2D Vector. Use [`textgrid`] macro here.
     ///```
     /// let grid: = GridParams::new(textgrid![["widget 1", "widget 2"], ["widget 3", "widget 4"]]);
     /// ```
     /// This will create layout like this:
-    /// 
+    ///
     ///|   Grid    |     1      |     2      |
     ///|-----------|------------|------------|
     ///|   **1**   | -widget 1- | -widget 3- |
     ///|   **2**   | -widget 2- | -widget 4- |
-    pub fn new (grid: &Vec<Vec<String>>) -> GridParams {
+    pub fn new(grid: &Vec<Vec<String>>) -> GridParams {
         GridParams {
             grid: grid.clone(),
             ..Default::default()
         }
     }
-    
+
     /// Grid parameters set to a custom relative height
-    pub fn with_anchor (mut self, anchor: Anchor) -> GridParams {
+    pub fn with_anchor(mut self, anchor: Anchor) -> GridParams {
         self.anchor = anchor;
         self
     }
 
     /// Grid parameters set to a custom relative width
-    pub fn with_width (mut self, width: f32) -> GridParams {
+    pub fn with_width(mut self, width: f32) -> GridParams {
         self.width_relative = width;
         self
     }
     /// Grid parameters set to a custom relative height
-    pub fn with_height (mut self, height: f32) -> GridParams {
+    pub fn with_height(mut self, height: f32) -> GridParams {
         self.height_relative = height;
         self
     }
 
     /// Grid parameters set to a custom relative gap width
-    pub fn with_width_gap (mut self, width: f32) -> GridParams {
+    pub fn with_width_gap(mut self, width: f32) -> GridParams {
         self.gap_relative.x = width;
         self
     }
     /// Grid parameters set to a custom relative gap height
-    pub fn with_height_gap (mut self, height: f32) -> GridParams {
+    pub fn with_height_gap(mut self, height: f32) -> GridParams {
         self.gap_relative.y = height;
         self
     }
 
     /// Grid parameters with enabled/disabled width border gap
-    pub fn with_width_gap_border (mut self, enable: bool) -> GridParams {
+    pub fn with_width_gap_border(mut self, enable: bool) -> GridParams {
         self.width_border_gap = enable;
         self
     }
     /// Grid parameters with enabled/disabled height border gap
-    pub fn with_height_gap_border (mut self, enable: bool) -> GridParams {
+    pub fn with_height_gap_border(mut self, enable: bool) -> GridParams {
         self.height_border_gap = enable;
         self
     }
-
-
 }
 
 /// ### Grid generate
 /// A complex function that will generate a grid of widgets. Can be used to make lists too.
-/// 
+///
 /// This function uses a widget to hold the grid, meaning no matter how many columns or rows there are, the grid widgets will have the same size.
 /// ### Arguments
 /// * `system` = UITree in which the grid should be made.
 /// * `path` = Path to a new widget that will hold the grid.
 /// * `relative` = Relative position of the grid in parenting widget.
 /// * `grid_params` = A struct holding all necessary info about the grid.
-pub fn grid_generate (system: &mut UITree, path: &String, relative: Vec2, grid_params: &GridParams) -> Result<Widget, String>{
+pub fn grid_generate(
+    system: &mut UITree,
+    path: &String,
+    relative: Vec2,
+    grid_params: &GridParams,
+) -> Result<Widget, String> {
     let xx = grid_params.grid.len();
     let yy = grid_params.grid[0].len();
 
     for i in 0..grid_params.grid.len() {
         if grid_params.grid[i].len() != yy {
-            return Result::Err(format!("Grid column {}(len: {}) has different length than column 0(len: {}). All columns should have the same length!", i, grid_params.grid[i].len(), xx))
+            return Result::Err(format!("Grid column {}(len: {}) has different length than column 0(len: {}). All columns should have the same length!", i, grid_params.grid[i].len(), xx));
         }
     }
 
     let total_width = grid_params.width_relative * xx as f32;
     let total_height = grid_params.height_relative * yy as f32;
 
-    let total_wgap = grid_params.gap_relative.x * (xx as f32 + if grid_params.width_border_gap == true {1.0} else {-1.0});
-    let total_hgap = grid_params.gap_relative.y * (yy as f32 + if grid_params.height_border_gap == true {1.0} else {-1.0});
+    let total_wgap = grid_params.gap_relative.x
+        * (xx as f32
+            + if grid_params.width_border_gap == true {
+                1.0
+            } else {
+                -1.0
+            });
+    let total_hgap = grid_params.gap_relative.y
+        * (yy as f32
+            + if grid_params.height_border_gap == true {
+                1.0
+            } else {
+                -1.0
+            });
 
     let container_width = total_width + total_wgap;
     let container_height = total_height + total_hgap;
@@ -141,38 +156,75 @@ pub fn grid_generate (system: &mut UITree, path: &String, relative: Vec2, grid_p
         Anchor::BottomLeft => Vec2::new(0.0, 1.0),
         Anchor::BottomRight => Vec2::new(1.0, 1.0),
 
-        Anchor::Custom( point ) => Vec2::new(point.x + 0.5, -point.y + 0.5),
+        Anchor::Custom(point) => Vec2::new(point.x + 0.5, -point.y + 0.5),
     };
 
-    let widget = match Widget::create(system, path, Layout::Window {
-        relative: Vec2::new(relative.x - anchor_offset.x*container_width, relative.y - anchor_offset.y*container_height),
-        width_relative: container_width,
-        height_relative: container_height,
-        ..Default::default()
-    }.pack()) {
-        Result::Ok (widget) => widget,
+    let widget = match Widget::create(
+        system,
+        path,
+        layout::Window {
+            relative: Vec2::new(
+                relative.x - anchor_offset.x * container_width,
+                relative.y - anchor_offset.y * container_height,
+            ),
+            width_relative: container_width,
+            height_relative: container_height,
+            ..Default::default()
+        }
+        .pack(),
+    ) {
+        Result::Ok(widget) => widget,
         Result::Err(message) => return Result::Err(message),
     };
 
-    let width = (100.0 * total_width/container_width)/xx as f32;
-    let height = (100.0 * total_height/container_height)/yy as f32;
+    let width = (100.0 * total_width / container_width) / xx as f32;
+    let height = (100.0 * total_height / container_height) / yy as f32;
 
-    let wgap = (100.0 * total_wgap/container_width)/(xx as f32 + if grid_params.width_border_gap == true {1.0} else {0.0});
-    let hgap = (100.0 * total_hgap/container_height)/(yy as f32 + if grid_params.height_border_gap == true {1.0} else {0.0});
+    let wgap = (100.0 * total_wgap / container_width)
+        / (xx as f32
+            + if grid_params.width_border_gap == true {
+                1.0
+            } else {
+                0.0
+            });
+    let hgap = (100.0 * total_hgap / container_height)
+        / (yy as f32
+            + if grid_params.height_border_gap == true {
+                1.0
+            } else {
+                0.0
+            });
 
     for x in 0..xx {
         for y in 0..yy {
-            match Widget::create(system, &widget.end(&grid_params.grid[x][y]), Layout::Window {
-                relative: Vec2::new(
-                    width*x as f32 + wgap*x as f32 + if grid_params.width_border_gap == true {wgap} else {0.0},
-                    height*y as f32 + hgap*y as f32 + if grid_params.height_border_gap == true {hgap} else {0.0},
-                ),
-                width_relative: width,
-                height_relative: height,
-                ..Default::default()
-            }.pack()) {
-                    Result::Ok (..) => (),
-                    Result::Err(message) => return Result::Err(message),
+            match Widget::create(
+                system,
+                &widget.end(&grid_params.grid[x][y]),
+                layout::Window {
+                    relative: Vec2::new(
+                        width * x as f32
+                            + wgap * x as f32
+                            + if grid_params.width_border_gap == true {
+                                wgap
+                            } else {
+                                0.0
+                            },
+                        height * y as f32
+                            + hgap * y as f32
+                            + if grid_params.height_border_gap == true {
+                                hgap
+                            } else {
+                                0.0
+                            },
+                    ),
+                    width_relative: width,
+                    height_relative: height,
+                    ..Default::default()
+                }
+                .pack(),
+            ) {
+                Result::Ok(..) => (),
+                Result::Err(message) => return Result::Err(message),
             };
         }
     }
@@ -181,56 +233,100 @@ pub fn grid_generate (system: &mut UITree, path: &String, relative: Vec2, grid_p
 
 /// ### Grid generate inside
 /// A complex function that will generate a grid of widgets. Can be used to make lists too.
-/// 
+///
 /// This function generates the grid inside of given widget, meaning with more columns and rows, the size of grid widgets will decrease.
 /// ### Arguments
 /// * `system` = UITree in which the grid should be made.
 /// * `widget` = The widget in which the grid should be made.
 /// * `grid_params` = A struct holding all necessary info about the grid.
-pub fn grid_generate_inside (system: &mut UITree, widget: &Widget, grid_params: &GridParams) -> Result<(), String>{
+pub fn grid_generate_inside(
+    system: &mut UITree,
+    widget: &Widget,
+    grid_params: &GridParams,
+) -> Result<(), String> {
     let xx = grid_params.grid.len();
     let yy = grid_params.grid[0].len();
-    
+
     for i in 0..grid_params.grid.len() {
         if grid_params.grid[i].len() != yy {
-            return Result::Err(format!("Grid column {}(len: {}) has different length than column 0(len: {}). All columns should have the same length!", i, grid_params.grid[i].len(), yy))
+            return Result::Err(format!("Grid column {}(len: {}) has different length than column 0(len: {}). All columns should have the same length!", i, grid_params.grid[i].len(), yy));
         }
     }
 
     let total_width = grid_params.width_relative * xx as f32;
     let total_height = grid_params.height_relative * yy as f32;
 
-    let total_wgap = grid_params.gap_relative.x * (xx as f32 + if grid_params.width_border_gap == true {1.0} else {-1.0});
-    let total_hgap = grid_params.gap_relative.y * (yy as f32 + if grid_params.height_border_gap == true {1.0} else {-1.0});
+    let total_wgap = grid_params.gap_relative.x
+        * (xx as f32
+            + if grid_params.width_border_gap == true {
+                1.0
+            } else {
+                -1.0
+            });
+    let total_hgap = grid_params.gap_relative.y
+        * (yy as f32
+            + if grid_params.height_border_gap == true {
+                1.0
+            } else {
+                -1.0
+            });
 
     let container_width = total_width + total_wgap;
     let container_height = total_height + total_hgap;
 
-    let width = (100.0 * total_width/container_width)/xx as f32;
-    let height = (100.0 * total_height/container_height)/yy as f32;
+    let width = (100.0 * total_width / container_width) / xx as f32;
+    let height = (100.0 * total_height / container_height) / yy as f32;
 
-    let wgap = (100.0 * total_wgap/container_width)/(xx as f32 + if grid_params.width_border_gap == true {1.0} else {0.0});
-    let hgap = (100.0 * total_hgap/container_height)/(yy as f32 + if grid_params.height_border_gap == true {1.0} else {0.0});
+    let wgap = (100.0 * total_wgap / container_width)
+        / (xx as f32
+            + if grid_params.width_border_gap == true {
+                1.0
+            } else {
+                0.0
+            });
+    let hgap = (100.0 * total_hgap / container_height)
+        / (yy as f32
+            + if grid_params.height_border_gap == true {
+                1.0
+            } else {
+                0.0
+            });
 
     for x in 0..xx {
-        for y in 0..yy{
-            match Widget::create(system, &widget.end(&grid_params.grid[x][y]), Layout::Window {
-                relative: Vec2::new(
-                    width*x as f32 + wgap*x as f32 + if grid_params.width_border_gap == true {wgap} else {0.0},
-                    height*y as f32 + hgap*y as f32 + if grid_params.height_border_gap == true {hgap} else {0.0},
-                ),
-                width_relative: width,
-                height_relative: height,
-                ..Default::default()
-            }.pack()) {
-                    Result::Ok (..) => (),
-                    Result::Err(message) => return Result::Err(message),
+        for y in 0..yy {
+            match Widget::create(
+                system,
+                &widget.end(&grid_params.grid[x][y]),
+                layout::Window {
+                    relative: Vec2::new(
+                        width * x as f32
+                            + wgap * x as f32
+                            + if grid_params.width_border_gap == true {
+                                wgap
+                            } else {
+                                0.0
+                            },
+                        height * y as f32
+                            + hgap * y as f32
+                            + if grid_params.height_border_gap == true {
+                                hgap
+                            } else {
+                                0.0
+                            },
+                    ),
+                    width_relative: width,
+                    height_relative: height,
+                    ..Default::default()
+                }
+                .pack(),
+            ) {
+                Result::Ok(..) => (),
+                Result::Err(message) => return Result::Err(message),
             };
         }
     }
     Result::Ok(())
 }
-
 
 /// ## Text Row
 /// Attempts to construct 1D vector from given elements, useful when you don't want to type .to_string() every time.
@@ -261,4 +357,3 @@ macro_rules! textgrid {
         ]
     };
 }
-
