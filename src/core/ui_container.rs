@@ -10,7 +10,7 @@ use bevy::prelude::Vec2;
 /// * [`Window`] = used for pop-up display.
 /// * [`Relative`] = used as the standart layout.
 /// * [`Solid`] = used for holding aspect ratio.
-pub mod Layout {
+pub mod layout {
     use super::{LayoutPackage, SolidScale};
     use bevy::prelude::Vec2;
 
@@ -270,28 +270,28 @@ pub enum SolidScale {
 /// * [`Layout::Solid`]
 #[derive(Clone, Debug, PartialEq)]
 pub enum LayoutPackage {
-    Window(Layout::Window),
-    Relative(Layout::Relative),
-    Solid(Layout::Solid),
+    Window(layout::Window),
+    Relative(layout::Relative),
+    Solid(layout::Solid),
 }
 
 impl LayoutPackage {
     /// Unwrap package into `&Window` layout, panic if this is not window.
-    pub fn expect_window_ref(&self) -> &Layout::Window {
+    pub fn expect_window_ref(&self) -> &layout::Window {
         match self {
             LayoutPackage::Window(window) => window,
             _ => panic!("Window layout was expected!"),
         }
     }
     /// Unwrap package into `&Relative` layout, panic if this is not window.
-    pub fn expect_relative_ref(&self) -> &Layout::Relative {
+    pub fn expect_relative_ref(&self) -> &layout::Relative {
         match self {
             LayoutPackage::Relative(relative) => relative,
             _ => panic!("Relative layout was expected!"),
         }
     }
     /// Unwrap package into `&Solid` layout, panic if this is not window.
-    pub fn expect_solid_ref(&self) -> &Layout::Solid {
+    pub fn expect_solid_ref(&self) -> &layout::Solid {
         match self {
             LayoutPackage::Solid(solid) => solid,
             _ => panic!("Solid layout was expected!"),
@@ -299,21 +299,21 @@ impl LayoutPackage {
     }
 
     /// Unwrap package into `&Window` layout, panic if this is not window.
-    pub fn expect_window_mut(&mut self) -> &mut Layout::Window {
+    pub fn expect_window_mut(&mut self) -> &mut layout::Window {
         match self {
             LayoutPackage::Window(window) => window,
             _ => panic!("Window layout was expected!"),
         }
     }
     /// Unwrap package into `&Relative` layout, panic if this is not window.
-    pub fn expect_relative_mut(&mut self) -> &mut Layout::Relative {
+    pub fn expect_relative_mut(&mut self) -> &mut layout::Relative {
         match self {
             LayoutPackage::Relative(relative) => relative,
             _ => panic!("Relative layout was expected!"),
         }
     }
     /// Unwrap package into `&Solid` layout, panic if this is not window.
-    pub fn expect_solid_mut(&mut self) -> &mut Layout::Solid {
+    pub fn expect_solid_mut(&mut self) -> &mut layout::Solid {
         match self {
             LayoutPackage::Solid(solid) => solid,
             _ => panic!("Solid layout was expected!"),
@@ -323,7 +323,7 @@ impl LayoutPackage {
 
 impl Default for LayoutPackage {
     fn default() -> Self {
-        LayoutPackage::Relative(Layout::Relative::default())
+        LayoutPackage::Relative(layout::Relative::default())
     }
 }
 
@@ -390,7 +390,7 @@ impl Container {
             position_layout: LayoutPackage::default(),
         }
     }
-    
+
     pub(super) fn calculate(&mut self, point: Vec2, width: f32, height: f32) {
         let values = match &self.position_layout {
             LayoutPackage::Window(container) => container.calculate(point, width, height),

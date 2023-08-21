@@ -7,7 +7,7 @@ pub(super) use super::general::split_last;
 pub(super) use ahash::AHashMap as HashMap;
 
 //# CONTAINERS
-pub use super::ui_container::Layout;
+pub use super::ui_container::layout;
 pub use super::ui_container::LayoutPackage;
 pub use super::ui_container::SolidScale;
 

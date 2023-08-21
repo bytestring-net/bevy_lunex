@@ -30,7 +30,7 @@ impl UITree {
         //let mut branch = Branch::new(0.0, true, "ROOT", "".to_string());
         let mut branch = Branch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
         branch.container.layout_set(
-            Layout::Relative {
+            layout::Relative {
                 relative_1: Vec2 { x: 0.0, y: 0.0 },
                 relative_2: Vec2 { x: 100.0, y: 100.0 },
                 ..Default::default()
