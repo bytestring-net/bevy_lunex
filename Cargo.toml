@@ -6,5 +6,5 @@ edition = "2021"
 
 [dependencies]
 ahash = "0.8.3"
-bevy = { git = "https://github.com/idedary/bevy", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
+bevy = { git = "https://github.com/bevyengine/bevy", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
 colored = "2.0.0"
