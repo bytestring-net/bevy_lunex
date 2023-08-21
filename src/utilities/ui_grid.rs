@@ -1,7 +1,7 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::thiserror::Error};
 use bevy::sprite::Anchor;
 
-use crate::{UiTree, Widget, layout};
+use crate::{UiTree, Widget, layout, BranchError};
 
 // ===========================================================
 // === GRID GENERATION ===
@@ -103,6 +103,18 @@ impl GridParams {
     }
 }
 
+#[derive(Debug, Error)]
+pub enum GridError {
+    #[error("Grid column {c1:} (len: {len_c1:}) has a different length to column 0 (len: {len_c0:})")]
+    Format {
+        c1: usize,
+        len_c1: usize,
+        len_c0: usize,
+    },
+    #[error("branch error: {0:}")]
+    Branch(BranchError),
+}
+
 /// ### Grid generate
 /// 
 /// A complex function that will generate a grid of widgets. Can be used to make lists too.
@@ -118,13 +130,13 @@ pub fn grid_generate(
     path: &String,
     relative: Vec2,
     grid_params: &GridParams,
-) -> Result<Widget, String> {
+) -> Result<Widget, GridError> {
     let xx = grid_params.grid.len();
     let yy = grid_params.grid[0].len();
 
     for i in 0..grid_params.grid.len() {
         if grid_params.grid[i].len() != yy {
-            return Result::Err(format!("Grid column {}(len: {}) has different length than column 0(len: {}). All columns should have the same length!", i, grid_params.grid[i].len(), xx));
+            return Err(GridError::Format { c1: i, len_c1: grid_params.grid[i].len(), len_c0: xx });
         }
     }
 
@@ -180,7 +192,7 @@ pub fn grid_generate(
         .pack(),
     ) {
         Result::Ok(widget) => widget,
-        Result::Err(message) => return Result::Err(message),
+        Result::Err(e) => return Result::Err(GridError::Branch(e)),
     };
 
     let width = (100.0 * total_width / container_width) / xx as f32;
@@ -229,8 +241,8 @@ pub fn grid_generate(
                 }
                 .pack(),
             ) {
-                Result::Ok(..) => (),
-                Result::Err(message) => return Result::Err(message),
+                Result::Ok(_) => (),
+                Result::Err(e) => return Result::Err(GridError::Branch(e)),
             };
         }
     }
@@ -249,13 +261,13 @@ pub fn grid_generate_inside(
     system: &mut UiTree,
     widget: &Widget,
     grid_params: &GridParams,
-) -> Result<(), String> {
+) -> Result<(), GridError> {
     let xx = grid_params.grid.len();
     let yy = grid_params.grid[0].len();
 
     for i in 0..grid_params.grid.len() {
         if grid_params.grid[i].len() != yy {
-            return Result::Err(format!("Grid column {}(len: {}) has different length than column 0(len: {}). All columns should have the same length!", i, grid_params.grid[i].len(), yy));
+            return Result::Err(GridError::Format { c1: i, len_c1: grid_params.grid[i].len(), len_c0: yy });
         }
     }
 
@@ -326,8 +338,8 @@ pub fn grid_generate_inside(
                 }
                 .pack(),
             ) {
-                Result::Ok(..) => (),
-                Result::Err(message) => return Result::Err(message),
+                Result::Ok(_) => (),
+                Result::Err(e) => return Result::Err(GridError::Branch(e)),
             };
         }
     }

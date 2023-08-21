@@ -7,6 +7,6 @@ pub use core::{
         AsLunexVec2,
     },
     ui_container::layout,
-    ui_core::UiTree,
+    ui_core::{UiTree, BranchError},
     widget::Widget,
 };

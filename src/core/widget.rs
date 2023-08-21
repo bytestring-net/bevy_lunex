@@ -1,7 +1,10 @@
+use crate::BranchError;
+
 use super::export::*;
 use super::general::split_last;
 use super::ui_core::Branch;
 use bevy::prelude::*;
+use bevy::utils::thiserror::Error;
 
 // ===========================================================
 // === MAIN WIDGET STRUCT ===
@@ -10,6 +13,13 @@ use bevy::prelude::*;
 pub struct Widget {
     path: String,
     name: String,
+}
+
+#[derive(Debug, Error)]
+#[error("could not find '{path:}': {cause:}")]
+pub struct FetchError {
+    path: String,
+    cause: BranchError,
 }
 
 impl Widget {
@@ -112,7 +122,7 @@ impl Widget {
     /// let button: &Branch = menu_pointer.fetch(&system, "Button").unwrap(); //You can locate sub-widgets
     ///
     /// ```
-    pub fn fetch<'a>(&'a self, system: &'a UiTree, path: &str) -> Result<&Branch, String> {
+    pub fn fetch<'a>(&'a self, system: &'a UiTree, path: &str) -> Result<&Branch, FetchError> {
         let mut extra_path = String::from(&self.path);
         if !path.is_empty() {
             extra_path += "/";
@@ -120,10 +130,10 @@ impl Widget {
         }
         match system.root_get().borrow_linked_checked(&extra_path) {
             Ok(branch) => Result::Ok(branch),
-            Err(message) => Err(format!(
-                "Fetch failed, could not find '{}' because: {}",
-                &extra_path, message
-            )),
+            Err(cause) => Err(FetchError {
+                path: extra_path,
+                cause,
+            }),
         }
     }
 
@@ -150,7 +160,7 @@ impl Widget {
         &'a self,
         system: &'a mut UiTree,
         path: &str,
-    ) -> Result<&mut Branch, String> {
+    ) -> Result<&mut Branch, FetchError> {
         let mut extra_path = String::from(&self.path);
         if !path.is_empty() {
             extra_path += "/";
@@ -158,10 +168,10 @@ impl Widget {
         }
         match system.root_get_mut().borrow_linked_checked_mut(&extra_path) {
             Ok(branch) => Result::Ok(branch),
-            Err(message) => Err(format!(
-                "Fetch failed, could not find '{}' because: {}",
-                &extra_path, message
-            )),
+            Err(cause) => Err(FetchError {
+                path: extra_path,
+                cause,
+            }),
         }
     }
 
@@ -169,10 +179,10 @@ impl Widget {
         &'a self,
         system: &'a UiTree,
         path: &str,
-    ) -> Result<&Option<Data>, String> {
+    ) -> Result<&Option<Data>, FetchError> {
         match self.fetch(system, path) {
             Ok(branch) => Result::Ok(branch.data_get()),
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
@@ -180,10 +190,10 @@ impl Widget {
         &'a self,
         system: &'a mut UiTree,
         path: &str,
-    ) -> Result<&mut Option<Data>, String> {
+    ) -> Result<&mut Option<Data>, FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => Result::Ok(branch.data_get_mut()),
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
@@ -193,7 +203,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: f32,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -210,7 +220,7 @@ impl Widget {
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
@@ -220,7 +230,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: String,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -237,7 +247,7 @@ impl Widget {
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
@@ -247,7 +257,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: bool,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -264,7 +274,7 @@ impl Widget {
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
@@ -274,7 +284,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: Vec2,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -291,7 +301,7 @@ impl Widget {
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
@@ -301,7 +311,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: Vec3,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -318,7 +328,7 @@ impl Widget {
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
@@ -328,7 +338,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: Vec4,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -345,7 +355,7 @@ impl Widget {
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
@@ -383,7 +393,7 @@ impl Widget {
         system: &mut UiTree,
         path: &str,
         position: LayoutPackage,
-    ) -> Result<Widget, String> {
+    ) -> Result<Widget, BranchError> {
         let str_list: Vec<&str> = path.split('/').collect();
         let str_list_len = str_list.len();
 
@@ -431,7 +441,7 @@ impl Widget {
                     widget.fetch_mut(system, "").unwrap().set_visibility(false);
                     Result::Ok(widget)
                 }
-                Result::Err(message) => Result::Err(message),
+                Result::Err(e) => Result::Err(e),
             }
 
         //# Create branch in branch
@@ -478,7 +488,7 @@ impl Widget {
                         }
                     }
                 }
-                Result::Err(message) => Result::Err(message),
+                Result::Err(e) => Result::Err(e.cause),
             }
         }
     }

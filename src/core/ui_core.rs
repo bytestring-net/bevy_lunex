@@ -1,6 +1,9 @@
+use std::num::ParseIntError;
+
 use super::export::*;
 use super::ui_container::{Container, LayoutPackage};
 use bevy::prelude::*;
+use bevy::utils::thiserror::Error;
 use colored::Colorize;
 
 const ROOT_STARTING_DEPTH: f32 = 100.0;
@@ -71,7 +74,7 @@ impl UiTree {
         self.branch.collect_paths()
     }
 
-    pub fn merge(&mut self, tree: UiTree) -> Result<(), String> {
+    pub fn merge(&mut self, tree: UiTree) -> Result<(), BranchError> {
         self.branch.merge(tree.branch)
     }
 
@@ -125,6 +128,24 @@ pub struct Branch {
     //# RECURSION =======
     inventory: HashMap<usize, Branch>,
     shortcuts: HashMap<String, String>,
+}
+
+#[derive(Debug, Error)]
+pub enum BranchError {
+    #[error("duplicate name '{0:}'")]
+    DuplicateName(String),
+    #[error("name '{0:}' already in use")]
+    NameInUse(String),
+    #[error("branch already contains name '{0:}'")]
+    AlreadyContainsPath(String),
+    #[error("no shortcut '{0:}'")]
+    NoShortcut(String),
+    #[error("branch with ID #{0:} doesn't exist")]
+    NoBranch(usize),
+    #[error("invalid branch ID: {0:}")]
+    InvalidId(ParseIntError),
+    #[error("cannot borrow branch with no name")]
+    BorrowNoName,
 }
 
 impl Branch {
@@ -259,24 +280,25 @@ impl Branch {
     /// existing_tree.merge(merged_tree)?;     //ID changed so we have no way of accessing the widget!!!
     /// ```
     ///
-    pub fn merge(&mut self, branch: Branch) -> Result<(), String> {
+    pub fn merge(&mut self, branch: Branch) -> Result<(), BranchError> {
         // Check if there is a name collision
         for name in branch.shortcuts.keys() {
             if self.shortcuts.contains_key(name) {
-                return Result::Err(format!("Cannot merge! Duplicate name found: {}!", name));
+                return Err(BranchError::DuplicateName(name.into()));
             }
         }
 
-        // 1. Check if all paths to be merged are free to use
-        for id in branch.inventory.keys() {
-            println!("Id: {}", id);
-        }
+        // commented out because we shouldn't be printing random debug stuff
+        // // 1. Check if all paths to be merged are free to use
+        // for id in branch.inventory.keys() {
+        //     println!("Id: {}", id);
+        // }
 
-        for (name, path) in branch.shortcuts.iter() {
-            println!("name: {} = path: {}", name, path);
-        }
+        // for (name, path) in branch.shortcuts.iter() {
+        //     println!("name: {} = path: {}", name, path);
+        // }
 
-        Result::Ok(())
+        Ok(())
         // 2. Merge them
     }
 
@@ -516,49 +538,49 @@ impl Branch {
         &mut self,
         name: &str,
         position: LayoutPackage,
-    ) -> Result<String, String> {
+    ) -> Result<String, BranchError> {
         if name.is_empty() {
-            Result::Ok(self.create_simple("", position))
+            Ok(self.create_simple("", position))
         } else {
             if !self.shortcuts.contains_key(name) {
                 let path = self.create_simple(name, position);
                 self.shortcuts.insert(name.to_string(), path);
-                Result::Ok(name.to_string())
+                Ok(name.into())
             } else {
-                Result::Err(format!("The name '{}' is already in use!", name))
+                Err(BranchError::NameInUse(name.into()))
             }
         }
     }
 
-    pub(super) fn register_path(&mut self, name: String, path: String) -> Result<(), String> {
+    pub(super) fn register_path(&mut self, name: String, path: String) -> Result<(), BranchError> {
         //This registers ABSOLUTE PATH for a key
         if self.shortcuts.contains_key(&name) {
-            return Result::Err(format!("Branch already contains a path for name {}", &name));
+            return Err(BranchError::AlreadyContainsPath(name));
         }
         self.shortcuts.insert(name, path);
-        Result::Ok(())
+        Ok(())
     }
 
-    pub(super) fn translate_simple(&self, name: &str) -> Result<String, String> {
+    pub(super) fn translate_simple(&self, name: &str) -> Result<String, BranchError> {
         //This can take ONLY RELATIVE and return ABSOLUTE
         match self.shortcuts.get(name) {
             Some(absolute) => Result::Ok(absolute.to_string()),
-            None => Result::Err(format!("There is no shortcut for '{}'!", &name)),
+            None => Err(BranchError::NoShortcut(name.into())),
         }
     }
 
-    pub(super) fn borrow_simple(&self, path: &str) -> Result<&Branch, String> {
+    pub(super) fn borrow_simple(&self, path: &str) -> Result<&Branch, BranchError> {
         //This can take ONLY ABSOLUTE and return reference
         match str::parse::<usize>(&path[1..]) {
-            Result::Ok(id) => match self.inventory.get(&id) {
-                Option::Some(branch) => Result::Ok(branch),
-                Option::None => Result::Err(format!("Branch with id '#{}' doesn't exist!", &id)),
+            Ok(id) => match self.inventory.get(&id) {
+                Some(branch) => Result::Ok(branch),
+                None => Err(BranchError::NoBranch(id)),
             },
-            Result::Err(..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
+            Err(e) => Err(BranchError::InvalidId(e)),
         }
     }
 
-    pub(super) fn borrow_simple_checked(&self, name: &str) -> Result<&Branch, String> {
+    pub(super) fn borrow_simple_checked(&self, name: &str) -> Result<&Branch, BranchError> {
         //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
             if is_numerical_id(name) {
@@ -566,37 +588,37 @@ impl Branch {
             } else {
                 match self.translate_simple(name) {
                     Ok(path) => self.borrow_linked_checked(&path),
-                    Err(message) => Result::Err(message),
+                    Err(e) => Err(e),
                 }
             }
         } else {
-            Result::Err("Cannot borrow branch with no name!".to_string())
+            Err(BranchError::BorrowNoName)
         }
     }
 
-    pub(super) fn borrow_linked_checked(&self, path: &str) -> Result<&Branch, String> {
+    pub(super) fn borrow_linked_checked(&self, path: &str) -> Result<&Branch, BranchError> {
         //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked(path),
             Some((branch, remaining_path)) => match self.borrow_simple_checked(branch) {
                 Ok(borrowed_widget) => borrowed_widget.borrow_linked_checked(remaining_path),
-                Err(message) => Result::Err(message),
+                Err(e) => Err(e),
             },
         }
     }
 
-    pub(super) fn borrow_simple_mut(&mut self, path: &str) -> Result<&mut Branch, String> {
+    pub(super) fn borrow_simple_mut(&mut self, path: &str) -> Result<&mut Branch, BranchError> {
         //This can take ONLY ABSOLUTE and return reference
         match str::parse::<usize>(&path[1..]) {
-            Result::Ok(id) => match self.inventory.get_mut(&id) {
-                Option::Some(branch) => Result::Ok(branch),
-                Option::None => Result::Err(format!("Branch with id '#{}' doesn't exist!", &id)),
+            Ok(id) => match self.inventory.get_mut(&id) {
+                Some(branch) => Ok(branch),
+                None => Err(BranchError::NoBranch(id)),
             },
-            Result::Err(..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
+            Err(e) => Err(BranchError::InvalidId(e)),
         }
     }
 
-    pub(super) fn borrow_simple_checked_mut(&mut self, name: &str) -> Result<&mut Branch, String> {
+    pub(super) fn borrow_simple_checked_mut(&mut self, name: &str) -> Result<&mut Branch, BranchError> {
         //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
             if is_numerical_id(name) {
@@ -604,21 +626,21 @@ impl Branch {
             } else {
                 match self.translate_simple(name) {
                     Ok(path) => self.borrow_linked_checked_mut(&path),
-                    Err(message) => Result::Err(message),
+                    Err(e) => Err(e),
                 }
             }
         } else {
-            Result::Err("Cannot borrow branch with no name!".to_string())
+            Err(BranchError::BorrowNoName)
         }
     }
 
-    pub(super) fn borrow_linked_checked_mut(&mut self, path: &str) -> Result<&mut Branch, String> {
+    pub(super) fn borrow_linked_checked_mut(&mut self, path: &str) -> Result<&mut Branch, BranchError> {
         //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked_mut(path),
             Some((branch, remaining_path)) => match self.borrow_simple_checked_mut(branch) {
                 Ok(borrowed_widget) => borrowed_widget.borrow_linked_checked_mut(remaining_path),
-                Err(message) => Result::Err(message),
+                Err(e) => Err(e),
             },
         }
     }
