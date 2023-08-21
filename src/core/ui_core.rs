@@ -261,16 +261,14 @@ impl Branch {
     ///
     pub fn merge(&mut self, branch: Branch) -> Result<(), String> {
         // Check if there is a name collision
-        for (name, path) in branch.shortcuts.iter() {
+        for name in branch.shortcuts.keys() {
             if self.shortcuts.contains_key(name) {
                 return Result::Err(format!("Cannot merge! Duplicate name found: {}!", name));
             }
         }
 
-        let new_shortcuts: HashMap<String, String> = HashMap::new();
-
         // 1. Check if all paths to be merged are free to use
-        for (id, branch) in branch.inventory.iter() {
+        for id in branch.inventory.keys() {
             println!("Id: {}", id);
         }
 
