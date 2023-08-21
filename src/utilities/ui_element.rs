@@ -1,17 +1,15 @@
-use bevy::prelude::*;
 use crate::prelude::*;
-
+use bevy::prelude::*;
 
 // ===========================================================
 // === ELEMENT ===
-
 
 /// ### Element
 /// Struct holding all necessary information for binding an entity to a [`Widget`].
 /// ### Fields
 /// * `relative` = position in % relative to the widget.
 /// * `absolute` = position in pixels, always the same.
-/// * `boundary` = width and height, for example image dimensions or text size. 
+/// * `boundary` = width and height, for example image dimensions or text size.
 /// * `scale` = size of the element in % of parent widget.
 /// * `depth` = local depth of the element, starts at 0.0, usefull when you have 2 elements overlapping (image and text)
 /// * `width` = optional, will force the width of the element in % of parent widget.
@@ -25,7 +23,7 @@ pub struct Element {
     /// Position in pixels, always the same.
     pub absolute: Vec2,
     /// ### Boundary
-    /// Width and height, for example image dimensions or text size. 
+    /// Width and height, for example image dimensions or text size.
     pub boundary: Vec2,
     /// ### Scale
     /// Size of the element in % of parent widget.
@@ -97,7 +95,12 @@ impl ImageElementBundle {
     /// * `image_params` = dictates how the element should behave and be located.
     /// * `texture` = image handle, you can use `asset_server.load("")`.
     /// * `image_dimension` = `Vec2` with width and height dimensions of the texture.
-    pub fn new (widget: Widget, image_params: &ImageParams, texture: Handle<Image>, image_dimensions: Vec2) -> ImageElementBundle {
+    pub fn new(
+        widget: Widget,
+        image_params: &ImageParams,
+        texture: Handle<Image>,
+        image_dimensions: Vec2,
+    ) -> ImageElementBundle {
         ImageElementBundle {
             widget,
             element: Element {
@@ -126,7 +129,7 @@ impl ImageElementBundle {
 /// ### Fields
 /// * `relative` = position in % relative to the widget.
 /// * `absolute` = position in pixels, always the same.
-/// * `anchor` = which corner of the image is origin (0.0). 
+/// * `anchor` = which corner of the image is origin (0.0).
 /// * `scale` = size of the image in % of parent widget.
 /// * `depth` = local depth of the image, starts at 0.0, usefull when you have 2 elements overlapping (image and text)
 /// * `width` = optional, will force the width of the image in % of parent widget.
@@ -140,7 +143,7 @@ pub struct ImageParams {
     /// Position in pixels, always the same.
     pub absolute: Vec2,
     /// ### Anchor
-    /// Which corner of the image is origin (0.0). 
+    /// Which corner of the image is origin (0.0).
     pub anchor: bevy::sprite::Anchor,
     /// ### Scale
     /// Size of the image in % of parent widget.
@@ -155,6 +158,7 @@ pub struct ImageParams {
     /// Optional, will force the height of the image in % of parent widget.
     pub height: Option<f32>,
 }
+
 impl Default for ImageParams {
     fn default() -> Self {
         ImageParams {
@@ -168,14 +172,14 @@ impl Default for ImageParams {
         }
     }
 }
+
 impl ImageParams {
     /// Text parameters set to a custom height
-    pub fn with_depth (mut self, depth: f32) -> ImageParams {
+    pub fn with_depth(mut self, depth: f32) -> ImageParams {
         self.depth = depth;
         self
     }
 }
-
 
 //# --------------------------------------------------------------------------------------------------------------
 
@@ -206,6 +210,7 @@ pub struct TextElementBundle {
     pub global_transform: GlobalTransform,
     pub computed_visibility: ComputedVisibility,
 }
+
 impl TextElementBundle {
     /// ### New
     /// Creates new [`TextElementBundle`] from given parameters.
@@ -213,7 +218,7 @@ impl TextElementBundle {
     /// * `widget` = widget to spawn element for.
     /// * `text_params` = dictates how the element should behave and be located.
     /// * `text` = the text you want to display.
-    pub fn new (widget: Widget, text_params: &TextParams, text: &str) -> TextElementBundle {
+    pub fn new(widget: Widget, text_params: &TextParams, text: &str) -> TextElementBundle {
         TextElementBundle {
             widget,
             element: Element {
@@ -226,7 +231,8 @@ impl TextElementBundle {
                 depth: text_params.depth,
                 ..Default::default()
             },
-            text: Text::from_section(text, text_params.style.clone()).with_alignment(text_params.alignment),
+            text: Text::from_section(text, text_params.style.clone())
+                .with_alignment(text_params.alignment),
             text_anchor: text_params.anchor.clone(),
             ..Default::default()
         }
@@ -245,7 +251,7 @@ impl TextElementBundle {
 /// * `absolute` = position in pixels, always the same.
 /// * `style` = [`TextStyle`] struct from Bevy.
 /// * `alignment` = where the text is aligned - left/center/right.
-/// * `anchor` = which corner of the text is origin (0.0). 
+/// * `anchor` = which corner of the text is origin (0.0).
 /// * `scale` = size of the text in % of parent widget.
 /// * `depth` = local depth of the text, starts at 0.0, usefull when you have 2 elements overlapping (image and text)
 /// * `width` = optional, will force the width of the text in % of parent widget.
@@ -265,7 +271,7 @@ pub struct TextParams {
     /// Where the text is aligned - left/center/right.
     pub alignment: TextAlignment,
     /// ### Anchor
-    /// Which corner of the text is origin (0.0). 
+    /// Which corner of the text is origin (0.0).
     pub anchor: bevy::sprite::Anchor,
     /// ### Scale
     /// Size of the text in % of parent widget.
@@ -280,6 +286,7 @@ pub struct TextParams {
     /// Optional, will force the height of the text in % of parent widget.
     pub height: Option<f32>,
 }
+
 impl Default for TextParams {
     fn default() -> Self {
         TextParams {
@@ -295,9 +302,10 @@ impl Default for TextParams {
         }
     }
 }
+
 impl TextParams {
     /// Text parameters set to top center position
-    pub fn topcenter () -> TextParams {
+    pub fn topcenter() -> TextParams {
         TextParams {
             relative: Vec2::new(50.0, 0.0),
             alignment: TextAlignment::Center,
@@ -306,7 +314,7 @@ impl TextParams {
         }
     }
     /// Text parameters set to top left position
-    pub fn topleft () -> TextParams {
+    pub fn topleft() -> TextParams {
         TextParams {
             relative: Vec2::new(0.0, 0.0),
             alignment: TextAlignment::Left,
@@ -315,7 +323,7 @@ impl TextParams {
         }
     }
     /// Text parameters set to top right position
-    pub fn topright () -> TextParams {
+    pub fn topright() -> TextParams {
         TextParams {
             relative: Vec2::new(100.0, 0.0),
             alignment: TextAlignment::Right,
@@ -325,7 +333,7 @@ impl TextParams {
     }
 
     /// Text parameters set to center position
-    pub fn center () -> TextParams {
+    pub fn center() -> TextParams {
         TextParams {
             relative: Vec2::new(50.0, 50.0),
             alignment: TextAlignment::Center,
@@ -334,7 +342,7 @@ impl TextParams {
         }
     }
     /// Text parameters set to center left position
-    pub fn centerleft () -> TextParams {
+    pub fn centerleft() -> TextParams {
         TextParams {
             relative: Vec2::new(0.0, 50.0),
             alignment: TextAlignment::Left,
@@ -343,7 +351,7 @@ impl TextParams {
         }
     }
     /// Text parameters set to center right position
-    pub fn centerright () -> TextParams {
+    pub fn centerright() -> TextParams {
         TextParams {
             relative: Vec2::new(100.0, 50.0),
             alignment: TextAlignment::Right,
@@ -351,9 +359,9 @@ impl TextParams {
             ..Default::default()
         }
     }
-    
+
     /// Text parameters set to bottom center position
-    pub fn bottomcenter () -> TextParams {
+    pub fn bottomcenter() -> TextParams {
         TextParams {
             relative: Vec2::new(50.0, 100.0),
             alignment: TextAlignment::Center,
@@ -362,7 +370,7 @@ impl TextParams {
         }
     }
     /// Text parameters set to bottom left position
-    pub fn bottomleft () -> TextParams {
+    pub fn bottomleft() -> TextParams {
         TextParams {
             relative: Vec2::new(0.0, 100.0),
             alignment: TextAlignment::Left,
@@ -371,7 +379,7 @@ impl TextParams {
         }
     }
     /// Text parameters set to bottom right position
-    pub fn bottomright () -> TextParams {
+    pub fn bottomright() -> TextParams {
         TextParams {
             relative: Vec2::new(100.0, 100.0),
             alignment: TextAlignment::Right,
@@ -379,40 +387,40 @@ impl TextParams {
             ..Default::default()
         }
     }
-    
+
     /// Text parameters set to a custom position
-    pub fn at (mut self, x: f32, y: f32) -> TextParams {
+    pub fn at(mut self, x: f32, y: f32) -> TextParams {
         self.relative = Vec2::new(x, y);
         self
     }
     /// Text parameters set to a custom x position
-    pub fn at_x (mut self, x: f32) -> TextParams {
+    pub fn at_x(mut self, x: f32) -> TextParams {
         self.relative.x = x;
         self
     }
     /// Text parameters set to a custom y position
-    pub fn at_y (mut self, y: f32) -> TextParams {
+    pub fn at_y(mut self, y: f32) -> TextParams {
         self.relative.y = y;
         self
     }
-    
+
     /// Text parameters set to a specific text style
-    pub fn styled (mut self, style: &TextStyle) -> TextParams {
+    pub fn styled(mut self, style: &TextStyle) -> TextParams {
         self.style = style.clone();
         self
     }
     /// Text parameters set to a custom scale
-    pub fn scaled (mut self, scale: f32) -> TextParams {
+    pub fn scaled(mut self, scale: f32) -> TextParams {
         self.scale = scale;
         self
     }
     /// Text parameters set to a custom width
-    pub fn with_width (mut self, width: f32) -> TextParams {
+    pub fn with_width(mut self, width: f32) -> TextParams {
         self.width = Option::Some(width);
         self
     }
     /// Text parameters set to a custom height
-    pub fn with_height (mut self, height: f32) -> TextParams {
+    pub fn with_height(mut self, height: f32) -> TextParams {
         self.height = Option::Some(height);
         self
     }
@@ -421,8 +429,7 @@ impl TextParams {
 /// ### Text size compute
 /// Simple and rough function to estimate boundary of a text.
 /// This function exists because there is currently not a nice way on how to get text boundary from Bevy internals.
-pub fn text_compute_size_simple (text: &str, font_size: f32) -> Vec2 {
-
+pub fn text_compute_size_simple(text: &str, font_size: f32) -> Vec2 {
     const SYMBOL_WIDTH_WEIGHT: f32 = 0.8 * 0.5;
     const SYMBOL_HEIGHT_WEIGHT: f32 = 1.2 * 0.5;
 
@@ -431,10 +438,15 @@ pub fn text_compute_size_simple (text: &str, font_size: f32) -> Vec2 {
     let list: Vec<&str> = text.split("/n").collect();
     for line in &list {
         let len = line.chars().count();
-        if len as f32 > width {width = len as f32}
+        if len as f32 > width {
+            width = len as f32
+        }
     }
 
-    Vec2::new(width * font_size * SYMBOL_WIDTH_WEIGHT, list.len() as f32 * font_size * SYMBOL_HEIGHT_WEIGHT)
+    Vec2::new(
+        width * font_size * SYMBOL_WIDTH_WEIGHT,
+        list.len() as f32 * font_size * SYMBOL_HEIGHT_WEIGHT,
+    )
 }
 
 //# --------------------------------------------------------------------------------------------------------------

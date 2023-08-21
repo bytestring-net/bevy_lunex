@@ -1,7 +1,7 @@
-use bevy::prelude::*;
-use colored::Colorize;
 use super::export::*;
 use super::ui_container::{Container, LayoutPackage};
+use bevy::prelude::*;
+use colored::Colorize;
 
 const ROOT_STARTING_DEPTH: f32 = 100.0;
 const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
@@ -12,27 +12,31 @@ const HIGHLIGHT_DEPTH_ADDED: f32 = 5.0;
 
 /// # UITree
 /// A tree-like data structure holding all UI layout data and information, similar to hierarchy.
-/// 
+///
 /// You can retrieve data from this structure using paths.
 /// * `settings`
 /// * `settings/display`
 /// * `settings/display/button_1`
-/// 
+///
 #[derive(Component, Default, Clone, Debug, PartialEq)]
 pub struct UITree {
     pub width: f32,
     pub height: f32,
     branch: Branch,
 }
+
 impl UITree {
-    pub fn new () -> UITree {
+    pub fn new() -> UITree {
         //let mut branch = Branch::new(0.0, true, "ROOT", "".to_string());
         let mut branch = Branch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
-        branch.container.layout_set(Layout::Relative {
-            relative_1: Vec2 { x: 0.0, y: 0.0 },
-            relative_2: Vec2 { x: 100.0, y: 100.0 },
-            ..Default::default()
-        }.pack());
+        branch.container.layout_set(
+            Layout::Relative {
+                relative_1: Vec2 { x: 0.0, y: 0.0 },
+                relative_2: Vec2 { x: 100.0, y: 100.0 },
+                ..Default::default()
+            }
+            .pack(),
+        );
 
         UITree {
             width: 0.0,
@@ -40,34 +44,41 @@ impl UITree {
             branch,
         }
     }
-    pub fn update (&mut self) {
-        self.branch.cascade_update_self(Vec2::default(), self.width, self.height);
+    pub fn update(&mut self) {
+        self.branch
+            .cascade_update_self(Vec2::default(), self.width, self.height);
     }
-    pub fn get_map (&self) -> String {
+    pub fn get_map(&self) -> String {
         let text = String::new();
-        format!("{}{}", "#ROOT".purple().bold().underline(), self.branch.cascade_map(text, 0))
+        format!(
+            "{}{}",
+            "#ROOT".purple().bold().underline(),
+            self.branch.cascade_map(text, 0)
+        )
     }
-    pub fn get_map_debug (&self) -> String {
+    pub fn get_map_debug(&self) -> String {
         let text = String::new();
-        format!("{}{}", "#ROOT".purple().bold().underline(), self.branch.cascade_map_debug(text, 0))
+        format!(
+            "{}{}",
+            "#ROOT".purple().bold().underline(),
+            self.branch.cascade_map_debug(text, 0)
+        )
     }
 
-    pub fn collect_paths (&self) -> Vec<String> {
+    pub fn collect_paths(&self) -> Vec<String> {
         self.branch.collect_paths()
     }
-    
-    pub fn merge (&mut self, tree: UITree) -> Result<(), String> {
+
+    pub fn merge(&mut self, tree: UITree) -> Result<(), String> {
         self.branch.merge(tree.branch)
     }
 
-
-    pub (in super) fn root_get (&self) -> & Branch {
+    pub(super) fn root_get(&self) -> &Branch {
         &self.branch
     }
-    pub (in super) fn root_get_mut (&mut self) -> &mut Branch {
+    pub(super) fn root_get_mut(&mut self) -> &mut Branch {
         &mut self.branch
     }
-    
 }
 
 pub fn hierarchy_update(mut query: Query<&mut UITree>, mut windows: Query<&mut Window>) {
@@ -80,13 +91,11 @@ pub fn hierarchy_update(mut query: Query<&mut UITree>, mut windows: Query<&mut W
     }
 }
 
-
 // ===========================================================
 // === BRANCH STRUCT ===
 
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct Branch {
-
     //# CACHING =======
     name: String,
     id: usize,
@@ -113,72 +122,79 @@ pub struct Branch {
     //# RECURSION =======
     inventory: HashMap<usize, Branch>,
     shortcuts: HashMap<String, String>,
-
 }
+
 impl Branch {
     //#USER EXPOSED CONTROL
 
     //Borrows
-    pub fn data_get (&self) -> &Option<Data> {                                                                
+    pub fn data_get(&self) -> &Option<Data> {
         &self.data
     }
-    pub fn data_get_mut (&mut self) -> &mut Option<Data> {                                                                
+    pub fn data_get_mut(&mut self) -> &mut Option<Data> {
         &mut self.data
     }
-    
-    pub fn layout_get (&self) -> &LayoutPackage {                                                                
+
+    pub fn layout_get(&self) -> &LayoutPackage {
         self.container.layout_get()
     }
-    pub fn layout_get_mut (&mut self) -> &mut LayoutPackage {                                                                
+    pub fn layout_get_mut(&mut self) -> &mut LayoutPackage {
         self.container.layout_get_mut()
     }
-    
-    pub fn container_get (&self) -> &Container {                                                                
+
+    pub fn container_get(&self) -> &Container {
         &self.container
     }
-    pub fn container_get_mut (&mut self) -> &mut Container {                                                                
+    pub fn container_get_mut(&mut self) -> &mut Container {
         &mut self.container
     }
 
     //Fn calls
-    pub fn get_name (&self) -> &String {
+    pub fn get_name(&self) -> &String {
         &self.name
     }
 
-    pub fn get_depth (&self) -> f32 {
-        if self.in_focus {self.level*LEVEL_DEPTH_DIFFERENCE + self.depth + HIGHLIGHT_DEPTH_ADDED} else {self.level*LEVEL_DEPTH_DIFFERENCE + self.depth}
+    pub fn get_depth(&self) -> f32 {
+        if self.in_focus {
+            self.level * LEVEL_DEPTH_DIFFERENCE + self.depth + HIGHLIGHT_DEPTH_ADDED
+        } else {
+            self.level * LEVEL_DEPTH_DIFFERENCE + self.depth
+        }
     }
-    pub fn set_depth (&mut self, depth: f32) {
+    pub fn set_depth(&mut self, depth: f32) {
         self.cascade_set_depth_self(depth);
     }
-    pub fn set_depth_self_only (&mut self, depth: f32) {
+    pub fn set_depth_self_only(&mut self, depth: f32) {
         self.cascade_set_depth(depth);
     }
-    
-    pub fn get_path (&self) -> String {
+
+    pub fn get_path(&self) -> String {
         if self.level == 0.0 {
             "".to_string()
-        } else if !self.path.is_empty(){
+        } else if !self.path.is_empty() {
             format!("{}/{}", self.path, self.name)
         } else {
             String::from(&self.name)
         }
     }
-    
-    pub fn get_focus (&self) -> bool {
+
+    pub fn get_focus(&self) -> bool {
         self.in_focus
     }
-    pub fn set_focus (&mut self, focus: bool) {
+
+    pub fn set_focus(&mut self, focus: bool) {
         self.in_focus = focus;
     }
 
-    pub fn is_visible (&self) -> bool {
+    pub fn is_visible(&self) -> bool {
         self.visible == true && self.parent_visible == true
     }
-    pub fn get_visibility (&self) -> bool {
+
+    pub fn get_visibility(&self) -> bool {
         self.visible
     }
-    pub fn set_visibility (&mut self, visible: bool) {
+
+    pub fn set_visibility(&mut self, visible: bool) {
         let old = self.is_visible();
         self.visible = visible;
         let new = self.is_visible();
@@ -187,16 +203,25 @@ impl Branch {
         }
     }
 
-    pub fn get_map (&self) -> String {
+    pub fn get_map(&self) -> String {
         let text = String::new();
-        format!("{}{}", self.name.purple().bold().underline(), self.cascade_map(text, 0))
-    }
-    pub fn get_map_debug (&self) -> String {
-        let text = String::new();
-        format!("{}{}", self.name.purple().bold().underline(), self.cascade_map_debug(text, 0))
+        format!(
+            "{}{}",
+            self.name.purple().bold().underline(),
+            self.cascade_map(text, 0)
+        )
     }
 
-    pub fn collect_paths (&self) -> Vec<String> {
+    pub fn get_map_debug(&self) -> String {
+        let text = String::new();
+        format!(
+            "{}{}",
+            self.name.purple().bold().underline(),
+            self.cascade_map_debug(text, 0)
+        )
+    }
+
+    pub fn collect_paths(&self) -> Vec<String> {
         let mut list = Vec::new();
         self.cascade_collect_paths(&mut list, "".to_string());
         list
@@ -204,41 +229,40 @@ impl Branch {
 
     /// # Merge
     /// This method will merge another branch into this branch. As long as there are no name collision, the merge will be succesfull.
-    /// 
+    ///
     /// ## Important!
     /// It is worth noting that internal IDs of the merged branches WILL change. That means if there are unnamed branches in the root of
     /// the merged branch, their paths will become invalid if the preserved branch is not empty.
-    /// 
+    ///
     /// To work around this, all branches located in the root of the merging MUST be named and accessed through their names!
     /// ```
     /// let mut existing_tree = UITree::new(); //Let's say it contains other widgets...
-    /// 
+    ///
     /// let mut merged_tree = UITree::new();    //This is blank new tree, so it's empty...
     /// let background = Widget::create(&mut merged_tree, "background", Layout::Solid::default().pack())?;  //It's first so ID is '0'
     /// let image = Widget::create(&mut merged_tree, &background.end(""), Layout::Solid::default().pack())?;  //unnamed widgets not in the root are fine
-    /// 
+    ///
     /// existing_tree.merge(merged_tree)?;     //The `background` after merge is no longer ID '0', but is offset by widgets that already existed there.
     /// ```
     /// ## Bad practice! Avoid!
     /// ```
     /// let mut existing_tree = UITree::new(); //Let's say it contains other widgets...
-    /// 
+    ///
     /// let mut merged_tree = UITree::new();    //This is blank new tree, so it's empty...
     /// let background = Widget::create(&mut merged_tree, "", Layout::Solid::default().pack())?;  //No name but ID is '0'
-    /// 
+    ///
     /// existing_tree.merge(merged_tree)?;     //ID changed so we have no way of accessing the widget!!!
     /// ```
-    /// 
-    pub fn merge (&mut self, branch: Branch) -> Result<(), String> {
-
+    ///
+    pub fn merge(&mut self, branch: Branch) -> Result<(), String> {
         // Check if there is a name collision
         for (name, path) in branch.shortcuts.iter() {
             if self.shortcuts.contains_key(name) {
-                return Result::Err(format!("Cannot merge! Duplicate name found: {}!", name))
+                return Result::Err(format!("Cannot merge! Duplicate name found: {}!", name));
             }
         }
 
-        let new_shortcuts:HashMap<String, String> = HashMap::new();
+        let new_shortcuts: HashMap<String, String> = HashMap::new();
 
         // 1. Check if all paths to be merged are free to use
         for (id, branch) in branch.inventory.iter() {
@@ -251,74 +275,110 @@ impl Branch {
 
         Result::Ok(())
         // 2. Merge them
-
     }
 
-
     //#LIBRARY RECURSION CALLS
-    pub (in super) fn cascade_map (&self, mut string: String, level: u32) -> String {                                                
-        for (name, path) in self.shortcuts.iter(){
-            match self.borrow_linked_checked(&path){
-                Ok (widget) => {
-
+    pub(super) fn cascade_map(&self, mut string: String, level: u32) -> String {
+        for (name, path) in self.shortcuts.iter() {
+            match self.borrow_linked_checked(&path) {
+                Ok(widget) => {
                     let mut text = String::from("\n  ");
-                    for _ in 0..level {text += "|    "}
+                    for _ in 0..level {
+                        text += "|    "
+                    }
                     text += "|-> ";
                     string = format!("{}{}{}", string, text.black(), name.bold().yellow());
 
                     string = widget.cascade_map(string, level + 1);
-                },
+                }
                 Err(..) => (),
             }
         }
         string
     }
-    pub (in super) fn cascade_map_debug (&self, mut string: String, level: u32) -> String {                                              
-        let mut done_widgets: HashMap<String, bool> = HashMap::new();
-        string = format!("{}{}", string, format!(" - [{}-#{}] [{}/{}] | ({}/{})", self.name, self.id, self.level, self.get_depth(), self.visible, self.parent_visible).black().italic());
-        
-        for (name, path) in self.shortcuts.iter(){
-            match self.borrow_linked_checked(&path){
-                Ok (widget) => {
 
+    pub(super) fn cascade_map_debug(&self, mut string: String, level: u32) -> String {
+        let mut done_widgets: HashMap<String, bool> = HashMap::new();
+        string = format!(
+            "{}{}",
+            string,
+            format!(
+                " - [{}-#{}] [{}/{}] | ({}/{})",
+                self.name,
+                self.id,
+                self.level,
+                self.get_depth(),
+                self.visible,
+                self.parent_visible
+            )
+            .black()
+            .italic()
+        );
+
+        for (name, path) in self.shortcuts.iter() {
+            match self.borrow_linked_checked(&path) {
+                Ok(widget) => {
                     let mut text = String::from("\n  ");
-                    for _ in 0..level {text += "|    "}
+                    for _ in 0..level {
+                        text += "|    "
+                    }
                     text += "|-> ";
-                    string = format!("{}{}{} ({})", string, text.black(), name.bold().yellow(), path);
+                    string = format!(
+                        "{}{}{} ({})",
+                        string,
+                        text.black(),
+                        name.bold().yellow(),
+                        path
+                    );
 
                     string = widget.cascade_map_debug(string, level + 1);
                     done_widgets.insert(path.to_string(), true);
-                },
+                }
                 Err(..) => {
                     let mut text = String::from("\n  ");
-                    for _ in 0..level {text += "|    "}
+                    for _ in 0..level {
+                        text += "|    "
+                    }
                     text += "|-> ";
-                    string = format!("{}{}{}", string, text.black(), format!("{} #[! Dangling register pointer !]", name).bold().red());
-                },
+                    string = format!(
+                        "{}{}{}",
+                        string,
+                        text.black(),
+                        format!("{} #[! Dangling register pointer !]", name)
+                            .bold()
+                            .red()
+                    );
+                }
             }
         }
-        for x in self.inventory.iter(){
-            if done_widgets.contains_key( &("#".to_string() + &x.0.to_string())) {
+        for x in self.inventory.iter() {
+            if done_widgets.contains_key(&("#".to_string() + &x.0.to_string())) {
                 continue;
             }
-            
+
             let mut text = String::from("\n  ");
-            for _ in 0..level {text += "|    "}
+            for _ in 0..level {
+                text += "|    "
+            }
             text += "|-> ";
-            string = format!("{}{}{}", string, text.black(), format!("#{}", x.0).bold().truecolor(255, 165, 214));
+            string = format!(
+                "{}{}{}",
+                string,
+                text.black(),
+                format!("#{}", x.0).bold().truecolor(255, 165, 214)
+            );
 
             string = x.1.cascade_map_debug(string, level + 1);
         }
         string
     }
 
-    pub (in super) fn cascade_collect_paths (&self, list: &mut Vec<String>, directory: String) {                                              
+    pub(super) fn cascade_collect_paths(&self, list: &mut Vec<String>, directory: String) {
         let mut done_widgets: HashMap<String, bool> = HashMap::new();
-        
-        for (name, path) in self.shortcuts.iter(){
-            match self.borrow_linked_checked(&path){
-                Ok (widget) => {
 
+        for (name, path) in self.shortcuts.iter() {
+            match self.borrow_linked_checked(&path) {
+                Ok(widget) => {
                     let dir = if directory.is_empty() {
                         String::from(name)
                     } else {
@@ -328,15 +388,15 @@ impl Branch {
                     widget.cascade_collect_paths(list, dir);
 
                     done_widgets.insert(path.to_string(), true);
-                },
-                Err(..) => {},
+                }
+                Err(..) => {}
             }
         }
-        for x in self.inventory.iter(){
-            if done_widgets.contains_key( &("#".to_string() + &x.0.to_string())) {
+        for x in self.inventory.iter() {
+            if done_widgets.contains_key(&("#".to_string() + &x.0.to_string())) {
                 continue;
             }
-            
+
             let dir = if directory.is_empty() {
                 String::from(format!("#{}", x.0))
             } else {
@@ -344,41 +404,45 @@ impl Branch {
             };
             list.push(dir.clone());
             x.1.cascade_collect_paths(list, dir);
-
         }
     }
 
-    pub (in super) fn cascade_update_self (&mut self, point: Vec2, width: f32, height: f32) {                                       //This will cascade update all branches
+    pub(super) fn cascade_update_self(&mut self, point: Vec2, width: f32, height: f32) {
+        //This will cascade update all branches
         self.container.calculate(point, width, height);
-        for x in self.inventory.iter_mut(){
+        for x in self.inventory.iter_mut() {
             let pos = self.container.position_get();
             x.1.cascade_update_self(pos.point_1, pos.width, pos.height);
         }
     }
 
-    pub (in super) fn cascade_set_visibility (&mut self) {                                                                              //This will cascade set parent visible all branches
+    pub(super) fn cascade_set_visibility(&mut self) {
+        //This will cascade set parent visible all branches
         let visibility = self.is_visible();
-        for x in self.inventory.iter_mut(){
+        for x in self.inventory.iter_mut() {
             x.1.cascade_set_visibility_self(visibility);
         }
     }
-    pub (in super) fn cascade_set_visibility_self (&mut self, visible: bool) {                                                          //This will cascade set parent visible all branches
+    pub(super) fn cascade_set_visibility_self(&mut self, visible: bool) {
+        //This will cascade set parent visible all branches
         self.parent_visible = visible;
         self.cascade_set_visibility()
     }
-    
-    pub (in super) fn cascade_set_depth (&mut self, depth: f32) {                                                                       //This will cascade set parent visible all branches
-        for x in self.inventory.iter_mut(){
+
+    pub(super) fn cascade_set_depth(&mut self, depth: f32) {
+        //This will cascade set parent visible all branches
+        for x in self.inventory.iter_mut() {
             x.1.cascade_set_depth_self(depth);
         }
     }
-    pub (in super) fn cascade_set_depth_self (&mut self, depth: f32) {                                                                  //This will cascade set parent visible all branches
+    pub(super) fn cascade_set_depth_self(&mut self, depth: f32) {
+        //This will cascade set parent visible all branches
         self.depth = depth;
         self.cascade_set_depth(depth);
     }
 
     //#LIBRARY MECHANISMS
-    fn new (name: String, id: usize, path: String, level: f32, parent_visible: bool) -> Branch {
+    fn new(name: String, id: usize, path: String, level: f32, parent_visible: bool) -> Branch {
         Branch {
             name,
             id,
@@ -400,132 +464,155 @@ impl Branch {
     }
 
     //
-    pub (in super) fn append (&mut self, branch: Branch) -> usize {
+    pub(super) fn append(&mut self, branch: Branch) -> usize {
         let mut id = 0;
-        loop {if !self.inventory.contains_key(&id) {break} else {id += 1}}
-
+        loop {
+            if !self.inventory.contains_key(&id) {
+                break;
+            } else {
+                id += 1
+            }
+        }
 
         self.inventory.insert(id, branch);
         id
     }
-    
-    pub (in super) fn create_simple (&mut self, name: &str, position: LayoutPackage) -> String {
-        
-        let mut id = 0;
-        loop {if !self.inventory.contains_key(&id) {break} else {id += 1}}
 
-        let path = if name.is_empty() {format!("{}/#{}", self.get_path(), id)} else {format!("{}/{}", self.get_path(), name)};
-        let mut branch = Branch::new(name.to_string(), id, path, self.level + 1.0, self.is_visible());
+    pub(super) fn create_simple(&mut self, name: &str, position: LayoutPackage) -> String {
+        let mut id = 0;
+        loop {
+            if !self.inventory.contains_key(&id) {
+                break;
+            } else {
+                id += 1
+            }
+        }
+
+        let path = if name.is_empty() {
+            format!("{}/#{}", self.get_path(), id)
+        } else {
+            format!("{}/{}", self.get_path(), name)
+        };
+        let mut branch = Branch::new(
+            name.to_string(),
+            id,
+            path,
+            self.level + 1.0,
+            self.is_visible(),
+        );
 
         branch.container.layout_set(position);
 
         self.inventory.insert(id, branch);
         format!("#{}", id)
-
     }
-    pub (in super) fn create_linked (&mut self, name: &str, position: LayoutPackage) -> Result<String, String> {
+    pub(super) fn create_linked(
+        &mut self,
+        name: &str,
+        position: LayoutPackage,
+    ) -> Result<String, String> {
         if name.is_empty() {
             Result::Ok(self.create_simple("", position))
         } else {
             if !self.shortcuts.contains_key(name) {
-
                 let path = self.create_simple(name, position);
                 self.shortcuts.insert(name.to_string(), path);
                 Result::Ok(name.to_string())
-
             } else {
                 Result::Err(format!("The name '{}' is already in use!", name))
             }
         }
     }
 
-    pub (in super) fn register_path (&mut self, name: String, path: String) -> Result<(), String> {                                                         //This registers ABSOLUTE PATH for a key
-        if self.shortcuts.contains_key(&name) {return Result::Err(format!("Branch already contains a path for name {}", &name));}
+    pub(super) fn register_path(&mut self, name: String, path: String) -> Result<(), String> {
+        //This registers ABSOLUTE PATH for a key
+        if self.shortcuts.contains_key(&name) {
+            return Result::Err(format!("Branch already contains a path for name {}", &name));
+        }
         self.shortcuts.insert(name, path);
         Result::Ok(())
     }
-    pub (in super) fn translate_simple (&self, name: &str) -> Result<String, String> {                                               //This can take ONLY RELATIVE and return ABSOLUTE
+    pub(super) fn translate_simple(&self, name: &str) -> Result<String, String> {
+        //This can take ONLY RELATIVE and return ABSOLUTE
         match self.shortcuts.get(name) {
-            Some (absolute) => Result::Ok(absolute.to_string()),
+            Some(absolute) => Result::Ok(absolute.to_string()),
             None => Result::Err(format!("There is no shortcut for '{}'!", &name)),
         }
     }
 
-    pub (in super) fn borrow_simple (&self, path: &str) -> Result<&Branch, String> {                                                //This can take ONLY ABSOLUTE and return reference
+    pub(super) fn borrow_simple(&self, path: &str) -> Result<&Branch, String> {
+        //This can take ONLY ABSOLUTE and return reference
         match str::parse::<usize>(&path[1..]) {
-            Result::Ok (id) => {
-                match self.inventory.get(&id) {
-                    Option::Some (branch) => {
-                        Result::Ok(branch)
-                    },
-                    Option::None => Result::Err(format!("Branch with id '#{}' doesn't exist!", &id)),
-                }
+            Result::Ok(id) => match self.inventory.get(&id) {
+                Option::Some(branch) => Result::Ok(branch),
+                Option::None => Result::Err(format!("Branch with id '#{}' doesn't exist!", &id)),
             },
-            Result::Err (..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
+            Result::Err(..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
         }
     }
-    pub (in super) fn borrow_simple_checked (&self, name: &str) -> Result<&Branch, String> {                                         //This can take RELATIVE/ABSOLUTE and return reference
+    pub(super) fn borrow_simple_checked(&self, name: &str) -> Result<&Branch, String> {
+        //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
-            if is_absolute(name){
+            if is_absolute(name) {
                 self.borrow_simple(name)
             } else {
-                match self.translate_simple(name){
-                    Ok (path) => self.borrow_linked_checked(&path),
-                    Err (message) => Result::Err(message),
+                match self.translate_simple(name) {
+                    Ok(path) => self.borrow_linked_checked(&path),
+                    Err(message) => Result::Err(message),
                 }
             }
         } else {
             Result::Err("Cannot borrow branch with no name!".to_string())
         }
     }
-    pub (in super) fn borrow_linked_checked (&self, path: &str) -> Result<&Branch, String> {                                      //This can take chained ABSOLUTE/RELATIVE path and return reference
+    pub(super) fn borrow_linked_checked(&self, path: &str) -> Result<&Branch, String> {
+        //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked(path),
-            Some ((branch, remaining_path)) => match self.borrow_simple_checked(branch) {
-                Ok (borrowed_widget) => borrowed_widget.borrow_linked_checked(remaining_path),
-                Err (message) => Result::Err(message),
+            Some((branch, remaining_path)) => match self.borrow_simple_checked(branch) {
+                Ok(borrowed_widget) => borrowed_widget.borrow_linked_checked(remaining_path),
+                Err(message) => Result::Err(message),
             },
         }
     }
 
-    pub (in super) fn borrow_simple_mut (&mut self, path: &str) -> Result<&mut Branch, String> {                                                //This can take ONLY ABSOLUTE and return reference
+    pub(super) fn borrow_simple_mut(&mut self, path: &str) -> Result<&mut Branch, String> {
+        //This can take ONLY ABSOLUTE and return reference
         match str::parse::<usize>(&path[1..]) {
-            Result::Ok (id) => {
-                match self.inventory.get_mut(&id) {
-                    Option::Some (branch) => {
-                        Result::Ok(branch)
-                    },
-                    Option::None => Result::Err(format!("Branch with id '#{}' doesn't exist!", &id)),
-                }
+            Result::Ok(id) => match self.inventory.get_mut(&id) {
+                Option::Some(branch) => Result::Ok(branch),
+                Option::None => Result::Err(format!("Branch with id '#{}' doesn't exist!", &id)),
             },
-            Result::Err (..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
+            Result::Err(..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
         }
     }
-    pub (in super) fn borrow_simple_checked_mut (&mut self, name: &str) -> Result<&mut Branch, String> {                                         //This can take RELATIVE/ABSOLUTE and return reference
+    pub(super) fn borrow_simple_checked_mut(&mut self, name: &str) -> Result<&mut Branch, String> {
+        //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
-            if is_absolute(name){
+            if is_absolute(name) {
                 self.borrow_simple_mut(name)
             } else {
-                match self.translate_simple(name){
-                    Ok (path) => self.borrow_linked_checked_mut(&path),
-                    Err (message) => Result::Err(message),
+                match self.translate_simple(name) {
+                    Ok(path) => self.borrow_linked_checked_mut(&path),
+                    Err(message) => Result::Err(message),
                 }
             }
         } else {
             Result::Err("Cannot borrow branch with no name!".to_string())
         }
     }
-    pub (in super) fn borrow_linked_checked_mut (&mut self, path: &str) -> Result<&mut Branch, String> {                                      //This can take chained ABSOLUTE/RELATIVE path and return reference
+    pub(super) fn borrow_linked_checked_mut(&mut self, path: &str) -> Result<&mut Branch, String> {
+        //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked_mut(path),
-            Some ((branch, remaining_path)) => match self.borrow_simple_checked_mut(branch) {
-                Ok (borrowed_widget) => borrowed_widget.borrow_linked_checked_mut(remaining_path),
-                Err (message) => Result::Err(message),
+            Some((branch, remaining_path)) => match self.borrow_simple_checked_mut(branch) {
+                Ok(borrowed_widget) => borrowed_widget.borrow_linked_checked_mut(remaining_path),
+                Err(message) => Result::Err(message),
             },
         }
     }
 
-/*
+    /*
     pub (in crate) fn destroy_simple (&mut self, path: &str) -> Result<(), String> {                                                       //This can take ONLY ABSOLUTE and return Option if the destruction succeded
         match path.chars().nth(1) {
             Some (value) => {
@@ -600,7 +687,6 @@ impl Branch {
     */
 }
 
-
 // ===========================================================
 // === DATA MOUNTED ON BRANCH ===
 
@@ -613,8 +699,9 @@ pub struct Data {
     pub bools: HashMap<String, bool>,
     pub strings: HashMap<String, String>,
 }
+
 impl Data {
-    pub fn new () -> Data {
+    pub fn new() -> Data {
         Data {
             f32s: HashMap::new(),
             vec2s: HashMap::new(),
