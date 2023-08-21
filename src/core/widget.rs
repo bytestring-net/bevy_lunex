@@ -1,4 +1,5 @@
 use super::export::*;
+use super::general::split_last;
 use super::ui_core::Branch;
 use bevy::prelude::*;
 
@@ -10,6 +11,7 @@ pub struct Widget {
     path: String,
     name: String,
 }
+
 impl Widget {
     /*
     pub fn fetch_layout<'a> (&'a self, system: &'a  UITree, key: &str) -> Result<&PositionLayout, String> {
@@ -110,7 +112,7 @@ impl Widget {
     /// let button: &Branch = menu_pointer.fetch(&system, "Button").unwrap(); //You can locate sub-widgets
     ///
     /// ```
-    pub fn fetch<'a>(&'a self, system: &'a UITree, path: &str) -> Result<&Branch, String> {
+    pub fn fetch<'a>(&'a self, system: &'a UiTree, path: &str) -> Result<&Branch, String> {
         let mut extra_path = String::from(&self.path);
         if !path.is_empty() {
             extra_path += "/";
@@ -146,7 +148,7 @@ impl Widget {
     /// ```
     pub fn fetch_mut<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
     ) -> Result<&mut Branch, String> {
         let mut extra_path = String::from(&self.path);
@@ -165,7 +167,7 @@ impl Widget {
 
     pub fn fetch_data<'a>(
         &'a self,
-        system: &'a UITree,
+        system: &'a UiTree,
         path: &str,
     ) -> Result<&Option<Data>, String> {
         match self.fetch(system, path) {
@@ -176,7 +178,7 @@ impl Widget {
 
     pub fn fetch_data_mut<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
     ) -> Result<&mut Option<Data>, String> {
         match self.fetch_mut(system, path) {
@@ -187,7 +189,7 @@ impl Widget {
 
     pub fn fetch_data_set_f32<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: f32,
@@ -214,7 +216,7 @@ impl Widget {
 
     pub fn fetch_data_set_string<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: String,
@@ -241,7 +243,7 @@ impl Widget {
 
     pub fn fetch_data_set_bool<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: bool,
@@ -268,7 +270,7 @@ impl Widget {
 
     pub fn fetch_data_set_vec2<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: Vec2,
@@ -295,7 +297,7 @@ impl Widget {
 
     pub fn fetch_data_set_vec3<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: Vec3,
@@ -319,10 +321,10 @@ impl Widget {
             Err(message) => Err(message),
         }
     }
-    
+
     pub fn fetch_data_set_vec4<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: Vec4,
@@ -378,7 +380,7 @@ impl Widget {
     /// In this case the path of ``button_pointer`` is `` #0/#0 `` (The number stands for an order they were created in)
     ///
     pub fn create(
-        system: &mut UITree,
+        system: &mut UiTree,
         path: &str,
         position: LayoutPackage,
     ) -> Result<Widget, String> {
@@ -396,9 +398,9 @@ impl Widget {
 
         //# This will check for skippable paths (Menu/#0/#0/Display -> Menu/Display)
         let mut absolute = String::new(); // => #0/#0
-        if !name.is_empty() && !is_absolute(&name) && str_list_len > 1 {
+        if !name.is_empty() && !is_numerical_id(&name) && str_list_len > 1 {
             let mut i = str_list_len - 2;
-            while is_absolute(str_list[i]) && i > 0 {
+            while is_numerical_id(str_list[i]) && i > 0 {
                 absolute = format!("{}/{}", str_list[i], absolute);
                 i -= 1;
             }
@@ -511,7 +513,7 @@ impl Widget {
     }
 
     //# FUNCTIONALITY
-    pub fn is_within(&self, system: &UITree, path: &str, point: &Vec2) -> Result<bool, String> {
+    pub fn is_within(&self, system: &UiTree, path: &str, point: &Vec2) -> Result<bool, String> {
         match self.fetch(&system, path) {
             Ok(branch) => {
                 let position = branch.container_get().position_get();

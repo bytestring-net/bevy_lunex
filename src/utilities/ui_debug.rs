@@ -1,6 +1,7 @@
-use crate::prelude::*;
 use bevy::{prelude::*, sprite::Anchor};
 use colored::Colorize;
+
+use crate::{UiTree, Widget, utilities::cursor_update};
 
 // ===========================================================
 // === DEBUGGING FUNCTIONALITY ===
@@ -15,7 +16,7 @@ pub struct DebugImage();
 pub fn lunex_setup_debug(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    systems: Query<&UITree>,
+    systems: Query<&UiTree>,
 ) {
     for system in systems.iter() {
         for x in system.collect_paths() {
@@ -51,7 +52,7 @@ pub fn lunex_setup_debug(
 /// ### Lunex setup debug
 /// A system that will update debug sprites to have + 400 Z
 pub fn lunex_update_debug(
-    systems: Query<&UITree>,
+    systems: Query<&UiTree>,
     mut query: Query<(&mut Widget, &mut Transform, &DebugImage)>,
 ) {
     let system = systems.get_single().unwrap();

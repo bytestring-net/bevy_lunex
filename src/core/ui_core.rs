@@ -10,7 +10,6 @@ const HIGHLIGHT_DEPTH_ADDED: f32 = 5.0;
 // ===========================================================
 // === UITREE STRUCT ===
 
-/// # UITree
 /// A tree-like data structure holding all UI layout data and information, similar to hierarchy.
 ///
 /// You can retrieve data from this structure using paths.
@@ -19,14 +18,14 @@ const HIGHLIGHT_DEPTH_ADDED: f32 = 5.0;
 /// * `settings/display/button_1`
 ///
 #[derive(Component, Default, Clone, Debug, PartialEq)]
-pub struct UITree {
+pub struct UiTree {
     pub width: f32,
     pub height: f32,
     branch: Branch,
 }
 
-impl UITree {
-    pub fn new() -> UITree {
+impl UiTree {
+    pub fn new() -> UiTree {
         //let mut branch = Branch::new(0.0, true, "ROOT", "".to_string());
         let mut branch = Branch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
         branch.container.layout_set(
@@ -38,16 +37,18 @@ impl UITree {
             .pack(),
         );
 
-        UITree {
+        UiTree {
             width: 0.0,
             height: 0.0,
             branch,
         }
     }
+
     pub fn update(&mut self) {
         self.branch
             .cascade_update_self(Vec2::default(), self.width, self.height);
     }
+
     pub fn get_map(&self) -> String {
         let text = String::new();
         format!(
@@ -56,6 +57,7 @@ impl UITree {
             self.branch.cascade_map(text, 0)
         )
     }
+
     pub fn get_map_debug(&self) -> String {
         let text = String::new();
         format!(
@@ -69,19 +71,20 @@ impl UITree {
         self.branch.collect_paths()
     }
 
-    pub fn merge(&mut self, tree: UITree) -> Result<(), String> {
+    pub fn merge(&mut self, tree: UiTree) -> Result<(), String> {
         self.branch.merge(tree.branch)
     }
 
     pub(super) fn root_get(&self) -> &Branch {
         &self.branch
     }
+
     pub(super) fn root_get_mut(&mut self) -> &mut Branch {
         &mut self.branch
     }
 }
 
-pub fn hierarchy_update(mut query: Query<&mut UITree>, mut windows: Query<&mut Window>) {
+pub fn hierarchy_update(mut query: Query<&mut UiTree>, mut windows: Query<&mut Window>) {
     let window = windows.get_single_mut().unwrap();
     for mut system in &mut query {
         system.width = window.resolution.width();
@@ -161,9 +164,11 @@ impl Branch {
             self.level * LEVEL_DEPTH_DIFFERENCE + self.depth
         }
     }
+
     pub fn set_depth(&mut self, depth: f32) {
         self.cascade_set_depth_self(depth);
     }
+
     pub fn set_depth_self_only(&mut self, depth: f32) {
         self.cascade_set_depth(depth);
     }
@@ -423,6 +428,7 @@ impl Branch {
             x.1.cascade_set_visibility_self(visibility);
         }
     }
+
     pub(super) fn cascade_set_visibility_self(&mut self, visible: bool) {
         //This will cascade set parent visible all branches
         self.parent_visible = visible;
@@ -435,6 +441,7 @@ impl Branch {
             x.1.cascade_set_depth_self(depth);
         }
     }
+
     pub(super) fn cascade_set_depth_self(&mut self, depth: f32) {
         //This will cascade set parent visible all branches
         self.depth = depth;
@@ -506,6 +513,7 @@ impl Branch {
         self.inventory.insert(id, branch);
         format!("#{}", id)
     }
+
     pub(super) fn create_linked(
         &mut self,
         name: &str,
@@ -532,6 +540,7 @@ impl Branch {
         self.shortcuts.insert(name, path);
         Result::Ok(())
     }
+
     pub(super) fn translate_simple(&self, name: &str) -> Result<String, String> {
         //This can take ONLY RELATIVE and return ABSOLUTE
         match self.shortcuts.get(name) {
@@ -550,10 +559,11 @@ impl Branch {
             Result::Err(..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
         }
     }
+
     pub(super) fn borrow_simple_checked(&self, name: &str) -> Result<&Branch, String> {
         //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
-            if is_absolute(name) {
+            if is_numerical_id(name) {
                 self.borrow_simple(name)
             } else {
                 match self.translate_simple(name) {
@@ -565,6 +575,7 @@ impl Branch {
             Result::Err("Cannot borrow branch with no name!".to_string())
         }
     }
+
     pub(super) fn borrow_linked_checked(&self, path: &str) -> Result<&Branch, String> {
         //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
@@ -586,10 +597,11 @@ impl Branch {
             Result::Err(..) => Result::Err(format!("Invalid syntax in path '{}'!", path)),
         }
     }
+
     pub(super) fn borrow_simple_checked_mut(&mut self, name: &str) -> Result<&mut Branch, String> {
         //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
-            if is_absolute(name) {
+            if is_numerical_id(name) {
                 self.borrow_simple_mut(name)
             } else {
                 match self.translate_simple(name) {
@@ -601,6 +613,7 @@ impl Branch {
             Result::Err("Cannot borrow branch with no name!".to_string())
         }
     }
+
     pub(super) fn borrow_linked_checked_mut(&mut self, path: &str) -> Result<&mut Branch, String> {
         //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {

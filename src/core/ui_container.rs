@@ -4,9 +4,10 @@ use bevy::prelude::Vec2;
 // ===========================================================
 // === LAYOUT VARIATIONS ===
 
-/// ### Layout
 /// A module holding all possible layouts widget can have.
+/// 
 /// ### Types
+/// 
 /// * [`Window`] = used for pop-up display.
 /// * [`Relative`] = used as the standart layout.
 /// * [`Solid`] = used for holding aspect ratio.

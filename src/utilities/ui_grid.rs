@@ -1,14 +1,18 @@
-use crate::prelude::*;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
+
+use crate::{UiTree, Widget, layout};
 
 // ===========================================================
 // === GRID GENERATION ===
 
 /// ### Grid parameters
+/// 
 /// Struct that is passed to [`grid_generate`] or [`grid_generate_inside`] function containing grid information.
 /// The fields are used to define grid of widgets created inside the function.
+/// 
 /// ### Fields
+/// 
 /// * `grid` = 2D Vector of String values, is used to determine rows and columns and to name the grid widgets. Use [`textgrid`] macro here.
 /// * `anchor` = the origin of the grid, useful when you try to position the grid somewhere specific. [`grid_generate_inside`] ignores this field.
 /// * `gap_relative` = width and height of the gaps between widgets in % relative to the parent widget.
@@ -26,6 +30,7 @@ pub struct GridParams {
     pub width_border_gap: bool,
     pub height_border_gap: bool,
 }
+
 impl Default for GridParams {
     fn default() -> Self {
         GridParams {
@@ -99,16 +104,17 @@ impl GridParams {
 }
 
 /// ### Grid generate
+/// 
 /// A complex function that will generate a grid of widgets. Can be used to make lists too.
 ///
 /// This function uses a widget to hold the grid, meaning no matter how many columns or rows there are, the grid widgets will have the same size.
 /// ### Arguments
-/// * `system` = UITree in which the grid should be made.
+/// * `system` = UiTree in which the grid should be made.
 /// * `path` = Path to a new widget that will hold the grid.
 /// * `relative` = Relative position of the grid in parenting widget.
 /// * `grid_params` = A struct holding all necessary info about the grid.
 pub fn grid_generate(
-    system: &mut UITree,
+    system: &mut UiTree,
     path: &String,
     relative: Vec2,
     grid_params: &GridParams,
@@ -240,7 +246,7 @@ pub fn grid_generate(
 /// * `widget` = The widget in which the grid should be made.
 /// * `grid_params` = A struct holding all necessary info about the grid.
 pub fn grid_generate_inside(
-    system: &mut UITree,
+    system: &mut UiTree,
     widget: &Widget,
     grid_params: &GridParams,
 ) -> Result<(), String> {

@@ -1,41 +1,50 @@
 use bevy::prelude::*;
 
+/// Allows converting a Vec2 in Bevy's coordinate system to Lunex's coordinate system.
+pub trait AsLunexVec2 {
+    /// This function is used for translating Vec2 from Bevy coordinate system to Lunex coordinate system.
+    /// It is necessary to go through this step if you want entities to be able to interact with Lunex.
+    ///
+    /// Example of this is the cursor entity which has [`Transform`] component.
+    /// Due to the nature of Bevy, the y+ direction is upwards instead of downwards. This is extremely counterintuitive, especially for UI.
+    /// * This function will invert the Y component.
+    /// * In addition it will offset the values because Bevy-Lunex always starts at 0.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let offset = Vec2::new(-window.size.x / 2.0, window.size.y / 2.0);
+    /// let cursor_position = Vec2::new(40.0, 20.0);
+    ///
+    /// let inside:bool = widget.is_within(&system, "", cursor_position.as_lunex(offset)).unwrap();
+    /// ```
+    fn as_lunex(self, offset: Vec2) -> Vec2;
+}
+
+impl AsLunexVec2 for Vec2 {
+    fn as_lunex(self, offset: Vec2) -> Vec2 {
+        Vec2::new(self.x - offset.x, offset.y - self.y)
+    }
+}
+
 // ===========================================================
 // === GENERAL ===
 
-/// ### Vec convert
-/// This function is used for translating Vec2 from Bevy coordinate system to Lunex coordinate system.
-/// It is necessary to go through this step if you want entities to be able to interact with Lunex.
-///
-/// Example of this is the cursor entity which has [`Transform`] component.
-/// Due to the nature of Bevy, the y+ direction is upwards instead of downwards. This is extremely counterintuitive, especially for UI.
-/// * This function will invert the Y component.
-/// * In addition it will offset the values because Bevy-Lunex always starts at 0.
-/// ### Example
-/// ```
-///  let offset = Vec2::new( -window.size.x / 2.0, window.size.y / 2.0 );
-///  let cursor_position = Vec2::new(40.0, 20.0);
-///
-///  let inside:bool = widget.is_within(&system, "", &vec_convert(cursor_position, &offset)).unwrap();
-/// ```
-pub fn vec_convert(vec2: &Vec2, offset: &Vec2) -> Vec2 {
-    Vec2::new(vec2.x - offset.x, offset.y - vec2.y)
-}
-
-/// ### Tween
 /// Very simple function for linear interpolation between 2 values.
+/// 
 /// * `slide` ranges from 0.0 to 1.0
 pub fn tween(value_1: f32, value_2: f32, slide: f32) -> f32 {
     let diff = value_2 - value_1;
     value_1 + diff * slide
 }
 
-/// ### Periodical
 /// Returns value that is normalized into a given period.
 /// Allows you to easily clamp values with overflow.
 ///
 /// The most common example would be normalizing degrees between 0 and 360.
-/// ### Example
+/// 
+/// # Example
+/// 
 /// ```
 ///  let period = 360.0;
 ///  assert_eq!(315.0, periodical(period, -45.0));
@@ -52,13 +61,15 @@ pub fn periodical(period: f32, x: f32) -> f32 {
     }
 }
 
-/// ### Periodical difference short
 /// Returns a difference between 2 periodical values.
 /// Uses the shortest path.
 ///
 /// The most common example would be getting a difference between 2 angles in degrees.
-/// Because of the nature of trigonometry, you can sometimes get inner or outer angle depending on use case. This function will always return the INNER angle.
-/// ### Example
+/// Because of the nature of trigonometry, you can sometimes get inner or outer angle depending on use case.
+/// This function will always return the INNER angle.
+/// 
+/// # Example
+/// 
 /// ```
 ///  let period = 360.0;
 ///  assert_eq!(120.0, periodical_difference_short(period, 0.0, 120.0));
@@ -77,13 +88,14 @@ pub fn periodical_difference_short(period: f32, x1: f32, x2: f32) -> f32 {
     }
 }
 
-/// ### Periodical difference long
 /// Returns a difference between 2 periodical values.
 /// Uses the longest path.
 ///
 /// The most common example would be getting a difference between 2 angles in degrees.
 /// Because of the nature of trigonometry, you can sometimes get inner or outer angle depending on use case. This function will always return the OUTER angle.
-/// ### Example
+/// 
+/// # Example
+/// 
 /// ```
 ///  let period = 360.0;
 ///  assert_eq!(-240.0, periodical_difference_long(period, 0.0, 120.0)); //Always returns the outer angle
@@ -155,16 +167,14 @@ pub fn blend_color(color1: Color, color2: Color) -> Color {
 // ===========================================================
 // === CRATE ONLY ===
 
-/// ### Is absolute
-/// Returns if a string is absolute path
-pub(super) fn is_absolute(str: &str) -> bool {
+/// Returns if a string represents a numerical ID in the tree
+pub(super) fn is_numerical_id(str: &str) -> bool {
     match str.chars().nth(0) {
         Some(value) => value == '#',
         None => false,
     }
 }
 
-/// ### Split last
 /// Same as `split_once`, but inverted.
 pub(super) fn split_last(string: &str, delimiter: &str) -> (String, String) {
     let str_list: Vec<&str> = string.split(delimiter).collect();
