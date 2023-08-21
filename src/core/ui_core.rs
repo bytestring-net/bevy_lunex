@@ -483,7 +483,7 @@ impl Branch {
             parent_visible,
 
             container: Container::new(),
-            data: None,
+            data: Option::None,
 
             inventory: HashMap::new(),
             shortcuts: HashMap::new(),
@@ -491,19 +491,19 @@ impl Branch {
     }
 
     //
-    pub(super) fn append(&mut self, branch: Branch) -> usize {
-        let mut id = 0;
-        loop {
-            if !self.inventory.contains_key(&id) {
-                break;
-            } else {
-                id += 1
-            }
-        }
+    // pub(super) fn append(&mut self, branch: Branch) -> usize {
+    //     let mut id = 0;
+    //     loop {
+    //         if !self.inventory.contains_key(&id) {
+    //             break;
+    //         } else {
+    //             id += 1
+    //         }
+    //     }
 
-        self.inventory.insert(id, branch);
-        id
-    }
+    //     self.inventory.insert(id, branch);
+    //     id
+    // }
 
     pub(super) fn create_simple(&mut self, name: &str, position: LayoutPackage) -> String {
         let mut id = 0;
