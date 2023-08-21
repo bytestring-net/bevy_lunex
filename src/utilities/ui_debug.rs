@@ -22,8 +22,8 @@ pub fn lunex_setup_debug(
         for x in system.collect_paths() {
             let widget = Widget::new(&x);
             match widget.fetch(system, "") {
-                Result::Err(..) => {}
-                Result::Ok(..) => {
+                Err(..) => {}
+                Ok(..) => {
                     println!(
                         "{} {} {}",
                         "Debug".green().bold(),
@@ -58,11 +58,11 @@ pub fn lunex_update_debug(
     let system = systems.get_single().unwrap();
     for (widget, mut transform, _) in &mut query {
         match widget.fetch(&system, "") {
-            Result::Err(..) => {
+            Err(..) => {
                 transform.translation.x = -10000.0;
                 transform.translation.y = -10000.0;
             }
-            Result::Ok(branch) => {
+            Ok(branch) => {
                 transform.translation.z = branch.get_depth() + 400.0;
             }
         };

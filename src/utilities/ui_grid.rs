@@ -191,8 +191,8 @@ pub fn grid_generate(
         }
         .pack(),
     ) {
-        Result::Ok(widget) => widget,
-        Result::Err(e) => return Result::Err(GridError::Branch(e)),
+        Ok(widget) => widget,
+        Err(e) => return Err(GridError::Branch(e)),
     };
 
     let width = (100.0 * total_width / container_width) / xx as f32;
@@ -241,12 +241,12 @@ pub fn grid_generate(
                 }
                 .pack(),
             ) {
-                Result::Ok(_) => (),
-                Result::Err(e) => return Result::Err(GridError::Branch(e)),
+                Ok(_) => (),
+                Err(e) => return Err(GridError::Branch(e)),
             };
         }
     }
-    Result::Ok(widget)
+    Ok(widget)
 }
 
 /// ### Grid generate inside
@@ -267,7 +267,7 @@ pub fn grid_generate_inside(
 
     for i in 0..grid_params.grid.len() {
         if grid_params.grid[i].len() != yy {
-            return Result::Err(GridError::Format { c1: i, len_c1: grid_params.grid[i].len(), len_c0: yy });
+            return Err(GridError::Format { c1: i, len_c1: grid_params.grid[i].len(), len_c0: yy });
         }
     }
 
@@ -338,12 +338,12 @@ pub fn grid_generate_inside(
                 }
                 .pack(),
             ) {
-                Result::Ok(_) => (),
-                Result::Err(e) => return Result::Err(GridError::Branch(e)),
+                Ok(_) => (),
+                Err(e) => return Err(GridError::Branch(e)),
             };
         }
     }
-    Result::Ok(())
+    Ok(())
 }
 
 /// ## Text Row

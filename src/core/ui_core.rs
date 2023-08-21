@@ -483,7 +483,7 @@ impl Branch {
             parent_visible,
 
             container: Container::new(),
-            data: Option::None,
+            data: None,
 
             inventory: HashMap::new(),
             shortcuts: HashMap::new(),
@@ -564,7 +564,7 @@ impl Branch {
     pub(super) fn translate_simple(&self, name: &str) -> Result<String, BranchError> {
         //This can take ONLY RELATIVE and return ABSOLUTE
         match self.shortcuts.get(name) {
-            Some(absolute) => Result::Ok(absolute.to_string()),
+            Some(absolute) => Ok(absolute.to_string()),
             None => Err(BranchError::NoShortcut(name.into())),
         }
     }
@@ -573,7 +573,7 @@ impl Branch {
         //This can take ONLY ABSOLUTE and return reference
         match str::parse::<usize>(&path[1..]) {
             Ok(id) => match self.inventory.get(&id) {
-                Some(branch) => Result::Ok(branch),
+                Some(branch) => Ok(branch),
                 None => Err(BranchError::NoBranch(id)),
             },
             Err(e) => Err(BranchError::InvalidId(e)),
@@ -650,23 +650,23 @@ impl Branch {
         match path.chars().nth(1) {
             Some (value) => {
                 match value {
-                    'p' => Result::Err(String::from("Widgets with no name are supposed to be permanent and cannot be destroyed directly!")),
+                    'p' => Err(String::from("Widgets with no name are supposed to be permanent and cannot be destroyed directly!")),
                     'r' => {
                         match str::parse::<usize>(&path[2..]) {
                             Ok (index) => {
                                 if !self.removable.contains_key(&index) {
-                                    return Result::Err(format!("Removable branch with key '{}' does not exist!", &index).to_string());
+                                    return Err(format!("Removable branch with key '{}' does not exist!", &index).to_string());
                                 }
                                 self.removable.remove(&index);
-                                Result::Ok(())
+                                Ok(())
                             },
-                            Err (..) => Result::Err(format!("The path '{}' is not a valid number!", &path).to_string()),
+                            Err (..) => Err(format!("The path '{}' is not a valid number!", &path).to_string()),
                         }
                     },
-                    _ => Result::Err(format!("The second character '{}' in '{}' needs to be either 'r' or 'p' (Stands for storage stack)!", &value, &path).to_string()),
+                    _ => Err(format!("The second character '{}' in '{}' needs to be either 'r' or 'p' (Stands for storage stack)!", &value, &path).to_string()),
                 }
             },
-            None => Result::Err(format!("Path '{}' is missing information (Example: #r12)!", &path).to_string()),
+            None => Err(format!("Path '{}' is missing information (Example: #r12)!", &path).to_string()),
         }
     }
     pub (in crate) fn destroy_simple_checked (&mut self, key: &str) -> Result<(), String> {                                                    //This can take RELATIVE/ABSOLUTE and return Option if the destruction succeded
@@ -674,11 +674,11 @@ impl Branch {
             Some (_char) => match _char {
                 '#' => self.destroy_simple(key),
                 _ => match self.translate_simple(key){
-                    Result::Ok (new_key) => self.destroy_chain(&new_key),
-                    Result::Err (message) => Result::Err(message),
+                    Ok (new_key) => self.destroy_chain(&new_key),
+                    Err (message) => Err(message),
                 },
             }
-            None => Result::Err(String::from("There is no key!")),
+            None => Err(String::from("There is no key!")),
         }
     }
     pub (in crate) fn destroy_chain (&mut self, path: &str) -> Result<(), String> {                                                            //This can take chained ABSOLUTE path and return Option if the destruction succeded
@@ -687,8 +687,8 @@ impl Branch {
                 self.destroy_simple(path)
             },
             Some (tuple) => match self.borrow_simple_mut(tuple.0) {
-                Result::Ok (borrowed_widget) => borrowed_widget.destroy_chain(tuple.1),
-                Result::Err (message) => Result::Err(message),
+                Ok (borrowed_widget) => borrowed_widget.destroy_chain(tuple.1),
+                Err (message) => Err(message),
             },
         }
     }
@@ -698,8 +698,8 @@ impl Branch {
                 self.destroy_simple_checked(keypath)
             },
             Some (tuple) => match self.borrow_simple_checked_mut(tuple.0) {
-                Result::Ok (borrowed_widget) => borrowed_widget.destroy_simple_checked(tuple.1),
-                Result::Err (message) => Result::Err(message),
+                Ok (borrowed_widget) => borrowed_widget.destroy_simple_checked(tuple.1),
+                Err (message) => Err(message),
             },
         }
     }
@@ -707,14 +707,14 @@ impl Branch {
     pub (in crate) fn remove_simple_checked (&mut self, key: &str) -> Result<(), String> {                                                     //This can take ONLY RELATIVE and return Option if the widget was destroyed and removed from register
         if self.register.contains_key(key) {
             match self.destroy_chain_checked(key) {
-                Result::Ok(_) => {
+                Ok(_) => {
                     self.register.remove(key);
-                    Result::Ok(())
+                    Ok(())
                 },
-                Result::Err (message) => Result::Err(message),
+                Err (message) => Err(message),
             }
         } else {
-            Result::Err(format!("Widget registered as '{}' does not exist!", &key).to_string())
+            Err(format!("Widget registered as '{}' does not exist!", &key).to_string())
         }
     }
     */

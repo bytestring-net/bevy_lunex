@@ -168,8 +168,8 @@ impl Default for ImageParams {
             anchor: bevy::sprite::Anchor::TopLeft,
             scale: 100.0,
             depth: 0.0,
-            width: Option::None,
-            height: Option::None,
+            width: None,
+            height: None,
         }
     }
 }
@@ -298,8 +298,8 @@ impl Default for TextParams {
             anchor: bevy::sprite::Anchor::CenterLeft,
             scale: 100.0,
             depth: 3.0,
-            width: Option::None,
-            height: Option::None,
+            width: None,
+            height: None,
         }
     }
 }
@@ -417,12 +417,12 @@ impl TextParams {
     }
     /// Text parameters set to a custom width
     pub fn with_width(mut self, width: f32) -> TextParams {
-        self.width = Option::Some(width);
+        self.width = Some(width);
         self
     }
     /// Text parameters set to a custom height
     pub fn with_height(mut self, height: f32) -> TextParams {
-        self.height = Option::Some(height);
+        self.height = Some(height);
         self
     }
 }

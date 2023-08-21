@@ -26,38 +26,38 @@ impl Widget {
     /*
     pub fn fetch_layout<'a> (&'a self, system: &'a  UITree, key: &str) -> Result<&PositionLayout, String> {
         match self.fetch(system, key){
-            Ok (branch) => Result::Ok(branch.container_get().position_layout_get()),
+            Ok (branch) => Ok(branch.container_get().position_layout_get()),
             Err (message) => Err(message),
         }
     }
     pub fn fetch_layout_mut<'a> (&'a self, system: &'a mut UITree, key: &str) -> Result<&mut PositionLayout, String> {
         match self.fetch_mut(system, key){
-            Ok (branch) => Result::Ok(branch.container_get_mut().position_layout_get_mut()),
+            Ok (branch) => Ok(branch.container_get_mut().position_layout_get_mut()),
             Err (message) => Err(message),
         }
     }
     pub fn fetch_data<'a> (&'a self, system: &'a  UITree, key: &str) -> Result<&Option<Data>, String> {
         match self.fetch(system, key){
-            Ok (branch) => Result::Ok(branch.data_get()),
+            Ok (branch) => Ok(branch.data_get()),
             Err (message) => Err(message),
         }
     }
     pub fn fetch_data_mut<'a> (&'a self, system: &'a mut UITree, key: &str) -> Result<&mut Option<Data>, String> {
         match self.fetch_mut(system, key){
-            Ok (branch) => Result::Ok(branch.data_get_mut()),
+            Ok (branch) => Ok(branch.data_get_mut()),
             Err (message) => Err(message),
         }
     }
     pub fn fetch_position<'a> (&'a self, system: &'a UITree, key: &str) -> Result<&Position, String> {
         match self.fetch(&system, key) {
-            Ok (branch) => Result::Ok(&branch.container_get().position_get()),
-            Err (message) => Result::Err(message),
+            Ok (branch) => Ok(&branch.container_get().position_get()),
+            Err (message) => Err(message),
         }
     }
     pub fn fetch_position_mut<'a> (&'a self, system: &'a mut UITree, key: &str) -> Result<&mut Position, String> {
         match self.fetch_mut(system, key) {
-            Ok (branch) => Result::Ok(branch.container_get_mut().position_get_mut()),
-            Err (message) => Result::Err(message),
+            Ok (branch) => Ok(branch.container_get_mut().position_get_mut()),
+            Err (message) => Err(message),
         }
     }
     */
@@ -69,7 +69,7 @@ impl Widget {
                 Ok (reference) => {
                     reference.destroy_chain_checked(path)
                 },
-                Err (message) => Result::Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
+                Err (message) => Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
             }
         }
         pub fn remove (&self, system: &mut UITree, key : &str) -> Result<(), String> {
@@ -77,7 +77,7 @@ impl Widget {
                 Ok (reference) => {
                     reference.remove_simple_checked(key)
                 },
-                Err (message) => Result::Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
+                Err (message) => Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
             }
         }
     */
@@ -129,7 +129,7 @@ impl Widget {
             extra_path += path;
         }
         match system.root_get().borrow_linked_checked(&extra_path) {
-            Ok(branch) => Result::Ok(branch),
+            Ok(branch) => Ok(branch),
             Err(cause) => Err(FetchError {
                 path: extra_path,
                 cause,
@@ -167,7 +167,7 @@ impl Widget {
             extra_path += path;
         }
         match system.root_get_mut().borrow_linked_checked_mut(&extra_path) {
-            Ok(branch) => Result::Ok(branch),
+            Ok(branch) => Ok(branch),
             Err(cause) => Err(FetchError {
                 path: extra_path,
                 cause,
@@ -181,7 +181,7 @@ impl Widget {
         path: &str,
     ) -> Result<&Option<Data>, FetchError> {
         match self.fetch(system, path) {
-            Ok(branch) => Result::Ok(branch.data_get()),
+            Ok(branch) => Ok(branch.data_get()),
             Err(e) => Err(e),
         }
     }
@@ -192,7 +192,7 @@ impl Widget {
         path: &str,
     ) -> Result<&mut Option<Data>, FetchError> {
         match self.fetch_mut(system, path) {
-            Ok(branch) => Result::Ok(branch.data_get_mut()),
+            Ok(branch) => Ok(branch.data_get_mut()),
             Err(e) => Err(e),
         }
     }
@@ -215,7 +215,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.f32s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
@@ -242,7 +242,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.strings.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
@@ -269,7 +269,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.bools.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
@@ -296,7 +296,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec2s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
@@ -323,7 +323,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec3s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
@@ -350,7 +350,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec4s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
@@ -432,63 +432,63 @@ impl Widget {
         if parent_path.is_empty() {
             let parent_branch = system.root_get_mut();
             match parent_branch.create_linked(&name, position) {
-                Result::Ok(absolute_key) => {
+                Ok(absolute_key) => {
                     let widget = if name.is_empty() {
                         Widget::new(&absolute_key)
                     } else {
                         Widget::new(path)
                     };
                     widget.fetch_mut(system, "").unwrap().set_visibility(false);
-                    Result::Ok(widget)
+                    Ok(widget)
                 }
-                Result::Err(e) => Result::Err(e),
+                Err(e) => Err(e),
             }
 
         //# Create branch in branch
         } else {
             match Widget::new(&parent_path).fetch_mut(system, "") {
-                Result::Ok(parent_branch) => {
+                Ok(parent_branch) => {
                     if !absolute.is_empty() == true {
                         //println!("Name: {}, Path: {}, PPath: {}, obs: {}/###", name, path, parent_path, absolute);
 
                         //# Create branch with skip
                         let absolute_key = match parent_branch.borrow_linked_checked_mut(&absolute)
                         {
-                            Result::Ok(nameless_branch) => {
+                            Ok(nameless_branch) => {
                                 match nameless_branch.create_linked(&name, position) {
-                                    Result::Ok(absolute_key) => absolute_key,
-                                    Result::Err(message) => return Result::Err(message),
+                                    Ok(absolute_key) => absolute_key,
+                                    Err(message) => return Err(message),
                                 }
                             }
-                            Result::Err(message) => return Result::Err(message),
+                            Err(message) => return Err(message),
                         };
                         match parent_branch
                             .register_path(name, format!("{}/{}", absolute, absolute_key))
                         {
-                            Result::Ok(..) => Result::Ok(Widget::new(&format!(
+                            Ok(..) => Ok(Widget::new(&format!(
                                 "{}/{}",
                                 parent_path, absolute_key
                             ))),
-                            Result::Err(message) => Result::Err(message),
+                            Err(message) => Err(message),
                         }
                     } else {
                         //# Create direct branch without skipping
                         match parent_branch.create_linked(&name, position) {
-                            Result::Ok(absolute_key) => {
+                            Ok(absolute_key) => {
                                 if name.is_empty() {
-                                    Result::Ok(Widget::new(&format!(
+                                    Ok(Widget::new(&format!(
                                         "{}/{}",
                                         parent_path, absolute_key
                                     )))
                                 } else {
-                                    Result::Ok(Widget::new(path))
+                                    Ok(Widget::new(path))
                                 }
                             }
-                            Result::Err(message) => Result::Err(message),
+                            Err(message) => Err(message),
                         }
                     }
                 }
-                Result::Err(e) => Result::Err(e.cause),
+                Err(e) => Err(e.cause),
             }
         }
     }
@@ -527,12 +527,12 @@ impl Widget {
         match self.fetch(&system, path) {
             Ok(branch) => {
                 let position = branch.container_get().position_get();
-                Result::Ok(
+                Ok(
                     (point.x > position.point_1.x && point.x < position.point_2.x)
                         && (point.y > position.point_1.y && point.y < position.point_2.y),
                 )
             }
-            Err(message) => Result::Err(format!("Point is_within failed because: {}", message)),
+            Err(message) => Err(format!("Point is_within failed because: {}", message)),
         }
     }
 }
