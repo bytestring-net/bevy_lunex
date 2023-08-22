@@ -4,6 +4,7 @@
 //# ONLY FOR USE INSIDE THE LIBRARY
 pub(super) use super::general::is_absolute;
 pub(super) use super::general::split_last;
+pub(super) use super::general::extract_id;
 pub(super) use ahash::AHashMap as HashMap;
 
 //# CONTAINERS

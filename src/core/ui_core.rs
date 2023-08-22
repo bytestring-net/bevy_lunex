@@ -254,27 +254,71 @@ impl Branch {
     /// existing_tree.merge(merged_tree)?;     //ID changed so we have no way of accessing the widget!!!
     /// ```
     ///
-    pub fn merge(&mut self, branch: Branch) -> Result<(), String> {
+    pub fn merge(&mut self, mut branch: Branch) -> Result<(), String> {
         // Check if there is a name collision
-        for (name, path) in branch.shortcuts.iter() {
+        for (name, _) in branch.shortcuts.iter() {
             if self.shortcuts.contains_key(name) {
                 return Result::Err(format!("Cannot merge! Duplicate name found: {}!", name));
             }
         }
 
-        let new_shortcuts: HashMap<String, String> = HashMap::new();
-
-        // 1. Check if all paths to be merged are free to use
-        for (id, branch) in branch.inventory.iter() {
-            println!("Id: {}", id);
-        }
-
+        //Merge it
         for (name, path) in branch.shortcuts.iter() {
-            println!("name: {} = path: {}", name, path);
+            match path.split_once('/') {
+                Some ((numeric_path, rest_of_path)) => {
+
+                    //Extract child branch from merging branch
+                    let old_id = extract_id(numeric_path).unwrap();
+                    let mut e_branch = branch.inventory.remove(&old_id).unwrap();
+
+                    //Get new ID
+                    let mut new_id = 0;
+                    loop {
+                        if !self.inventory.contains_key(&new_id) {
+                            break;
+                        } else {
+                            new_id += 1
+                        }
+                    }
+
+                    //Construct new path
+                    let new_path = format!("#{}/{}", new_id, rest_of_path);
+                    e_branch.id = new_id;
+                    //e_branch.path = new_path;
+
+                    //Merge it
+                    self.inventory.insert(new_id, e_branch);
+                    self.shortcuts.insert(name.to_string(), new_path);
+                    
+                },
+                None => {
+                    //Extract child branch from merging branch
+                    let old_id = extract_id(path).unwrap();
+                    let mut e_branch = branch.inventory.remove(&old_id).unwrap();
+
+                    //Get new ID
+                    let mut new_id = 0;
+                    loop {
+                        if !self.inventory.contains_key(&new_id) {
+                            break;
+                        } else {
+                            new_id += 1
+                        }
+                    }
+
+                    //Construct new path
+                    let new_path = format!("#{}", new_id);
+                    e_branch.id = new_id;
+                    //e_branch.path = new_path;
+
+                    //Merge it
+                    self.inventory.insert(new_id, e_branch);
+                    self.shortcuts.insert(name.to_string(), new_path);
+                }
+            }
         }
 
         Result::Ok(())
-        // 2. Merge them
     }
 
     //#LIBRARY RECURSION CALLS

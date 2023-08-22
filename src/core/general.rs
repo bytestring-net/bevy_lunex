@@ -180,3 +180,15 @@ pub(super) fn split_last(string: &str, delimiter: &str) -> (String, String) {
     }
     (output, String::from(str_list[str_list.len() - 1]))
 }
+
+/// ### Extract ID
+/// This will extract id from numeric path
+pub(super) fn extract_id(str: &str) -> Result<usize, String> {
+    match str.chars().nth(0) {
+        Some(_) => match str::parse::<usize>(&str[1..]) {
+            Ok (value) => Ok (value),
+            Err (_) => Err (format!("{} caused syntax error!", str))
+        },
+        None => Err (format!("This is not a numeric path!")),
+    }
+}
