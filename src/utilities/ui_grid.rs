@@ -124,7 +124,7 @@ pub fn grid_generate(
 
     for i in 0..grid_params.grid.len() {
         if grid_params.grid[i].len() != yy {
-            return Err(LunexError::Format { c1: i, len_c1: grid_params.grid[i].len(), len_c0: xx });
+            return Err(LunexError::GridFormat { c1: i, len_c1: grid_params.grid[i].len(), len_c0: xx });
         }
     }
 
@@ -255,7 +255,7 @@ pub fn grid_generate_inside(
 
     for i in 0..grid_params.grid.len() {
         if grid_params.grid[i].len() != yy {
-            return Err(LunexError::Format { c1: i, len_c1: grid_params.grid[i].len(), len_c0: yy });
+            return Err(LunexError::GridFormat { c1: i, len_c1: grid_params.grid[i].len(), len_c0: yy });
         }
     }
 

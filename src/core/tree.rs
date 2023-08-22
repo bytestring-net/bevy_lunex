@@ -584,7 +584,7 @@ impl Branch {
     pub(super) fn register_path(&mut self, name: String, path: String) -> Result<(), LunexError> {
         //This registers ABSOLUTE PATH for a key
         if self.shortcuts.contains_key(&name) {
-            return Err(LunexError::AlreadyContainsPath(name));
+            return Err(LunexError::NameInUse(name));
         }
         self.shortcuts.insert(name, path);
         Ok(())
@@ -621,7 +621,7 @@ impl Branch {
                 }
             }
         } else {
-            Err(LunexError::BorrowNoName)
+            Err(LunexError::InvalidPathSyntax)
         }
     }
 
@@ -659,7 +659,7 @@ impl Branch {
                 }
             }
         } else {
-            Err(LunexError::BorrowNoName)
+            Err(LunexError::InvalidPathSyntax)
         }
     }
 
