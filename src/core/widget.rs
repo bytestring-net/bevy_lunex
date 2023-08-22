@@ -1,7 +1,6 @@
 use bevy::prelude::*;
-use bevy::utils::thiserror::Error;
 
-use crate::{BranchError, UiTree, Branch, Data, LayoutPackage};
+use crate::{LunexError, UiTree, Branch, Data, LayoutPackage};
 use crate::core::{is_numerical_id, split_last};
 
 // ===========================================================
@@ -11,13 +10,6 @@ use crate::core::{is_numerical_id, split_last};
 pub struct Widget {
     path: String,
     name: String,
-}
-
-#[derive(Debug, Error)]
-#[error("could not find '{path:}': {cause:}")]
-pub struct FetchError {
-    path: String,
-    cause: BranchError,
 }
 
 impl Widget {
@@ -120,7 +112,7 @@ impl Widget {
     /// let button: &Branch = menu_pointer.fetch(&system, "Button").unwrap(); //You can locate sub-widgets
     ///
     /// ```
-    pub fn fetch<'a>(&'a self, system: &'a UiTree, path: &str) -> Result<&Branch, FetchError> {
+    pub fn fetch<'a>(&'a self, system: &'a UiTree, path: &str) -> Result<&Branch, LunexError> {
         let mut extra_path = String::from(&self.path);
         if !path.is_empty() {
             extra_path += "/";
@@ -128,9 +120,9 @@ impl Widget {
         }
         match system.root_get().borrow_linked_checked(&extra_path) {
             Ok(branch) => Ok(branch),
-            Err(cause) => Err(FetchError {
+            Err(cause) => Err(LunexError::FetchError {
                 path: extra_path,
-                cause,
+                cause: Box::new(cause),
             }),
         }
     }
@@ -158,7 +150,7 @@ impl Widget {
         &'a self,
         system: &'a mut UiTree,
         path: &str,
-    ) -> Result<&mut Branch, FetchError> {
+    ) -> Result<&mut Branch, LunexError> {
         let mut extra_path = String::from(&self.path);
         if !path.is_empty() {
             extra_path += "/";
@@ -166,9 +158,9 @@ impl Widget {
         }
         match system.root_get_mut().borrow_linked_checked_mut(&extra_path) {
             Ok(branch) => Ok(branch),
-            Err(cause) => Err(FetchError {
+            Err(cause) => Err(LunexError::FetchError {
                 path: extra_path,
-                cause,
+                cause: Box::new(cause),
             }),
         }
     }
@@ -177,7 +169,7 @@ impl Widget {
         &'a self,
         system: &'a UiTree,
         path: &str,
-    ) -> Result<&Option<Data>, FetchError> {
+    ) -> Result<&Option<Data>, LunexError> {
         match self.fetch(system, path) {
             Ok(branch) => Ok(branch.data_get()),
             Err(e) => Err(e),
@@ -188,7 +180,7 @@ impl Widget {
         &'a self,
         system: &'a mut UiTree,
         path: &str,
-    ) -> Result<&mut Option<Data>, FetchError> {
+    ) -> Result<&mut Option<Data>, LunexError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => Ok(branch.data_get_mut()),
             Err(e) => Err(e),
@@ -201,7 +193,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: f32,
-    ) -> Result<(), FetchError> {
+    ) -> Result<(), LunexError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -228,7 +220,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: String,
-    ) -> Result<(), FetchError> {
+    ) -> Result<(), LunexError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -255,7 +247,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: bool,
-    ) -> Result<(), FetchError> {
+    ) -> Result<(), LunexError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -282,7 +274,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: Vec2,
-    ) -> Result<(), FetchError> {
+    ) -> Result<(), LunexError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -309,7 +301,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: Vec3,
-    ) -> Result<(), FetchError> {
+    ) -> Result<(), LunexError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -336,7 +328,7 @@ impl Widget {
         path: &str,
         key: &str,
         value: Vec4,
-    ) -> Result<(), FetchError> {
+    ) -> Result<(), LunexError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -391,7 +383,7 @@ impl Widget {
         system: &mut UiTree,
         path: &str,
         position: LayoutPackage,
-    ) -> Result<Widget, BranchError> {
+    ) -> Result<Widget, LunexError> {
         let str_list: Vec<&str> = path.split('/').collect();
         let str_list_len = str_list.len();
 
@@ -486,7 +478,7 @@ impl Widget {
                         }
                     }
                 }
-                Err(e) => Err(e.cause),
+                Err(e) => Err(e),
             }
         }
     }

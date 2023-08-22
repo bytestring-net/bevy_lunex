@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 
+use bevy::utils::thiserror::Error;
+use std::num::ParseIntError;
+
 /// Allows converting a Vec2 in Bevy's coordinate system to Lunex's coordinate system.
 pub trait AsLunexVec2 {
     /// This function is used for translating Vec2 from Bevy coordinate system to Lunex coordinate system.
@@ -29,6 +32,40 @@ impl AsLunexVec2 for Vec2 {
 
 // ===========================================================
 // === GENERAL ===
+
+#[derive(Debug, Error)]
+pub enum LunexError {
+    #[error("duplicate name '{0:}'")]
+    DuplicateName(String),
+    #[error("name '{0:}' already in use")]
+    NameInUse(String),
+    #[error("branch already contains name '{0:}'")]
+    AlreadyContainsPath(String),
+    #[error("no shortcut '{0:}'")]
+    NoShortcut(String),
+    #[error("branch with ID #{0:} doesn't exist")]
+    NoBranch(usize),
+    #[error("invalid branch ID: {0:}")]
+    InvalidId(ParseIntError),
+    #[error("cannot borrow branch with no name")]
+    BorrowNoName,
+
+    #[error("could not find '{path:}': {cause:}")]
+    FetchError {
+        path: String,
+        cause: Box<LunexError>,
+    },
+
+    #[error("Grid column {c1:} (len: {len_c1:}) has a different length to column 0 (len: {len_c0:})")]
+    Format {
+        c1: usize,
+        len_c1: usize,
+        len_c0: usize,
+    },
+    #[error("branch error: {0:}")]
+    Branch(Box<LunexError>),
+}
+
 
 /// Very simple function for linear interpolation between 2 values.
 /// 

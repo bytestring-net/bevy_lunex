@@ -1,12 +1,9 @@
-use std::num::ParseIntError;
-
 use ahash::{HashMap, HashMapExt};
 use bevy::prelude::*;
-use bevy::utils::thiserror::Error;
 use colored::Colorize;
 
 use crate::{layout, Container, LayoutPackage};
-use crate::core::{is_numerical_id, extract_id};
+use crate::core::{is_numerical_id, extract_id, LunexError};
 
 const ROOT_STARTING_DEPTH: f32 = 100.0;
 const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
@@ -78,7 +75,7 @@ impl UiTree {
         self.branch.collect_paths()
     }
 
-    pub fn merge(&mut self, tree: UiTree) -> Result<(), String> {
+    pub fn merge(&mut self, tree: UiTree) -> Result<(), LunexError> {
         self.branch.merge(tree.branch)
     }
 
@@ -133,24 +130,6 @@ pub struct Branch {
     //# RECURSION =======
     inventory: HashMap<usize, Branch>,
     shortcuts: HashMap<String, String>,
-}
-
-#[derive(Debug, Error)]
-pub enum BranchError {
-    #[error("duplicate name '{0:}'")]
-    DuplicateName(String),
-    #[error("name '{0:}' already in use")]
-    NameInUse(String),
-    #[error("branch already contains name '{0:}'")]
-    AlreadyContainsPath(String),
-    #[error("no shortcut '{0:}'")]
-    NoShortcut(String),
-    #[error("branch with ID #{0:} doesn't exist")]
-    NoBranch(usize),
-    #[error("invalid branch ID: {0:}")]
-    InvalidId(ParseIntError),
-    #[error("cannot borrow branch with no name")]
-    BorrowNoName,
 }
 
 impl Branch {
@@ -285,11 +264,11 @@ impl Branch {
     /// existing_tree.merge(merged_tree)?;     //ID changed so we have no way of accessing the widget!!!
     /// ```
     ///
-    pub fn merge(&mut self, mut branch: Branch) -> Result<(), String> {
+    pub fn merge(&mut self, mut branch: Branch) -> Result<(), LunexError> {
         // Check if there is a name collision
         for (name, _) in branch.shortcuts.iter() {
             if self.shortcuts.contains_key(name) {
-                return Result::Err(format!("Cannot merge! Duplicate name found: {}!", name));
+                return Result::Err(LunexError::DuplicateName(name.to_string()));
             }
         }
 
@@ -588,7 +567,7 @@ impl Branch {
         &mut self,
         name: &str,
         position: LayoutPackage,
-    ) -> Result<String, BranchError> {
+    ) -> Result<String, LunexError> {
         if name.is_empty() {
             Ok(self.create_simple("", position))
         } else {
@@ -597,40 +576,40 @@ impl Branch {
                 self.shortcuts.insert(name.to_string(), path);
                 Ok(name.into())
             } else {
-                Err(BranchError::NameInUse(name.into()))
+                Err(LunexError::NameInUse(name.into()))
             }
         }
     }
 
-    pub(super) fn register_path(&mut self, name: String, path: String) -> Result<(), BranchError> {
+    pub(super) fn register_path(&mut self, name: String, path: String) -> Result<(), LunexError> {
         //This registers ABSOLUTE PATH for a key
         if self.shortcuts.contains_key(&name) {
-            return Err(BranchError::AlreadyContainsPath(name));
+            return Err(LunexError::AlreadyContainsPath(name));
         }
         self.shortcuts.insert(name, path);
         Ok(())
     }
 
-    pub(super) fn translate_simple(&self, name: &str) -> Result<String, BranchError> {
+    pub(super) fn translate_simple(&self, name: &str) -> Result<String, LunexError> {
         //This can take ONLY RELATIVE and return ABSOLUTE
         match self.shortcuts.get(name) {
             Some(absolute) => Ok(absolute.to_string()),
-            None => Err(BranchError::NoShortcut(name.into())),
+            None => Err(LunexError::NoShortcut(name.into())),
         }
     }
 
-    pub(super) fn borrow_simple(&self, path: &str) -> Result<&Branch, BranchError> {
+    pub(super) fn borrow_simple(&self, path: &str) -> Result<&Branch, LunexError> {
         //This can take ONLY ABSOLUTE and return reference
         match str::parse::<usize>(&path[1..]) {
             Ok(id) => match self.inventory.get(&id) {
                 Some(branch) => Ok(branch),
-                None => Err(BranchError::NoBranch(id)),
+                None => Err(LunexError::NoBranch(id)),
             },
-            Err(e) => Err(BranchError::InvalidId(e)),
+            Err(e) => Err(LunexError::InvalidId(e)),
         }
     }
 
-    pub(super) fn borrow_simple_checked(&self, name: &str) -> Result<&Branch, BranchError> {
+    pub(super) fn borrow_simple_checked(&self, name: &str) -> Result<&Branch, LunexError> {
         //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
             if is_numerical_id(name) {
@@ -642,11 +621,11 @@ impl Branch {
                 }
             }
         } else {
-            Err(BranchError::BorrowNoName)
+            Err(LunexError::BorrowNoName)
         }
     }
 
-    pub(super) fn borrow_linked_checked(&self, path: &str) -> Result<&Branch, BranchError> {
+    pub(super) fn borrow_linked_checked(&self, path: &str) -> Result<&Branch, LunexError> {
         //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked(path),
@@ -657,18 +636,18 @@ impl Branch {
         }
     }
 
-    pub(super) fn borrow_simple_mut(&mut self, path: &str) -> Result<&mut Branch, BranchError> {
+    pub(super) fn borrow_simple_mut(&mut self, path: &str) -> Result<&mut Branch, LunexError> {
         //This can take ONLY ABSOLUTE and return reference
         match str::parse::<usize>(&path[1..]) {
             Ok(id) => match self.inventory.get_mut(&id) {
                 Some(branch) => Ok(branch),
-                None => Err(BranchError::NoBranch(id)),
+                None => Err(LunexError::NoBranch(id)),
             },
-            Err(e) => Err(BranchError::InvalidId(e)),
+            Err(e) => Err(LunexError::InvalidId(e)),
         }
     }
 
-    pub(super) fn borrow_simple_checked_mut(&mut self, name: &str) -> Result<&mut Branch, BranchError> {
+    pub(super) fn borrow_simple_checked_mut(&mut self, name: &str) -> Result<&mut Branch, LunexError> {
         //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
             if is_numerical_id(name) {
@@ -680,11 +659,11 @@ impl Branch {
                 }
             }
         } else {
-            Err(BranchError::BorrowNoName)
+            Err(LunexError::BorrowNoName)
         }
     }
 
-    pub(super) fn borrow_linked_checked_mut(&mut self, path: &str) -> Result<&mut Branch, BranchError> {
+    pub(super) fn borrow_linked_checked_mut(&mut self, path: &str) -> Result<&mut Branch, LunexError> {
         //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked_mut(path),

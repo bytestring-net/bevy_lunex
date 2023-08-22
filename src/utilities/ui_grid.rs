@@ -1,7 +1,7 @@
-use bevy::{prelude::*, utils::thiserror::Error};
+use bevy::prelude::*;
 use bevy::sprite::Anchor;
 
-use crate::{UiTree, Widget, layout, BranchError};
+use crate::{UiTree, Widget, layout, LunexError};
 
 // ===========================================================
 // === GRID GENERATION ===
@@ -103,18 +103,6 @@ impl GridParams {
     }
 }
 
-#[derive(Debug, Error)]
-pub enum GridError {
-    #[error("Grid column {c1:} (len: {len_c1:}) has a different length to column 0 (len: {len_c0:})")]
-    Format {
-        c1: usize,
-        len_c1: usize,
-        len_c0: usize,
-    },
-    #[error("branch error: {0:}")]
-    Branch(BranchError),
-}
-
 /// ### Grid generate
 /// 
 /// A complex function that will generate a grid of widgets. Can be used to make lists too.
@@ -130,13 +118,13 @@ pub fn grid_generate(
     path: &String,
     relative: Vec2,
     grid_params: &GridParams,
-) -> Result<Widget, GridError> {
+) -> Result<Widget, LunexError> {
     let xx = grid_params.grid.len();
     let yy = grid_params.grid[0].len();
 
     for i in 0..grid_params.grid.len() {
         if grid_params.grid[i].len() != yy {
-            return Err(GridError::Format { c1: i, len_c1: grid_params.grid[i].len(), len_c0: xx });
+            return Err(LunexError::Format { c1: i, len_c1: grid_params.grid[i].len(), len_c0: xx });
         }
     }
 
@@ -192,7 +180,7 @@ pub fn grid_generate(
         .pack(),
     ) {
         Ok(widget) => widget,
-        Err(e) => return Err(GridError::Branch(e)),
+        Err(e) => return Err(e),
     };
 
     let width = (100.0 * total_width / container_width) / xx as f32;
@@ -242,7 +230,7 @@ pub fn grid_generate(
                 .pack(),
             ) {
                 Ok(_) => (),
-                Err(e) => return Err(GridError::Branch(e)),
+                Err(e) => return Err(e),
             };
         }
     }
@@ -261,13 +249,13 @@ pub fn grid_generate_inside(
     system: &mut UiTree,
     widget: &Widget,
     grid_params: &GridParams,
-) -> Result<(), GridError> {
+) -> Result<(), LunexError> {
     let xx = grid_params.grid.len();
     let yy = grid_params.grid[0].len();
 
     for i in 0..grid_params.grid.len() {
         if grid_params.grid[i].len() != yy {
-            return Err(GridError::Format { c1: i, len_c1: grid_params.grid[i].len(), len_c0: yy });
+            return Err(LunexError::Format { c1: i, len_c1: grid_params.grid[i].len(), len_c0: yy });
         }
     }
 
@@ -339,7 +327,7 @@ pub fn grid_generate_inside(
                 .pack(),
             ) {
                 Ok(_) => (),
-                Err(e) => return Err(GridError::Branch(e)),
+                Err(e) => return Err(e),
             };
         }
     }

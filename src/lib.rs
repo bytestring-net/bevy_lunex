@@ -4,10 +4,10 @@ pub mod utilities;
 pub use crate::core::{
     util::{
         blend_color, tween, tween_color_hsla_long, tween_color_hsla_short, tween_color_rgba,
-        AsLunexVec2,
+        AsLunexVec2, LunexError,
     },
     container::{Container, layout, LayoutPackage},
-    tree::{UiTree, Branch, BranchError, Data},
+    tree::{UiTree, Branch, Data},
     widget::Widget,
 };
 
@@ -21,10 +21,10 @@ pub mod prelude {
         // Export core
         core::widget::Widget,
         core::container::{layout, SolidScale, LayoutPackage},
-        core::tree::{UiTree, BranchError, Data, hierarchy_update},
+        core::tree::{UiTree, Data, hierarchy_update},
 
         // Some of it will get moved to Mathia crate
-        core::util::AsLunexVec2,
+        core::util::{AsLunexVec2, LunexError},
         core::util::tween,
         core::util::{tween_color_rgba, tween_color_hsla_short, tween_color_hsla_long},
 
