@@ -235,17 +235,104 @@ impl Default for ImageParams {
 }
 
 impl ImageParams {
-    /// Text parameters set to a custom depth
+    /// Image parameters set to top center position
+    pub fn topcenter() -> ImageParams {
+        ImageParams {
+            anchor: bevy::sprite::Anchor::TopCenter,
+            ..Default::default()
+        }
+    }
+    /// Image parameters set to top left position
+    pub fn topleft() -> ImageParams {
+        ImageParams {
+            anchor: bevy::sprite::Anchor::TopLeft,
+            ..Default::default()
+        }
+    }
+    /// Image parameters set to top right position
+    pub fn topright() -> ImageParams {
+        ImageParams {
+            anchor: bevy::sprite::Anchor::TopRight,
+            ..Default::default()
+        }
+    }
+
+    /// Image parameters set to center position
+    pub fn center() -> ImageParams {
+        ImageParams {
+            anchor: bevy::sprite::Anchor::Center,
+            ..Default::default()
+        }
+    }
+    /// Image parameters set to center left position
+    pub fn centerleft() -> ImageParams {
+        ImageParams {
+            anchor: bevy::sprite::Anchor::CenterLeft,
+            ..Default::default()
+        }
+    }
+    /// Image parameters set to center right position
+    pub fn centerright() -> ImageParams {
+        ImageParams {
+            anchor: bevy::sprite::Anchor::CenterRight,
+            ..Default::default()
+        }
+    }
+
+    /// Image parameters set to bottom center position
+    pub fn bottomcenter() -> ImageParams {
+        ImageParams {
+            anchor: bevy::sprite::Anchor::BottomCenter,
+            ..Default::default()
+        }
+    }
+    /// Image parameters set to bottom left position
+    pub fn bottomleft() -> ImageParams {
+        ImageParams {
+            anchor: bevy::sprite::Anchor::BottomLeft,
+            ..Default::default()
+        }
+    }
+    /// Image parameters set to bottom right position
+    pub fn bottomright() -> ImageParams {
+        ImageParams {
+            anchor: bevy::sprite::Anchor::BottomRight,
+            ..Default::default()
+        }
+    }
+
+
+    /// Image parameters set to a custom position
+    pub fn at(mut self, x: f32, y: f32) -> ImageParams {
+        self.relative = Vec2::new(x, y);
+        self
+    }
+     /// Image parameters set to a custom x position
+     pub fn at_x(mut self, x: f32) -> ImageParams {
+        self.relative.x = x;
+        self
+    }
+    /// Image parameters set to a custom y position
+    pub fn at_y(mut self, y: f32) -> ImageParams {
+        self.relative.y = y;
+        self
+    }
+    /// Image parameters set to a custom depth
     pub fn with_depth(mut self, depth: f32) -> ImageParams {
         self.depth = depth;
         self
     }
-    /// Text parameters set to a custom width
+    /// Image parameters set to a custom scale
+    pub fn scaled(mut self, scale: f32) -> ImageParams {
+        self.scale = scale;
+        self
+    }
+    /// Image parameters set to a custom width
     pub fn with_width(mut self, width: Option<f32>) -> ImageParams {
         self.width = width;
         self
     }
-    /// Text parameters set to a custom height
+    /// Image parameters set to a custom height
     pub fn with_height(mut self, height: Option<f32>) -> ImageParams {
         self.height = height;
         self

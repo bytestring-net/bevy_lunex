@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use colored::Colorize;
 
-use crate::{UiTree, Widget, prelude::{ImageElementBundle, ImageParams}};
+use crate::{UiTree, Widget, prelude::{ImageElementBundle, ImageParams, element_update}};
 
 use super::cursor_update;
 
@@ -86,7 +86,7 @@ pub struct LunexDebugPlugin;
 impl Plugin for LunexDebugPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostStartup, lunex_setup_debug)
-            .add_systems(Update, lunex_update_debug)
+            .add_systems(Update, lunex_update_debug.after(element_update))
             .add_systems(Update, lunex_camera_move_debug.before(cursor_update));
     }
 }
