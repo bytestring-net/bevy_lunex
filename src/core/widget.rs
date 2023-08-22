@@ -1,10 +1,8 @@
-use crate::BranchError;
-
-use super::export::*;
-use super::general::split_last;
-use super::ui_core::Branch;
 use bevy::prelude::*;
 use bevy::utils::thiserror::Error;
+
+use crate::{BranchError, UiTree, Branch, Data, LayoutPackage};
+use crate::core::{is_numerical_id, split_last};
 
 // ===========================================================
 // === MAIN WIDGET STRUCT ===
@@ -215,7 +213,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.f32s.insert(key.to_string(), value);
-                        *data_option = Some(data);
+                        *data_option = Option::Some(data);
                         Ok(())
                     }
                 }
@@ -242,7 +240,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.strings.insert(key.to_string(), value);
-                        *data_option = Some(data);
+                        *data_option = Option::Some(data);
                         Ok(())
                     }
                 }
@@ -269,7 +267,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.bools.insert(key.to_string(), value);
-                        *data_option = Some(data);
+                        *data_option = Option::Some(data);
                         Ok(())
                     }
                 }
@@ -296,7 +294,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec2s.insert(key.to_string(), value);
-                        *data_option = Some(data);
+                        *data_option = Option::Some(data);
                         Ok(())
                     }
                 }
@@ -323,7 +321,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec3s.insert(key.to_string(), value);
-                        *data_option = Some(data);
+                        *data_option = Option::Some(data);
                         Ok(())
                     }
                 }
@@ -350,7 +348,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec4s.insert(key.to_string(), value);
-                        *data_option = Some(data);
+                        *data_option = Option::Some(data);
                         Ok(())
                     }
                 }

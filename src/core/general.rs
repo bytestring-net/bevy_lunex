@@ -168,7 +168,7 @@ pub fn blend_color(color1: Color, color2: Color) -> Color {
 // === CRATE ONLY ===
 
 /// Returns if a string represents a numerical ID in the tree
-pub(super) fn is_numerical_id(str: &str) -> bool {
+pub(crate) fn is_numerical_id(str: &str) -> bool {
     match str.chars().nth(0) {
         Some(value) => value == '#',
         None => false,
@@ -176,7 +176,7 @@ pub(super) fn is_numerical_id(str: &str) -> bool {
 }
 
 /// Same as `split_once`, but inverted.
-pub(super) fn split_last(string: &str, delimiter: &str) -> (String, String) {
+pub(crate) fn split_last(string: &str, delimiter: &str) -> (String, String) {
     let str_list: Vec<&str> = string.split(delimiter).collect();
     let mut output = String::new();
     let mut is_first = true;

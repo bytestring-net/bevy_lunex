@@ -1,10 +1,12 @@
 use std::num::ParseIntError;
 
-use super::export::*;
-use super::ui_container::{Container, LayoutPackage};
+use ahash::{HashMap, HashMapExt};
 use bevy::prelude::*;
 use bevy::utils::thiserror::Error;
 use colored::Colorize;
+
+use crate::{layout, Container, LayoutPackage};
+use crate::core::is_numerical_id;
 
 const ROOT_STARTING_DEPTH: f32 = 100.0;
 const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
