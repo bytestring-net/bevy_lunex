@@ -235,9 +235,19 @@ impl Default for ImageParams {
 }
 
 impl ImageParams {
-    /// Text parameters set to a custom height
+    /// Text parameters set to a custom depth
     pub fn with_depth(mut self, depth: f32) -> ImageParams {
         self.depth = depth;
+        self
+    }
+    /// Text parameters set to a custom width
+    pub fn with_width(mut self, width: Option<f32>) -> ImageParams {
+        self.width = width;
+        self
+    }
+    /// Text parameters set to a custom height
+    pub fn with_height(mut self, height: Option<f32>) -> ImageParams {
+        self.height = height;
         self
     }
 }

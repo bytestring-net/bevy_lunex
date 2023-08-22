@@ -1,7 +1,7 @@
 use bevy::{prelude::*, sprite::Anchor};
 use colored::Colorize;
 
-use crate::{UiTree, Widget};
+use crate::{UiTree, Widget, prelude::{ImageElementBundle, ImageParams}};
 
 use super::cursor_update;
 
@@ -32,7 +32,7 @@ pub fn lunex_setup_debug(
                         "sprite created for:".black().italic(),
                         x.yellow().bold()
                     );
-                    commands.spawn((
+                    /*commands.spawn((
                         widget,
                         DebugImage,
                         SpriteBundle {
@@ -44,6 +44,10 @@ pub fn lunex_setup_debug(
                             },
                             ..default()
                         },
+                    ));*/
+                    commands.spawn((
+                        ImageElementBundle::new(widget, &ImageParams::default().with_width(Some(100.0)).with_height(Some(100.0)), asset_server.load("debug.png"), Vec2::new(300.0,200.0)),
+                        DebugImage
                     ));
                 }
             }
