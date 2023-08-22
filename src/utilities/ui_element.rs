@@ -39,6 +39,65 @@ pub struct Element {
     pub height: Option<f32>,
 }
 
+/// # Element update
+/// UI function that querries elements and repositions them to the output of the UITree.
+pub fn element_update(mut systems: Query<&mut UITree>, mut query: Query<(&mut Widget, &Element, &mut Transform)>) {
+    for system in &mut systems {
+        for (widget, element, mut transform) in &mut query {
+            match widget.fetch(&system, "") {
+                Err(..) => {
+                    transform.translation.x = -10000.0;
+                    transform.translation.y = -10000.0;
+                },
+                Ok(branch) => {
+                    if !branch.is_visible() {
+                        transform.translation.x = -10000.0;
+                        transform.translation.y = -10000.0;
+                    } else {
+    
+                        transform.translation.z = branch.get_depth() + element.depth;
+    
+                        let pos = widget.fetch(&system, "").unwrap().container_get().position_get().invert_y();
+                        let vec = pos.get_pos_y_inverted(element.relative);
+                        transform.translation.x = vec.x + system.offset.x;
+                        transform.translation.y = vec.y + system.offset.y;
+    
+                        match element.width {
+                            Some (w) => {
+                                match element.height {
+                                    Some (h) => {
+                                        transform.scale.x = (pos.width/element.boundary.x)*(w/100.0) * element.scale/100.0;
+                                        transform.scale.y = (pos.height/element.boundary.y)*(h/100.0) * element.scale/100.0;
+                                    },
+                                    None => {
+                                        let scale = (pos.width/element.boundary.x)*(w/100.0) * element.scale/100.0;
+                                        transform.scale.x = scale;
+                                        transform.scale.y = scale;
+                                    },
+                                }
+                            },
+                            None => {
+                                match element.height {
+                                    Some (h) => {
+                                        let scale = (pos.height/element.boundary.y)*(h/100.0) * element.scale/100.0;
+                                        transform.scale.x = scale;
+                                        transform.scale.y = scale;
+                                    },
+                                    None => {
+                                        let scale = f32::min(pos.width/element.boundary.x, pos.height/element.boundary.y) * element.scale/100.0;
+                                        transform.scale.x = scale;
+                                        transform.scale.y = scale;
+                                    },
+                                }
+                            },
+                        }
+                    }
+                }
+            };
+        }
+    }
+}
+
 //# --------------------------------------------------------------------------------------------------------------
 
 /// # DEPRACTED?!

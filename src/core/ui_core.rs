@@ -22,6 +22,7 @@ const HIGHLIGHT_DEPTH_ADDED: f32 = 5.0;
 pub struct UITree {
     pub width: f32,
     pub height: f32,
+    pub offset: Vec2,
     branch: Branch,
 }
 
@@ -41,6 +42,7 @@ impl UITree {
         UITree {
             width: 0.0,
             height: 0.0,
+            offset: Vec2::new(0.0, 0.0),
             branch,
         }
     }
@@ -86,6 +88,9 @@ pub fn hierarchy_update(mut query: Query<&mut UITree>, mut windows: Query<&mut W
     for mut system in &mut query {
         system.width = window.resolution.width();
         system.height = window.resolution.height();
+
+        system.offset.x = -system.width/2.0;
+        system.offset.y = system.height/2.0;
 
         system.update();
     }

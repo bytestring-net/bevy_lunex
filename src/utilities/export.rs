@@ -13,6 +13,7 @@ pub use crate::textrow;
 
 //# WIDGET STYLE
 pub use super::ui_element::text_compute_size_simple;
+pub use super::ui_element::element_update;
 pub use super::ui_element::Element;
 pub use super::ui_element::ElementBundle;
 pub use super::ui_element::ImageElementBundle;
