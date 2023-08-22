@@ -1,4 +1,4 @@
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::prelude::*;
 use colored::Colorize;
 
 use crate::{UiTree, Widget, prelude::{ImageElementBundle, ImageParams}};
@@ -32,19 +32,6 @@ pub fn lunex_setup_debug(
                         "sprite created for:".black().italic(),
                         x.yellow().bold()
                     );
-                    /*commands.spawn((
-                        widget,
-                        DebugImage,
-                        SpriteBundle {
-                            texture: asset_server.load("debug.png"),
-                            transform: Transform { ..default() },
-                            sprite: Sprite {
-                                anchor: Anchor::TopLeft,
-                                ..default()
-                            },
-                            ..default()
-                        },
-                    ));*/
                     commands.spawn((
                         ImageElementBundle::new(widget, &ImageParams::default().with_width(Some(100.0)).with_height(Some(100.0)), asset_server.load("debug.png"), Vec2::new(300.0,200.0)),
                         DebugImage
