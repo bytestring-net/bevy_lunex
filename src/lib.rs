@@ -1,7 +1,7 @@
 pub mod core;
 pub mod utilities;
 
-pub use core::{
+pub use crate::core::{
     util::{
         blend_color, tween, tween_color_hsla_long, tween_color_hsla_short, tween_color_rgba,
         AsLunexVec2,
