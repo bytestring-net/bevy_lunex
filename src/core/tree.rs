@@ -485,7 +485,7 @@ impl Branch {
             parent_visible,
 
             container: Container::new(),
-            data: Option::None,
+            data: None,
 
             inventory: HashMap::new(),
             shortcuts: HashMap::new(),

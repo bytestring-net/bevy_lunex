@@ -1,6 +1,6 @@
-pub mod general;
-pub mod ui_container;
-pub mod ui_core;
+pub mod util;
+pub mod container;
+pub mod tree;
 pub mod widget;
 
-pub(crate) use general::{is_numerical_id, split_last};
+pub(crate) use util::{is_numerical_id, split_last};

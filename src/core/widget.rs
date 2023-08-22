@@ -213,7 +213,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.f32s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
@@ -240,7 +240,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.strings.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
@@ -267,7 +267,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.bools.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
@@ -294,7 +294,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec2s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
@@ -321,7 +321,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec3s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
@@ -348,7 +348,7 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec4s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }

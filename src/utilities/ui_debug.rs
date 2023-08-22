@@ -1,7 +1,9 @@
 use bevy::{prelude::*, sprite::Anchor};
 use colored::Colorize;
 
-use crate::{UiTree, Widget, utilities::cursor_update};
+use crate::{UiTree, Widget, utilities::ui_cursor};
+
+use super::cursor_update;
 
 // ===========================================================
 // === DEBUGGING FUNCTIONALITY ===
