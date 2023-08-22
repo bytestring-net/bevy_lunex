@@ -1,7 +1,7 @@
 use bevy::{prelude::*, sprite::Anchor};
 use colored::Colorize;
 
-use crate::{UiTree, Widget, utilities::ui_cursor};
+use crate::{UiTree, Widget};
 
 use super::cursor_update;
 
@@ -11,7 +11,7 @@ use super::cursor_update;
 /// ### Debug Image
 /// A marker for ImageBundles spawned by debug functions, ***NOT INTENDED*** to be used by user!
 #[derive(Component)]
-pub struct DebugImage();
+pub struct DebugImage;
 
 /// ### Lunex setup debug
 /// A system that will create debug sprites for all valid widgets
@@ -34,7 +34,7 @@ pub fn lunex_setup_debug(
                     );
                     commands.spawn((
                         widget,
-                        DebugImage(),
+                        DebugImage,
                         SpriteBundle {
                             texture: asset_server.load("debug.png"),
                             transform: Transform { ..default() },
