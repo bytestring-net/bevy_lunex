@@ -1,6 +1,9 @@
-use crate::prelude::*;
 use bevy::{prelude::*, sprite::Anchor};
 use colored::Colorize;
+
+use crate::{UiTree, Widget};
+
+use super::cursor_update;
 
 // ===========================================================
 // === DEBUGGING FUNCTIONALITY ===
@@ -8,21 +11,21 @@ use colored::Colorize;
 /// ### Debug Image
 /// A marker for ImageBundles spawned by debug functions, ***NOT INTENDED*** to be used by user!
 #[derive(Component)]
-pub struct DebugImage();
+pub struct DebugImage;
 
 /// ### Lunex setup debug
 /// A system that will create debug sprites for all valid widgets
 pub fn lunex_setup_debug(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    systems: Query<&UITree>,
+    systems: Query<&UiTree>,
 ) {
     for system in systems.iter() {
         for x in system.collect_paths() {
             let widget = Widget::new(&x);
             match widget.fetch(system, "") {
-                Result::Err(..) => {}
-                Result::Ok(..) => {
+                Err(..) => {}
+                Ok(..) => {
                     println!(
                         "{} {} {}",
                         "Debug".green().bold(),
@@ -31,7 +34,7 @@ pub fn lunex_setup_debug(
                     );
                     commands.spawn((
                         widget,
-                        DebugImage(),
+                        DebugImage,
                         SpriteBundle {
                             texture: asset_server.load("debug.png"),
                             transform: Transform { ..default() },
@@ -51,17 +54,17 @@ pub fn lunex_setup_debug(
 /// ### Lunex setup debug
 /// A system that will update debug sprites to have + 400 Z
 pub fn lunex_update_debug(
-    systems: Query<&UITree>,
+    systems: Query<&UiTree>,
     mut query: Query<(&mut Widget, &mut Transform, &DebugImage)>,
 ) {
     let system = systems.get_single().unwrap();
     for (widget, mut transform, _) in &mut query {
         match widget.fetch(&system, "") {
-            Result::Err(..) => {
+            Err(..) => {
                 transform.translation.x = -10000.0;
                 transform.translation.y = -10000.0;
             }
-            Result::Ok(branch) => {
+            Ok(branch) => {
                 transform.translation.z = branch.get_depth() + 400.0;
             }
         };

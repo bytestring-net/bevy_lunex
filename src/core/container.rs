@@ -1,12 +1,12 @@
-#![allow(non_snake_case)]
 use bevy::prelude::Vec2;
 
 // ===========================================================
 // === LAYOUT VARIATIONS ===
 
-/// ### Layout
 /// A module holding all possible layouts widget can have.
-/// ### Types
+/// 
+/// # Types
+/// 
 /// * [`Window`] = used for pop-up display.
 /// * [`Relative`] = used as the standart layout.
 /// * [`Solid`] = used for holding aspect ratio.
@@ -43,15 +43,18 @@ pub mod layout {
         pub height_absolute: f32,
         pub height_relative: f32,
     }
+
     impl Window {
         /// Creates new window layout from default.
         pub fn new() -> Window {
             Window::default()
         }
+
         /// This method will package the struct into LayoutPackage for further processing.
         pub fn pack(self) -> LayoutPackage {
             LayoutPackage::Window(self)
         }
+
         /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
         pub(super) fn calculate(&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let xs = width / 100.0;
@@ -66,6 +69,7 @@ pub mod layout {
             )
         }
     }
+
     impl Default for Window {
         fn default() -> Self {
             Window {
@@ -104,15 +108,18 @@ pub mod layout {
         pub relative_1: Vec2,
         pub relative_2: Vec2,
     }
+
     impl Relative {
         /// Creates new relative layout from default.
         pub fn new() -> Relative {
             Relative::default()
         }
+
         /// This method will package the struct into LayoutPackage for further processing.
         pub fn pack(self) -> LayoutPackage {
             LayoutPackage::Relative(self)
         }
+
         /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
         pub(super) fn calculate(&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let xs = width / 100.0;
@@ -130,6 +137,7 @@ pub mod layout {
             (v1, _width, _height)
         }
     }
+
     impl Default for Relative {
         fn default() -> Self {
             Relative {
@@ -172,15 +180,18 @@ pub mod layout {
         pub vertical_anchor: f32,
         pub scaling: SolidScale,
     }
+
     impl Solid {
         /// Creates new solid layout from default.
         pub fn new() -> Solid {
             Solid::default()
         }
+
         /// This method will package the struct into LayoutPackage for further processing.
         pub fn pack(self) -> LayoutPackage {
             LayoutPackage::Solid(self)
         }
+
         /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
         pub(super) fn calculate(&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
             let scale = match self.scaling {
@@ -211,27 +222,32 @@ pub mod layout {
             self.width = width;
             self
         }
+
         /// Solid layout set to a custom height
         pub fn with_height(mut self, height: f32) -> Solid {
             self.height = height;
             self
         }
+
         /// Solid layout set to a custom horizontal_anchor
         pub fn with_horizontal_anchor(mut self, horizontal_anchor: f32) -> Solid {
             self.horizontal_anchor = horizontal_anchor;
             self
         }
+
         /// Solid layout set to a custom vertical_anchor
         pub fn with_vertical_anchor(mut self, vertical_anchor: f32) -> Solid {
             self.vertical_anchor = vertical_anchor;
             self
         }
+
         /// Solid layout set to a custom scaling
         pub fn with_scaling(mut self, scaling: SolidScale) -> Solid {
             self.scaling = scaling;
             self
         }
     }
+
     impl Default for Solid {
         fn default() -> Self {
             Solid {
@@ -283,6 +299,7 @@ impl LayoutPackage {
             _ => panic!("Window layout was expected!"),
         }
     }
+
     /// Unwrap package into `&Relative` layout, panic if this is not window.
     pub fn expect_relative_ref(&self) -> &layout::Relative {
         match self {
@@ -290,6 +307,7 @@ impl LayoutPackage {
             _ => panic!("Relative layout was expected!"),
         }
     }
+
     /// Unwrap package into `&Solid` layout, panic if this is not window.
     pub fn expect_solid_ref(&self) -> &layout::Solid {
         match self {
@@ -305,6 +323,7 @@ impl LayoutPackage {
             _ => panic!("Window layout was expected!"),
         }
     }
+
     /// Unwrap package into `&Relative` layout, panic if this is not window.
     pub fn expect_relative_mut(&mut self) -> &mut layout::Relative {
         match self {
@@ -312,6 +331,7 @@ impl LayoutPackage {
             _ => panic!("Relative layout was expected!"),
         }
     }
+
     /// Unwrap package into `&Solid` layout, panic if this is not window.
     pub fn expect_solid_mut(&mut self) -> &mut layout::Solid {
         match self {
@@ -344,6 +364,7 @@ pub struct Position {
     pub height: f32,
     pub depth: f32,
 }
+
 impl Position {
     /// Returns cloned [`Position`], but with inverted Y coordinate, this translation is required so Bevy (Y is up) can properly render Lunex (Y is down).
     pub fn invert_y(&self) -> Position {
@@ -355,6 +376,7 @@ impl Position {
             depth: self.depth,
         }
     }
+
     /// Returns a position from a custom relative point on this widget.
     pub fn get_pos(&self, relative: Vec2) -> Vec2 {
         Vec2::new(
@@ -362,6 +384,7 @@ impl Position {
             self.point_1.y + self.height * relative.y / 100.0,
         )
     }
+    
     /// Returns a position from a custom relative point on this widget, but Y is inverted due to the same reason as `invert_y` method.
     pub fn get_pos_y_inverted(&self, relative: Vec2) -> Vec2 {
         Vec2::new(

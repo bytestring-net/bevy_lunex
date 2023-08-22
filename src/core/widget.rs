@@ -1,6 +1,8 @@
-use super::export::*;
-use super::ui_core::Branch;
 use bevy::prelude::*;
+use bevy::utils::thiserror::Error;
+
+use crate::{BranchError, UiTree, Branch, Data, LayoutPackage};
+use crate::core::{is_numerical_id, split_last};
 
 // ===========================================================
 // === MAIN WIDGET STRUCT ===
@@ -10,42 +12,50 @@ pub struct Widget {
     path: String,
     name: String,
 }
+
+#[derive(Debug, Error)]
+#[error("could not find '{path:}': {cause:}")]
+pub struct FetchError {
+    path: String,
+    cause: BranchError,
+}
+
 impl Widget {
     /*
     pub fn fetch_layout<'a> (&'a self, system: &'a  UITree, key: &str) -> Result<&PositionLayout, String> {
         match self.fetch(system, key){
-            Ok (branch) => Result::Ok(branch.container_get().position_layout_get()),
+            Ok (branch) => Ok(branch.container_get().position_layout_get()),
             Err (message) => Err(message),
         }
     }
     pub fn fetch_layout_mut<'a> (&'a self, system: &'a mut UITree, key: &str) -> Result<&mut PositionLayout, String> {
         match self.fetch_mut(system, key){
-            Ok (branch) => Result::Ok(branch.container_get_mut().position_layout_get_mut()),
+            Ok (branch) => Ok(branch.container_get_mut().position_layout_get_mut()),
             Err (message) => Err(message),
         }
     }
     pub fn fetch_data<'a> (&'a self, system: &'a  UITree, key: &str) -> Result<&Option<Data>, String> {
         match self.fetch(system, key){
-            Ok (branch) => Result::Ok(branch.data_get()),
+            Ok (branch) => Ok(branch.data_get()),
             Err (message) => Err(message),
         }
     }
     pub fn fetch_data_mut<'a> (&'a self, system: &'a mut UITree, key: &str) -> Result<&mut Option<Data>, String> {
         match self.fetch_mut(system, key){
-            Ok (branch) => Result::Ok(branch.data_get_mut()),
+            Ok (branch) => Ok(branch.data_get_mut()),
             Err (message) => Err(message),
         }
     }
     pub fn fetch_position<'a> (&'a self, system: &'a UITree, key: &str) -> Result<&Position, String> {
         match self.fetch(&system, key) {
-            Ok (branch) => Result::Ok(&branch.container_get().position_get()),
-            Err (message) => Result::Err(message),
+            Ok (branch) => Ok(&branch.container_get().position_get()),
+            Err (message) => Err(message),
         }
     }
     pub fn fetch_position_mut<'a> (&'a self, system: &'a mut UITree, key: &str) -> Result<&mut Position, String> {
         match self.fetch_mut(system, key) {
-            Ok (branch) => Result::Ok(branch.container_get_mut().position_get_mut()),
-            Err (message) => Result::Err(message),
+            Ok (branch) => Ok(branch.container_get_mut().position_get_mut()),
+            Err (message) => Err(message),
         }
     }
     */
@@ -57,7 +67,7 @@ impl Widget {
                 Ok (reference) => {
                     reference.destroy_chain_checked(path)
                 },
-                Err (message) => Result::Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
+                Err (message) => Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
             }
         }
         pub fn remove (&self, system: &mut UITree, key : &str) -> Result<(), String> {
@@ -65,7 +75,7 @@ impl Widget {
                 Ok (reference) => {
                     reference.remove_simple_checked(key)
                 },
-                Err (message) => Result::Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
+                Err (message) => Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
             }
         }
     */
@@ -110,18 +120,18 @@ impl Widget {
     /// let button: &Branch = menu_pointer.fetch(&system, "Button").unwrap(); //You can locate sub-widgets
     ///
     /// ```
-    pub fn fetch<'a>(&'a self, system: &'a UITree, path: &str) -> Result<&Branch, String> {
+    pub fn fetch<'a>(&'a self, system: &'a UiTree, path: &str) -> Result<&Branch, FetchError> {
         let mut extra_path = String::from(&self.path);
         if !path.is_empty() {
             extra_path += "/";
             extra_path += path;
         }
         match system.root_get().borrow_linked_checked(&extra_path) {
-            Ok(branch) => Result::Ok(branch),
-            Err(message) => Err(format!(
-                "Fetch failed, could not find '{}' because: {}",
-                &extra_path, message
-            )),
+            Ok(branch) => Ok(branch),
+            Err(cause) => Err(FetchError {
+                path: extra_path,
+                cause,
+            }),
         }
     }
 
@@ -146,52 +156,52 @@ impl Widget {
     /// ```
     pub fn fetch_mut<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
-    ) -> Result<&mut Branch, String> {
+    ) -> Result<&mut Branch, FetchError> {
         let mut extra_path = String::from(&self.path);
         if !path.is_empty() {
             extra_path += "/";
             extra_path += path;
         }
         match system.root_get_mut().borrow_linked_checked_mut(&extra_path) {
-            Ok(branch) => Result::Ok(branch),
-            Err(message) => Err(format!(
-                "Fetch failed, could not find '{}' because: {}",
-                &extra_path, message
-            )),
+            Ok(branch) => Ok(branch),
+            Err(cause) => Err(FetchError {
+                path: extra_path,
+                cause,
+            }),
         }
     }
 
     pub fn fetch_data<'a>(
         &'a self,
-        system: &'a UITree,
+        system: &'a UiTree,
         path: &str,
-    ) -> Result<&Option<Data>, String> {
+    ) -> Result<&Option<Data>, FetchError> {
         match self.fetch(system, path) {
-            Ok(branch) => Result::Ok(branch.data_get()),
-            Err(message) => Err(message),
+            Ok(branch) => Ok(branch.data_get()),
+            Err(e) => Err(e),
         }
     }
 
     pub fn fetch_data_mut<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
-    ) -> Result<&mut Option<Data>, String> {
+    ) -> Result<&mut Option<Data>, FetchError> {
         match self.fetch_mut(system, path) {
-            Ok(branch) => Result::Ok(branch.data_get_mut()),
-            Err(message) => Err(message),
+            Ok(branch) => Ok(branch.data_get_mut()),
+            Err(e) => Err(e),
         }
     }
 
     pub fn fetch_data_set_f32<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: f32,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -203,22 +213,22 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.f32s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
     pub fn fetch_data_set_string<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: String,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -230,22 +240,22 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.strings.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
     pub fn fetch_data_set_bool<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: bool,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -257,22 +267,22 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.bools.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
     pub fn fetch_data_set_vec2<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: Vec2,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -284,22 +294,22 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec2s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
     pub fn fetch_data_set_vec3<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: Vec3,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -311,22 +321,22 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec3s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
-    
+
     pub fn fetch_data_set_vec4<'a>(
         &'a self,
-        system: &'a mut UITree,
+        system: &'a mut UiTree,
         path: &str,
         key: &str,
         value: Vec4,
-    ) -> Result<(), String> {
+    ) -> Result<(), FetchError> {
         match self.fetch_mut(system, path) {
             Ok(branch) => {
                 let data_option = branch.data_get_mut();
@@ -338,12 +348,12 @@ impl Widget {
                     None => {
                         let mut data = Data::new();
                         data.vec4s.insert(key.to_string(), value);
-                        *data_option = Option::Some(data);
+                        *data_option = Some(data);
                         Ok(())
                     }
                 }
             }
-            Err(message) => Err(message),
+            Err(e) => Err(e),
         }
     }
 
@@ -378,10 +388,10 @@ impl Widget {
     /// In this case the path of ``button_pointer`` is `` #0/#0 `` (The number stands for an order they were created in)
     ///
     pub fn create(
-        system: &mut UITree,
+        system: &mut UiTree,
         path: &str,
         position: LayoutPackage,
-    ) -> Result<Widget, String> {
+    ) -> Result<Widget, BranchError> {
         let str_list: Vec<&str> = path.split('/').collect();
         let str_list_len = str_list.len();
 
@@ -396,9 +406,9 @@ impl Widget {
 
         //# This will check for skippable paths (Menu/#0/#0/Display -> Menu/Display)
         let mut absolute = String::new(); // => #0/#0
-        if !name.is_empty() && !is_absolute(&name) && str_list_len > 1 {
+        if !name.is_empty() && !is_numerical_id(&name) && str_list_len > 1 {
             let mut i = str_list_len - 2;
-            while is_absolute(str_list[i]) && i > 0 {
+            while is_numerical_id(str_list[i]) && i > 0 {
                 absolute = format!("{}/{}", str_list[i], absolute);
                 i -= 1;
             }
@@ -420,63 +430,63 @@ impl Widget {
         if parent_path.is_empty() {
             let parent_branch = system.root_get_mut();
             match parent_branch.create_linked(&name, position) {
-                Result::Ok(absolute_key) => {
+                Ok(absolute_key) => {
                     let widget = if name.is_empty() {
                         Widget::new(&absolute_key)
                     } else {
                         Widget::new(path)
                     };
                     widget.fetch_mut(system, "").unwrap().set_visibility(false);
-                    Result::Ok(widget)
+                    Ok(widget)
                 }
-                Result::Err(message) => Result::Err(message),
+                Err(e) => Err(e),
             }
 
         //# Create branch in branch
         } else {
             match Widget::new(&parent_path).fetch_mut(system, "") {
-                Result::Ok(parent_branch) => {
+                Ok(parent_branch) => {
                     if !absolute.is_empty() == true {
                         //println!("Name: {}, Path: {}, PPath: {}, obs: {}/###", name, path, parent_path, absolute);
 
                         //# Create branch with skip
                         let absolute_key = match parent_branch.borrow_linked_checked_mut(&absolute)
                         {
-                            Result::Ok(nameless_branch) => {
+                            Ok(nameless_branch) => {
                                 match nameless_branch.create_linked(&name, position) {
-                                    Result::Ok(absolute_key) => absolute_key,
-                                    Result::Err(message) => return Result::Err(message),
+                                    Ok(absolute_key) => absolute_key,
+                                    Err(message) => return Err(message),
                                 }
                             }
-                            Result::Err(message) => return Result::Err(message),
+                            Err(message) => return Err(message),
                         };
                         match parent_branch
                             .register_path(name, format!("{}/{}", absolute, absolute_key))
                         {
-                            Result::Ok(..) => Result::Ok(Widget::new(&format!(
+                            Ok(..) => Ok(Widget::new(&format!(
                                 "{}/{}",
                                 parent_path, absolute_key
                             ))),
-                            Result::Err(message) => Result::Err(message),
+                            Err(message) => Err(message),
                         }
                     } else {
                         //# Create direct branch without skipping
                         match parent_branch.create_linked(&name, position) {
-                            Result::Ok(absolute_key) => {
+                            Ok(absolute_key) => {
                                 if name.is_empty() {
-                                    Result::Ok(Widget::new(&format!(
+                                    Ok(Widget::new(&format!(
                                         "{}/{}",
                                         parent_path, absolute_key
                                     )))
                                 } else {
-                                    Result::Ok(Widget::new(path))
+                                    Ok(Widget::new(path))
                                 }
                             }
-                            Result::Err(message) => Result::Err(message),
+                            Err(message) => Err(message),
                         }
                     }
                 }
-                Result::Err(message) => Result::Err(message),
+                Err(e) => Err(e.cause),
             }
         }
     }
@@ -511,16 +521,16 @@ impl Widget {
     }
 
     //# FUNCTIONALITY
-    pub fn is_within(&self, system: &UITree, path: &str, point: &Vec2) -> Result<bool, String> {
+    pub fn is_within(&self, system: &UiTree, path: &str, point: &Vec2) -> Result<bool, String> {
         match self.fetch(&system, path) {
             Ok(branch) => {
                 let position = branch.container_get().position_get();
-                Result::Ok(
+                Ok(
                     (point.x > position.point_1.x && point.x < position.point_2.x)
                         && (point.y > position.point_1.y && point.y < position.point_2.y),
                 )
             }
-            Err(message) => Result::Err(format!("Point is_within failed because: {}", message)),
+            Err(message) => Err(format!("Point is_within failed because: {}", message)),
         }
     }
 }
