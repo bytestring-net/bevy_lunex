@@ -3,7 +3,7 @@ pub mod utilities;
 
 pub use crate::core::{
     util::{
-        blend_color, tween, tween_color_hsla_long, tween_color_hsla_short, tween_color_rgba,
+        blend_color, tween_color_hsla_long, tween_color_hsla_short, tween_color_rgba,
         AsLunexVec2, LunexError,
     },
     container::{Container, layout, LayoutPackage},
@@ -25,7 +25,6 @@ pub mod prelude {
 
         // Some of it will get moved to Mathia crate
         core::util::{AsLunexVec2, LunexError},
-        core::util::tween,
         core::util::{tween_color_rgba, tween_color_hsla_short, tween_color_hsla_long},
 
         // Reorganize in the future

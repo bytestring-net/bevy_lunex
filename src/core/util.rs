@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use mathio::*;
 
 use bevy::utils::thiserror::Error;
 use std::num::ParseIntError;
@@ -75,15 +76,15 @@ pub enum LunexError {
     },
 }
 
-
+/*
 /// Very simple function for linear interpolation between 2 values.
 /// 
 /// * `slide` ranges from 0.0 to 1.0
 pub fn tween(value_1: f32, value_2: f32, slide: f32) -> f32 {
     let diff = value_2 - value_1;
     value_1 + diff * slide
-}
-
+}*/
+/*
 /// Returns value that is normalized into a given period.
 /// Allows you to easily clamp values with overflow.
 ///
@@ -159,6 +160,7 @@ pub fn periodical_difference_long(period: f32, x1: f32, x2: f32) -> f32 {
         difference
     }
 }
+*/
 
 pub fn periodical_tween_short(period: f32, x1: f32, x2: f32, slider: f32) -> f32 {
     let start = periodical(period, x1);
