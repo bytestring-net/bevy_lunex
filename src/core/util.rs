@@ -193,7 +193,7 @@ pub(crate) fn split_last(string: &str, delimiter: &str) -> (String, String) {
 
 /// ### Extract ID
 /// This will extract id from numeric path
-pub(super) fn extract_id(str: &str) -> Result<usize, String> {
+pub(crate) fn extract_id(str: &str) -> Result<usize, String> {
     match str.chars().nth(0) {
         Some(_) => match str::parse::<usize>(&str[1..]) {
             Ok (value) => Ok (value),

@@ -1,3 +1,4 @@
+use crate::UiTree;
 use bevy::prelude::*;
 
 use crate::Widget;
@@ -42,7 +43,7 @@ pub struct Element {
 
 /// # Element update
 /// UI function that querries elements and repositions them to the output of the UITree.
-pub fn element_update(mut systems: Query<&mut UITree>, mut query: Query<(&mut Widget, &Element, &mut Transform)>) {
+pub fn element_update(mut systems: Query<&mut UiTree>, mut query: Query<(&mut Widget, &Element, &mut Transform)>) {
     for system in &mut systems {
         for (widget, element, mut transform) in &mut query {
             match widget.fetch(&system, "") {

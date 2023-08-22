@@ -6,7 +6,7 @@ use bevy::utils::thiserror::Error;
 use colored::Colorize;
 
 use crate::{layout, Container, LayoutPackage};
-use crate::core::is_numerical_id;
+use crate::core::{is_numerical_id, extract_id};
 
 const ROOT_STARTING_DEPTH: f32 = 100.0;
 const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
@@ -26,6 +26,7 @@ const HIGHLIGHT_DEPTH_ADDED: f32 = 5.0;
 pub struct UiTree {
     pub width: f32,
     pub height: f32,
+    pub offset: Vec2,
     branch: Branch,
 }
 
@@ -45,6 +46,7 @@ impl UiTree {
         UiTree {
             width: 0.0,
             height: 0.0,
+            offset: Vec2::new(0.0, 0.0),
             branch,
         }
     }
@@ -76,7 +78,7 @@ impl UiTree {
         self.branch.collect_paths()
     }
 
-    pub fn merge(&mut self, tree: UiTree) -> Result<(), BranchError> {
+    pub fn merge(&mut self, tree: UiTree) -> Result<(), String> {
         self.branch.merge(tree.branch)
     }
 
@@ -94,7 +96,8 @@ pub fn hierarchy_update(mut query: Query<&mut UiTree>, mut windows: Query<&mut W
     for mut system in &mut query {
         system.width = window.resolution.width();
         system.height = window.resolution.height();
-
+        system.offset.x = -system.width/2.0;
+        system.offset.y = system.height/2.0;
         system.update();
     }
 }
@@ -282,26 +285,71 @@ impl Branch {
     /// existing_tree.merge(merged_tree)?;     //ID changed so we have no way of accessing the widget!!!
     /// ```
     ///
-    pub fn merge(&mut self, branch: Branch) -> Result<(), BranchError> {
+    pub fn merge(&mut self, mut branch: Branch) -> Result<(), String> {
         // Check if there is a name collision
-        for name in branch.shortcuts.keys() {
+        for (name, _) in branch.shortcuts.iter() {
             if self.shortcuts.contains_key(name) {
-                return Err(BranchError::DuplicateName(name.into()));
+                return Result::Err(format!("Cannot merge! Duplicate name found: {}!", name));
             }
         }
 
-        // commented out because we shouldn't be printing random debug stuff
-        // // 1. Check if all paths to be merged are free to use
-        // for id in branch.inventory.keys() {
-        //     println!("Id: {}", id);
-        // }
+        //Merge it
+        for (name, path) in branch.shortcuts.iter() {
+            match path.split_once('/') {
+                Some ((numeric_path, rest_of_path)) => {
 
-        // for (name, path) in branch.shortcuts.iter() {
-        //     println!("name: {} = path: {}", name, path);
-        // }
+                    //Extract child branch from merging branch
+                    let old_id = extract_id(numeric_path).unwrap();
+                    let mut e_branch = branch.inventory.remove(&old_id).unwrap();
 
-        Ok(())
-        // 2. Merge them
+                    //Get new ID
+                    let mut new_id = 0;
+                    loop {
+                        if !self.inventory.contains_key(&new_id) {
+                            break;
+                        } else {
+                            new_id += 1
+                        }
+                    }
+
+                    //Construct new path
+                    let new_path = format!("#{}/{}", new_id, rest_of_path);
+                    e_branch.id = new_id;
+                    //e_branch.path = new_path;
+
+                    //Merge it
+                    self.inventory.insert(new_id, e_branch);
+                    self.shortcuts.insert(name.to_string(), new_path);
+                    
+                },
+                None => {
+                    //Extract child branch from merging branch
+                    let old_id = extract_id(path).unwrap();
+                    let mut e_branch = branch.inventory.remove(&old_id).unwrap();
+
+                    //Get new ID
+                    let mut new_id = 0;
+                    loop {
+                        if !self.inventory.contains_key(&new_id) {
+                            break;
+                        } else {
+                            new_id += 1
+                        }
+                    }
+
+                    //Construct new path
+                    let new_path = format!("#{}", new_id);
+                    e_branch.id = new_id;
+                    //e_branch.path = new_path;
+
+                    //Merge it
+                    self.inventory.insert(new_id, e_branch);
+                    self.shortcuts.insert(name.to_string(), new_path);
+                }
+            }
+        }
+
+        Result::Ok(())
     }
 
     //#LIBRARY RECURSION CALLS
