@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{LunexError, UiTree, Branch, Data, LayoutPackage};
+use crate::{LunexError, UiTree, UiBranch, Data, LayoutPackage};
 use crate::core::{is_numerical_id, split_last};
 
 // ===========================================================
@@ -95,7 +95,7 @@ impl Widget {
     }
 
     /// ## Description
-    /// This function will try to return &[`Branch`], located inside [`UITree`] based on the widgets path.
+    /// This function will try to return &[`UiBranch`], located inside [`UITree`] based on the widgets path.
     ///
     /// If you want to interact with the UITree, you use this to get a borrow.
     ///
@@ -108,11 +108,11 @@ impl Widget {
     /// let button_pointer = Widget::create(&mut system, &menu_pointer.end("Button"), PositionLayout::Default);
     ///
     /// //This is the actual 'widget' that you can manipulate
-    /// let menu: &Branch = menu_pointer.fetch(&system, "").unwrap();   //Leave blank for self
-    /// let button: &Branch = menu_pointer.fetch(&system, "Button").unwrap(); //You can locate sub-widgets
+    /// let menu: &UiBranch = menu_pointer.fetch(&system, "").unwrap();   //Leave blank for self
+    /// let button: &UiBranch = menu_pointer.fetch(&system, "Button").unwrap(); //You can locate sub-widgets
     ///
     /// ```
-    pub fn fetch<'a>(&'a self, system: &'a UiTree, path: &str) -> Result<&Branch, LunexError> {
+    pub fn fetch<'a>(&'a self, system: &'a UiTree, path: &str) -> Result<&UiBranch, LunexError> {
         let mut extra_path = String::from(&self.path);
         if !path.is_empty() {
             extra_path += "/";
@@ -128,7 +128,7 @@ impl Widget {
     }
 
     /// ## Description
-    /// This function will try to return &mut [`Branch`], located inside [`UITree`] based on the widgets path.
+    /// This function will try to return &mut [`UiBranch`], located inside [`UITree`] based on the widgets path.
     ///
     /// If you want to interact with the UITree, you use this to get a borrow.
     ///
@@ -142,15 +142,15 @@ impl Widget {
     ///                                                 //      Menu/Button       //
     ///
     /// //This is the actual 'widget' that you can manipulate
-    /// let menu: &mut Branch = menu_pointer.fetch_mut(&mut system, "").unwrap();   //Leave blank for self
-    /// let button: &mut Branch = menu_pointer.fetch_mut(&mut system, "Button").unwrap(); //You can locate sub-widgets
+    /// let menu: &mut UiBranch = menu_pointer.fetch_mut(&mut system, "").unwrap();   //Leave blank for self
+    /// let button: &mut UiBranch = menu_pointer.fetch_mut(&mut system, "Button").unwrap(); //You can locate sub-widgets
     ///
     /// ```
     pub fn fetch_mut<'a>(
         &'a self,
         system: &'a mut UiTree,
         path: &str,
-    ) -> Result<&mut Branch, LunexError> {
+    ) -> Result<&mut UiBranch, LunexError> {
         let mut extra_path = String::from(&self.path);
         if !path.is_empty() {
             extra_path += "/";

@@ -24,13 +24,12 @@ pub struct UiTree {
     pub width: f32,
     pub height: f32,
     pub offset: Vec2,
-    branch: Branch,
+    branch: UiBranch,
 }
 
 impl UiTree {
     pub fn new() -> UiTree {
-        //let mut branch = Branch::new(0.0, true, "ROOT", "".to_string());
-        let mut branch = Branch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
+        let mut branch = UiBranch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
         branch.container.layout_set(
             layout::Relative {
                 relative_1: Vec2 { x: 0.0, y: 0.0 },
@@ -79,11 +78,11 @@ impl UiTree {
         self.branch.merge(tree.branch)
     }
 
-    pub(super) fn root_get(&self) -> &Branch {
+    pub(super) fn root_get(&self) -> &UiBranch {
         &self.branch
     }
 
-    pub(super) fn root_get_mut(&mut self) -> &mut Branch {
+    pub(super) fn root_get_mut(&mut self) -> &mut UiBranch {
         &mut self.branch
     }
 }
@@ -103,7 +102,7 @@ pub fn hierarchy_update(mut query: Query<&mut UiTree>, mut windows: Query<&mut W
 // === BRANCH STRUCT ===
 
 #[derive(Default, Clone, Debug, PartialEq)]
-pub struct Branch {
+pub struct UiBranch {
     //# CACHING =======
     name: String,
     id: usize,
@@ -128,11 +127,11 @@ pub struct Branch {
     data: Option<Data>,
 
     //# RECURSION =======
-    inventory: HashMap<usize, Branch>,
+    inventory: HashMap<usize, UiBranch>,
     shortcuts: HashMap<String, String>,
 }
 
-impl Branch {
+impl UiBranch {
     //#USER EXPOSED CONTROL
 
     //Borrows
@@ -264,7 +263,7 @@ impl Branch {
     /// existing_tree.merge(merged_tree)?;     //ID changed so we have no way of accessing the widget!!!
     /// ```
     ///
-    pub fn merge(&mut self, mut branch: Branch) -> Result<(), LunexError> {
+    pub fn merge(&mut self, mut branch: UiBranch) -> Result<(), LunexError> {
         // Check if there is a name collision
         for (name, _) in branch.shortcuts.iter() {
             if self.shortcuts.contains_key(name) {
@@ -498,8 +497,8 @@ impl Branch {
     }
 
     //#LIBRARY MECHANISMS
-    fn new(name: String, id: usize, path: String, level: f32, parent_visible: bool) -> Branch {
-        Branch {
+    fn new(name: String, id: usize, path: String, level: f32, parent_visible: bool) -> UiBranch {
+        UiBranch {
             name,
             id,
             path,
@@ -520,7 +519,7 @@ impl Branch {
     }
 
     //
-    // pub(super) fn append(&mut self, branch: Branch) -> usize {
+    // pub(super) fn append(&mut self, branch: UiBranch) -> usize {
     //     let mut id = 0;
     //     loop {
     //         if !self.inventory.contains_key(&id) {
@@ -549,7 +548,7 @@ impl Branch {
         } else {
             format!("{}/{}", self.get_path(), name)
         };
-        let mut branch = Branch::new(
+        let mut branch = UiBranch::new(
             name.to_string(),
             id,
             path,
@@ -598,7 +597,7 @@ impl Branch {
         }
     }
 
-    pub(super) fn borrow_simple(&self, path: &str) -> Result<&Branch, LunexError> {
+    pub(super) fn borrow_simple(&self, path: &str) -> Result<&UiBranch, LunexError> {
         //This can take ONLY ABSOLUTE and return reference
         match str::parse::<usize>(&path[1..]) {
             Ok(id) => match self.inventory.get(&id) {
@@ -609,7 +608,7 @@ impl Branch {
         }
     }
 
-    pub(super) fn borrow_simple_checked(&self, name: &str) -> Result<&Branch, LunexError> {
+    pub(super) fn borrow_simple_checked(&self, name: &str) -> Result<&UiBranch, LunexError> {
         //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
             if is_numerical_id(name) {
@@ -625,7 +624,7 @@ impl Branch {
         }
     }
 
-    pub(super) fn borrow_linked_checked(&self, path: &str) -> Result<&Branch, LunexError> {
+    pub(super) fn borrow_linked_checked(&self, path: &str) -> Result<&UiBranch, LunexError> {
         //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked(path),
@@ -636,7 +635,7 @@ impl Branch {
         }
     }
 
-    pub(super) fn borrow_simple_mut(&mut self, path: &str) -> Result<&mut Branch, LunexError> {
+    pub(super) fn borrow_simple_mut(&mut self, path: &str) -> Result<&mut UiBranch, LunexError> {
         //This can take ONLY ABSOLUTE and return reference
         match str::parse::<usize>(&path[1..]) {
             Ok(id) => match self.inventory.get_mut(&id) {
@@ -647,7 +646,7 @@ impl Branch {
         }
     }
 
-    pub(super) fn borrow_simple_checked_mut(&mut self, name: &str) -> Result<&mut Branch, LunexError> {
+    pub(super) fn borrow_simple_checked_mut(&mut self, name: &str) -> Result<&mut UiBranch, LunexError> {
         //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
             if is_numerical_id(name) {
@@ -663,7 +662,7 @@ impl Branch {
         }
     }
 
-    pub(super) fn borrow_linked_checked_mut(&mut self, path: &str) -> Result<&mut Branch, LunexError> {
+    pub(super) fn borrow_linked_checked_mut(&mut self, path: &str) -> Result<&mut UiBranch, LunexError> {
         //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked_mut(path),

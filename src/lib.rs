@@ -7,7 +7,7 @@ pub use crate::core::{
         AsLunexVec2, LunexError,
     },
     container::{Container, layout, LayoutPackage},
-    tree::{UiTree, Branch, Data},
+    tree::{UiTree, UiBranch, Data},
     widget::Widget,
 };
 
