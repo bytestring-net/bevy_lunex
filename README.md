@@ -12,6 +12,8 @@ Blazingly fast ***path*** based ***modular layout system*** built on top of **Be
 
 *^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. It aligns Textures in 2D space to values calculated by the Bevy-Lunex layout engine. It achieves AAA-level layout capabilities and modularity. [Source code here](https://github.com/IDEDARY/bevy-lunex-cyberpunk) (Example).*
 
+*For latest state-of-the-art example usage of Bevy-Lunex, take a look at the source code of this [repository](https://github.com/IDEDARY/stardawn).*
+
 
 ## === Purpose ===
 
@@ -68,7 +70,7 @@ let widget = Widget::create(&mut tree, "widget", RelativeLayout {
 ```
 
 ### --- Logic binding ---
-Once you have the **"Widget"** created, you can pass it to an entity as a component together with other components like **"Image"**. Here we use **"ImageElementBundle"**, which is the same **"SpriteBundle"**, but has extra fields for **"Widget"** and **"Element"**. Element component is used when you need to attach a visual entity to a widget, like text or image.
+Once you have the **"Widget"** created, you can pass it to an entity as a component together with other components like **"Image"**. Here we use **"ImageElementBundle"**, which is the same as **"SpriteBundle"**, but has extra fields for **"Widget"** and **"Element"**. Element component is used when you need to attach a visual entity to a widget, like text or image.
 ```rust
 commands.spawn((
     ImageElementBundle::new(
