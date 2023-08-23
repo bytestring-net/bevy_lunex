@@ -1,36 +1,37 @@
-# Bevy Lunex 🧩
+# Bevy Lunex 🚀️
 
 [![License](https://img.shields.io/badge/License-MIT%20or%20Apache%202-blue.svg?label=license)](./LICENSE-MIT)
 [![crates.io](https://img.shields.io/crates/v/bevy_lunex.svg)](https://crates.io/crates/bevy_lunex)
 [![Released API docs](https://docs.rs/bevy_lunex/badge.svg)](https://docs.rs/bevy_lunex)
 
-Blazingly fast ***path*** based ***modular layout system*** built on top of **Bevy ECS**. It positions rectangles with user defined relations to achieve dynamic layout.
+Blazingly fast ***path*** based ***modular layout system*** built on top of **Bevy ECS**. It positions rectangles with user-defined positions to achieve a precise layout.
 
-*Note: Currently WIP development. It is not released on crates.io because version 0.1 is still not ready. Once Bevy 0.12 is finished and required PRs in 0.12 milestone are merged, this crate will be officially released.*
+*Note: Currently WIP development. It is not released on crates.io because version 0.1 is still not UX polished. Most of the features are indeed implemented, but we are giving ourselves some time to catch bugs and improve our systems. The deadline for the 0.1 release is the 0.12.0 release of Bevy.*
 ## === Showcase ===
 ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
 
-*^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. It aligns SpriteBundles to values returned from Lunex achieving AAA level layout capabilites and modularity. [Source code here](https://github.com/IDEDARY/bevy-lunex-cyberpunk).*
+*^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. It aligns Textures in 2D space to values calculated by the Bevy-Lunex layout engine. It achieves AAA-level layout capabilities and modularity. [Source code here](https://github.com/IDEDARY/bevy-lunex-cyberpunk) (Example).*
+
+
+## === Purpose ===
+
+This project was developed as an **alternative** to all **web-tech-inspired** user interface libraries. I dislike HTML-CSS-inspired frameworks due to the confusion the underlying system causes. This project strives to be **clean**, **simple** and **intuitive** to the user. All underlying concepts used here were rediscovered from the ground up while developing this library.
 
 ## === Description ===
 
-**Bevy-Lunex** is a layout framework with *endless amount of use cases*. The most prominet one is to use it as a *"building brick"* for **user interaface**.
+**Bevy-Lunex** is a layout framework focused on defining and managing rectangles. The most prominent use case is to use it as a *"building brick"* for **user interface**.
 
-However it can be used in **ANY** scenario where ***dynamic positioning is required***. For example:
+The core of the library is **purely math** based and has *limited relation* to actual UI. However, we provide abstractions and functions to **leverage the power** of this layouting framework to create a very **modular user interface**.
 
-* Already mentioned UIs, GUIs, HUDs, any on screen display.
-* In-game UI, like floating labels next to a dropped item for example.
-* Positioning and animating "elements", like sliding transitions.
-
-In shortcut whenever you need to **position anything inside a rectagle** that is **NOT STATIC**, this library will be useful to you.
 
 ## === Workflow ===
 
-Due to the nature of Rust, we had to come up with a **unique** way on how manage data. We decided to implement **hierarchy tree structure**, which is used in **UNIX file system**.
+Due to the nature of Rust, we had to come up with a **unique** way how to manage data. We decided to implement **hierarchy tree structure**, which is used in **UNIX file system**.
 
-All data is stored in a master struct, called **UITree**, which manages the inner tree. Custom pointers to these "**Branches**" are then passed to entities as **components**.
+All data is stored in a master struct, called "**UiTree**", which manages all layout data. The **"UiTree"** is composed of "**UiBranches**", where each branch represents a rectangle and they can be nested inside each other. **"Widgets"** are custom smart pointers containing a *"path"* to the corresponding nested **"UiBranch"**. **"Widgets"** are **components** and are spawned as entity.
 
-When needed, the pointers can **locate themselves** inside the tree and modify the data, thus **changing the behaviour** and result of the rectangle calculations taking place.
+When needed, the **"Widget"** can *fetch* **"UiBranch"** inside the **"UiTree"** and return a mutable borrow. From the borrow you can modify the layout data, thus **changing the behaviour** and the result of the rectangle calculations taking place.
+This is the way to get around the *Rust's borrow checker*.
 ```
 #ROOT
   |-> Main_menu
@@ -46,75 +47,87 @@ When needed, the pointers can **locate themselves** inside the tree and modify t
   |    |    |    |-> Additional_Content
   |    |    |    |-> Quit_Game
  ```
+^ This is a **"UiTree"** structure printed out in a terminal. Each item displayed here is **"UiBranch"**. Look for example at the *"Board"* branch, in which are nested *"Logo"* and *"Buttons"* branches.
+
 
 ## === Usage ===
-First create a hierarchy struct that will hold all the recursive data.
+
+First, create a **"UiTree"** struct that will hold all the layout data managed recursively.
 ```rust
-let mut system = UITree::new();
+let mut tree = UiTree::new();
 ```
-### Creating widgets
-To create a new widget in root directory you pass in the hierarchy, specify widget properties and the function returns a pointer. 
+
+### --- Layout definition ---
+To create a new **"Widget"** in the root directory you pass in the **"UiTree"**, specify widget properties and the function returns the smart pointer. 
 ```rust
-let widget_pointer = Widget::create(&mut system, "Widget", Layout::Relative {
+let widget = Widget::create(&mut tree, "widget", RelativeLayout {
     relative_1: Vec2::new(0.0, 0.0),
     relative_2: Vec2::new(100.0, 100.0),
-    ..Default::default()
-}.pack()).unwrap();
+    ..default()
+}.pack())?;
 ```
-### Spawning entities
-Once you have the pointer created you can pass the pointer to an entity as component. Here we add image to the widget.
+
+### --- Logic binding ---
+Once you have the **"Widget"** created, you can pass it to an entity as a component together with other components like **"Image"**. Here we use **"ImageElementBundle"**, which is the same **"SpriteBundle"**, but has extra fields for **"Widget"** and **"Element"**. Element component is used when you need to attach a visual entity to a widget, like text or image.
 ```rust
-commands.spawn ((
-    widget_pointer,
-    SpriteBundle {
-        texture: asset_server.load("image.png"),
-        sprite: Sprite {
-            anchor: Anchor::TopLeft,
-            ..default()
-        },
-        ..default()
-    }
+commands.spawn((
+    ImageElementBundle::new(
+        widget,
+        &ImageParams::default(),
+        asset_server.load("button.png"),
+        Vec2::new(1280.0, 250.0)),
+    ButtonHighlightEffect::new(Color::GOLD),
 ));
 ```
-*The library features custom bundles to make it easier to create entities, like 'TextElementBundle' or 'ImageElementBundle'. The example above only shows the main idea of widgets being components.*
-### Querying for widgets
-To add logic to your containers, you use bevy systems and query for your widgets. This function for example checks if cursor is inside a widget or not.
-```rust
-fn button_update(
-    mut systems: Query<(&mut UITree, &UIPlacement)>,
-    cursors: Query<&Cursor>,
-    mut widgets: Query<(&mut Widget)>,
-    mouse_button_input: Res<Input<MouseButton>>
-) {    
-    //# Get UITree and cursor
-    let (mut system, placement) = systems.get_single_mut().unwrap();
-    let cursor = cursors.get_single().unwrap();
+In this example, we also passed another component called **"ButtonHighlightEffect"**, which we will define in the next section.
 
-    //# Loop through all widgets in the query
-    for widget in &mut query {
-        //# Check if the cursor is within the current widget boundaries
-        if widget.is_within(&system, "", &vec_convert(cursor.position_world(), &placement.offset)).unwrap(){
-            println!("Cursor is inside a widget!");            
+### --- Logic definition ---
+To add logic to your **"Widgets"**, you use Bevy systems. In this example, we will create a system that will tint the sprite to a certain colour if a cursor hovers over the **"Widget"** First we define the component with color data. Then we define the system that will query **"UiTree"**, **"Cursor"** and our components. Add the logic and we are done.
+```rust
+#[derive(Component)]
+pub struct ButtonHighlightEffect (pub Color);
+
+fn button_highlight_effect_update(
+    systems: Query<&UiTree>,
+    cursors: Query<&Cursor>, 
+    mut query: Query<(&Widget, &mut Sprite, &ButtonHighlightEffect)>
+) {
+    for system in systems.iter() {
+        for (widget, mut sprite, color) in &mut query {
+            for cursor in cursors.iter() {
+                if widget.is_within(&system, "", &cursor.position_world().as_lunex(system.offset)).unwrap(){
+                    sprite.color = color.0;
+                } else {
+                    sprite.color = Color::WHITE;
+                }
+            }
         }
     }
 }
 ```
-### Layout defining
+### --- Last ---
+Don't forget to add the system to the app.
+```rust
+.add_systems(Update, button_highlight_effect_update)
+```
+You need to spawn the **"UiTree"** we created in the first step as an entity so we can query for it.
+```rust
+commands.spawn(tree);
+```
 
-There are 3 options to pick from. With their combination you can define any layout. They are:
+### --- Layout options ---
+
+There are 3 main layout options to pick from. With their combination, you can define any setup. They are:
 * **RELATIVE** || Defined from 2 points, as % of the parent container.
 * **SOLID** || Defined as a ratio of width and height. Will scale to fit or fill parent.
 * **WINDOW** || Defined as a point + width and height. Same as RELATIVE.
 
-By combining containers of these 3 types, you can precisely define the position and dynamic bahvior.
+By nesting branches of these 3 types, you can precisely define the position and layout behaviour.
+
 
 ## === Contributing ===
-
-If you have an idea for improvement, start a discussion about it or create a pull request. If it is something aligned with the spirit of this repo I will try my best to merge it.
-
-However, I do not want this repo to be an all-in-one solution for everything. It is middle-level framework supposed to be built upon.
+Any contribution submitted by you will be dual licensed as mentioned below, without any additional terms or conditions.
 
 ## === Licensing ===
 
 Released under both [APACHE](./LICENSE-APACHE) and [MIT](./LICENSE-MIT) licenses, for the sake of compatibility with other projects. Pick one that suits you the most!
-
