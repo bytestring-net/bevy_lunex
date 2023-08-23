@@ -2,7 +2,7 @@ use ahash::{HashMap, HashMapExt};
 use bevy::prelude::*;
 use colored::Colorize;
 
-use crate::{layout, Container, LayoutPackage};
+use crate::{RelativeLayout, Container, LayoutPackage};
 use crate::core::{is_numerical_id, extract_id, LunexError};
 
 const ROOT_STARTING_DEPTH: f32 = 100.0;
@@ -31,7 +31,7 @@ impl UiTree {
     pub fn new() -> UiTree {
         let mut branch = UiBranch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
         branch.container.layout_set(
-            layout::Relative {
+            RelativeLayout {
                 relative_1: Vec2 { x: 0.0, y: 0.0 },
                 relative_2: Vec2 { x: 100.0, y: 100.0 },
                 ..Default::default()

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 
-use crate::{UiTree, Widget, layout, LunexError};
+use crate::{UiTree, Widget, WindowLayout, LunexError};
 
 // ===========================================================
 // === GRID GENERATION ===
@@ -168,7 +168,7 @@ pub fn grid_generate(
     let widget = match Widget::create(
         system,
         path,
-        layout::Window {
+        WindowLayout {
             relative: Vec2::new(
                 relative.x - anchor_offset.x * container_width,
                 relative.y - anchor_offset.y * container_height,
@@ -206,7 +206,7 @@ pub fn grid_generate(
             match Widget::create(
                 system,
                 &widget.end(&grid_params.grid[x][y]),
-                layout::Window {
+                WindowLayout {
                     relative: Vec2::new(
                         width * x as f32
                             + wgap * x as f32
@@ -303,7 +303,7 @@ pub fn grid_generate_inside(
             match Widget::create(
                 system,
                 &widget.end(&grid_params.grid[x][y]),
-                layout::Window {
+                WindowLayout {
                     relative: Vec2::new(
                         width * x as f32
                             + wgap * x as f32

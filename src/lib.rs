@@ -6,7 +6,7 @@ pub use crate::core::{
         blend_color, tween_color_hsla_long, tween_color_hsla_short, tween_color_rgba,
         AsLunexVec2, LunexError,
     },
-    container::{Container, layout, LayoutPackage},
+    container::{Container, RelativeLayout, WindowLayout, SolidLayout, LayoutPackage},
     tree::{UiTree, UiBranch, Data},
     widget::Widget,
 };
@@ -20,7 +20,7 @@ pub mod prelude {
         
         // Export core
         core::widget::Widget,
-        core::container::{layout, SolidScale, LayoutPackage},
+        core::container::{RelativeLayout, WindowLayout, SolidLayout, SolidScale, LayoutPackage},
         core::tree::{UiTree, Data, hierarchy_update},
 
         // Some of it will get moved to Mathia crate
