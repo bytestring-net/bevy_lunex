@@ -16,7 +16,7 @@ use crate::Widget;
 /// * `depth` = local depth of the element, starts at 0.0, usefull when you have 2 elements overlapping (image and text)
 /// * `width` = optional, will force the width of the element in % of parent widget.
 /// * `height` = optional, will force the height of the element in % of parent widget.
-#[derive(Component, Clone, Debug, Default)]
+#[derive(Component, Clone, Debug)]
 pub struct Element {
     /// ### Relative
     /// Position in % relative to the widget.
@@ -40,6 +40,21 @@ pub struct Element {
     /// Optional, will force the height of the element in % of parent widget.
     pub height: Option<f32>,
 }
+
+impl Default for Element {
+    fn default() -> Self {
+        Element {
+            relative: Vec2::new(50.0, 50.0),
+            absolute: Vec2::new(0.0, 0.0),
+            boundary: Vec2::new(50.0, 50.0),
+            scale: 100.0,
+            depth: 0.0,
+            width: None,
+            height: None,
+        }
+    }
+}
+
 
 /// # Element update
 /// UI function that querries elements and repositions them to the output of the UITree.

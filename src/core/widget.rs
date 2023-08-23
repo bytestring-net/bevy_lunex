@@ -428,7 +428,6 @@ impl Widget {
                     } else {
                         Widget::new(path)
                     };
-                    widget.fetch_mut(system, "").unwrap().set_visibility(false);
                     Ok(widget)
                 }
                 Err(e) => Err(e),
