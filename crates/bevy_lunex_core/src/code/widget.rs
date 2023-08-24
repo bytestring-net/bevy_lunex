@@ -11,7 +11,6 @@ pub struct Widget {
     path: String,
     name: String,
 }
-
 impl Widget {
     /*
     pub fn fetch_layout<'a> (&'a self, system: &'a  UITree, key: &str) -> Result<&PositionLayout, String> {
@@ -861,7 +860,7 @@ impl Widget {
         }
     }
 
-    /// # Is Within
+    /// # Is Within Extended
     /// This function will fetch the widget and will do a lookup to check if the point provided is within the calculated position of the container.
     /// 
     /// In this extended function you can also specify path to sub-widgets which will be used as target instead.

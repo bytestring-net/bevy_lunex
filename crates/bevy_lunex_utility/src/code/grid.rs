@@ -4,14 +4,14 @@ use bevy::sprite::Anchor;
 use bevy_lunex_core::{UiTree, Widget, WindowLayout, LunexError};
 
 // ===========================================================
-// === GRID GENERATION ===
+// === GRID DEFINITION ===
 
-/// ### Grid parameters
+/// # Grid parameters
 /// 
-/// Struct that is passed to [`grid_generate`] or [`grid_generate_inside`] function containing grid information.
+/// Struct that is passed to [`grid_generate`] or [`grid_generate_inside`] function and containing grid information.
 /// The fields are used to define grid of widgets created inside the function.
 /// 
-/// ### Fields
+/// # Fields
 /// 
 /// * `grid` = 2D Vector of String values, is used to determine rows and columns and to name the grid widgets. Use [`textgrid`] macro here.
 /// * `anchor` = the origin of the grid, useful when you try to position the grid somewhere specific. [`grid_generate_inside`] ignores this field.
@@ -30,7 +30,6 @@ pub struct GridParams {
     pub width_border_gap: bool,
     pub height_border_gap: bool,
 }
-
 impl Default for GridParams {
     fn default() -> Self {
         GridParams {
@@ -44,7 +43,6 @@ impl Default for GridParams {
         }
     }
 }
-
 impl GridParams {
     /// Blank new grid parameters from 2D Vector. Use [`textgrid`] macro here.
     ///```
@@ -103,18 +101,21 @@ impl GridParams {
     }
 }
 
-/// ### Grid generate
+// ===========================================================
+// === GRID GENERATION ===
+
+/// # Grid generate
 /// 
 /// A complex function that will generate a grid of widgets. Can be used to make lists too.
 ///
 /// This function uses a widget to hold the grid, meaning no matter how many columns or rows there are, the grid widgets will have the same size.
-/// ### Arguments
-/// * `system` = UiTree in which the grid should be made.
+/// # Arguments
+/// * `tree` = UiTree in which the grid should be made.
 /// * `path` = Path to a new widget that will hold the grid.
 /// * `relative` = Relative position of the grid in parenting widget.
 /// * `grid_params` = A struct holding all necessary info about the grid.
 pub fn grid_generate(
-    system: &mut UiTree,
+    tree: &mut UiTree,
     path: &String,
     relative: Vec2,
     grid_params: &GridParams,
@@ -166,7 +167,7 @@ pub fn grid_generate(
     };
 
     let widget = match Widget::create(
-        system,
+        tree,
         path,
         WindowLayout {
             relative: Vec2::new(
@@ -204,7 +205,7 @@ pub fn grid_generate(
     for x in 0..xx {
         for y in 0..yy {
             match Widget::create(
-                system,
+                tree,
                 &widget.end(&grid_params.grid[x][y]),
                 WindowLayout {
                     relative: Vec2::new(
@@ -237,16 +238,16 @@ pub fn grid_generate(
     Ok(widget)
 }
 
-/// ### Grid generate inside
+/// # Grid generate inside
 /// A complex function that will generate a grid of widgets. Can be used to make lists too.
 ///
 /// This function generates the grid inside of given widget, meaning with more columns and rows, the size of grid widgets will decrease.
-/// ### Arguments
-/// * `system` = UITree in which the grid should be made.
+/// # Arguments
+/// * `tree` = UITree in which the grid should be made.
 /// * `widget` = The widget in which the grid should be made.
 /// * `grid_params` = A struct holding all necessary info about the grid.
 pub fn grid_generate_inside(
-    system: &mut UiTree,
+    tree: &mut UiTree,
     widget: &Widget,
     grid_params: &GridParams,
 ) -> Result<(), LunexError> {
@@ -301,7 +302,7 @@ pub fn grid_generate_inside(
     for x in 0..xx {
         for y in 0..yy {
             match Widget::create(
-                system,
+                tree,
                 &widget.end(&grid_params.grid[x][y]),
                 WindowLayout {
                     relative: Vec2::new(
@@ -334,8 +335,11 @@ pub fn grid_generate_inside(
     Ok(())
 }
 
-/// ## Text Row
-/// Attempts to construct 1D vector from given elements, useful when you don't want to type .to_string() every time.
+// ===========================================================
+// === GRID MACROS ===
+
+/// # Text Row
+/// Attempts to construct 1D vector from given elements, useful when you don't want to type `.to_string()` every time.
 /// ```
 /// let row: Vec<String> = textrow!["item 1", "item 2", "item 3"];
 /// ```
@@ -346,8 +350,8 @@ macro_rules! textrow {
     }};
 }
 
-/// ## Text Grid
-/// Attempts to construct 2D vector from given elements, useful when you don't want to type .to_string() every time.
+/// # Text Grid
+/// Attempts to construct 2D vector from given elements, useful when you don't want to type `.to_string()` every time.
 /// ```
 /// let grid: Vec<Vec<String>> = textgrid![["item 1", "item 2"], ["item 3", "item 4"]];
 /// ```

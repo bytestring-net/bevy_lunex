@@ -2,6 +2,11 @@ use bevy::prelude::*;
 use bevy_lunex_core::{UiTree, Widget};
 use bevy_lunex_utility::Element;
 
+use crate::cursor_update;
+
+// ===========================================================
+// === SYSTEMS ===
+
 /// # Tree Update
 /// A system that transforms every [`UiTree`] into an immidiete mode UI framework.
 /// 
@@ -90,6 +95,9 @@ pub fn element_update(systems: Query<&UiTree>, mut query: Query<(&Widget, &Eleme
 }
 
 
+// ===========================================================
+// === PLUGIN ===
+
 /// # Lunex Ui Plugin
 /// A main plugin adding Lunex UI functionality for 2D plane.
 /// # Systems
@@ -98,6 +106,7 @@ pub fn element_update(systems: Query<&UiTree>, mut query: Query<(&Widget, &Eleme
 pub struct LunexUiPlugin;
 impl Plugin for LunexUiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (tree_update, element_update).chain());
+        app.add_systems(Update, (tree_update, element_update).chain())
+           .add_systems(Update, cursor_update);
     }
 }

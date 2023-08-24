@@ -2,11 +2,11 @@ use bevy::prelude::*;
 use bevy_lunex_core::Widget;
 
 // ===========================================================
-// === ELEMENT ===
+// === ELEMENT DEFINITION ===
 
-/// ### Element
+/// # Element
 /// Struct holding all necessary information for binding an entity to a [`Widget`].
-/// ### Fields
+/// # Fields
 /// * `relative` = position in % relative to the widget.
 /// * `absolute` = position in pixels, always the same.
 /// * `boundary` = width and height, for example image dimensions or text size.
@@ -38,7 +38,6 @@ pub struct Element {
     /// Optional, will force the height of the element in % of parent widget.
     pub height: Option<f32>,
 }
-
 impl Default for Element {
     fn default() -> Self {
         Element {
@@ -53,14 +52,11 @@ impl Default for Element {
     }
 }
 
-
-//# --------------------------------------------------------------------------------------------------------------
-
 /// # DEPRACTED?!
-/// ### Element Bundle
+/// # Element Bundle
 /// A bundle containing [`Element`] + [`Widget`].
 /// It is recommended to use the [`element_spawn`] macro abstraction.
-/// ### Fields
+/// # Fields
 /// * `widget`
 /// * `element`
 /// * `transform`
@@ -77,12 +73,14 @@ pub struct ElementBundle {
     pub computed_visibility: ComputedVisibility,
 }
 
-//# --------------------------------------------------------------------------------------------------------------
 
-/// ### Image Element Bundle
+// ===========================================================
+// === IMAGE ELEMENT ===
+
+/// # Image Element Bundle
 /// A bundle containing [`Image`] + [`Element`] + [`Widget`].
 /// It is recommended to use the `new` method.
-/// ### Fields
+/// # Fields
 /// * `widget`
 /// * `element`
 /// * `sprite`
@@ -138,10 +136,10 @@ impl ImageElementBundle {
     }
 }
 
-/// ### Image parameters
+/// # Image parameters
 /// Struct that is passed to [`image_element_spawn`] macro containing image information.
 /// The fields are then transfered to the [`Element`] struct inside the macro.
-/// ### Fields
+/// # Fields
 /// * `relative` = position in % relative to the widget.
 /// * `absolute` = position in pixels, always the same.
 /// * `anchor` = which corner of the image is origin (0.0).
@@ -173,7 +171,6 @@ pub struct ImageParams {
     /// Optional, will force the height of the image in % of parent widget.
     pub height: Option<f32>,
 }
-
 impl Default for ImageParams {
     fn default() -> Self {
         ImageParams {
@@ -187,7 +184,6 @@ impl Default for ImageParams {
         }
     }
 }
-
 impl ImageParams {
     /// Image parameters set to top center position
     pub fn topcenter() -> ImageParams {
@@ -293,12 +289,14 @@ impl ImageParams {
     }
 }
 
-//# --------------------------------------------------------------------------------------------------------------
 
-/// ### Text Element Bundle
+// ===========================================================
+// === TEXT ELEMENT ===
+
+/// # Text Element Bundle
 /// A bundle containing [`Text`] + [`Element`] + [`Widget`].
 /// It is recommended to use the `new` method.
-/// ### Fields
+/// # Fields
 /// * `widget`
 /// * `element`
 /// * `text`
@@ -322,7 +320,6 @@ pub struct TextElementBundle {
     pub global_transform: GlobalTransform,
     pub computed_visibility: ComputedVisibility,
 }
-
 impl TextElementBundle {
     /// ### New
     /// Creates new [`TextElementBundle`] from given parameters.
@@ -351,14 +348,14 @@ impl TextElementBundle {
     }
 }
 
-/// ### Text parameters
+/// # Text parameters
 /// Struct that is passed to [`text_element_spawn`] macro containing text information.
 /// The fields are then transfered to the [`Element`] struct inside the macro.
-/// ### Example:
+/// # Example:
 /// ```
 ///  let params = TextParams::centerleft().at(20.0, 50.0).with_height(80.0);
 /// ```
-/// ### Fields
+/// # Fields
 /// * `relative` = position in % relative to the widget.
 /// * `absolute` = position in pixels, always the same.
 /// * `style` = [`TextStyle`] struct from Bevy.
@@ -398,7 +395,6 @@ pub struct TextParams {
     /// Optional, will force the height of the text in % of parent widget.
     pub height: Option<f32>,
 }
-
 impl Default for TextParams {
     fn default() -> Self {
         TextParams {
@@ -414,7 +410,6 @@ impl Default for TextParams {
         }
     }
 }
-
 impl TextParams {
     /// Text parameters set to top center position
     pub fn topcenter() -> TextParams {
@@ -538,7 +533,11 @@ impl TextParams {
     }
 }
 
-/// ### Text size compute
+
+// ===========================================================
+// === BOUNDARY COMPUTATION ===
+
+/// # Text size compute
 /// Simple and rough function to estimate boundary of a text.
 /// This function exists because there is currently not a nice way on how to get text boundary from Bevy internals.
 pub fn text_compute_size_simple(text: &str, font_size: f32) -> Vec2 {

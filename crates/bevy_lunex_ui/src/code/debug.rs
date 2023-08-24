@@ -7,7 +7,6 @@ use bevy_lunex_utility::{ImageElementBundle, ImageParams};
 use crate::cursor_update;
 use crate::element_update;
 
-//use super::cursor_update;
 
 // ===========================================================
 // === DEBUGGING FUNCTIONALITY ===
@@ -80,14 +79,17 @@ pub fn lunex_camera_move_debug(
     }
 }
 
-/// ### Lunex Debug Plugin
+// ===========================================================
+// === PLUGIN ===
+
+/// ### Lunex Ui Debug Plugin
 /// A plugin holding all systems used for debugging Bevy-Lunex.
 /// ### Systems
 /// * `lunex_setup_debug` = queries and initiates debug sprites for all valid widgets.
 /// * `lunex_update_debug` = updates the debug sprites Z coordinate to be Z + 400.
 /// * `lunex_camera_move_debug` = adds WASD movement to the camera so you can see widgets out of view.
-pub struct LunexDebugPlugin;
-impl Plugin for LunexDebugPlugin {
+pub struct LunexUiDebugPlugin;
+impl Plugin for LunexUiDebugPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostStartup, lunex_setup_debug)
             .add_systems(Update, lunex_update_debug.after(element_update))
