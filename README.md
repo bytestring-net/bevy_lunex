@@ -1,8 +1,15 @@
-# Bevy Lunex 🚀️
+![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/7f178bb8-5ea4-4da9-a169-708f595c248c)
 
-[![License](https://img.shields.io/badge/License-MIT%20or%20Apache%202-blue.svg?label=license)](./LICENSE-MIT)
-[![crates.io](https://img.shields.io/crates/v/bevy_lunex.svg)](https://crates.io/crates/bevy_lunex)
-[![Released API docs](https://docs.rs/bevy_lunex/badge.svg)](https://docs.rs/bevy_lunex)
+<div align="center">
+  <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
+  <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/d/bevy_lunex?label=downloads&color=df9e97"></a>
+  <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.11.2-white.svg?label=bevy&color=bb86a5"></a>
+  <a href="./LICENSE-Apache"><img src="https://img.shields.io/badge/License-Apache-white.svg?label=license&color=9fcec4"></a>
+  <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-MIT-white.svg?label=license&color=a0f6b9"></a>
+  <a href="https://docs.rs/bevy_lunex"><img src="https://img.shields.io/docsrs/bevy_lunex/latest?color=8df7cb"></a>
+</div>
+
+# 
 
 Blazingly fast ***path*** based ***modular layout system*** built on top of **Bevy ECS**. It positions rectangles with user-defined positions to achieve a precise layout.
 
