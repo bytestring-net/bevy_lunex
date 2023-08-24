@@ -1,11 +1,8 @@
 [package]
-name = "bevy_lunex"
+name = "bevy_lunex_core"
 version = "0.1.0"
 edition = "2021"
 
-members = [
-  "crates/*"
-]
 
 [dependencies]
 ahash = "0.8.3"
