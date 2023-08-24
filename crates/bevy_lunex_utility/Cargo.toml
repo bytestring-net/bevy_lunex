@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
 colored = "2.0.0"
+
+bevy = { git = "https://github.com/bevyengine/bevy", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
 
 bevy_lunex_core = { path = "../bevy_lunex_core"}
