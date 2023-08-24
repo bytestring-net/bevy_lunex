@@ -7,7 +7,7 @@ authors = ["Dominik Kaspar <dominik0kaspar@gmail.com>"]
 repository = "https://github.com/bytestring-net/bevy-lunex"
 keywords = ["ui", "layout", "bevy", "lunex", "bevy-lunex"]
 categories = ["gui", "mathematics", "game-development"]
-description = "Blazingly fast path based modular layout system built on top of Bevy ECS."
+description = "Blazingly fast path based modular layout system built on top of Bevy ECS"
 readme = "README.md"
 
 members = [

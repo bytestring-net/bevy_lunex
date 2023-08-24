@@ -2,6 +2,12 @@
 name = "bevy_lunex_ui"
 version = "0.0.1"
 edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["Dominik Kaspar <dominik0kaspar@gmail.com>"]
+repository = "https://github.com/bytestring-net/bevy-lunex"
+keywords = ["ui", "layout", "bevy", "lunex", "bevy-lunex"]
+categories = ["gui", "mathematics", "game-development"]
+description = "Supporting crate for bevy_lunex"
 
 [dependencies]
 mathio = "0.2.1"
