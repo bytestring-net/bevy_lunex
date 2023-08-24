@@ -23,6 +23,7 @@ pub use code::widget::Widget;
 pub mod prelude {
     pub use super::{WindowLayout, RelativeLayout, SolidLayout};
     pub use super::{SolidScale, LayoutPackage};
+    pub use super::LunexError;
     pub use super::UiTree;
     pub use super::Widget;
 }

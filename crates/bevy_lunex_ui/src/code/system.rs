@@ -23,7 +23,15 @@ pub fn tree_update(mut query: Query<&mut UiTree>, windows: Query<&Window>) {
 }
 
 /// # Element Update
-/// A system that repositions every [`Element`] to match the calculated layout.
+/// A system that re-positions and re-scales every [`Element`] to match the calculated layout.
+/// 
+/// Requires that entity has [`Element`] + [`Widget`] + [`Transform`] components.
+/// * [`Element`] contains the data how to position the entity relative to the widget.
+/// * [`Widget`] constains the path link.
+/// * [`Transform`] fields will be overwritten by this system.
+/// 
+/// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**.
+/// When [`Widget`] visibility is set to `false`, X and Y transform will be set to `-10 000`.
 pub fn element_update(systems: Query<&UiTree>, mut query: Query<(&Widget, &Element, &mut Transform)>) {
     for system in systems.iter() {
         for (widget, element, mut transform) in &mut query {
@@ -90,6 +98,6 @@ pub fn element_update(systems: Query<&UiTree>, mut query: Query<(&Widget, &Eleme
 pub struct LunexUiPlugin;
 impl Plugin for LunexUiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (tree_update, element_update));
+        app.add_systems(Update, (tree_update, element_update).chain());
     }
 }

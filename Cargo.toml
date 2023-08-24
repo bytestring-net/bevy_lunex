@@ -8,7 +8,6 @@ members = [
 ]
 
 [dependencies]
-ahash = "0.8.3"
-mathio = "0.2.0"
-bevy = { git = "https://github.com/bevyengine/bevy", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
-colored = "2.0.0"
+bevy_lunex_core = { path = "crates/bevy_lunex_core"}
+bevy_lunex_ui = { path = "crates/bevy_lunex_ui"}
+bevy_lunex_utility = { path = "crates/bevy_lunex_utility"}

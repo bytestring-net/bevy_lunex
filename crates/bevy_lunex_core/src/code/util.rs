@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 use mathio::*;
 
-use bevy::utils::thiserror::Error;
-use std::num::ParseIntError;
-
 /// Allows converting a Vec2 in Bevy's coordinate system to Lunex's coordinate system.
 pub trait AsLunexVec2 {
     /// This function is used for translating Vec2 from Bevy coordinate system to Lunex coordinate system.
