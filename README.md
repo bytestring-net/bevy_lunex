@@ -4,7 +4,7 @@
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/d/bevy_lunex?label=downloads&color=df9e97"></a>
   <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.11.2-white.svg?label=bevy&color=bb86a5"></a>
-  <a href="./LICENSE-Apache"><img src="https://img.shields.io/badge/License-Apache-white.svg?label=license&color=9fcec4"></a>
+  <a href="./LICENSE-APACHE"><img src="https://img.shields.io/badge/License-Apache-white.svg?label=license&color=9fcec4"></a>
   <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-MIT-white.svg?label=license&color=a0f6b9"></a>
   <a href="https://docs.rs/bevy_lunex"><img src="https://img.shields.io/docsrs/bevy_lunex/latest?color=8df7cb"></a>
 </div>
@@ -13,7 +13,7 @@
 
 Blazingly fast ***path*** based ***modular layout system*** built on top of **Bevy ECS**. It positions rectangles with user-defined positions to achieve a precise layout.
 
-*Note: Currently WIP development. It is not released on crates.io because version 0.1 is still not UX polished. Most of the features are indeed implemented, but we are giving ourselves some time to catch bugs and improve our systems. The deadline for the 0.1 release is the 0.12.0 release of Bevy.*
+*Note: Currently WIP development. This version currently relies on github version of Bevy. Most of the features are already implemented, but we are giving ourselves some time to catch bugs and polish our systems. The deadline for the 0.1 release is the 0.12.0 release of Bevy.*
 ## === Showcase ===
 ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
 
@@ -125,7 +125,6 @@ commands.spawn(tree);
 ```
 
 ### --- Layout options ---
-
 There are 3 main layout options to pick from. With their combination, you can define any setup. They are:
 * **RELATIVE** || Defined from 2 points, as % of the parent container.
 * **SOLID** || Defined as a ratio of width and height. Will scale to fit or fill parent.
@@ -135,6 +134,7 @@ By nesting branches of these 3 types, you can precisely define the position and 
 
 
 ## === Contributing ===
+
 Any contribution submitted by you will be dual licensed as mentioned below, without any additional terms or conditions.
 
 ## === Licensing ===
