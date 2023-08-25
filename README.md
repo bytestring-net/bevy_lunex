@@ -6,10 +6,9 @@
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/d/bevy_lunex?label=downloads&color=df9e97"></a>
   <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.11.2-white.svg?label=bevy&color=bb86a5"></a>
-  <a href="./LICENSE-APACHE"><img src="https://img.shields.io/badge/License-Apache-white.svg?label=license&color=9fcec4"></a>
-  <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-MIT-white.svg?label=license&color=a0f6b9"></a>
+  <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-Apache/MIT-white.svg?label=license&color=9fcec4"></a>
+  <a href="https://deps.rs/repo/github/bytestring-net/bevy-lunex"><img src="https://img.shields.io/badge/check-white.svg?label=deps&color=a0f6b9"></a>
   <a href="https://docs.rs/bevy_lunex"><img src="https://img.shields.io/docsrs/bevy_lunex/latest?color=8df7cb"></a>
-  <a href="https://deps.rs/repo/github/bytestring-net/bevy-lunex"><img src="https://deps.rs/repo/github/bytestring-net/bevy-lunex/status.svg?color=8df7cb"></a>
 </div>
 
 # 
