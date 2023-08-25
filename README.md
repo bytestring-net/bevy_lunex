@@ -9,13 +9,15 @@
   <a href="./LICENSE-APACHE"><img src="https://img.shields.io/badge/License-Apache-white.svg?label=license&color=9fcec4"></a>
   <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-MIT-white.svg?label=license&color=a0f6b9"></a>
   <a href="https://docs.rs/bevy_lunex"><img src="https://img.shields.io/docsrs/bevy_lunex/latest?color=8df7cb"></a>
+  <a href="https://deps.rs/repo/github/bytestring-net/bevy-lunex"><img src="https://deps.rs/repo/github/bytestring-net/bevy-lunex/status.svg?color=8df7cb"></a>
 </div>
 
 # 
 
 Blazingly fast ***path*** based ***modular layout system*** built on top of **Bevy ECS**. It positions rectangles with user-defined positions to achieve a precise layout.
 
-*Note: Currently WIP development. This version currently relies on github version of Bevy. Most of the features are already implemented, but we are giving ourselves some time to catch bugs and polish our systems. The deadline for the 0.1 release is the 0.12.0 release of Bevy.*
+*Note: Currently WIP development. Most of the features are already implemented, but we are giving ourselves some time to catch bugs and polish our systems. The deadline for the 0.1 release is the 0.12.0 release of Bevy.*
+
 ## === Showcase ===
 ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
 
