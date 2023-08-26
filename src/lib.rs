@@ -1,12 +1,13 @@
 //! ![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/41d0cf62-26fe-40d3-8ed6-23644108f28f)
 //! 
+//! 
 //! <div align="center">
-//! <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
-//! <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/d/bevy_lunex?label=downloads&color=df9e97"></a>
-//! <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.11.2-white.svg?label=bevy&color=bb86a5"></a>
-//! <a href="./LICENSE-APACHE"><img src="https://img.shields.io/badge/License-Apache-white.svg?label=license&color=9fcec4"></a>
-//! <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-MIT-white.svg?label=license&color=a0f6b9"></a>
-//! <a href="https://docs.rs/bevy_lunex"><img src="https://img.shields.io/docsrs/bevy_lunex/latest?color=8df7cb"></a>
+//!   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
+//!   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/d/bevy_lunex?label=downloads&color=df9e97"></a>
+//!   <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.11.2-white.svg?label=bevy&color=bb86a5"></a>
+//!   <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-Apache/MIT-white.svg?label=license&color=9fcec4"></a>
+//!   <a href="https://deps.rs/repo/github/bytestring-net/bevy-lunex"><img src="https://img.shields.io/badge/check-white.svg?label=deps&color=a0f6b9"></a>
+//!   <a href="https://docs.rs/bevy_lunex"><img src="https://img.shields.io/docsrs/bevy_lunex/latest?color=8df7cb"></a>
 //! </div>
 //! 
 //! # 
@@ -44,19 +45,19 @@
 //! This is the way to get around the *Rust's borrow checker*.
 //! ```
 //! #ROOT
-//! |-> Main_menu
-//! |    |-> Background
-//! |    |-> Board
-//! |    |    |-> Logo
-//! |    |    |-> Buttons
-//! |    |    |    |-> Continue
-//! |    |    |    |-> New_Game
-//! |    |    |    |-> Load_Game
-//! |    |    |    |-> Settings
-//! |    |    |    |-> Credits
-//! |    |    |    |-> Additional_Content
-//! |    |    |    |-> Quit_Game
-//! ```
+//!   |-> Main_menu
+//!   |    |-> Background
+//!   |    |-> Board
+//!   |    |    |-> Logo
+//!   |    |    |-> Buttons
+//!   |    |    |    |-> Continue
+//!   |    |    |    |-> New_Game
+//!   |    |    |    |-> Load_Game
+//!   |    |    |    |-> Settings
+//!   |    |    |    |-> Credits
+//!   |    |    |    |-> Additional_Content
+//!   |    |    |    |-> Quit_Game
+//!  ```
 //! ^ This is a **"UiTree"** structure printed out in a terminal. Each item displayed here is **"UiBranch"**. Look for example at the *"Board"* branch, in which are nested *"Logo"* and *"Buttons"* branches.
 //! 
 //! 
@@ -71,9 +72,9 @@
 //! To create a new **"Widget"** in the root directory you pass in the **"UiTree"**, specify widget properties and the function returns the smart pointer. 
 //! ```rust
 //! let widget = Widget::create(&mut tree, "widget", RelativeLayout {
-//!   relative_1: Vec2::new(0.0, 0.0),
-//!   relative_2: Vec2::new(100.0, 100.0),
-//!   ..default()
+//!     relative_1: Vec2::new(0.0, 0.0),
+//!     relative_2: Vec2::new(100.0, 100.0),
+//!     ..default()
 //! }.pack())?;
 //! ```
 //! 
@@ -81,12 +82,12 @@
 //! Once you have the **"Widget"** created, you can pass it to an entity as a component together with other components like **"Image"**. Here we use **"ImageElementBundle"**, which is the same as **"SpriteBundle"**, but has extra fields for **"Widget"** and **"Element"**. Element component is used when you need to attach a visual entity to a widget, like text or image.
 //! ```rust
 //! commands.spawn((
-//!   ImageElementBundle::new(
-//!       widget,
-//!       &ImageParams::default(),
-//!       asset_server.load("button.png"),
-//!       Vec2::new(1280.0, 250.0)),
-//!   ButtonHighlightEffect::new(Color::GOLD),
+//!     ImageElementBundle::new(
+//!         widget,
+//!         &ImageParams::default(),
+//!         asset_server.load("button.png"),
+//!         Vec2::new(1280.0, 250.0)),
+//!     ButtonHighlightEffect::new(Color::GOLD),
 //! ));
 //! ```
 //! In this example, we also passed another component called **"ButtonHighlightEffect"**, which we will define in the next section.
@@ -98,21 +99,21 @@
 //! pub struct ButtonHighlightEffect (pub Color);
 //! 
 //! fn button_highlight_effect_update(
-//!   systems: Query<&UiTree>,
-//!   cursors: Query<&Cursor>, 
-//!   mut query: Query<(&Widget, &mut Sprite, &ButtonHighlightEffect)>
+//!     systems: Query<&UiTree>,
+//!     cursors: Query<&Cursor>, 
+//!     mut query: Query<(&Widget, &mut Sprite, &ButtonHighlightEffect)>
 //! ) {
-//!   for system in systems.iter() {
-//!       for (widget, mut sprite, color) in &mut query {
-//!           for cursor in cursors.iter() {
-//!               if widget.is_within(&system, "", &cursor.position_world().as_lunex(system.offset)).unwrap(){
-//!                   sprite.color = color.0;
-//!               } else {
-//!                   sprite.color = Color::WHITE;
-//!               }
-//!           }
-//!       }
-//!   }
+//!     for system in systems.iter() {
+//!         for (widget, mut sprite, color) in &mut query {
+//!             for cursor in cursors.iter() {
+//!                 if widget.is_within(&system, "", &cursor.position_world().as_lunex(system.offset)).unwrap(){
+//!                     sprite.color = color.0;
+//!                 } else {
+//!                     sprite.color = Color::WHITE;
+//!                 }
+//!             }
+//!         }
+//!     }
 //! }
 //! ```
 //! ### --- Last ---
