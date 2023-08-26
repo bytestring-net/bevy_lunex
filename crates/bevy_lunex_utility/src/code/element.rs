@@ -51,8 +51,74 @@ impl Default for Element {
         }
     }
 }
+impl Element {
+    /// Element set to a custom relative position
+    pub fn at(mut self, x: f32, y: f32) -> Element {
+        self.relative = Vec2::new(x, y);
+        self
+    }
+    
+    /// Element set to a custom x relative position
+    pub fn at_x(mut self, x: f32) -> Element {
+        self.relative.x = x;
+        self
+    }
+    
+    /// Element set to a custom y relative position
+    pub fn at_y(mut self, y: f32) -> Element {
+        self.relative.y = y;
+        self
+    }
 
-/// # DEPRACTED?!
+    /// Element set to a custom absolute position
+    pub fn at_abs(mut self, x: f32, y: f32) -> Element {
+        self.absolute = Vec2::new(x, y);
+        self
+    }
+    
+    /// Element set to a custom x absolute position
+    pub fn at_x_abs(mut self, x: f32) -> Element {
+        self.absolute.x = x;
+        self
+    }
+    
+    // Element set to a custom y absolute position
+    pub fn at_y_abs(mut self, y: f32) -> Element {
+        self.absolute.y = y;
+        self
+    }
+    
+    /// Element set to a custom boundary
+    pub fn with_bounds(mut self, boundary: Vec2) -> Element {
+        self.boundary = boundary;
+        self
+    }
+
+    /// Element set to a custom scale
+    pub fn with_scale(mut self, scale: f32) -> Element {
+        self.scale = scale;
+        self
+    }
+    
+    /// Element set to a custom depth
+    pub fn with_depth(mut self, depth: f32) -> Element {
+        self.depth = depth;
+        self
+    }
+    
+    /// Element set to a custom width
+    pub fn with_width(mut self, width: Option<f32>) -> Element {
+        self.width = width;
+        self
+    }
+    
+    /// Element set to a custom height
+    pub fn with_height(mut self, height: Option<f32>) -> Element {
+        self.height = height;
+        self
+    }
+}
+
 /// # Element Bundle
 /// A bundle containing [`Element`] + [`Widget`].
 /// It is recommended to use the [`element_spawn`] macro abstraction.
@@ -71,6 +137,20 @@ pub struct ElementBundle {
     pub visibility: Visibility,
     pub global_transform: GlobalTransform,
     pub computed_visibility: ComputedVisibility,
+}
+impl ElementBundle {
+    /// # New
+    /// Creates new [`ElementBundle`] from given parameters.
+    /// # Arguments
+    /// * `widget` = widget to spawn element for.
+    /// * `element` = the element to spawn.
+    pub fn new(widget: Widget, element: Element) -> ElementBundle {
+        ElementBundle {
+            widget,
+            element,
+            ..default()
+        }
+    }
 }
 
 
@@ -101,9 +181,9 @@ pub struct ImageElementBundle {
     pub computed_visibility: ComputedVisibility,
 }
 impl ImageElementBundle {
-    /// ### New
+    /// # New
     /// Creates new [`ImageElementBundle`] from given parameters.
-    /// ### Arguments
+    /// # Arguments
     /// * `widget` = widget to spawn element for.
     /// * `image_params` = dictates how the element should behave and be located.
     /// * `texture` = image handle, you can use `asset_server.load("")`.
@@ -252,36 +332,60 @@ impl ImageParams {
     }
 
 
-    /// Image parameters set to a custom position
+    /// Image parameters set to a custom relative position
     pub fn at(mut self, x: f32, y: f32) -> ImageParams {
         self.relative = Vec2::new(x, y);
         self
     }
-     /// Image parameters set to a custom x position
-     pub fn at_x(mut self, x: f32) -> ImageParams {
+    
+    /// Image parameters set to a custom x relative position
+    pub fn at_x(mut self, x: f32) -> ImageParams {
         self.relative.x = x;
         self
     }
-    /// Image parameters set to a custom y position
+    
+    /// Image parameters set to a custom y relative position
     pub fn at_y(mut self, y: f32) -> ImageParams {
         self.relative.y = y;
         self
     }
+
+    /// Image parameters set to a custom absolute position
+    pub fn at_abs(mut self, x: f32, y: f32) -> ImageParams {
+        self.absolute = Vec2::new(x, y);
+        self
+    }
+    
+    /// Image parameters set to a custom x absolute position
+    pub fn at_x_abs(mut self, x: f32) -> ImageParams {
+        self.absolute.x = x;
+        self
+    }
+    
+    /// Image parameters set to a custom y absolute position
+    pub fn at_y_abs(mut self, y: f32) -> ImageParams {
+        self.absolute.y = y;
+        self
+    }
+
+    /// Image parameters set to a custom scale
+    pub fn with_scale(mut self, scale: f32) -> ImageParams {
+        self.scale = scale;
+        self
+    }
+    
     /// Image parameters set to a custom depth
     pub fn with_depth(mut self, depth: f32) -> ImageParams {
         self.depth = depth;
         self
     }
-    /// Image parameters set to a custom scale
-    pub fn scaled(mut self, scale: f32) -> ImageParams {
-        self.scale = scale;
-        self
-    }
+    
     /// Image parameters set to a custom width
     pub fn with_width(mut self, width: Option<f32>) -> ImageParams {
         self.width = width;
         self
     }
+    
     /// Image parameters set to a custom height
     pub fn with_height(mut self, height: Option<f32>) -> ImageParams {
         self.height = height;
@@ -321,9 +425,9 @@ pub struct TextElementBundle {
     pub computed_visibility: ComputedVisibility,
 }
 impl TextElementBundle {
-    /// ### New
+    /// # New
     /// Creates new [`TextElementBundle`] from given parameters.
-    /// ### Arguments
+    /// # Arguments
     /// * `widget` = widget to spawn element for.
     /// * `text_params` = dictates how the element should behave and be located.
     /// * `text` = the text you want to display.
@@ -495,40 +599,70 @@ impl TextParams {
         }
     }
 
-    /// Text parameters set to a custom position
+
+    /// Text parameters set to a custom relative position
     pub fn at(mut self, x: f32, y: f32) -> TextParams {
         self.relative = Vec2::new(x, y);
         self
     }
-    /// Text parameters set to a custom x position
+    
+    /// Text parameters set to a custom x relative position
     pub fn at_x(mut self, x: f32) -> TextParams {
         self.relative.x = x;
         self
     }
-    /// Text parameters set to a custom y position
+    
+    /// Text parameters set to a custom y relative position
     pub fn at_y(mut self, y: f32) -> TextParams {
         self.relative.y = y;
         self
     }
 
+    /// Text parameters set to a custom absolute position
+    pub fn at_abs(mut self, x: f32, y: f32) -> TextParams {
+        self.absolute = Vec2::new(x, y);
+        self
+    }
+    
+    /// Text parameters set to a custom x absolute position
+    pub fn at_x_abs(mut self, x: f32) -> TextParams {
+        self.absolute.x = x;
+        self
+    }
+    
+    /// Text parameters set to a custom y absolute position
+    pub fn at_y_abs(mut self, y: f32) -> TextParams {
+        self.absolute.y = y;
+        self
+    }
+
     /// Text parameters set to a specific text style
-    pub fn styled(mut self, style: &TextStyle) -> TextParams {
+    pub fn with_style(mut self, style: &TextStyle) -> TextParams {
         self.style = style.clone();
         self
     }
+
     /// Text parameters set to a custom scale
-    pub fn scaled(mut self, scale: f32) -> TextParams {
+    pub fn with_scale(mut self, scale: f32) -> TextParams {
         self.scale = scale;
         self
     }
-    /// Text parameters set to a custom width
-    pub fn with_width(mut self, width: f32) -> TextParams {
-        self.width = Some(width);
+    
+    /// Text parameters set to a custom depth
+    pub fn with_depth(mut self, depth: f32) -> TextParams {
+        self.depth = depth;
         self
     }
+    
+    /// Text parameters set to a custom width
+    pub fn with_width(mut self, width: Option<f32>) -> TextParams {
+        self.width = width;
+        self
+    }
+    
     /// Text parameters set to a custom height
-    pub fn with_height(mut self, height: f32) -> TextParams {
-        self.height = Some(height);
+    pub fn with_height(mut self, height: Option<f32>) -> TextParams {
+        self.height = height;
         self
     }
 }
