@@ -1,4 +1,4 @@
-//! ![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/7f178bb8-5ea4-4da9-a169-708f595c248c)
+//! ![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/41d0cf62-26fe-40d3-8ed6-23644108f28f)
 //! 
 //! <div align="center">
 //! <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
@@ -13,7 +13,8 @@
 //! 
 //! Blazingly fast ***path*** based ***modular layout system*** built on top of **Bevy ECS**. It positions rectangles with user-defined positions to achieve a precise layout.
 //! 
-//! *Note: Currently WIP development. This version currently relies on github version of Bevy. Most of the features are already implemented, but we are giving ourselves some time to catch bugs and polish our systems. The deadline for the 0.1 release is the 0.12.0 release of Bevy.*
+//! *Note: Currently WIP development. Most of the features are already implemented, but we are giving ourselves some time to catch bugs and polish our systems. The deadline for the 0.1 release is the 0.12.0 release of Bevy.*
+//! 
 //! ## === Showcase ===
 //! ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
 //! 
