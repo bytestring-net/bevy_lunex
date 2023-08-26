@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{LunexError, UiTree, UiBranch, Data, LayoutPackage};
+use crate::{LunexError, UiTree, UiBranch, Data, LayoutPackage, Position};
 use crate::{is_numerical_id, split_last};
 
 // ===========================================================
@@ -197,8 +197,39 @@ impl Widget {
         }
     }
 
+    /// # Fetch Position
+    /// This function will try to return &[`Position`].
+    ///
+    /// This struct is output of the calculated layout data.
+    pub fn fetch_position<'a>(
+        &'a self,
+        tree: &'a UiTree,
+    ) -> Result<&Position, LunexError> {
+        match self.fetch(tree) {
+            Ok(branch) => Ok(branch.container_get().position_get()),
+            Err(e) => Err(e),
+        }
+    }
+
+    /// # Fetch Position Extended
+    /// This function will try to return &[`Position`].
+    ///
+    /// This struct is output of the calculated layout data.
+    /// 
+    /// In this extended function you can also specify path to sub-widgets which will be used as target instead.
+    pub fn fetch_position_ext<'a>(
+        &'a self,
+        tree: &'a UiTree,
+        path: &str,
+    ) -> Result<&Position, LunexError> {
+        match self.fetch_ext(tree, path) {
+            Ok(branch) => Ok(branch.container_get().position_get()),
+            Err(e) => Err(e),
+        }
+    }
+
     /// # Fetch Data
-    /// This function will try to return &mut option with [`Data`].
+    /// This function will try to return &option with [`Data`].
     ///
     /// This struct holds any data you need to recursively share between widgets.
     pub fn fetch_data<'a>(
@@ -212,7 +243,7 @@ impl Widget {
     }
 
     /// # Fetch Data Extended
-    /// This function will try to return &mut option with [`Data`].
+    /// This function will try to return &option with [`Data`].
     ///
     /// This struct holds any data you need to recursively share between widgets.
     /// 

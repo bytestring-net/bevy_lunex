@@ -53,7 +53,7 @@ pub fn element_update(systems: Query<&UiTree>, mut query: Query<(&Widget, &Eleme
     
                         transform.translation.z = branch.get_depth() + element.depth;
     
-                        let pos = widget.fetch(&system).unwrap().container_get().position_get().invert_y();
+                        let pos = widget.fetch(&system).unwrap().container_get().position_get().clone().invert_y();
                         let vec = pos.get_pos_y_inverted(element.relative);
                         transform.translation.x = vec.x + system.offset.x;
                         transform.translation.y = vec.y + system.offset.y;

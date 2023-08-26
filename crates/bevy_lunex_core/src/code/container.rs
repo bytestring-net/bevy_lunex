@@ -346,15 +346,25 @@ pub struct Position {
     pub depth: f32,
 }
 impl Position {
-    /// Returns cloned [`Position`], but with inverted Y coordinate, this translation is required so Bevy (Y is up) can properly render Lunex (Y is down).
-    pub fn invert_y(&self) -> Position {
-        Position {
-            point_1: Vec2::new(self.point_1.x, -self.point_1.y),
-            point_2: Vec2::new(self.point_2.x, -self.point_2.y),
-            width: self.width,
-            height: self.height,
-            depth: self.depth,
-        }
+    /// This function will offset the coordination values by given offset.
+    pub fn offset(mut self, offset: Vec2) -> Position {
+        self.point_1 += offset;
+        self.point_2 += offset;
+        self
+    }
+
+    /// This function will invert coordination value x.
+    pub fn invert_x(mut self) -> Position {
+        self.point_1.x = -self.point_1.x;
+        self.point_2.x = -self.point_1.x;
+        self
+    }
+
+    /// This function will invert coordination value y.
+    pub fn invert_y(mut self) -> Position {
+        self.point_1.y = -self.point_1.y;
+        self.point_2.y = -self.point_1.y;
+        self
     }
 
     /// Returns a position from a custom relative point on this widget.
@@ -364,11 +374,27 @@ impl Position {
             self.point_1.y + self.height * relative.y / 100.0,
         )
     }
+
+    /// Returns a position from a custom relative point on this widget, but X is inverted.
+    pub fn get_pos_x_inverted(&self, relative: Vec2) -> Vec2 {
+        Vec2::new(
+            self.point_1.x + self.width * -relative.x / 100.0,
+            self.point_1.y + self.height * relative.y / 100.0,
+        )
+    }
     
-    /// Returns a position from a custom relative point on this widget, but Y is inverted due to the same reason as `invert_y` method.
+    /// Returns a position from a custom relative point on this widget, but Y is inverted.
     pub fn get_pos_y_inverted(&self, relative: Vec2) -> Vec2 {
         Vec2::new(
             self.point_1.x + self.width * relative.x / 100.0,
+            self.point_1.y + self.height * -relative.y / 100.0,
+        )
+    }
+
+    /// Returns a position from a custom relative point on this widget, but X and Y is inverted.
+    pub fn get_pos_xy_inverted(&self, relative: Vec2) -> Vec2 {
+        Vec2::new(
+            self.point_1.x + self.width * -relative.x / 100.0,
             self.point_1.y + self.height * -relative.y / 100.0,
         )
     }

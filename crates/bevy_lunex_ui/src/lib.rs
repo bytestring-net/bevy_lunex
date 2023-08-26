@@ -29,5 +29,6 @@ pub mod prelude {
     pub use super::Cursor;
 
     pub use super::LunexUiPlugin;
+    pub use super::{tree_update, element_update};
     pub use super::LunexUiDebugPlugin;
 }
