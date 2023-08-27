@@ -16,9 +16,6 @@ Blazingly fast ***path*** based ***modular layout engine*** built on top of **Be
 
 ## === Showcase ===
 
-![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
-
-
 <img src="promo/readme_cyberpunk.gif" alt="Cyberpunk gif"/>
 
 *^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/bevy-lunex-cyberpunk).*
