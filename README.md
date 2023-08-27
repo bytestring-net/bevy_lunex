@@ -1,10 +1,7 @@
-
 ![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/41d0cf62-26fe-40d3-8ed6-23644108f28f)
-
 
 <div align="center">
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
-  <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/d/bevy_lunex?label=downloads&color=df9e97"></a>
   <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.11.2-white.svg?label=bevy&color=bb86a5"></a>
   <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-Apache/MIT-white.svg?label=license&color=9fcec4"></a>
   <a href="https://deps.rs/crate/bevy_lunex"><img src="https://img.shields.io/badge/check-white.svg?label=deps&color=a0f6b9"></a>
@@ -13,30 +10,36 @@
 
 # 
 
-Blazingly fast ***path*** based ***modular layout system*** built on top of **Bevy ECS**. It positions rectangles with user-defined positions to achieve a precise layout.
+Blazingly fast ***path*** based ***modular layout engine*** built on top of **Bevy ECS**. It calculates layout from user-defined ***rectangle positions*** and percentages. Works for ***all aspect ratios***.
 
 *Note: Currently WIP development. Most of the features are already implemented, but we are giving ourselves some time to catch bugs and polish our systems. The deadline for the 0.1 release is the 0.12.0 release of Bevy.*
 
 ## === Showcase ===
+
 ![image](https://github.com/bytestring-net/bevy_lunex/assets/49441831/73d96dd1-d851-4a9f-9d58-11aba63e579d)
 
-*^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. It aligns Textures in 2D space to values calculated by the Bevy-Lunex layout engine. It achieves AAA-level layout capabilities and modularity. [Source code here](https://github.com/IDEDARY/bevy-lunex-cyberpunk) (Example).*
+
+<img src="promo/readme_cyberpunk.gif" alt="Cyberpunk gif"/>
+
+*^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/bevy-lunex-cyberpunk).*
 
 *For latest state-of-the-art example usage of Bevy-Lunex, take a look at the source code of this [repository](https://github.com/IDEDARY/stardawn).*
 
 
-## === Purpose ===
-
-This project was developed as an **alternative** to all **web-tech-inspired** user interface libraries. I dislike HTML-CSS-inspired frameworks due to the confusion the underlying system causes. This project strives to be **clean**, **simple** and **intuitive** to the user. All underlying concepts used here were rediscovered from the ground up while developing this library.
-
 ## === Description ===
 
-**Bevy-Lunex** is a layout framework focused on defining and managing rectangles. The most prominent use case is to use it as a *"building brick"* for **user interface**.
+**Bevy-Lunex** is a layout engine based on defining and managing rectangles. It strives to be **clean**, **simple** and **intuitive** to the user. The most prominent use case is to use it as a *"building brick"* for your own **user interface**.
 
-The core of the library is **purely math** based and has *limited relation* to actual UI. However, we provide abstractions and functions to **leverage the power** of this layouting framework to create a very **modular user interface**.
+The core of this library is **pure math** layout engine, meaning **no styling** or **rendering** is currently included. That's where you come in. You can use the library to hook your own components and custom rendering to make it look exactly the way you want.
 
+By attaching entities to coordinates returned by **Bevy Lunex**, you can abstract complex positioning logic away from you. Take a look at these examples:
+* **[`Bevy Lunex Cyberpunk`](https://github.com/IDEDARY/bevy-lunex-cyberpunk)** - *Made by attaching images to Bevy Lunex rectangles and animating them*.
+* **[`Stardawn`](https://github.com/IDEDARY/stardawn)** - *Used [bevy_vector_shapes](https://github.com/james-j-obrien/bevy_vector_shapes) to render resizable dynamic elements*.
 
 ## === Workflow ===
+<details><summary>Expand</summary>
+
+### --- Usage ---
 
 Due to the nature of Rust, we had to come up with a **unique** way how to manage data. We decided to implement **hierarchy tree structure**, which is used in **UNIX file system**.
 
@@ -61,8 +64,7 @@ This is the way to get around the *Rust's borrow checker*.
  ```
 ^ This is a **"UiTree"** structure printed out in a terminal. Each item displayed here is **"UiBranch"**. Look for example at the *"Board"* branch, in which are nested *"Logo"* and *"Buttons"* branches.
 
-
-## === Usage ===
+### --- Tree creation ---
 
 First, create a **"UiTree"** struct that will hold all the layout data managed recursively.
 ```rust
@@ -135,6 +137,12 @@ There are 3 main layout options to pick from. With their combination, you can de
 
 By nesting branches of these 3 types, you can precisely define the position and layout behaviour.
 
+</details>
+
+## === Versions ===
+|  Bevy  | Bevy Lunex |
+|--------|------------|
+| 0.11.2 |  <= 0.0.3  |
 
 ## === Contributing ===
 
