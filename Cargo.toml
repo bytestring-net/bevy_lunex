@@ -3,12 +3,16 @@ name = "bevy_lunex"
 version = "0.0.3"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-authors = ["Dominik Kaspar <dominik0kaspar@gmail.com>"]
+authors = ["Dominik Kaspar"]
 repository = "https://github.com/bytestring-net/bevy-lunex"
 keywords = ["ui", "layout", "bevy", "lunex", "bevy-lunex"]
 categories = ["gui", "mathematics", "game-development"]
 description = "Blazingly fast path based modular layout system built on top of Bevy ECS"
 readme = "README.md"
+
+exclude = [
+  "promo/*",
+]
 
 members = [
   "crates/*"
