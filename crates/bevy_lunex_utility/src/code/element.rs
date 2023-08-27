@@ -209,6 +209,9 @@ impl ImageElementBundle {
             texture,
             sprite: Sprite {
                 anchor: image_params.anchor.clone(),
+                color: image_params.color.clone(),
+                flip_x: image_params.flip_x.clone(),
+                flip_y: image_params.flip_y.clone(),
                 ..default()
             },
             ..Default::default()
@@ -223,6 +226,9 @@ impl ImageElementBundle {
 /// * `relative` = position in % relative to the widget.
 /// * `absolute` = position in pixels, always the same.
 /// * `anchor` = which corner of the image is origin (0.0).
+/// * `color` = color tint of the image.
+/// * `flip_x` = flips the image horizontally.
+/// * `flip_y` = flips the image vertically.
 /// * `scale` = size of the image in % of parent widget.
 /// * `depth` = local depth of the image, starts at 0.0, usefull when you have 2 elements overlapping (image and text)
 /// * `width` = optional, will force the width of the image in % of parent widget.
@@ -238,6 +244,15 @@ pub struct ImageParams {
     /// ### Anchor
     /// Which corner of the image is origin (0.0).
     pub anchor: bevy::sprite::Anchor,
+    /// ### Color
+    /// Color tint of the image.
+    pub color: Color,
+    /// ### Flip X
+    /// Flips the image horizontally.
+    pub flip_x: bool,
+    /// ### Flip Y
+    /// Flips the image vertically..
+    pub flip_y: bool,
     /// ### Scale
     /// Size of the image in % of parent widget.
     pub scale: f32,
@@ -257,6 +272,9 @@ impl Default for ImageParams {
             relative: Vec2::new(0.0, 0.0),
             absolute: Vec2::new(0.0, 0.0),
             anchor: bevy::sprite::Anchor::TopLeft,
+            color: Color::WHITE,
+            flip_x: false,
+            flip_y: false,
             scale: 100.0,
             depth: 0.0,
             width: None,
@@ -371,6 +389,24 @@ impl ImageParams {
     /// Image parameters set to a custom scale
     pub fn with_scale(mut self, scale: f32) -> ImageParams {
         self.scale = scale;
+        self
+    }
+
+    /// Image parameters set to a custom color
+    pub fn with_color(mut self, color: Color) -> ImageParams {
+        self.color = color;
+        self
+    }
+
+    /// Image parameters set to a custom flip_x
+    pub fn with_flip_x(mut self, flip_x: bool) -> ImageParams {
+        self.flip_x = flip_x;
+        self
+    }
+
+    /// Image parameters set to a custom flip_x
+    pub fn with_flip_y(mut self, flip_y: bool) -> ImageParams {
+        self.flip_y = flip_y;
         self
     }
     
