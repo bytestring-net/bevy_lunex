@@ -100,7 +100,7 @@ pub struct UiBranch {
     path: String,
 
     //# RENDERING =======
-    /// How deep the branch is in UITree
+    /// How deep the branch is in UiTree
     level: f32,
     /// Z index calculated from branch depth
     depth: f32,
@@ -123,26 +123,35 @@ pub struct UiBranch {
 }
 
 impl UiBranch {
-    //#USER EXPOSED CONTROL
+    // ===========================================================
+    // === BRANCH CONTROL ===
 
-    //Borrows
+    /// Returns borrow of [`Data`] struct mounted on this branch
     pub fn data_get(&self) -> &Option<Data> {
         &self.data
     }
+    
+    /// Returns mut borrow of [`Data`] struct mounted on this branch
     pub fn data_get_mut(&mut self) -> &mut Option<Data> {
         &mut self.data
     }
 
+    /// Returns borrow of layout data of this branch
     pub fn layout_get(&self) -> &LayoutPackage {
         self.container.layout_get()
     }
+    
+    /// Returns mut borrow of layout data of this branch
     pub fn layout_get_mut(&mut self) -> &mut LayoutPackage {
         self.container.layout_get_mut()
     }
 
+    /// Returns borrow of [`Container`] struct mounted on this branch
     pub fn container_get(&self) -> &Container {
         &self.container
     }
+    
+    /// Returns mut borrow of [`Container`] struct mounted on this branch
     pub fn container_get_mut(&mut self) -> &mut Container {
         &mut self.container
     }
@@ -487,7 +496,10 @@ impl UiBranch {
         self.cascade_set_depth(depth);
     }
 
-    //#LIBRARY MECHANISMS
+    // ===========================================================
+    // === BRANCH CREATION ===
+
+    /// Create this struct from given arguments
     fn new(name: String, id: usize, path: String, level: f32, parent_visible: bool) -> UiBranch {
         UiBranch {
             name,
@@ -509,6 +521,7 @@ impl UiBranch {
         }
     }
 
+    /// Create new branch and set name, id, path, level and visibility to cache
     pub(super) fn create_simple(&mut self, name: &str, position: LayoutPackage) -> String {
         let mut id = 0;
         loop {
@@ -518,12 +531,8 @@ impl UiBranch {
                 id += 1
             }
         }
+        let path = if name.is_empty() { format!("{}/#{}", self.get_path(), id) } else { format!("{}/{}", self.get_path(), name) };
 
-        let path = if name.is_empty() {
-            format!("{}/#{}", self.get_path(), id)
-        } else {
-            format!("{}/{}", self.get_path(), name)
-        };
         let mut branch = UiBranch::new(
             name.to_string(),
             id,
@@ -538,11 +547,8 @@ impl UiBranch {
         format!("#{}", id)
     }
 
-    pub(super) fn create_linked(
-        &mut self,
-        name: &str,
-        position: LayoutPackage,
-    ) -> Result<String, LunexError> {
+    /// Register new shortcut if any and calls `create_simple` to make new branch
+    pub(super) fn create_linked(&mut self, name: &str, position: LayoutPackage) -> Result<String, LunexError> {
         if name.is_empty() {
             Ok(self.create_simple("", position))
         } else {
@@ -556,8 +562,7 @@ impl UiBranch {
         }
     }
 
-
-    // USED IN WIDGET
+    /// Create new shortcut with name and path
     pub(super) fn shortcut_add(&mut self, name: String, path: String) -> Result<(), LunexError> {
         if self.shortcuts.contains_key(&name) {
             return Err(LunexError::NameInUse(name));
@@ -659,7 +664,7 @@ impl UiBranch {
     // === BRANCH REMOVAL ===
 
     /// Parses the ***NUMERICAL UID*** and drops the branch
-    pub(super) fn drop_simple (&mut self, uid: &str) -> Result<(), LunexError> {
+    pub(super) fn drop_simple(&mut self, uid: &str) -> Result<(), LunexError> {
         match str::parse::<usize>(&uid[1..]) {
             Ok (id) => match self.inventory.remove(&id) {
                 Some(_) => Ok(()),
@@ -697,7 +702,7 @@ impl UiBranch {
     }
 
     /// Checks for shortcut ***NAME*** and removes it. Then drops the branch
-    pub(super) fn remove_simple_checked (&mut self, name: &str) -> Result<(), LunexError> {
+    pub(super) fn remove_simple_checked(&mut self, name: &str) -> Result<(), LunexError> {
         if self.shortcuts.contains_key(name) {
             match self.drop_linked_checked(name) {
                 Ok(_) => {
@@ -712,7 +717,7 @@ impl UiBranch {
     }
 
     /// Checks all shortcuts and removes them if they are invalid, returns number of removed shortcuts
-    pub(super) fn remove_invalid (&mut self) -> usize {
+    pub(super) fn remove_invalid(&mut self) -> usize {
         let mut marked: Vec<String> = Vec::new();
         for (shortcut, path) in &self.shortcuts {
             match self.borrow_linked_checked(path) {
