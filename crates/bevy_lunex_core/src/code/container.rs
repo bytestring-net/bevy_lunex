@@ -56,6 +56,42 @@ impl WindowLayout {
             self.height_absolute + (self.height_relative * ys),
         )
     }
+
+    /// Window layout set with a custom absolute
+    pub fn with_abs(mut self, abs: Vec2) -> WindowLayout {
+        self.absolute = abs;
+        self
+    }
+
+    /// Window layout set with a custom relative
+    pub fn with_rel(mut self, rel: Vec2) -> WindowLayout {
+        self.relative = rel;
+        self
+    }
+
+    /// Window layout set with a custom width_absolute
+    pub fn with_width_abs(mut self, abs: f32) -> WindowLayout {
+        self.width_absolute = abs;
+        self
+    }
+
+    /// Window layout set with a custom width_relative
+    pub fn with_width_rel(mut self, rel: f32) -> WindowLayout {
+        self.width_relative = rel;
+        self
+    }
+
+    /// Window layout set with a custom height_absolute
+    pub fn with_height_abs(mut self, abs: f32) -> WindowLayout {
+        self.height_absolute = abs;
+        self
+    }
+
+    /// Window layout set with a custom height_relative
+    pub fn with_height_rel(mut self, rel: f32) -> WindowLayout {
+        self.height_relative = rel;
+        self
+    }
 }
 impl Default for WindowLayout {
     fn default() -> Self {
@@ -121,6 +157,30 @@ impl RelativeLayout {
         let _width = v2.x - v1.x;
         let _height = v2.y - v1.y;
         (v1, _width, _height)
+    }
+
+    /// Relative layout set with a custom absolute_1
+    pub fn with_abs_1(mut self, abs: Vec2) -> RelativeLayout {
+        self.absolute_1 = abs;
+        self
+    }
+
+    /// Relative layout set with a custom absolute_2
+    pub fn with_abs_2(mut self, abs: Vec2) -> RelativeLayout {
+        self.absolute_2 = abs;
+        self
+    }
+
+    /// Relative layout set with a custom relative_1
+    pub fn with_rel_1(mut self, rel: Vec2) -> RelativeLayout {
+        self.relative_1 = rel;
+        self
+    }
+
+    /// Relative layout set with a custom relative_1
+    pub fn with_rel_2(mut self, rel: Vec2) -> RelativeLayout {
+        self.relative_2 = rel;
+        self
     }
 }
 impl Default for RelativeLayout {

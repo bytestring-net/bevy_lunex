@@ -509,21 +509,6 @@ impl UiBranch {
         }
     }
 
-    //
-    // pub(super) fn append(&mut self, branch: UiBranch) -> usize {
-    //     let mut id = 0;
-    //     loop {
-    //         if !self.inventory.contains_key(&id) {
-    //             break;
-    //         } else {
-    //             id += 1
-    //         }
-    //     }
-
-    //     self.inventory.insert(id, branch);
-    //     id
-    // }
-
     pub(super) fn create_simple(&mut self, name: &str, position: LayoutPackage) -> String {
         let mut id = 0;
         loop {
@@ -571,8 +556,9 @@ impl UiBranch {
         }
     }
 
-    pub(super) fn register_path(&mut self, name: String, path: String) -> Result<(), LunexError> {
-        //This registers ABSOLUTE PATH for a key
+
+    // USED IN WIDGET
+    pub(super) fn shortcut_add(&mut self, name: String, path: String) -> Result<(), LunexError> {
         if self.shortcuts.contains_key(&name) {
             return Err(LunexError::NameInUse(name));
         }
@@ -580,17 +566,21 @@ impl UiBranch {
         Ok(())
     }
 
+    /// Checks for shortcut ***NAME*** and returns path
     pub(super) fn translate_simple(&self, name: &str) -> Result<String, LunexError> {
-        //This can take ONLY RELATIVE and return ABSOLUTE
         match self.shortcuts.get(name) {
-            Some(absolute) => Ok(absolute.to_string()),
+            Some(path) => Ok(path.into()),
             None => Err(LunexError::NoShortcut(name.into())),
         }
     }
 
-    pub(super) fn borrow_simple(&self, path: &str) -> Result<&UiBranch, LunexError> {
-        //This can take ONLY ABSOLUTE and return reference
-        match str::parse::<usize>(&path[1..]) {
+
+    // ===========================================================
+    // === BRANCH BORROW ===
+
+    /// Parses the ***NUMERICAL UID*** and returns borrow
+    pub(super) fn borrow_simple(&self, uid: &str) -> Result<&UiBranch, LunexError> {
+        match str::parse::<usize>(&uid[1..]) {
             Ok(id) => match self.inventory.get(&id) {
                 Some(branch) => Ok(branch),
                 None => Err(LunexError::NoBranch(id)),
@@ -599,8 +589,8 @@ impl UiBranch {
         }
     }
 
+    /// Checks for shortcut ***NAME*** and calls `borrow_simple` or enters recursion
     pub(super) fn borrow_simple_checked(&self, name: &str) -> Result<&UiBranch, LunexError> {
-        //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
             if is_numerical_id(name) {
                 self.borrow_simple(name)
@@ -615,8 +605,8 @@ impl UiBranch {
         }
     }
 
+    /// Checks the ***PATH*** until recursively locates the branch and calls `borrow_simple_checked`
     pub(super) fn borrow_linked_checked(&self, path: &str) -> Result<&UiBranch, LunexError> {
-        //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked(path),
             Some((branch, remaining_path)) => match self.borrow_simple_checked(branch) {
@@ -626,9 +616,9 @@ impl UiBranch {
         }
     }
 
-    pub(super) fn borrow_simple_mut(&mut self, path: &str) -> Result<&mut UiBranch, LunexError> {
-        //This can take ONLY ABSOLUTE and return reference
-        match str::parse::<usize>(&path[1..]) {
+    /// Parses the ***NUMERICAL UID*** and returns mut borrow
+    pub(super) fn borrow_simple_mut(&mut self, uid: &str) -> Result<&mut UiBranch, LunexError> {
+        match str::parse::<usize>(&uid[1..]) {
             Ok(id) => match self.inventory.get_mut(&id) {
                 Some(branch) => Ok(branch),
                 None => Err(LunexError::NoBranch(id)),
@@ -637,8 +627,8 @@ impl UiBranch {
         }
     }
 
+    /// Checks for shortcut ***NAME*** and calls `borrow_simple_mut` or enters recursion
     pub(super) fn borrow_simple_checked_mut(&mut self, name: &str) -> Result<&mut UiBranch, LunexError> {
-        //This can take RELATIVE/ABSOLUTE and return reference
         if !name.is_empty() {
             if is_numerical_id(name) {
                 self.borrow_simple_mut(name)
@@ -653,8 +643,8 @@ impl UiBranch {
         }
     }
 
+    /// Checks the ***PATH*** until recursively locates the branch and calls `borrow_simple_checked_mut`
     pub(super) fn borrow_linked_checked_mut(&mut self, path: &str) -> Result<&mut UiBranch, LunexError> {
-        //This can take chained ABSOLUTE/RELATIVE path and return reference
         match path.split_once('/') {
             None => self.borrow_simple_checked_mut(path),
             Some((branch, remaining_path)) => match self.borrow_simple_checked_mut(branch) {
@@ -664,79 +654,81 @@ impl UiBranch {
         }
     }
 
-    /*
-    pub (in crate) fn destroy_simple (&mut self, path: &str) -> Result<(), String> {                                                       //This can take ONLY ABSOLUTE and return Option if the destruction succeded
-        match path.chars().nth(1) {
-            Some (value) => {
-                match value {
-                    'p' => Err(String::from("Widgets with no name are supposed to be permanent and cannot be destroyed directly!")),
-                    'r' => {
-                        match str::parse::<usize>(&path[2..]) {
-                            Ok (index) => {
-                                if !self.removable.contains_key(&index) {
-                                    return Err(format!("Removable branch with key '{}' does not exist!", &index).to_string());
-                                }
-                                self.removable.remove(&index);
-                                Ok(())
-                            },
-                            Err (..) => Err(format!("The path '{}' is not a valid number!", &path).to_string()),
-                        }
-                    },
-                    _ => Err(format!("The second character '{}' in '{}' needs to be either 'r' or 'p' (Stands for storage stack)!", &value, &path).to_string()),
+
+    // ===========================================================
+    // === BRANCH REMOVAL ===
+
+    /// Parses the ***NUMERICAL UID*** and drops the branch
+    pub(super) fn drop_simple (&mut self, uid: &str) -> Result<(), LunexError> {
+        match str::parse::<usize>(&uid[1..]) {
+            Ok (id) => match self.inventory.remove(&id) {
+                Some(_) => Ok(()),
+                None => Err(LunexError::NoBranch(id)),
+            },
+            Err(e) => Err(LunexError::InvalidId(e)),
+        }
+    }
+
+    /// Checks for shortcut ***NAME*** and calls `drop_simple` or enters recursion
+    pub(super) fn drop_simple_checked(&mut self, name: &str) -> Result<(), LunexError> {
+        if !name.is_empty() {
+            if is_numerical_id(name) {
+                self.drop_simple(name)
+            } else {
+                match self.translate_simple(name) {
+                    Ok(path) => self.drop_linked_checked(&path),
+                    Err(e) => Err(e),
                 }
-            },
-            None => Err(format!("Path '{}' is missing information (Example: #r12)!", &path).to_string()),
-        }
-    }
-    pub (in crate) fn destroy_simple_checked (&mut self, key: &str) -> Result<(), String> {                                                    //This can take RELATIVE/ABSOLUTE and return Option if the destruction succeded
-        match key.chars().next() {
-            Some (_char) => match _char {
-                '#' => self.destroy_simple(key),
-                _ => match self.translate_simple(key){
-                    Ok (new_key) => self.destroy_chain(&new_key),
-                    Err (message) => Err(message),
-                },
             }
-            None => Err(String::from("There is no key!")),
+        } else {
+            Err(LunexError::InvalidPathSyntax)
         }
     }
-    pub (in crate) fn destroy_chain (&mut self, path: &str) -> Result<(), String> {                                                            //This can take chained ABSOLUTE path and return Option if the destruction succeded
+
+    /// Checks the ***PATH*** until recursively locates the branch and calls `drop_simple_checked`
+    pub(super) fn drop_linked_checked(&mut self, path: &str) -> Result<(), LunexError> {
         match path.split_once('/') {
-            None => {
-                self.destroy_simple(path)
-            },
-            Some (tuple) => match self.borrow_simple_mut(tuple.0) {
-                Ok (borrowed_widget) => borrowed_widget.destroy_chain(tuple.1),
-                Err (message) => Err(message),
-            },
-        }
-    }
-    pub (in crate) fn destroy_chain_checked (&mut self, keypath: &str) -> Result<(), String> {                                                 //This can take chained ABSOLUTE/RELATIVE path and return Option if the destruction succeded
-        match keypath.split_once('/') {
-            None => {
-                self.destroy_simple_checked(keypath)
-            },
-            Some (tuple) => match self.borrow_simple_checked_mut(tuple.0) {
-                Ok (borrowed_widget) => borrowed_widget.destroy_simple_checked(tuple.1),
-                Err (message) => Err(message),
+            None => self.drop_simple_checked(path),
+            Some((branch, remaining_path)) => match self.borrow_simple_checked_mut(branch) {
+                Ok(borrowed_widget) => borrowed_widget.drop_linked_checked(remaining_path),
+                Err(e) => Err(e),
             },
         }
     }
 
-    pub (in crate) fn remove_simple_checked (&mut self, key: &str) -> Result<(), String> {                                                     //This can take ONLY RELATIVE and return Option if the widget was destroyed and removed from register
-        if self.register.contains_key(key) {
-            match self.destroy_chain_checked(key) {
+    /// Checks for shortcut ***NAME*** and removes it. Then drops the branch
+    pub(super) fn remove_simple_checked (&mut self, name: &str) -> Result<(), LunexError> {
+        if self.shortcuts.contains_key(name) {
+            match self.drop_linked_checked(name) {
                 Ok(_) => {
-                    self.register.remove(key);
+                    self.shortcuts.remove(name);
                     Ok(())
                 },
-                Err (message) => Err(message),
+                Err (e) => Err(e),
             }
         } else {
-            Err(format!("Widget registered as '{}' does not exist!", &key).to_string())
+            Err(LunexError::NoShortcut(name.into()))
         }
     }
-    */
+
+    /// Checks all shortcuts and removes them if they are invalid, returns number of removed shortcuts
+    pub(super) fn remove_invalid (&mut self) -> usize {
+        let mut marked: Vec<String> = Vec::new();
+        for (shortcut, path) in &self.shortcuts {
+            match self.borrow_linked_checked(path) {
+                Ok (..) => {},
+                Err (..) => {
+                    marked.push(shortcut.to_string())
+                },
+            }
+        }
+        let n = marked.len();
+        for shortcut in marked {
+            self.shortcuts.remove(&shortcut);
+        }
+        n
+    }
+
 }
 
 // ===========================================================
@@ -751,7 +743,6 @@ pub struct Data {
     pub bools: HashMap<String, bool>,
     pub strings: HashMap<String, String>,
 }
-
 impl Data {
     pub fn new() -> Data {
         Data {

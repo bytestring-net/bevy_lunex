@@ -25,41 +25,28 @@ impl Widget {
             Err (message) => Err(message),
         }
     }
-
-    pub fn fetch_position<'a> (&'a self, system: &'a UITree, key: &str) -> Result<&Position, String> {
-        match self.fetch(&system, key) {
-            Ok (branch) => Ok(&branch.container_get().position_get()),
-            Err (message) => Err(message),
-        }
-    }
-    pub fn fetch_position_mut<'a> (&'a self, system: &'a mut UITree, key: &str) -> Result<&mut Position, String> {
-        match self.fetch_mut(system, key) {
-            Ok (branch) => Ok(branch.container_get_mut().position_get_mut()),
-            Err (message) => Err(message),
-        }
-    }
     */
     //add is cursor_within + depth
 
-    /*
-        pub fn destroy (&self, system: &mut UITree, path : &str) -> Result<(), String> {
+    /* 
+        pub fn destroy (&self, system: &mut UiTree, path : &str) -> Result<(), LunexError> {
             match system.root_get_mut().borrow_linked_checked_mut(&self.path){
                 Ok (reference) => {
                     reference.destroy_chain_checked(path)
                 },
-                Err (message) => Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
+                Err (e) => Err(e),
             }
         }
-        pub fn remove (&self, system: &mut UITree, key : &str) -> Result<(), String> {
+        pub fn remove (&self, system: &mut UiTree, key : &str) -> Result<(), LunexError> {
             match system.root_get_mut().borrow_linked_checked_mut(&self.path){
                 Ok (reference) => {
                     reference.remove_simple_checked(key)
                 },
-                Err (message) => Err(String::from("WIDGET NOT FOUND! #Error: ") + &message),
+                Err (e) => Err(e),
             }
         }
-    */
-
+    
+*/
 
     // ===========================================================
     // === FETCHING ===
@@ -793,7 +780,7 @@ impl Widget {
                             Err(message) => return Err(message),
                         };
                         match parent_branch
-                            .register_path(name, format!("{}/{}", absolute, absolute_key))
+                            .shortcut_add(name, format!("{}/{}", absolute, absolute_key))
                         {
                             Ok(..) => Ok(Widget::new(&format!(
                                 "{}/{}",

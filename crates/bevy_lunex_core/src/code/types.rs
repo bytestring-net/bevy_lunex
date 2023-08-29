@@ -12,7 +12,7 @@ pub enum LunexError {
     NameInUse(String),
 
     /// Error that happens when you try to locate a branch by name that doesn't exist.
-    #[error("no shortcut '{0:}'")]
+    #[error("no shortcut for '{0:}'")]
     NoShortcut(String),
 
     /// Error that happens when you try to locate a branch by ID that doesn't exist.
@@ -23,7 +23,7 @@ pub enum LunexError {
     #[error("invalid branch ID: {0:}")]
     InvalidId(ParseIntError),
 
-    /// Syntax error that happens when the path provided is invalid (miss-use of '/').
+    /// Syntax error that happens when the path provided is invalid (miss-use of '/' or is empty string).
     #[error("the path syntax is invalid")]
     InvalidPathSyntax,
 

@@ -52,6 +52,18 @@ impl Default for Element {
     }
 }
 impl Element {
+    /// New element created from default
+    pub fn new() -> Element {
+        Element::default()
+    }
+
+    /// New element of the size 1x1 scaled to the size of a container
+    /// * transform.scale.x = width of the container
+    /// * transform.scale.y = height of the container
+    pub fn fullfill() -> Element {
+        Element::default().with_bounds(Vec2::splat(1.0)).with_width(Some(100.0)).with_height(Some(100.0))
+    }
+
     /// Element set to a custom relative position
     pub fn at(mut self, x: f32, y: f32) -> Element {
         self.relative = Vec2::new(x, y);
