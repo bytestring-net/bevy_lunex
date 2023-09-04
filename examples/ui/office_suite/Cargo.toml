@@ -1,0 +1,11 @@
+[package]
+name = "office_suite"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+bevy_lunex = { path = "../../../../bevy-lunex"}
+
+bevy = { version = "0.11.2", features = ["dynamic_linking"] }
+bevy_vector_shapes = "0.5.1"

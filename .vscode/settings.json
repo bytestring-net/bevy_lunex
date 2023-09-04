@@ -2,6 +2,8 @@
     "rust-analyzer.linkedProjects": [
         "./crates/bevy_lunex_core/Cargo.toml",
         "./crates/bevy_lunex_ui/Cargo.toml",
-        "./crates/bevy_lunex_utility/Cargo.toml"
+        "./crates/bevy_lunex_utility/Cargo.toml",
+
+        "./examples/ui/office_suite/Cargo.toml"
     ]
 }
