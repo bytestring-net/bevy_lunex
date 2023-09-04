@@ -28,26 +28,6 @@ impl Widget {
     */
     //add is cursor_within + depth
 
-    /* 
-        pub fn destroy (&self, system: &mut UiTree, path : &str) -> Result<(), LunexError> {
-            match system.root_get_mut().borrow_linked_checked_mut(&self.path){
-                Ok (reference) => {
-                    reference.destroy_chain_checked(path)
-                },
-                Err (e) => Err(e),
-            }
-        }
-        pub fn remove (&self, system: &mut UiTree, key : &str) -> Result<(), LunexError> {
-            match system.root_get_mut().borrow_linked_checked_mut(&self.path){
-                Ok (reference) => {
-                    reference.remove_simple_checked(key)
-                },
-                Err (e) => Err(e),
-            }
-        }
-    
-*/
-
     // ===========================================================
     // === FETCHING ===
 
@@ -70,7 +50,7 @@ impl Widget {
     ///
     /// ```
     pub fn fetch<'a>(&'a self, tree: &'a UiTree) -> Result<&UiBranch, LunexError> {
-        match tree.root_get().borrow_linked_checked(&self.path) {
+        match tree.main_branch().borrow_linked_checked(&self.path) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: self.path.to_string(),
@@ -105,7 +85,7 @@ impl Widget {
             extra_path += "/";
             extra_path += path;
         }
-        match tree.root_get().borrow_linked_checked(&extra_path) {
+        match tree.main_branch().borrow_linked_checked(&extra_path) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: extra_path,
@@ -136,7 +116,7 @@ impl Widget {
         &'a self,
         tree: &'a mut UiTree,
     ) -> Result<&mut UiBranch, LunexError> {
-        match tree.root_get_mut().borrow_linked_checked_mut(&self.path) {
+        match tree.main_branch_mut().borrow_linked_checked_mut(&self.path) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: self.path.to_string(),
@@ -175,7 +155,7 @@ impl Widget {
             extra_path += "/";
             extra_path += path;
         }
-        match tree.root_get_mut().borrow_linked_checked_mut(&extra_path) {
+        match tree.main_branch_mut().borrow_linked_checked_mut(&extra_path) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: extra_path,
@@ -744,8 +724,7 @@ impl Widget {
 
         //# Create branch in ROOT
         if parent_path.is_empty() {
-            let parent_branch = tree.root_get_mut();
-            match parent_branch.create_linked(&name, position) {
+            match tree.main_branch_mut().create_linked(&name, position) {
                 Ok(absolute_key) => {
                     let widget = if name.is_empty() {
                         Widget::new(&absolute_key)
@@ -803,6 +782,43 @@ impl Widget {
                 }
                 Err(e) => Err(e),
             }
+        }
+    }
+
+
+    // ===========================================================
+    // === REMOVAL ===
+
+    /// # Drop Extended
+    /// This function will try to drop a sub-branch
+    pub fn drop_ext (&self, tree: &mut UiTree, path : &str) -> Result<(), LunexError> {
+        match self.fetch_mut(tree) {
+            Ok(branch) => {
+                branch.drop_linked_checked(path)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    /// # Remove
+    /// This function will try to drop a sub-branch and remove it's shortcut
+    pub fn remove (&self, tree: &mut UiTree, key : &str) -> Result<(), LunexError> {
+        match self.fetch_mut(tree) {
+            Ok(branch) => {
+                branch.remove_simple_checked(key)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    /// # Remove Invalid
+    /// This function will try to remove all shortcuts that are not valid
+    pub fn remove_invalid (&self, tree: &mut UiTree) -> Result<usize, LunexError> {
+        match self.fetch_mut(tree) {
+            Ok(branch) => {
+                Ok(branch.remove_invalid())
+            }
+            Err(e) => Err(e),
         }
     }
 

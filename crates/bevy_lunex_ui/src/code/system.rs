@@ -11,7 +11,7 @@ use crate::cursor_update;
 /// A system that transforms every [`UiTree`] into an immidiete mode UI framework.
 /// 
 /// It does that by pulling width and height from the first [`Window`] it queries (multiple windows not supported yet) and feeding it to the [`UiTree`].
-/// Then it calls `.update()`.
+/// Then it calls `.compute_at_origin()`.
 /// 
 /// This is repeated every frame.
 pub fn tree_update(mut query: Query<&mut UiTree>, windows: Query<&Window>) {
@@ -21,7 +21,7 @@ pub fn tree_update(mut query: Query<&mut UiTree>, windows: Query<&Window>) {
             system.height = window.resolution.height();
             system.offset.x = -system.width/2.0;
             system.offset.y = system.height/2.0;
-            system.update();
+            system.compute_at_origin();
         }
         break;  //Currently support only 1 window.
     }
@@ -41,7 +41,7 @@ pub fn element_update(systems: Query<&UiTree>, mut query: Query<(&Widget, &Eleme
     for system in systems.iter() {
         for (widget, element, mut transform) in &mut query {
             match widget.fetch(&system) {
-                Err(..) => {
+                Err(_) => {
                     transform.translation.x = -10000.0;
                     transform.translation.y = -10000.0;
                 },

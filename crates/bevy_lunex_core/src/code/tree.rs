@@ -27,17 +27,38 @@ pub struct UiTree {
     pub offset: Vec2,
     branch: UiBranch,
 }
-
 impl UiTree {
-    pub fn new() -> UiTree {
-        let mut branch = UiBranch::new("ROOT".to_string(), 0, "".to_string(), 0.0, true);
+    // ===========================================================
+    // === EXPOSED BRANCH BORROW ===
+
+    /// Returns borrow of the main [`UiBranch`] that this [`UiTree`] is wrapped around
+    pub(super) fn main_branch(&self) -> &UiBranch {
+        &self.branch
+    }
+
+    /// Returns mut borrow of the main [`UiBranch`] that this [`UiTree`] is wrapped around
+    pub(super) fn main_branch_mut(&mut self) -> &mut UiBranch {
+        &mut self.branch
+    }
+
+    /// Returns borrow of [`UiBranch`], a branch nested within this tree on a given path
+    pub fn branch_get(&self, path: &str) -> Result<&UiBranch, LunexError> {
+        self.branch.borrow_linked_checked(path)
+    }
+
+    /// Returns mut borrow of [`UiBranch`], a branch nested within this tree on a given path
+    pub fn branch_get_mut(&mut self, path: &str) -> Result<&mut UiBranch, LunexError> {
+        self.branch.borrow_linked_checked_mut(path)
+    }
+
+    // ===========================================================
+    // === EXPOSED TREE CONTROL ===
+
+    /// Creates a new tree with the given name
+    pub fn new(name: &str) -> UiTree {
+        let mut branch = UiBranch::new(name.into(), 0, "".into(), 0.0, true);
         branch.container.layout_set(
-            RelativeLayout {
-                relative_1: Vec2 { x: 0.0, y: 0.0 },
-                relative_2: Vec2 { x: 100.0, y: 100.0 },
-                ..Default::default()
-            }
-            .pack(),
+            RelativeLayout::default().pack(),
         );
 
         UiTree {
@@ -48,55 +69,109 @@ impl UiTree {
         }
     }
 
-    pub fn update(&mut self) {
-        self.branch
-            .cascade_update_self(Vec2::default(), self.width, self.height);
+    /// Compute the layout starting at origin
+    pub fn compute_at_origin(&mut self) {
+        self.branch.cascade_compute_layout(Vec2::default(), self.width, self.height);
     }
 
-    pub fn get_map(&self) -> String {
-        let text = String::new();
-        format!(
-            "{}{}",
-            "#ROOT".purple().bold().underline(),
-            self.branch.cascade_map(text, 0)
-        )
+    /// Compute the layout starting at offset instead
+    pub fn compute_with_offset(&mut self) {
+        self.branch.cascade_compute_layout(self.offset, self.width, self.height);
     }
 
-    pub fn get_map_debug(&self) -> String {
-        let text = String::new();
-        format!(
-            "{}{}",
-            "#ROOT".purple().bold().underline(),
-            self.branch.cascade_map_debug(text, 0)
-        )
-    }
 
-    pub fn collect_paths(&self) -> Vec<String> {
-        self.branch.collect_paths()
-    }
-
+    /// # Merge
+    /// This method will merge another branch into this branch. As long as there are no name collision, the merge will be succesfull.
+    ///
+    /// ## Important!
+    /// It is worth noting that internal IDs of the merged widgets WILL change. That means if there are unnamed widgets in the root of
+    /// the merged branch, their paths will become invalid if the preserved branch is not empty.
+    ///
+    /// To work around this, all widgets located in the root of the merging MUST be named and accessed through their names!
+    /// ```
+    /// let mut existing_tree = UiTree::new(); //Let's say it contains other widgets...
+    ///
+    /// let mut merged_tree = UiTree::new();    //This is blank new tree, so it's empty...
+    /// let background = Widget::create(&mut merged_tree, "background", Layout::Solid::default().pack())?;  //It's first so ID is '0'
+    /// let image = Widget::create(&mut merged_tree, &background.end(""), Layout::Solid::default().pack())?;  //unnamed widgets not in the root are fine
+    ///
+    /// existing_tree.merge(merged_tree)?;     //The `background` after merge is no longer ID '0', but is offset by widgets that already existed there.
+    /// ```
+    /// ## Bad practice! Avoid!
+    /// ```
+    /// let mut existing_tree = UiTree::new(); //Let's say it contains other widgets...
+    ///
+    /// let mut merged_tree = UiTree::new();    //This is blank new tree, so it's empty...
+    /// let background = Widget::create(&mut merged_tree, "", Layout::Solid::default().pack())?;  //No name but ID is '0'
+    ///
+    /// existing_tree.merge(merged_tree)?;     //ID changed so we have no way of accessing the widget!!!
+    /// ```
+    ///
     pub fn merge(&mut self, tree: UiTree) -> Result<(), LunexError> {
         self.branch.merge(tree.branch)
     }
 
-    pub(super) fn root_get(&self) -> &UiBranch {
-        &self.branch
+    /// Returns the name of the tree
+    pub fn get_name(&self) -> &String {
+        &self.branch.name
     }
 
-    pub(super) fn root_get_mut(&mut self) -> &mut UiBranch {
-        &mut self.branch
+    /// Returns current depth
+    pub fn get_depth(&self) -> f32 {
+        self.branch.get_depth()
     }
+
+    /// Set depth of the tree and all its branches
+    pub fn set_depth(&mut self, depth: f32) {
+        self.branch.set_depth(depth);
+    }
+
+    /// This will return visibility of the tree
+    pub fn get_visibility(&self) -> bool {
+        self.branch.get_visibility()
+    }
+
+    /// This will set visibility to the value given
+    pub fn set_visibility(&mut self, visible: bool) {
+        self.branch.set_visibility(visible)
+    }
+
+
+    // ===========================================================
+    // === EXPOSED TREE DEBUG ===
+
+    /// Generate overview of the inner tree in a stringified form
+    pub fn generate_map(&self) -> String {
+        self.branch.generate_map()
+    }
+
+    /// Generate debug view of the inner tree in a stringified form
+    pub fn generate_map_debug(&self) -> String {
+        self.branch.generate_map_debug()
+    }
+    
+    /// Return a vector to iterate over containing all paths to all sub-branches
+    pub fn collect_paths(&self) -> Vec<String> {
+        self.branch.collect_paths()
+    }
+
 }
 
 
 // ===========================================================
 // === BRANCH STRUCT ===
 
+/// A struct that can nest another branches inside itself, implemented as tree like structure
+/// 
+/// Holds all data, layout and handles the logic of Lunex.
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct UiBranch {
     //# CACHING =======
+    /// Only the name from path
     name: String,
+    /// The ID it is indexed under
     id: usize,
+    /// Path without the branch name
     path: String,
 
     //# RENDERING =======
@@ -104,11 +179,11 @@ pub struct UiBranch {
     level: f32,
     /// Z index calculated from branch depth
     depth: f32,
-    /// If widget is activated, can be used to check for interactivity
+    /// If branch is activated, can be used to check for interactivity
     active: bool,
-    /// If widget has visibility enabled
+    /// If branch has visibility enabled
     visible: bool,
-    /// If widget is currently highligted
+    /// If branch is currently highligted
     in_focus: bool,
     /// If the parenting container is visible
     parent_visible: bool,
@@ -121,10 +196,9 @@ pub struct UiBranch {
     inventory: HashMap<usize, UiBranch>,
     shortcuts: HashMap<String, String>,
 }
-
 impl UiBranch {
     // ===========================================================
-    // === BRANCH CONTROL ===
+    // === EXPOSED BRANCH BORROW ===
 
     /// Returns borrow of [`Data`] struct mounted on this branch
     pub fn data_get(&self) -> &Option<Data> {
@@ -156,98 +230,32 @@ impl UiBranch {
         &mut self.container
     }
 
-    //Fn calls
-    pub fn get_name(&self) -> &String {
-        &self.name
+    /// Returns borrow of [`UiBranch`], a sub-branch nested within this branch on a given path
+    pub fn branch_get(&self, path: &str) -> Result<&UiBranch, LunexError> {
+        self.borrow_linked_checked(path)
     }
 
-    pub fn get_depth(&self) -> f32 {
-        if self.in_focus {
-            self.level * LEVEL_DEPTH_DIFFERENCE + self.depth + HIGHLIGHT_DEPTH_ADDED
-        } else {
-            self.level * LEVEL_DEPTH_DIFFERENCE + self.depth
-        }
+    /// Returns mut borrow of [`UiBranch`], a sub-branch nested within this branch on a given path
+    pub fn branch_get_mut(&mut self, path: &str) -> Result<&mut UiBranch, LunexError> {
+        self.borrow_linked_checked_mut(path)
     }
 
-    pub fn set_depth(&mut self, depth: f32) {
-        self.cascade_set_depth_self(depth);
-    }
 
-    pub fn set_depth_self_only(&mut self, depth: f32) {
-        self.cascade_set_depth(depth);
-    }
-
-    pub fn get_path(&self) -> String {
-        if self.level == 0.0 {
-            "".to_string()
-        } else if !self.path.is_empty() {
-            format!("{}/{}", self.path, self.name)
-        } else {
-            String::from(&self.name)
-        }
-    }
-
-    pub fn get_focus(&self) -> bool {
-        self.in_focus
-    }
-
-    pub fn set_focus(&mut self, focus: bool) {
-        self.in_focus = focus;
-    }
-
-    pub fn is_visible(&self) -> bool {
-        self.visible == true && self.parent_visible == true
-    }
-
-    pub fn get_visibility(&self) -> bool {
-        self.visible
-    }
-
-    pub fn set_visibility(&mut self, visible: bool) {
-        let old = self.is_visible();
-        self.visible = visible;
-        let new = self.is_visible();
-        if new != old {
-            self.cascade_set_visibility()
-        }
-    }
-
-    pub fn get_map(&self) -> String {
-        let text = String::new();
-        format!(
-            "{}{}",
-            self.name.purple().bold().underline(),
-            self.cascade_map(text, 0)
-        )
-    }
-
-    pub fn get_map_debug(&self) -> String {
-        let text = String::new();
-        format!(
-            "{}{}",
-            self.name.purple().bold().underline(),
-            self.cascade_map_debug(text, 0)
-        )
-    }
-
-    pub fn collect_paths(&self) -> Vec<String> {
-        let mut list = Vec::new();
-        self.cascade_collect_paths(&mut list, "".to_string());
-        list
-    }
+    // ===========================================================
+    // === EXPOSED BRANCH CONTROL ===
 
     /// # Merge
     /// This method will merge another branch into this branch. As long as there are no name collision, the merge will be succesfull.
     ///
     /// ## Important!
-    /// It is worth noting that internal IDs of the merged branches WILL change. That means if there are unnamed branches in the root of
+    /// It is worth noting that internal IDs of the merged widgets WILL change. That means if there are unnamed widgets in the root of
     /// the merged branch, their paths will become invalid if the preserved branch is not empty.
     ///
-    /// To work around this, all branches located in the root of the merging MUST be named and accessed through their names!
+    /// To work around this, all widgets located in the root of the merging MUST be named and accessed through their names!
     /// ```
-    /// let mut existing_tree = UITree::new(); //Let's say it contains other widgets...
+    /// let mut existing_tree = UiTree::new(); //Let's say it contains other widgets...
     ///
-    /// let mut merged_tree = UITree::new();    //This is blank new tree, so it's empty...
+    /// let mut merged_tree = UiTree::new();    //This is blank new tree, so it's empty...
     /// let background = Widget::create(&mut merged_tree, "background", Layout::Solid::default().pack())?;  //It's first so ID is '0'
     /// let image = Widget::create(&mut merged_tree, &background.end(""), Layout::Solid::default().pack())?;  //unnamed widgets not in the root are fine
     ///
@@ -255,9 +263,9 @@ impl UiBranch {
     /// ```
     /// ## Bad practice! Avoid!
     /// ```
-    /// let mut existing_tree = UITree::new(); //Let's say it contains other widgets...
+    /// let mut existing_tree = UiTree::new(); //Let's say it contains other widgets...
     ///
-    /// let mut merged_tree = UITree::new();    //This is blank new tree, so it's empty...
+    /// let mut merged_tree = UiTree::new();    //This is blank new tree, so it's empty...
     /// let background = Widget::create(&mut merged_tree, "", Layout::Solid::default().pack())?;  //No name but ID is '0'
     ///
     /// existing_tree.merge(merged_tree)?;     //ID changed so we have no way of accessing the widget!!!
@@ -330,28 +338,121 @@ impl UiBranch {
         Result::Ok(())
     }
 
-    //#LIBRARY RECURSION CALLS
-    pub(super) fn cascade_map(&self, mut string: String, level: u32) -> String {
-        for (name, path) in self.shortcuts.iter() {
+    /// Returns the name from local cache on the same branch, is not guaranteed to be valid
+    pub fn get_name(&self) -> &String {
+        &self.name
+    }
+
+    /// Returns current depth with focus counted in
+    pub fn get_depth(&self) -> f32 {
+        if self.in_focus {
+            self.level * LEVEL_DEPTH_DIFFERENCE + self.depth + HIGHLIGHT_DEPTH_ADDED
+        } else {
+            self.level * LEVEL_DEPTH_DIFFERENCE + self.depth
+        }
+    }
+
+    /// Set depth of the branch and all its sub-branches
+    pub fn set_depth(&mut self, depth: f32) {
+        self.cascade_set_depth(depth);
+    }
+
+    /// Constructs the path from local cache on the same branch, is not guaranteed to be valid
+    pub fn get_path(&self) -> String {
+        if self.level == 0.0 {
+            "".to_string()
+        } else if !self.path.is_empty() {
+            format!("{}/{}", self.path, self.name)
+        } else {
+            String::from(&self.name)
+        }
+    }
+
+    /// Returns if branch is in focus (highlighted, helps to decide which branch in the same layer to prefer)
+    pub fn get_focus(&self) -> bool {
+        self.in_focus
+    }
+
+    /// Set focus of the current branch (helpful when you have overlaying branches in the same layer)
+    pub fn set_focus(&mut self, focus: bool) {
+        self.in_focus = focus;
+    }
+
+    /// This will check if branch is overall visible, including local and inherited visibility from parent branches
+    pub fn is_visible(&self) -> bool {
+        self.visible == true && self.parent_visible == true
+    }
+
+    /// This will return local visibility of the branch
+    pub fn get_visibility(&self) -> bool {
+        self.visible
+    }
+
+    /// This will set local visibility to the value given, but it doesn't mean the branch will be 100% visible
+    pub fn set_visibility(&mut self, visible: bool) {
+        let old = self.is_visible();
+        self.visible = visible;
+        let new = self.is_visible();
+        if new != old {
+            self.cascade_compute_visibility()
+        }
+    }
+
+
+    // ===========================================================
+    // === EXPOSED BRANCH DEBUG ===
+
+    /// Generate overview of the inner tree in a stringified form
+    pub fn generate_map(&self) -> String {
+        let text = String::new();
+        format!(
+            "> {}{}",
+            self.name.purple().bold().underline(),
+            self.cascade_generate_map(text, 0)
+        )
+    }
+
+    /// Generate debug view of the inner tree in a stringified form
+    pub fn generate_map_debug(&self) -> String {
+        let text = String::new();
+        format!(
+            "> {}{}",
+            self.name.purple().bold().underline(),
+            self.cascade_generate_map_debug(text, 0)
+        )
+    }
+    
+    /// Return a vector to iterate over containing all paths to all sub-branches
+    pub fn collect_paths(&self) -> Vec<String> {
+        let mut list = Vec::new();
+        self.cascade_collect_paths(&mut list, "");
+        list
+    }
+
+
+    // ===========================================================
+    // === RECURSIVE SUB-FUNCTIONS ===
+
+    /// Generate overview of the inner tree and write the mapped output to the given string with data formatted to a certain level depth
+    pub(super) fn cascade_generate_map(&self, mut string: String, level: u32) -> String {
+        for (name, path) in & self.shortcuts {
             match self.borrow_linked_checked(&path) {
-                Ok(widget) => {
+                Ok(branch) => {
                     let mut text = String::from("\n  ");
-                    for _ in 0..level {
-                        text += "|    "
-                    }
+                    for _ in 0..level { text += "|    " }
                     text += "|-> ";
                     string = format!("{}{}{}", string, text.black(), name.bold().yellow());
-
-                    string = widget.cascade_map(string, level + 1);
+                    string = branch.cascade_generate_map(string, level + 1);
                 }
-                Err(..) => (),
+                Err(_) => (),
             }
         }
         string
     }
 
-    pub(super) fn cascade_map_debug(&self, mut string: String, level: u32) -> String {
-        let mut done_widgets: HashMap<String, bool> = HashMap::new();
+    /// Generate debug view of the inner tree and write the mapped debug output to the given string with data formatted to a certain level depth
+    pub(super) fn cascade_generate_map_debug(&self, mut string: String, level: u32) -> String {
+        let mut done_branches: HashMap<String, bool> = HashMap::new();
         string = format!(
             "{}{}",
             string,
@@ -370,7 +471,7 @@ impl UiBranch {
 
         for (name, path) in self.shortcuts.iter() {
             match self.borrow_linked_checked(&path) {
-                Ok(widget) => {
+                Ok(branch) => {
                     let mut text = String::from("\n  ");
                     for _ in 0..level {
                         text += "|    "
@@ -383,11 +484,10 @@ impl UiBranch {
                         name.bold().yellow(),
                         path
                     );
-
-                    string = widget.cascade_map_debug(string, level + 1);
-                    done_widgets.insert(path.to_string(), true);
+                    string = branch.cascade_generate_map_debug(string, level + 1);
+                    done_branches.insert(path.to_string(), true);
                 }
-                Err(..) => {
+                Err(_) => {
                     let mut text = String::from("\n  ");
                     for _ in 0..level {
                         text += "|    "
@@ -397,7 +497,7 @@ impl UiBranch {
                         "{}{}{}",
                         string,
                         text.black(),
-                        format!("{} #[! Dangling register pointer !]", name)
+                        format!("{} #[! Dangling pointer !]", name)
                             .bold()
                             .red()
                     );
@@ -405,7 +505,7 @@ impl UiBranch {
             }
         }
         for x in self.inventory.iter() {
-            if done_widgets.contains_key(&("#".to_string() + &x.0.to_string())) {
+            if done_branches.contains_key(&("#".to_string() + &x.0.to_string())) {
                 continue;
             }
 
@@ -421,32 +521,33 @@ impl UiBranch {
                 format!("#{}", x.0).bold().truecolor(255, 165, 214)
             );
 
-            string = x.1.cascade_map_debug(string, level + 1);
+            string = x.1.cascade_generate_map_debug(string, level + 1);
         }
         string
     }
 
-    pub(super) fn cascade_collect_paths(&self, list: &mut Vec<String>, directory: String) {
-        let mut done_widgets: HashMap<String, bool> = HashMap::new();
+    /// Crawl through the subbranches and return all valid paths in the given directory
+    pub(super) fn cascade_collect_paths(&self, list: &mut Vec<String>, directory: &str) {
+        let mut done_branches: HashMap<String, bool> = HashMap::new();
 
         for (name, path) in self.shortcuts.iter() {
             match self.borrow_linked_checked(&path) {
-                Ok(widget) => {
+                Ok(branch) => {
                     let dir = if directory.is_empty() {
                         String::from(name)
                     } else {
                         format!("{}/{}", directory, name)
                     };
                     list.push(dir.clone());
-                    widget.cascade_collect_paths(list, dir);
+                    branch.cascade_collect_paths(list, &dir);
 
-                    done_widgets.insert(path.to_string(), true);
+                    done_branches.insert(path.to_string(), true);
                 }
-                Err(..) => {}
+                Err(_) => {}
             }
         }
         for x in self.inventory.iter() {
-            if done_widgets.contains_key(&("#".to_string() + &x.0.to_string())) {
+            if done_branches.contains_key(&("#".to_string() + &x.0.to_string())) {
                 continue;
             }
 
@@ -456,45 +557,36 @@ impl UiBranch {
                 format!("{}/{}", directory, format!("#{}", x.0))
             };
             list.push(dir.clone());
-            x.1.cascade_collect_paths(list, dir);
+            x.1.cascade_collect_paths(list, &dir);
         }
     }
 
-    pub(super) fn cascade_update_self(&mut self, point: Vec2, width: f32, height: f32) {
-        //This will cascade update all branches
-        self.container.calculate(point, width, height);
-        for x in self.inventory.iter_mut() {
+    /// Computes the branches layout and recursively computes the sub-branches
+    pub(super) fn cascade_compute_layout(&mut self, origin: Vec2, width: f32, height: f32) {
+        self.container.calculate(origin, width, height);
+        for x in &mut self.inventory {
             let pos = self.container.position_get();
-            x.1.cascade_update_self(pos.point_1, pos.width, pos.height);
+            x.1.cascade_compute_layout(pos.point_1, pos.width, pos.height);
         }
     }
 
-    pub(super) fn cascade_set_visibility(&mut self) {
-        //This will cascade set parent visible all branches
+    /// Checks branches visibility and recursively overwrites sub-branches parent visibility
+    pub(super) fn cascade_compute_visibility(&mut self) {
         let visibility = self.is_visible();
-        for x in self.inventory.iter_mut() {
-            x.1.cascade_set_visibility_self(visibility);
+        for x in &mut self.inventory {
+            x.1.parent_visible = visibility;
+            x.1.cascade_compute_visibility()
         }
     }
 
-    pub(super) fn cascade_set_visibility_self(&mut self, visible: bool) {
-        //This will cascade set parent visible all branches
-        self.parent_visible = visible;
-        self.cascade_set_visibility()
-    }
-
+    /// Recursively overwrites the subbranches depth
     pub(super) fn cascade_set_depth(&mut self, depth: f32) {
-        //This will cascade set parent visible all branches
-        for x in self.inventory.iter_mut() {
-            x.1.cascade_set_depth_self(depth);
+        for x in &mut self.inventory {
+            x.1.depth = depth;
+            x.1.cascade_set_depth(depth);
         }
     }
 
-    pub(super) fn cascade_set_depth_self(&mut self, depth: f32) {
-        //This will cascade set parent visible all branches
-        self.depth = depth;
-        self.cascade_set_depth(depth);
-    }
 
     // ===========================================================
     // === BRANCH CREATION ===
@@ -615,7 +707,7 @@ impl UiBranch {
         match path.split_once('/') {
             None => self.borrow_simple_checked(path),
             Some((branch, remaining_path)) => match self.borrow_simple_checked(branch) {
-                Ok(borrowed_widget) => borrowed_widget.borrow_linked_checked(remaining_path),
+                Ok(borrowed_branch) => borrowed_branch.borrow_linked_checked(remaining_path),
                 Err(e) => Err(e),
             },
         }
@@ -653,7 +745,7 @@ impl UiBranch {
         match path.split_once('/') {
             None => self.borrow_simple_checked_mut(path),
             Some((branch, remaining_path)) => match self.borrow_simple_checked_mut(branch) {
-                Ok(borrowed_widget) => borrowed_widget.borrow_linked_checked_mut(remaining_path),
+                Ok(borrowed_branch) => borrowed_branch.borrow_linked_checked_mut(remaining_path),
                 Err(e) => Err(e),
             },
         }
@@ -695,7 +787,7 @@ impl UiBranch {
         match path.split_once('/') {
             None => self.drop_simple_checked(path),
             Some((branch, remaining_path)) => match self.borrow_simple_checked_mut(branch) {
-                Ok(borrowed_widget) => borrowed_widget.drop_linked_checked(remaining_path),
+                Ok(borrowed_branch) => borrowed_branch.drop_linked_checked(remaining_path),
                 Err(e) => Err(e),
             },
         }
