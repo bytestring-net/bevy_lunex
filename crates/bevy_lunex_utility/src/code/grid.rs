@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 
-use bevy_lunex_core::{UiTree, Widget, WindowLayout, LunexError};
+use bevy_lunex_core::{UiTree, Widget, WindowLayout, SolidLayout, LunexError};
 
 // ===========================================================
 // === GRID DEFINITION ===
@@ -46,7 +46,7 @@ impl Default for GridParams {
 impl GridParams {
     /// Blank new grid parameters from 2D Vector. Use [`textgrid`] macro here.
     ///```
-    /// let grid: = GridParams::new(textgrid![["widget 1", "widget 2"], ["widget 3", "widget 4"]]);
+    /// let grid = GridParams::new(textgrid![["widget 1", "widget 2"], ["widget 3", "widget 4"]]);
     /// ```
     /// This will create layout like this:
     ///
@@ -61,7 +61,7 @@ impl GridParams {
         }
     }
 
-    /// Grid parameters set to a custom relative height
+    /// Grid parameters set to a custom anchor
     pub fn with_anchor(mut self, anchor: Anchor) -> GridParams {
         self.anchor = anchor;
         self
@@ -176,6 +176,138 @@ pub fn grid_generate(
             ),
             width_relative: container_width,
             height_relative: container_height,
+            ..Default::default()
+        }
+        .pack(),
+    ) {
+        Ok(widget) => widget,
+        Err(e) => return Err(e),
+    };
+
+    let width = (100.0 * total_width / container_width) / xx as f32;
+    let height = (100.0 * total_height / container_height) / yy as f32;
+
+    let wgap = (100.0 * total_wgap / container_width)
+        / (xx as f32
+            + if grid_params.width_border_gap == true {
+                1.0
+            } else {
+                0.0
+            });
+    let hgap = (100.0 * total_hgap / container_height)
+        / (yy as f32
+            + if grid_params.height_border_gap == true {
+                1.0
+            } else {
+                0.0
+            });
+
+    for x in 0..xx {
+        for y in 0..yy {
+            match Widget::create(
+                tree,
+                &widget.end(&grid_params.grid[x][y]),
+                WindowLayout {
+                    relative: Vec2::new(
+                        width * x as f32
+                            + wgap * x as f32
+                            + if grid_params.width_border_gap == true {
+                                wgap
+                            } else {
+                                0.0
+                            },
+                        height * y as f32
+                            + hgap * y as f32
+                            + if grid_params.height_border_gap == true {
+                                hgap
+                            } else {
+                                0.0
+                            },
+                    ),
+                    width_relative: width,
+                    height_relative: height,
+                    ..Default::default()
+                }
+                .pack(),
+            ) {
+                Ok(_) => (),
+                Err(e) => return Err(e),
+            };
+        }
+    }
+    Ok(widget)
+}
+
+/// # Grid generate Solid
+/// 
+/// A complex function that will generate a grid of widgets. Can be used to make lists too.
+///
+/// This function uses a widget to hold the grid, meaning no matter how many columns or rows there are, the grid widgets will have the same size.
+/// # Arguments
+/// * `tree` = UiTree in which the grid should be made.
+/// * `path` = Path to a new widget that will hold the grid.
+/// * `relative` = Relative position of the grid in parenting widget.
+/// * `grid_params` = A struct holding all necessary info about the grid.
+pub fn grid_generate_solid(
+    tree: &mut UiTree,
+    path: &String,
+    grid_params: &GridParams,
+) -> Result<Widget, LunexError> {
+    let xx = grid_params.grid.len();
+    let yy = grid_params.grid[0].len();
+
+    for i in 0..grid_params.grid.len() {
+        if grid_params.grid[i].len() != yy {
+            return Err(LunexError::GridFormat { c1: i, len_c1: grid_params.grid[i].len(), len_c0: xx });
+        }
+    }
+
+    let total_width = grid_params.width_relative * xx as f32;
+    let total_height = grid_params.height_relative * yy as f32;
+
+    let total_wgap = grid_params.gap_relative.x
+        * (xx as f32
+            + if grid_params.width_border_gap == true {
+                1.0
+            } else {
+                -1.0
+            });
+    let total_hgap = grid_params.gap_relative.y
+        * (yy as f32
+            + if grid_params.height_border_gap == true {
+                1.0
+            } else {
+                -1.0
+            });
+
+    let container_width = total_width + total_wgap;
+    let container_height = total_height + total_hgap;
+
+    let anchor_offset = match grid_params.anchor {
+        Anchor::TopCenter => Vec2::new(0.0, -1.0),
+        Anchor::TopLeft => Vec2::new(-1.0, -1.0),
+        Anchor::TopRight => Vec2::new(1.0, -1.0),
+
+        Anchor::Center => Vec2::new(0.0, 0.0),
+        Anchor::CenterLeft => Vec2::new(-1.0, 0.0),
+        Anchor::CenterRight => Vec2::new(1.0, 0.0),
+
+        Anchor::BottomCenter => Vec2::new(0.0, 1.0),
+        Anchor::BottomLeft => Vec2::new(-1.0, 1.0),
+        Anchor::BottomRight => Vec2::new(1.0, 1.0),
+
+        Anchor::Custom(point) => Vec2::new(point.x * 2.0, -point.y * 2.0),
+    };
+    println!("{} {}", container_width, container_height);
+    let widget = match Widget::create(
+        tree,
+        path,
+        SolidLayout {
+            horizontal_anchor: anchor_offset.x,
+            vertical_anchor: anchor_offset.y,
+            
+            width: container_width,
+            height: container_height,
             ..Default::default()
         }
         .pack(),
