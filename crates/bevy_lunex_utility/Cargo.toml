@@ -1,6 +1,6 @@
 [package]
 name = "bevy_lunex_utility"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["Dominik Kaspar <dominik0kaspar@gmail.com>"]
@@ -12,7 +12,6 @@ description = "Supporting crate for bevy_lunex"
 [dependencies]
 colored = "2.0.0"
 
-#bevy = { git = "https://github.com/bevyengine/bevy", version = "0.12.0-dev", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
 bevy = { version = "0.11.2", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
 
-bevy_lunex_core = { path = "../bevy_lunex_core", version = "0.0.2"}
+bevy_lunex_core = { path = "../bevy_lunex_core", version = "0.0.4"}
