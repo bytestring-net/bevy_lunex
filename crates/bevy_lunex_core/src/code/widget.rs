@@ -875,9 +875,9 @@ impl Widget {
     // ===========================================================
     // === FUNCTIONAL METHODS ===
 
-    /// # Is Within
+    /// # Contains Position
     /// This function will fetch the widget and will do a lookup to check if the point provided is within the calculated position of the container.
-    pub fn is_within(&self, tree: &UiTree, point: &Vec2) -> Result<bool, LunexError> {
+    pub fn contains_position(&self, tree: &UiTree, point: &Vec2) -> Result<bool, LunexError> {
         match self.fetch(&tree) {
             Ok(branch) => {
                 let position = branch.container_get().position_get();
@@ -890,11 +890,11 @@ impl Widget {
         }
     }
 
-    /// # Is Within Extended
+    /// # Contains Position
     /// This function will fetch the widget and will do a lookup to check if the point provided is within the calculated position of the container.
     /// 
     /// In this extended function you can also specify path to sub-widgets which will be used as target instead.
-    pub fn is_within_ext(&self, tree: &UiTree, path: &str, point: &Vec2) -> Result<bool, LunexError> {
+    pub fn contains_position_ext(&self, tree: &UiTree, path: &str, point: &Vec2) -> Result<bool, LunexError> {
         match self.fetch_ext(&tree, path) {
             Ok(branch) => {
                 let position = branch.container_get().position_get();

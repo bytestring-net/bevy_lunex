@@ -106,7 +106,7 @@
 //!     for system in systems.iter() {
 //!         for (widget, mut sprite, color) in &mut query {
 //!             for cursor in cursors.iter() {
-//!                 if widget.is_within(&system, "", &cursor.position_world().as_lunex(system.offset)).unwrap(){
+//!                 if widget.contains_position(&system, "", &cursor.position_world().as_lunex(system.offset)).unwrap(){
 //!                     sprite.color = color.0;
 //!                 } else {
 //!                     sprite.color = Color::WHITE;

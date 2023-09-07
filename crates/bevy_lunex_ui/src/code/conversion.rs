@@ -16,7 +16,7 @@ pub trait AsLunexVec2 {
     /// let offset = Vec2::new(-window.size.x / 2.0, window.size.y / 2.0);
     /// let cursor_position = Vec2::new(40.0, 20.0);
     ///
-    /// let inside:bool = widget.is_within(&tree, cursor_position.as_lunex(offset))?;
+    /// let inside:bool = widget.contains_position(&tree, cursor_position.as_lunex(offset))?;
     /// ```
     fn as_lunex(self, offset: Vec2) -> Vec2;
 }
