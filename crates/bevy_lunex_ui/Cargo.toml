@@ -8,6 +8,7 @@ repository = "https://github.com/bytestring-net/bevy-lunex"
 keywords = ["ui", "layout", "bevy", "lunex", "bevy-lunex"]
 categories = ["gui", "mathematics", "game-development"]
 description = "Supporting crate for bevy_lunex"
+readme = "README.md"
 
 [dependencies]
 mathio = "0.2.1"
