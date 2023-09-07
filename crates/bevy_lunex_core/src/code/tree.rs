@@ -581,8 +581,8 @@ impl UiBranch {
 
     /// Recursively overwrites the subbranches depth
     pub(super) fn cascade_set_depth(&mut self, depth: f32) {
+        self.depth = depth;
         for x in &mut self.inventory {
-            x.1.depth = depth;
             x.1.cascade_set_depth(depth);
         }
     }
