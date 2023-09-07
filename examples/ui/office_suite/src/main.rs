@@ -12,7 +12,7 @@ fn main() {
         .add_systems(Startup, setup)
 
         .add_systems(Update, (
-            vector_fill_update,
+            vector_rectangle_update,
         ).after(element_update))
 
         .run()
@@ -38,7 +38,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree) -> Result<(), LunexError> {
 
-    const TOPBAR_SIZE: f32 = 35.0;
+    const TOPBAR_SIZE: f32 = 25.0;
     const SIDEBAR_SIZE: f32 = 70.0;
 
     let mut temporary_tree = UiTree::new("tmp");
@@ -60,31 +60,15 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     }.pack())?;
 
 
+
+    let style = TextStyle {
+        font: asset_server.load("Montserrat-Regular.ttf"),
+        font_size: 40.0,
+        color: Color::WHITE,
+    };
     let names = textgrid![["file"],["edit"],["preferences"],["help"]];
-    let grid = GridParams::new(&names).with_anchor(bevy::sprite::Anchor::CenterLeft).with_width(100.0).with_height(20.0).with_width_gap(10.0);
+    let grid = GridParams::new(&names).with_anchor(bevy::sprite::Anchor::CenterLeft).with_width(70.0).with_height(20.0).with_width_gap(7.0);
     let wgrid = grid_generate_solid(tmp, &top_panel.end("navbar"), &grid)?;
-
-    /*commands.spawn((
-        ElementBundle::new(wgrid.clone(), Element::fullfill()),
-        VectorElementColorFill (Color::rgb(200./255., 200./255., 200./255.)),
-    ));*/
-
-    //# Loop over grid of widgets in 'nameless'
-    for x in 0..names.len() {
-        for y in 0..names[0].len() {
-
-            //# Spawn image for widgets in 'nameless'
-            let widget = Widget::new(&wgrid.end(&names[x][y]));
-            /*commands.spawn((
-                ElementBundle::new(widget.clone(), Element::fullfill()),
-                VectorElementColorFill (Color::rgb(200./255., 200./255., 200./255.)),
-            ));*/
-
-            commands.spawn(
-                TextElementBundle::new(widget.clone(), &TextParams::default(), &names[x][y])
-            );
-        }
-    }
 
     ui_tree.merge(temporary_tree)?;
 
@@ -92,16 +76,41 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
 
         commands.spawn((
             ElementBundle::new(workspace.clone(), Element::fullfill()),
-            VectorElementColorFill (Color::rgb(48./255., 52./255., 70./255.)),
+            VectorElementRectangle {
+                color: Color::rgb(48./255., 52./255., 70./255.),
+                corner_radii: Vec4::splat(0.0)
+            },
         ));
         commands.spawn((
             ElementBundle::new(top_panel.clone(), Element::fullfill()),
-            VectorElementColorFill (Color::rgb(35./255., 38./255., 52./255.)),
+            VectorElementRectangle {
+                color: Color::rgb(35./255., 38./255., 52./255.),
+                corner_radii: Vec4::new(20.0, 0.0, 0.0, 0.0)
+            },
         ));
         commands.spawn((
             ElementBundle::new(side_panel.clone(), Element::fullfill()),
-            VectorElementColorFill (Color::rgb(41./255., 44./255., 60./255.)),
+            VectorElementRectangle {
+                color: Color::rgb(41./255., 44./255., 60./255.),
+                corner_radii: Vec4::new(20.0, 0.0, 0.0, 0.0)
+            },
         ));
+
+        for x in 0..names.len() {
+            for y in 0..names[0].len() {
+                let widget = Widget::new(&wgrid.end(&names[x][y]));
+                commands.spawn((
+                    ElementBundle::new(widget.clone(), Element::fullfill()),
+                    VectorElementRectangle {
+                        color: Color::rgb(36./255., 29./255., 41./255.),
+                        corner_radii: Vec4::splat(30.0)
+                    },
+                ));
+                commands.spawn(
+                    TextElementBundle::new(widget.clone(), &TextParams::center().with_style(&style).with_height(Some(50.0)), &names[x][y])
+                );
+            }
+        }
 
     }
 
@@ -110,11 +119,16 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     Ok(())
 }
 
-// DEFINE STYLE
 
+
+
+/// Renders the widget
 #[derive(Component)]
-pub struct VectorElementColorFill (Color);
-pub fn vector_fill_update (mut painter: ShapePainter, query: Query<(&Transform, &VectorElementColorFill)>) {
+pub struct VectorElementRectangle {
+    color: Color,
+    corner_radii: Vec4
+}
+pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transform, &VectorElementRectangle)>) {
     for (transform, color) in &query {
 
         painter.set_translation(transform.translation);
@@ -123,8 +137,9 @@ pub fn vector_fill_update (mut painter: ShapePainter, query: Query<(&Transform, 
         let ww = transform.scale.x;
         let hh = transform.scale.y;
 
-        painter.color = color.0;
+        painter.color = color.color;
         painter.thickness = 1.0;
+        painter.corner_radii = color.corner_radii;
         painter.rect(Vec2::new(ww, hh));
     }
 }

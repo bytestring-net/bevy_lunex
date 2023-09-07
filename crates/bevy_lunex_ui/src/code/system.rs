@@ -15,7 +15,7 @@ use crate::cursor_update;
 /// 
 /// This is repeated every frame.
 pub fn tree_update(mut query: Query<&mut UiTree>, windows: Query<&Window>) {
-    for window in windows.iter() {
+    for window in &windows {
         for mut system in &mut query {
             system.width = window.resolution.width();
             system.height = window.resolution.height();

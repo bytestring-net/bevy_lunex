@@ -298,6 +298,7 @@ impl ImageParams {
     /// Image parameters set to top center position
     pub fn topcenter() -> ImageParams {
         ImageParams {
+            relative: Vec2::new(50.0, 0.0),
             anchor: bevy::sprite::Anchor::TopCenter,
             ..Default::default()
         }
@@ -305,6 +306,7 @@ impl ImageParams {
     /// Image parameters set to top left position
     pub fn topleft() -> ImageParams {
         ImageParams {
+            relative: Vec2::new(0.0, 0.0),
             anchor: bevy::sprite::Anchor::TopLeft,
             ..Default::default()
         }
@@ -312,6 +314,7 @@ impl ImageParams {
     /// Image parameters set to top right position
     pub fn topright() -> ImageParams {
         ImageParams {
+            relative: Vec2::new(100.0, 0.0),
             anchor: bevy::sprite::Anchor::TopRight,
             ..Default::default()
         }
@@ -320,6 +323,7 @@ impl ImageParams {
     /// Image parameters set to center position
     pub fn center() -> ImageParams {
         ImageParams {
+            relative: Vec2::new(50.0, 50.0),
             anchor: bevy::sprite::Anchor::Center,
             ..Default::default()
         }
@@ -327,6 +331,7 @@ impl ImageParams {
     /// Image parameters set to center left position
     pub fn centerleft() -> ImageParams {
         ImageParams {
+            relative: Vec2::new(0.0, 50.0),
             anchor: bevy::sprite::Anchor::CenterLeft,
             ..Default::default()
         }
@@ -334,6 +339,7 @@ impl ImageParams {
     /// Image parameters set to center right position
     pub fn centerright() -> ImageParams {
         ImageParams {
+            relative: Vec2::new(100.0, 50.0),
             anchor: bevy::sprite::Anchor::CenterRight,
             ..Default::default()
         }
@@ -342,6 +348,7 @@ impl ImageParams {
     /// Image parameters set to bottom center position
     pub fn bottomcenter() -> ImageParams {
         ImageParams {
+            relative: Vec2::new(50.0, 100.0),
             anchor: bevy::sprite::Anchor::BottomCenter,
             ..Default::default()
         }
@@ -349,6 +356,7 @@ impl ImageParams {
     /// Image parameters set to bottom left position
     pub fn bottomleft() -> ImageParams {
         ImageParams {
+            relative: Vec2::new(0.0, 100.0),
             anchor: bevy::sprite::Anchor::BottomLeft,
             ..Default::default()
         }
@@ -356,6 +364,7 @@ impl ImageParams {
     /// Image parameters set to bottom right position
     pub fn bottomright() -> ImageParams {
         ImageParams {
+            relative: Vec2::new(100.0, 100.0),
             anchor: bevy::sprite::Anchor::BottomRight,
             ..Default::default()
         }

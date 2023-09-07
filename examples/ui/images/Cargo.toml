@@ -1,5 +1,5 @@
 [package]
-name = "lunex_office_suite_example"
+name = "lunex_images_example"
 version = "0.1.0"
 edition = "2021"
 publish = false
