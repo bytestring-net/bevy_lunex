@@ -177,8 +177,7 @@ pub fn grid_generate(
             width_relative: container_width,
             height_relative: container_height,
             ..Default::default()
-        }
-        .pack(),
+        },
     ) {
         Ok(widget) => widget,
         Err(e) => return Err(e),
@@ -227,8 +226,7 @@ pub fn grid_generate(
                     width_relative: width,
                     height_relative: height,
                     ..Default::default()
-                }
-                .pack(),
+                },
             ) {
                 Ok(_) => (),
                 Err(e) => return Err(e),
@@ -309,8 +307,7 @@ pub fn grid_generate_solid(
             width: container_width,
             height: container_height,
             ..Default::default()
-        }
-        .pack(),
+        },
     ) {
         Ok(widget) => widget,
         Err(e) => return Err(e),
@@ -359,8 +356,7 @@ pub fn grid_generate_solid(
                     width_relative: width,
                     height_relative: height,
                     ..Default::default()
-                }
-                .pack(),
+                },
             ) {
                 Ok(_) => (),
                 Err(e) => return Err(e),
@@ -456,8 +452,7 @@ pub fn grid_generate_inside(
                     width_relative: width,
                     height_relative: height,
                     ..Default::default()
-                }
-                .pack(),
+                },
             ) {
                 Ok(_) => (),
                 Err(e) => return Err(e),

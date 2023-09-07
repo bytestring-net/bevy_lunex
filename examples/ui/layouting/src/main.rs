@@ -42,7 +42,7 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
     let tmp = &mut temporary_tree;
 
     
-    let workspace = Widget::create(tmp, "workspace", RelativeLayout::new().pack())?;
+    let workspace = Widget::create(tmp, "workspace", RelativeLayout::new())?;
 
 
     let window = Widget::create(tmp, &workspace.end("window"), WindowLayout {
@@ -50,7 +50,7 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
         width_relative: 50.,
         height_relative: 50.,
         ..default()
-    }.pack())?;
+    })?;
 
 
 

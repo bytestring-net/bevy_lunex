@@ -38,11 +38,6 @@ impl WindowLayout {
         WindowLayout::default()
     }
 
-    /// This method will package the struct into LayoutPackage for further processing.
-    pub fn pack(self) -> LayoutPackage {
-        LayoutPackage::Window(self)
-    }
-
     /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
     pub(super) fn calculate(&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
         let xs = width / 100.0;
@@ -105,6 +100,11 @@ impl Default for WindowLayout {
         }
     }
 }
+impl Into<LayoutPackage> for WindowLayout {
+    fn into(self) -> LayoutPackage {
+        LayoutPackage::Window(self)
+    }
+}
 
 /// # Relative Layout
 /// Under the hood it works the exact same way as [`WindowLayout`], but is defined in a way that makes it easier to define boundaries.
@@ -135,11 +135,6 @@ impl RelativeLayout {
     /// Creates new relative layout from default.
     pub fn new() -> RelativeLayout {
         RelativeLayout::default()
-    }
-
-    /// This method will package the struct into LayoutPackage for further processing.
-    pub fn pack(self) -> LayoutPackage {
-        LayoutPackage::Relative(self)
     }
 
     /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
@@ -193,6 +188,11 @@ impl Default for RelativeLayout {
         }
     }
 }
+impl Into<LayoutPackage> for RelativeLayout {
+    fn into(self) -> LayoutPackage {
+        LayoutPackage::Relative(self)
+    }
+}
 
 /// # Solid Layout
 /// This is a special layout that will **ALWAYS** keep size ratio.
@@ -229,11 +229,6 @@ impl SolidLayout {
     /// Creates new solid layout from default.
     pub fn new() -> SolidLayout {
         SolidLayout::default()
-    }
-
-    /// This method will package the struct into LayoutPackage for further processing.
-    pub fn pack(self) -> LayoutPackage {
-        LayoutPackage::Solid(self)
     }
 
     /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
@@ -300,6 +295,11 @@ impl Default for SolidLayout {
             vertical_anchor: 0.0,
             scaling: SolidScale::default(),
         }
+    }
+}
+impl Into<LayoutPackage> for SolidLayout {
+    fn into(self) -> LayoutPackage {
+        LayoutPackage::Solid(self)
     }
 }
 
@@ -503,8 +503,8 @@ impl Container {
     }
 
     /// Set a new layout to a container
-    pub fn layout_set(&mut self, position: LayoutPackage) {
-        self.position_layout = position;
+    pub fn layout_set(&mut self, position: impl Into<LayoutPackage>) {
+        self.position_layout = position.into();
     }
 
     /// Returns a read only reference to a layout

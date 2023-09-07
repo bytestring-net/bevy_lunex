@@ -42,7 +42,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     let tmp = &mut temporary_tree;
 
     
-    let workspace = Widget::create(tmp, "workspace", RelativeLayout::new().pack())?;
+    let workspace = Widget::create(tmp, "workspace", RelativeLayout::new())?;
 
 
     let window1 = Widget::create(tmp, &workspace.end("window1"), WindowLayout {
@@ -50,7 +50,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         width_relative: 30.,
         height_relative: 20.,
         ..default()
-    }.pack())?;
+    })?;
 
 
     let window2 = Widget::create(tmp, &workspace.end("window2"), WindowLayout {
@@ -58,7 +58,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         width_relative: 30.,
         height_relative: 20.,
         ..default()
-    }.pack())?;
+    })?;
 
 
     let window3 = Widget::create(tmp, &workspace.end("window3"), WindowLayout {
@@ -66,28 +66,28 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         width_relative: 30.,
         height_relative: 20.,
         ..default()
-    }.pack())?;
+    })?;
 
     let window4 = Widget::create(tmp, &workspace.end("window4"), WindowLayout {
         relative: Vec2::new(50., 30.),
         width_relative: 30.,
         height_relative: 20.,
         ..default()
-    }.pack())?;
+    })?;
 
     let window5 = Widget::create(tmp, &workspace.end("window5"), WindowLayout {
         relative: Vec2::new(5., 60.),
         width_relative: 30.,
         height_relative: 20.,
         ..default()
-    }.pack())?;
+    })?;
 
     let window6 = Widget::create(tmp, &workspace.end("window6"), WindowLayout {
         relative: Vec2::new(50., 60.),
         width_relative: 30.,
         height_relative: 20.,
         ..default()
-    }.pack())?;
+    })?;
 
 
 

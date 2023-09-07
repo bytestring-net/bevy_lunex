@@ -45,19 +45,19 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     let tmp = &mut temporary_tree;
 
     
-    let workspace = Widget::create(tmp, "workspace", RelativeLayout::new().pack())?;
+    let workspace = Widget::create(tmp, "workspace", RelativeLayout::new())?;
 
     let top_panel = Widget::create(tmp, &workspace.end("top_panel"), RelativeLayout {
         relative_2: Vec2::new(100.0, 0.0),
         absolute_2: Vec2::new(0.0, TOPBAR_SIZE),
         ..default()
-    }.pack())?;
+    })?;
     let side_panel = Widget::create(tmp, &workspace.end("side_panel"), RelativeLayout {
         absolute_1: Vec2::new(0.0, TOPBAR_SIZE),
         absolute_2: Vec2::new(SIDEBAR_SIZE, 0.0),
         relative_2: Vec2::new(0.0, 100.0),
         ..default()
-    }.pack())?;
+    })?;
 
 
 

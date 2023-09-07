@@ -58,7 +58,7 @@ impl UiTree {
     pub fn new(name: &str) -> UiTree {
         let mut branch = UiBranch::new(name.into(), 0, "".into(), 0.0, true);
         branch.container.layout_set(
-            RelativeLayout::default().pack(),
+            RelativeLayout::default(),
         );
 
         UiTree {

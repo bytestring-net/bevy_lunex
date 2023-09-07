@@ -687,7 +687,7 @@ impl Widget {
     /// ```
     /// In this case the path of ``button_pointer`` is `` #0/#0 `` (The number stands for an order they were created in)
     ///
-    pub fn create(tree: &mut UiTree, path: &str, position: LayoutPackage) -> Result<Widget, LunexError> {
+    pub fn create(tree: &mut UiTree, path: &str, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
         let str_list: Vec<&str> = path.split('/').collect();
         let str_list_len = str_list.len();
 
@@ -724,7 +724,7 @@ impl Widget {
 
         //# Create branch in ROOT
         if parent_path.is_empty() {
-            match tree.main_branch_mut().create_linked(&name, position) {
+            match tree.main_branch_mut().create_linked(&name, position.into()) {
                 Ok(absolute_key) => {
                     let widget = if name.is_empty() {
                         Widget::new(&absolute_key)
@@ -747,7 +747,7 @@ impl Widget {
                         let absolute_key = match parent_branch.borrow_linked_checked_mut(&absolute)
                         {
                             Ok(nameless_branch) => {
-                                match nameless_branch.create_linked(&name, position) {
+                                match nameless_branch.create_linked(&name, position.into()) {
                                     Ok(absolute_key) => absolute_key,
                                     Err(message) => return Err(message),
                                 }
@@ -765,7 +765,7 @@ impl Widget {
                         }
                     } else {
                         //# Create direct branch without skipping
-                        match parent_branch.create_linked(&name, position) {
+                        match parent_branch.create_linked(&name, position.into()) {
                             Ok(absolute_key) => {
                                 if name.is_empty() {
                                     Ok(Widget::new(&format!(
