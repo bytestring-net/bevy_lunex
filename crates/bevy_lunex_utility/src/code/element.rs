@@ -199,19 +199,19 @@ impl ImageElementBundle {
     /// * `widget` = widget to spawn element for.
     /// * `image_params` = dictates how the element should behave and be located.
     /// * `texture` = image handle, you can use `asset_server.load("")`.
-    /// * `image_dimension` = `Vec2` with width and height dimensions of the texture.
+    /// * `source_image_dimensions` = `Vec2` with width and height dimensions of the texture.
     pub fn new(
         widget: Widget,
         image_params: &ImageParams,
         texture: Handle<Image>,
-        image_dimensions: Vec2,
+        source_image_dimensions: Vec2,
     ) -> ImageElementBundle {
         ImageElementBundle {
             widget,
             element: Element {
                 relative: image_params.relative,
                 absolute: image_params.absolute,
-                boundary: image_dimensions,
+                boundary: source_image_dimensions,
                 scale: image_params.scale,
                 depth: image_params.depth,
                 width: image_params.width,
