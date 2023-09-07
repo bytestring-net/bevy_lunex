@@ -16,7 +16,13 @@ Blazingly fast ***path*** based ***modular layout engine*** built on top of **Be
 
 ## === Showcase ===
 
+![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/2097927c-806f-475e-8cff-1e1cb534fbcb)
+
+<details><summary>Gif</summary>
+  
 <img src="promo/readme_cyberpunk.gif" alt="Cyberpunk gif"/>
+
+</details>
 
 *^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/bevy-lunex-cyberpunk).*
 
@@ -45,7 +51,7 @@ All data is stored in a master struct, called "**UiTree**", which manages all la
 When needed, the **"Widget"** can *fetch* **"UiBranch"** inside the **"UiTree"** and return a mutable borrow. From the borrow you can modify the layout data, thus **changing the behaviour** and the result of the rectangle calculations taking place.
 This is the way to get around the *Rust's borrow checker*.
 ```
-#ROOT
+> UI
   |-> Main_menu
   |    |-> Background
   |    |-> Board
@@ -65,7 +71,7 @@ This is the way to get around the *Rust's borrow checker*.
 
 First, create a **"UiTree"** struct that will hold all the layout data managed recursively.
 ```rust
-let mut tree = UiTree::new();
+let mut tree = UiTree::new("UI");
 ```
 
 ### --- Layout definition ---
@@ -75,7 +81,7 @@ let widget = Widget::create(&mut tree, "widget", RelativeLayout {
     relative_1: Vec2::new(0.0, 0.0),
     relative_2: Vec2::new(100.0, 100.0),
     ..default()
-}.pack())?;
+})?;
 ```
 
 ### --- Logic binding ---
@@ -139,7 +145,7 @@ By nesting branches of these 3 types, you can precisely define the position and 
 ## === Versions ===
 |  Bevy  | Bevy Lunex |
 |--------|------------|
-| 0.11.2 |  <= 0.0.3  |
+| 0.11.2 |  <= 0.0.4  |
 
 ## === Contributing ===
 
