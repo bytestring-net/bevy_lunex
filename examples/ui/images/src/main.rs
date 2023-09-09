@@ -104,7 +104,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window1.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb(40./255., 40./255., 40./255.),
+                color: Color::rgb_u8(40, 40, 40),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
@@ -113,7 +113,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window2.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb(40./255., 40./255., 40./255.),
+                color: Color::rgb_u8(40, 40, 40),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
@@ -122,7 +122,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window3.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb(40./255., 40./255., 40./255.),
+                color: Color::rgb_u8(40, 40, 40),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
@@ -131,7 +131,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window4.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb(40./255., 40./255., 40./255.),
+                color: Color::rgb_u8(40, 40, 40),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
@@ -140,7 +140,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window5.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb(40./255., 40./255., 40./255.),
+                color: Color::rgb_u8(40, 40, 40),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
@@ -149,7 +149,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window6.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb(40./255., 40./255., 40./255.),
+                color: Color::rgb_u8(40, 40, 40),
                 corner_radii: Vec4::splat(10.0)
             },
         ));

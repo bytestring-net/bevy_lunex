@@ -68,7 +68,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     };
     let names = textgrid![["file"],["edit"],["preferences"],["help"]];
     let grid = GridParams::new(&names).with_anchor(bevy::sprite::Anchor::CenterLeft).with_width(70.0).with_height(20.0).with_width_gap(7.0);
-    let wgrid = grid_generate_solid(tmp, &top_panel.end("navbar"), &grid)?;
+    //let wgrid = grid_generate_solid(tmp, &top_panel.end("navbar"), &grid)?;
 
     ui_tree.merge(temporary_tree)?;
 
@@ -77,32 +77,32 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(workspace.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb(48./255., 52./255., 70./255.),
+                color: Color::rgb_u8(48, 52, 70),
                 corner_radii: Vec4::splat(0.0)
             },
         ));
         commands.spawn((
             ElementBundle::new(top_panel.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb(35./255., 38./255., 52./255.),
+                color: Color::rgb_u8(35, 38, 52),
                 corner_radii: Vec4::new(20.0, 0.0, 0.0, 0.0)
             },
         ));
         commands.spawn((
             ElementBundle::new(side_panel.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb(41./255., 44./255., 60./255.),
+                color: Color::rgb_u8(41, 44, 60),
                 corner_radii: Vec4::new(20.0, 0.0, 0.0, 0.0)
             },
         ));
 
-        for x in 0..names.len() {
+        /*for x in 0..names.len() {
             for y in 0..names[0].len() {
                 let widget = Widget::new(&wgrid.end(&names[x][y]));
                 commands.spawn((
                     ElementBundle::new(widget.clone(), Element::fullfill()),
                     VectorElementRectangle {
-                        color: Color::rgb(36./255., 29./255., 41./255.),
+                        color: Color::rgb_u8(36, 29, 41),
                         corner_radii: Vec4::splat(30.0)
                     },
                 ));
@@ -110,7 +110,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
                     TextElementBundle::new(widget.clone(), &TextParams::center().with_style(&style).with_height(Some(50.0)), &names[x][y])
                 );
             }
-        }
+        }*/
 
     }
 
@@ -141,5 +141,42 @@ pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transf
         painter.thickness = 1.0;
         painter.corner_radii = color.corner_radii;
         painter.rect(Vec2::new(ww, hh));
+    }
+}
+
+
+pub struct DropDownElement {
+    text_style: TextStyle,
+    options: Vec<String>,
+    select: String,
+}
+impl DropDownElement {
+    pub fn new(options: Vec<String>, text_style: TextStyle) -> DropDownElement {
+        DropDownElement {
+            text_style,
+            select: options[0].clone(),
+            options: options,
+        }
+    }
+    pub fn build_list(&self, commands: &mut Commands, tree: &mut UiTree, widget: &Widget) {
+        let row = textgrid![["Option 1", "Option 2", "Option 3"]];
+        
+        /*let w = grid_generate(tree, &widget.end("list"), Vec2::new(0.0, 100.0), &GridParams::new(&row)).unwrap();
+        
+        for x in 0..row.len() {
+            for y in 0..row[0].len() {
+                let wid = Widget::new(&w.end(&row[x][y]));
+                commands.spawn((
+                    ElementBundle::new(wid.clone(), Element::fullfill()),
+                    VectorElementRectangle {
+                        color: Color::rgb_u8(36, 29, 41),
+                        corner_radii: Vec4::splat(30.0)
+                    },
+                ));
+                commands.spawn(
+                    TextElementBundle::new(wid.clone(), &TextParams::center().with_style(&self.text_style).with_height(Some(50.0)), &row[x][y])
+                );
+            }
+        }*/
     }
 }

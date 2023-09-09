@@ -687,7 +687,9 @@ impl Widget {
     /// ```
     /// In this case the path of ``button_pointer`` is `` #0/#0 `` (The number stands for an order they were created in)
     ///
-    pub fn create(tree: &mut UiTree, path: &str, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
+    pub fn create(tree: &mut UiTree, path: impl AsRef<str>, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
+        let path = path.as_ref();
+
         let str_list: Vec<&str> = path.split('/').collect();
         let str_list_len = str_list.len();
 
@@ -852,8 +854,8 @@ impl Widget {
     /// let path = menu.str("Category").end("Button");
     /// assert_eq!("Menu/Category/Button", path);
     /// ```
-    pub fn str(&self, s: &str) -> Widget {
-        Widget::new(&format!("{}/{}", self.path, s))
+    pub fn str(&self, s: impl AsRef<str>) -> Widget {
+        Widget::new(&format!("{}/{}", self.path, s.as_ref()))
     }
     /// # End
     /// This method is used to create dynamic path to widgets.
@@ -867,8 +869,8 @@ impl Widget {
     /// let path = category.end("Button");
     /// assert_eq!("Menu/Category/Button", path);
     /// ```
-    pub fn end(&self, s: &str) -> String {
-        format!("{}/{}", self.path, s)
+    pub fn end(&self, s: impl AsRef<str>) -> String {
+        format!("{}/{}", self.path, s.as_ref())
     }
 
 
@@ -905,5 +907,16 @@ impl Widget {
             }
             Err(e) => Err(e),
         }
+    }
+}
+
+impl AsRef<Widget> for Widget {
+    fn as_ref(&self) -> &Widget {
+        &self
+    }
+}
+impl AsMut<Widget> for Widget {
+    fn as_mut(&mut self) -> &mut Widget {
+        self
     }
 }

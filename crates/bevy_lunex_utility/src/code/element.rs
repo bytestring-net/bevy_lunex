@@ -156,9 +156,9 @@ impl ElementBundle {
     /// # Arguments
     /// * `widget` = widget to spawn element for.
     /// * `element` = the element to spawn.
-    pub fn new(widget: Widget, element: Element) -> ElementBundle {
+    pub fn new(widget: impl AsRef<Widget>, element: Element) -> ElementBundle {
         ElementBundle {
-            widget,
+            widget: widget.as_ref().to_owned(),
             element,
             ..default()
         }
@@ -197,33 +197,29 @@ impl ImageElementBundle {
     /// Creates new [`ImageElementBundle`] from given parameters.
     /// # Arguments
     /// * `widget` = widget to spawn element for.
-    /// * `image_params` = dictates how the element should behave and be located.
+    /// * `params` = dictates how the element should behave and be located.
     /// * `texture` = image handle, you can use `asset_server.load("")`.
     /// * `source_image_dimensions` = `Vec2` with width and height dimensions of the texture.
-    pub fn new(
-        widget: Widget,
-        image_params: &ImageParams,
-        texture: Handle<Image>,
-        source_image_dimensions: Vec2,
-    ) -> ImageElementBundle {
+    pub fn new(widget: impl AsRef<Widget>, params: impl AsRef<ImageParams>, texture: Handle<Image>, source_image_dimensions: Vec2) -> ImageElementBundle {
+        let params = params.as_ref();
         ImageElementBundle {
-            widget,
+            widget: widget.as_ref().to_owned(),
             element: Element {
-                relative: image_params.relative,
-                absolute: image_params.absolute,
+                relative: params.relative,
+                absolute: params.absolute,
                 boundary: source_image_dimensions,
-                scale: image_params.scale,
-                depth: image_params.depth,
-                width: image_params.width,
-                height: image_params.height,
+                scale: params.scale,
+                depth: params.depth,
+                width: params.width,
+                height: params.height,
                 ..default()
             },
             texture,
             sprite: Sprite {
-                anchor: image_params.anchor.clone(),
-                color: image_params.color.clone(),
-                flip_x: image_params.flip_x.clone(),
-                flip_y: image_params.flip_y.clone(),
+                anchor: params.anchor.clone(),
+                color: params.color.clone(),
+                flip_x: params.flip_x.clone(),
+                flip_y: params.flip_y.clone(),
                 ..default()
             },
             ..Default::default()
@@ -449,7 +445,16 @@ impl ImageParams {
         self
     }
 }
-
+impl AsRef<ImageParams> for ImageParams {
+    fn as_ref(&self) -> &ImageParams {
+        &self
+    }
+}
+impl AsMut<ImageParams> for ImageParams {
+    fn as_mut(&mut self) -> &mut ImageParams {
+        self
+    }
+}
 
 // ===========================================================
 // === TEXT ELEMENT ===
@@ -486,25 +491,26 @@ impl TextElementBundle {
     /// Creates new [`TextElementBundle`] from given parameters.
     /// # Arguments
     /// * `widget` = widget to spawn element for.
-    /// * `text_params` = dictates how the element should behave and be located.
+    /// * `params` = dictates how the element should behave and be located.
     /// * `text` = the text you want to display.
-    pub fn new(widget: Widget, text_params: &TextParams, text: &str) -> TextElementBundle {
+    pub fn new(widget: impl AsRef<Widget>, params: impl AsRef<TextParams>, text: &str) -> TextElementBundle {
+        let params = params.as_ref();
         TextElementBundle {
-            widget,
+            widget: widget.as_ref().to_owned(),
             element: Element {
-                relative: text_params.relative,
-                absolute: text_params.absolute,
-                boundary: text_compute_size_simple(text, text_params.style.font_size),
-                scale: text_params.scale,
-                width: text_params.width,
-                height: text_params.height,
-                depth: text_params.depth,
-                ..Default::default()
+                relative: params.relative,
+                absolute: params.absolute,
+                boundary: text_compute_size_simple(text, params.style.font_size),
+                scale: params.scale,
+                width: params.width,
+                height: params.height,
+                depth: params.depth,
+                ..default()
             },
-            text: Text::from_section(text, text_params.style.clone())
-                .with_alignment(text_params.alignment),
-            text_anchor: text_params.anchor.clone(),
-            ..Default::default()
+            text: Text::from_section(text, params.style.clone())
+                .with_alignment(params.alignment),
+            text_anchor: params.anchor.clone(),
+            ..default()
         }
     }
 }
@@ -723,7 +729,16 @@ impl TextParams {
         self
     }
 }
-
+impl AsRef<TextParams> for TextParams {
+    fn as_ref(&self) -> &TextParams {
+        &self
+    }
+}
+impl AsMut<TextParams> for TextParams {
+    fn as_mut(&mut self) -> &mut TextParams {
+        self
+    }
+}
 
 // ===========================================================
 // === BOUNDARY COMPUTATION ===

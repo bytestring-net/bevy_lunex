@@ -36,7 +36,7 @@ pub fn lunex_setup_debug(
                         x.yellow().bold()
                     );
                     commands.spawn((
-                        ImageElementBundle::new(widget, &ImageParams::default().with_width(Some(100.0)).with_height(Some(100.0)), asset_server.load("debug.png"), Vec2::new(300.0,200.0)),
+                        ImageElementBundle::new(widget, ImageParams::default().with_width(Some(100.0)).with_height(Some(100.0)), asset_server.load("debug.png"), Vec2::new(300.0,200.0)),
                         DebugImage
                     ));
                 }

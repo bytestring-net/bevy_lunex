@@ -100,10 +100,22 @@ impl GridParams {
         self
     }
 }
+impl AsRef<GridParams> for GridParams {
+    fn as_ref(&self) -> &GridParams {
+        &self
+    }
+}
+impl AsMut<GridParams> for GridParams {
+    fn as_mut(&mut self) -> &mut GridParams {
+        self
+    }
+}
 
 // ===========================================================
 // === GRID GENERATION ===
 
+//### RETURN (Widget, Vec<Vec<Widget>>)!!!!!!!!!!!!!
+/*
 /// # Grid generate
 /// 
 /// A complex function that will generate a grid of widgets. Can be used to make lists too.
@@ -377,8 +389,9 @@ pub fn grid_generate_solid(
 pub fn grid_generate_inside(
     tree: &mut UiTree,
     widget: &Widget,
-    grid_params: &GridParams,
+    params: impl AsRef<GridParams>,
 ) -> Result<(), LunexError> {
+    let grid_params = params.as_ref();
     let xx = grid_params.grid.len();
     let yy = grid_params.grid[0].len();
 
@@ -461,6 +474,209 @@ pub fn grid_generate_inside(
     }
     Ok(())
 }
+*/
+
+
+pub struct Grid {
+    orientation: GridOrientation,
+    inverted: bool,
+    cell: Vec<GridSegment>,
+    gap: Vec<f32>,
+    borders: bool,
+}
+impl Grid {
+    pub fn build_in(&self, widget: impl AsRef<Widget>) -> Result<(Widget, Vec<Vec<Widget>>), LunexError> {
+        let _widget = widget.as_ref();
+
+        
+        
+
+
+
+        Err(LunexError::InvalidPathSyntax)
+    }
+}
+
+pub struct GridSegment {
+    //capblock: bool,
+    pub cell: Vec<GridCell>,
+    pub gap: Vec<f32>,
+    //border: Option<[f32; 2]>,
+}
+impl GridSegment {
+    /// Iterate over and find the biggest cell and use it as size
+    pub fn compute_size(&self, orientation: GridOrientation) -> f32 {
+        //let orientation = GridOrientation::Horizontal;
+        let mut segment_size = 0.0;
+        match orientation {
+            GridOrientation::Horizontal => for x in &self.cell {
+                if x.size.y > segment_size { segment_size = x.size.y }
+            },
+            GridOrientation::Vertical => for x in &self.cell {
+                if x.size.x > segment_size { segment_size = x.size.x }
+            },
+        }
+        segment_size
+    }
+
+    /// Iterate over and sum all cells and gaps to return lenght
+    pub fn compute_lenght(&self, orientation: GridOrientation) -> f32 {
+        //let orientation = GridOrientation::Horizontal;
+        let mut segment_lenght = 0.0;
+        match orientation {
+            GridOrientation::Horizontal => for x in &self.cell {
+                segment_lenght += x.size.x;
+            },
+            GridOrientation::Vertical => for x in &self.cell {
+                segment_lenght += x.size.y;
+            },
+        }
+        //let gaps: f32 = self.gap.iter().sum();
+        let mut gaps = 0.0;
+        // Cannot have more gaps that cells - 1
+        for x in 0..self.gap.len().min(self.cell.len()-1) {
+            gaps += self.gap[x]
+        }
+        segment_lenght + gaps
+    }
+
+    pub fn build_in(&self, tree: &mut UiTree, widget: impl AsRef<Widget>, orientation: GridOrientation, inverted: bool) -> Result<Vec<Widget>, LunexError> {
+        let widget = widget.as_ref();
+
+        let segment_size = self.compute_size(orientation);
+        let segment_lenght = self.compute_lenght(orientation);
+
+        let mut cell_length_so_far = 0.0;
+        let mut gap_length_so_far = 0.0;
+
+        let mut widget_return: Vec<Widget> = Vec::new();
+
+        match orientation {
+            GridOrientation::Horizontal => for x in 0..self.cell.len() {
+
+                if x != 0 && x <= self.gap.len(){ gap_length_so_far += 100.0 * self.gap[x-1]/segment_lenght }
+
+                let name = match &self.cell[x].name {
+                    Some (str) => str.clone(),
+                    None => format!("|{}|", x),
+                };
+
+                let ll = 100.0 * self.cell[x].size.x/segment_lenght;
+
+                widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
+                    relative: Vec2::new(
+                        cell_length_so_far + gap_length_so_far,
+                        100.0 * (segment_size/2.0 - self.cell[x].size.y/2.0)/segment_size,
+                    ),
+                    width_relative: ll,
+                    height_relative: 100.0 * self.cell[x].size.y/segment_size,
+                    ..default()
+                })?);
+
+                cell_length_so_far += ll;
+
+            },
+
+            GridOrientation::Vertical => for x in 0..self.cell.len() {
+
+                if x != 0 && x <= self.gap.len(){ gap_length_so_far += 100.0 * self.gap[x-1]/segment_lenght }
+    
+                let name = match &self.cell[x].name {
+                    Some (str) => str.clone(),
+                    None => format!("|{}|", x),
+                };
+    
+                let ll = 100.0 * self.cell[x].size.y/segment_lenght;
+    
+                widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
+                    relative: Vec2::new(
+                        100.0 * (segment_size/2.0 - self.cell[x].size.x/2.0)/segment_size,
+                        cell_length_so_far + gap_length_so_far,
+                    ),
+                    width_relative: 100.0 * self.cell[x].size.x/segment_size,
+                    height_relative: ll,
+                    ..default()
+                })?);
+    
+                cell_length_so_far += ll;
+    
+            }
+        }
+
+
+        Ok(widget_return)
+    }
+}
+impl AsRef<GridSegment> for GridSegment {
+    fn as_ref(&self) -> &GridSegment {
+        &self
+    }
+}
+impl AsMut<GridSegment> for GridSegment {
+    fn as_mut(&mut self) -> &mut GridSegment {
+        self
+    }
+}
+
+pub struct GridCell {
+    pub size: Vec2,
+    pub name: Option<String>,
+    pub align: GridAlign,
+}
+impl Default for GridCell{
+    fn default() -> GridCell {
+        GridCell {
+            size: Vec2::splat(10.0),
+            name: None,
+            align: GridAlign::Middle,
+        }
+    }
+}
+impl GridCell {
+    pub fn new() -> GridCell {
+        GridCell::default()
+    }
+    pub fn sized(size: Vec2) -> GridCell {
+        GridCell {
+            size,
+            ..default()
+        }
+    }
+    pub fn named(size: Vec2, name: impl AsRef<str>) -> GridCell {
+        GridCell {
+            size,
+            name: Some(name.as_ref().into()),
+            ..default()
+        }
+    }
+}
+impl AsRef<GridCell> for GridCell {
+    fn as_ref(&self) -> &GridCell {
+        &self
+    }
+}
+impl AsMut<GridCell> for GridCell {
+    fn as_mut(&mut self) -> &mut GridCell {
+        self
+    }
+}
+
+#[derive(Clone, Debug, Copy)]
+pub enum GridOrientation {
+    Horizontal,
+    Vertical,
+}
+
+#[derive(Clone, Debug, Copy)]
+pub enum GridAlign {
+    Start,
+    Middle,
+    End,
+}
+
+
+
+
 
 // ===========================================================
 // === GRID MACROS ===

@@ -17,7 +17,6 @@ fn main() {
 
         .run()
 }
-
 fn setup(mut commands: Commands) {
     commands.spawn(
         Camera2dBundle {
@@ -39,25 +38,53 @@ fn setup(mut commands: Commands) {
 pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result<(), LunexError> {
 
     let mut temporary_tree = UiTree::new("tmp");
-    let tmp = &mut temporary_tree;
+    let mut tmp = &mut temporary_tree;
 
     
-    let workspace = Widget::create(tmp, "workspace", RelativeLayout::new())?;
+    let workspace = Widget::create(&mut tmp, "workspace", RelativeLayout::new())?;
 
 
-    let window = Widget::create(tmp, &workspace.end("window"), WindowLayout {
+    let window = Widget::create(&mut tmp, &workspace.end("window"), WindowLayout {
         relative: Vec2::new(10., 10.),
-        width_relative: 50.,
-        height_relative: 50.,
+        width_relative: 80.,
+        height_relative: 80.,
         ..default()
     })?;
 
+
+    // Create grid segment
+    let segment = GridSegment {
+        cell: vec![
+            GridCell::sized(Vec2::new(5.0, 5.0)),
+            GridCell::sized(Vec2::new(10.0, 10.0)),
+            GridCell::sized(Vec2::new(15.0, 15.0)),
+            GridCell::sized(Vec2::new(20.0, 20.0)),
+        ],
+        gap: vec![
+            10.0,
+            10.0,
+            10.0,
+        ],
+    };
+
+    // Generate grid
+    let iter = segment.build_in(tmp, &window, GridOrientation::Horizontal, false)?;
+
+    // Assign entities to grid cells
+    for x in iter {
+        commands.spawn((
+            ElementBundle::new(x, Element::fullfill()),
+            VectorElementRectangle {
+                color: Color::rgb_u8(200, 200, 200),
+                corner_radii: Vec4::splat(10.0)
+            },
+        ));
+    }
 
 
     // Merge the temporary tree to main ui tree
 
     ui_tree.merge(temporary_tree)?;
-
 
 
     // Spawns the draw entities last
@@ -75,7 +102,7 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
         commands.spawn((
             ElementBundle::new(window.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb_u8(200, 200, 200),
+                color: Color::rgb_u8(100, 100, 100),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
