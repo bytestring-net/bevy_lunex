@@ -65,6 +65,7 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
             10.0,
             10.0,
         ],
+        border: Some([10.0, 10.0])
     };
 
     // Generate grid

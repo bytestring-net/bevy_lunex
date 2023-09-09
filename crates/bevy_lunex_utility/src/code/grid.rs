@@ -501,7 +501,7 @@ pub struct GridSegment {
     //capblock: bool,
     pub cell: Vec<GridCell>,
     pub gap: Vec<f32>,
-    //border: Option<[f32; 2]>,
+    pub border: Option<[f32; 2]>,
 }
 impl GridSegment {
     /// Iterate over and find the biggest cell and use it as size
