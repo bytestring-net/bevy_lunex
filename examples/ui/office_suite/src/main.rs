@@ -17,7 +17,6 @@ fn main() {
 
         .run()
 }
-
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(
         Camera2dBundle {
@@ -33,8 +32,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     println!("{}", ui_tree.generate_map_debug());
     commands.spawn (ui_tree);
 }
-
-
 
 pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree) -> Result<(), LunexError> {
 
@@ -67,18 +64,15 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         color: Color::WHITE,
     };
 
-    let names = textrow!["file","edit","preferences","help"];
-    let segment1 = GridSegment::text_cells(&names).add_gaps(7.0);
-
-    let grid = Grid::new().with_segments(vec![segment1]).with_orientation(GridOrientation::Horizontal);
-
-    let (_, iter) = grid.build_in_solid(tmp, &top_panel.end("Grid"), SolidLayout::new().with_horizontal_anchor(-1.0))?;
+    let names = textrow!["file", "edit", "preferences", "help"];
+    let segment = GridSegment::text_cells(&names).add_gaps(7.0);
+    let (_, wlist) = segment.build_in_solid(tmp, &top_panel.end("Grid"), SolidLayout::new().with_horizontal_anchor(-1.0), GridOrientation::Horizontal)?;
 
 
     ui_tree.merge(temporary_tree)?;
 
+    
     '_Fills: {
-
         commands.spawn((
             ElementBundle::new(workspace.clone(), Element::fullfill()),
             VectorElementRectangle {
@@ -100,25 +94,19 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
                 corner_radii: Vec4::new(20.0, 0.0, 0.0, 0.0)
             },
         ));
-
-        for x in 0..iter.len() {
-            for y in 0..iter[x].len() {
-                commands.spawn((
-                    ElementBundle::new(&iter[x][y], Element::fullfill()),
-                    VectorElementRectangle {
-                        color: Color::rgb_u8(36, 29, 41),
-                        corner_radii: Vec4::splat(30.0)
-                    },
-                ));
-                commands.spawn(
-                    TextElementBundle::new(&iter[x][y], &TextParams::center().with_style(&style).with_height(Some(50.0)), &names[y])
-                );
-            }
+        for x in 0..wlist.len() {
+            commands.spawn((
+                ElementBundle::new(&wlist[x], Element::fullfill()),
+                VectorElementRectangle {
+                    color: Color::rgb_u8(36, 29, 41),
+                    corner_radii: Vec4::splat(30.0)
+                },
+            ));
+            commands.spawn(
+                TextElementBundle::new(&wlist[x], &TextParams::center().with_style(&style).with_height(Some(50.0)), &names[x])
+            );
         }
-
     }
-
-
 
     Ok(())
 }
