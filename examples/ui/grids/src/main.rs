@@ -50,10 +50,13 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
     })?;
 
 
-    let n = 100;
 
-    let segment = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), n).add_gaps(0.0);
-    let grid = Grid::splat_segment(segment, n).add_gaps(0.0).with_orientation(GridOrientation::Vertical);
+    let segment1 = GridSegment::splat_cells(GridCell::sized(Vec2::new(10.0, 5.0)), 2).add_gaps(5.0);
+    let segment2 = GridSegment::splat_cells(GridCell::sized(Vec2::new(15.0, 5.0)), 5).add_gaps(5.0);
+    let segment3 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 10.0)), 3).add_gaps(5.0).with_scale(Some(100.0));
+    let segment4 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 15.0)), 7).add_gaps(5.0);
+
+    let grid = Grid::new().with_segments(vec![segment1,segment2,segment3,segment4]).add_gaps(5.0).with_orientation(GridOrientation::Horizontal);
 
 
     let iter = grid.build_in(tmp, &window)?;
@@ -64,7 +67,7 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
             commands.spawn((
                 ElementBundle::new(&iter[x][y], Element::fullfill()),
                 VectorElementRectangle {
-                    color: Color::rgb_u8((x * 255/iter.len()) as u8, (y * 255/iter[x].len()) as u8, (y * 255/iter[x].len()) as u8),
+                    color: Color::rgb_u8((x * 255/iter.len()) as u8, (x * 255/iter.len()) as u8, (y * 255/iter[x].len()) as u8),
                     corner_radii: Vec4::splat(0.0)
                 },
             ));

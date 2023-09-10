@@ -20,7 +20,7 @@ use bevy_lunex_core::{UiTree, Widget, WindowLayout, SolidLayout, LunexError};
 /// * `height_relative` = height of one widget in % relative to the parent widget.
 /// * `width_border_gap` = if gaps should also be on the outside of the grid.
 /// * `height_border_gap` = if gaps should also be on the outside of the grid.
-#[derive(Clone, Debug)]
+/*#[derive(Clone, Debug)]
 pub struct GridParams {
     pub grid: Vec<Vec<String>>,
     pub anchor: Anchor,
@@ -110,7 +110,7 @@ impl AsMut<GridParams> for GridParams {
         self
     }
 }
-
+*/
 // ===========================================================
 // === GRID GENERATION ===
 
@@ -476,11 +476,21 @@ pub fn grid_generate_inside(
 }
 */
 
+/// # Grid
+/// It's made out of vector of [`GridSegment`]. Depending on the grid orientation, they are either columns next to each other or rows under each other.
+/// 
+/// You can specify the segments, the gap between each segment, the orientation and border gap.
+/// 
+/// Used for creating any kind of 2D grid like item inventories.
 #[derive(Clone, Debug)]
 pub struct Grid {
+    /// If the grid orientation is along the X axis or Y axis
     pub orientation: GridOrientation,
+    /// The vector with the grids segments to spawn
     pub segment: Vec<GridSegment>,
+    /// The in-between gaps between the segments, should be n-1 of segments. Overflow is simply ignored
     pub gap: Vec<f32>,
+    /// Border gaps on sides of the segment
     pub border: Option<[f32; 2]>,
 }
 impl Grid {
@@ -609,10 +619,9 @@ impl Grid {
             if x != 0 && x <= self.gap.len(){ gap_length_so_far += self.gap[x-1] * length_normalization }
 
             let ll = self.segment[x].compute_size(self.orientation) * length_normalization;
+            let ss = self.segment[x].compute_lenght(self.orientation) * size_normalization;
 
-            widget_return.push(
-                self.segment[x].build_in_part_grid(tree, &widget, self.orientation, x, segment_length_so_far + gap_length_so_far, ll, 100.0)?
-            );
+            widget_return.push(self.segment[x].build_in_part_grid(tree, &widget, self.orientation, x, segment_length_so_far + gap_length_so_far, ll, ss)?);
 
             segment_length_so_far += ll;
         }
@@ -633,10 +642,24 @@ impl Default for Grid {
     }
 }
 
+
+/// # Grid Segment
+/// Represents a row/column in [`Grid`]. It's made out of vector of [`GridCell`].
+/// 
+/// You can specify the size of each cell, the gap between each cell, the scale and border gap.
+/// 
+/// Can be spawned standalone without a grid.
+/// 
+/// Used for creating any kind of row or column like text tabs or file hierarchies.
 #[derive(Clone, Debug)]
 pub struct GridSegment {
+    /// If the segment should scale in length to a % of the widget. Leave None for Auto.
+    pub scale: Option<f32>,
+    /// The vector with the segments cells to spawn
     pub cell: Vec<GridCell>,
+    /// The in-between gaps between the cells, should be n-1 of cells. Overflow is simply ignored
     pub gap: Vec<f32>,
+    /// Border gaps on sides of the segment
     pub border: Option<[f32; 2]>,
 }
 impl GridSegment {
@@ -707,6 +730,12 @@ impl GridSegment {
         self
     }
 
+    /// Set gridcontext of the segment to the value given
+    pub fn with_scale(mut self, scale: Option<f32>) -> Self {
+        self.scale = scale;
+        self
+    }
+
 
     /// Iterate over and find the biggest cell and use it as size
     pub fn compute_size(&self, orientation: GridOrientation) -> f32 {
@@ -755,7 +784,7 @@ impl GridSegment {
         let segment_lenght = self.compute_lenght(orientation);
 
         let size_normalization = 100.0/segment_size;
-        let length_normalization = 100.0/segment_lenght;
+        let length_normalization = if let Some(scale) = self.scale {scale } else { 100.0 }/segment_lenght;
 
         let mut cell_length_so_far = 0.0;
         let mut gap_length_so_far = 0.0;
@@ -822,88 +851,14 @@ impl GridSegment {
     }
 
     /// Builds the grid segment in the selected widget, but you can specify in which part
-    pub fn build_in_partial(&self, tree: &mut UiTree, widget: impl AsRef<Widget>, orientation: GridOrientation, size: f32, lenght: f32) -> Result<Vec<Widget>, LunexError> {
+    fn build_in_part_grid(&self, tree: &mut UiTree, widget: impl AsRef<Widget>, orientation: GridOrientation, step: usize, length_pos: f32, size: f32, lenght: f32) -> Result<Vec<Widget>, LunexError> {
         let widget = widget.as_ref();
 
         let segment_size = self.compute_size(orientation);
         let segment_lenght = self.compute_lenght(orientation);
 
         let size_normalization = size/segment_size;
-        let length_normalization = lenght/segment_lenght;
-
-        let mut cell_length_so_far = 0.0;
-        let mut gap_length_so_far = 0.0;
-        if let Some(border) = self.border {
-            gap_length_so_far += border[0] * length_normalization
-        }
-
-        let mut widget_return: Vec<Widget> = Vec::new();
-
-        match orientation {
-            GridOrientation::Horizontal => for x in 0..self.cell.len() {
-
-                if x != 0 && x <= self.gap.len(){ gap_length_so_far += self.gap[x-1] * length_normalization }
-
-                let name = match &self.cell[x].name {
-                    Some (str) => str.clone(),
-                    None => format!("|{}|", x),
-                };
-
-                let ll = self.cell[x].size.x * length_normalization;
-
-                widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
-                        cell_length_so_far + gap_length_so_far,
-                        (segment_size/2.0 - self.cell[x].size.y/2.0) * size_normalization,
-                    ),
-                    width_relative: ll,
-                    height_relative: self.cell[x].size.y * size_normalization,
-                    ..default()
-                })?);
-
-                cell_length_so_far += ll;
-
-            },
-
-            GridOrientation::Vertical => for x in 0..self.cell.len() {
-
-                if x != 0 && x <= self.gap.len(){ gap_length_so_far += self.gap[x-1] * length_normalization }
-    
-                let name = match &self.cell[x].name {
-                    Some (str) => str.clone(),
-                    None => format!("|{}|", x),
-                };
-    
-                let ll = self.cell[x].size.y * length_normalization;
-    
-                widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
-                        (segment_size/2.0 - self.cell[x].size.x/2.0) * size_normalization,
-                        cell_length_so_far + gap_length_so_far,
-                    ),
-                    width_relative: self.cell[x].size.x * size_normalization,
-                    height_relative: ll,
-                    ..default()
-                })?);
-    
-                cell_length_so_far += ll;
-    
-            }
-        }
-
-
-        Ok(widget_return)
-    }
-
-    /// Builds the grid segment in the selected widget, but you can specify in which part
-    pub fn build_in_part_grid(&self, tree: &mut UiTree, widget: impl AsRef<Widget>, orientation: GridOrientation, step: usize, length_pos: f32, size: f32, lenght: f32) -> Result<Vec<Widget>, LunexError> {
-        let widget = widget.as_ref();
-
-        let segment_size = self.compute_size(orientation);
-        let segment_lenght = self.compute_lenght(orientation);
-
-        let size_normalization = size/segment_size;
-        let length_normalization = lenght/segment_lenght;
+        let length_normalization = if let Some(scale) = self.scale {scale } else { lenght }/segment_lenght;
 
         let mut cell_length_so_far = 0.0;
         let mut gap_length_so_far = 0.0;
@@ -972,6 +927,7 @@ impl GridSegment {
 impl Default for GridSegment {
     fn default() -> Self {
         GridSegment {
+            scale: None,
             cell: Vec::new(),
             gap: Vec::new(),
             border: None,
@@ -989,20 +945,17 @@ impl AsMut<GridSegment> for GridSegment {
     }
 }
 
+
+/// # Grid Cell
+/// Represents a cell in [`GridSegment`]. You can define it's size, name and alignment (WIP).
 #[derive(Clone, Debug)]
 pub struct GridCell {
+    /// The relative size of the cell, X is always width no matter the orientation. Same for Y
     pub size: Vec2,
+    /// Optional name of the cell to be used to name the grid, otherwise the index is used.
     pub name: Option<String>,
+    /// Cell alignment within the segment. Shows only when some cells are bigger than other.
     pub align: GridAlign,
-}
-impl Default for GridCell{
-    fn default() -> GridCell {
-        GridCell {
-            size: Vec2::splat(10.0),
-            name: None,
-            align: GridAlign::Middle,
-        }
-    }
 }
 impl GridCell {
     pub fn new() -> GridCell {
@@ -1022,6 +975,15 @@ impl GridCell {
         }
     }
 }
+impl Default for GridCell{
+    fn default() -> GridCell {
+        GridCell {
+            size: Vec2::splat(10.0),
+            name: None,
+            align: GridAlign::Middle,
+        }
+    }
+}
 impl AsRef<GridCell> for GridCell {
     fn as_ref(&self) -> &GridCell {
         &self
@@ -1033,12 +995,14 @@ impl AsMut<GridCell> for GridCell {
     }
 }
 
+/// Decides if [`GridSegment`] is row or column
 #[derive(Clone, Debug, Copy)]
 pub enum GridOrientation {
     Horizontal,
     Vertical,
 }
 
+/// Alignment of [`GridCell`] in a [`GridSegment`]. Currently WIP.
 #[derive(Clone, Debug, Copy)]
 pub enum GridAlign {
     Start,
@@ -1052,7 +1016,7 @@ pub enum GridAlign {
 
 // ===========================================================
 // === GRID MACROS ===
-
+/*
 /// # Text Row
 /// Attempts to construct 1D vector from given elements, useful when you don't want to type `.to_string()` every time.
 /// ```
@@ -1082,3 +1046,4 @@ macro_rules! textgrid {
         ]
     };
 }
+*/
