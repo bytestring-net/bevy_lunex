@@ -49,24 +49,24 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
 
 
 
-    let segment1 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 11).add_gaps(5.0);
+    let segment1 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 11).add_gaps(2.0);
     let segment2 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 5).add_gaps(5.0);
-    let segment3 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 3).add_gaps(5.0).with_scale(Some(100.0));
+    let segment3 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 3).add_gaps(7.0).with_scale(Some(100.0));
     let segment4 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 7).add_gaps(5.0);
 
-    let grid = Grid::new().with_segments(vec![segment1,segment2,segment3,segment4]).add_gaps(5.0).with_orientation(GridOrientation::Horizontal);
+    let grid = Grid::new().with_segments(vec![segment1,segment2,segment3,segment4]).add_gaps(1.0).with_orientation(GridOrientation::Vertical);
 
 
-    //let iter = grid.build_in(tmp, &window)?;
-    let (_, iter) = grid.build_in_window(tmp, &window.end("Grid"), WindowLayout::new())?;
+    let wgrid = grid.build_in(tmp, &window)?;
+    //let (_, wgrid) = grid.build_in_window(tmp, &window.end("Grid"), WindowLayout::new())?;
 
     // Assign entities to grid cells
-    for x in 0..iter.len() {
-        for y in 0..iter[x].len() {
+    for x in 0..wgrid.len() {
+        for y in 0..wgrid[x].len() {
             commands.spawn((
-                ElementBundle::new(&iter[x][y], Element::fullfill()),
+                ElementBundle::new(&wgrid[x][y], Element::fullfill()),
                 VectorElementRectangle {
-                    color: Color::rgb_u8((x * 255/iter.len()) as u8, (x * 255/iter.len()) as u8, (y * 255/iter[x].len()) as u8),
+                    color: Color::rgb_u8((x * 255/wgrid.len()) as u8, (x * 255/wgrid.len()) as u8, (y * 255/wgrid[x].len()) as u8),
                     corner_radii: Vec4::splat(0.0)
                 },
             ));
@@ -80,7 +80,6 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
 
     // Spawns the draw entities last
     '_Fills: {
-
         commands.spawn((
             ElementBundle::new(workspace.clone(), Element::fullfill()),
             VectorElementRectangle {
@@ -88,7 +87,6 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
                 corner_radii: Vec4::splat(0.0)
             },
         ));
-
         commands.spawn((
             ElementBundle::new(window.clone(), Element::fullfill()),
             VectorElementRectangle {
@@ -96,12 +94,10 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
                 corner_radii: Vec4::splat(10.0)
             },
         ));
-
     }
 
     Ok(())
 }
-
 
 
 /// Renders the widget
