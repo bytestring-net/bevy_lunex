@@ -18,11 +18,6 @@
 //# 
 //# ![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/2097927c-806f-475e-8cff-1e1cb534fbcb)
 //# 
-//# <details><summary>Gif</summary>
-//#   
-//# <img src="promo/readme_cyberpunk.gif" alt="Cyberpunk gif"/>
-//# 
-//# </details>
 //# 
 //# *^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/bevy-lunex-cyberpunk).*
 //# 
@@ -145,7 +140,7 @@
 //# ## === Versions ===
 //# |  Bevy  | Bevy Lunex |
 //# |--------|------------|
-//# | 0.11.2 |  <= 0.0.4  |
+//# | 0.11.2 |  <= 0.0.5  |
 //# 
 //# ## === Contributing ===
 //# 
