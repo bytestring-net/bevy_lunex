@@ -61,11 +61,11 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
             GridCell::sized(Vec2::new(20.0, 20.0)),
         ],
         gap: vec![
-            10.0,
-            10.0,
-            10.0,
+            5.0,
+            5.0,
+            5.0,
         ],
-        border: Some([10.0, 10.0])
+        border: Some([5.0, 5.0])
     };
 
     // Generate grid

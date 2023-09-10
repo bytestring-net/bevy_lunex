@@ -471,6 +471,8 @@ impl Position {
 pub struct Container {
     position_cached: Position,
     position_layout: LayoutPackage,
+    //control_layout: Option<Layout>,
+    //elementary_layout: Elementarylayout,
 }
 impl Container {
     /// Creates a new container
