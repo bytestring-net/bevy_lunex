@@ -40,9 +40,7 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
     let mut temporary_tree = UiTree::new("tmp");
     let mut tmp = &mut temporary_tree;
 
-    
     let workspace = Widget::create(&mut tmp, "workspace", RelativeLayout::new())?;
-
 
     let window = Widget::create(&mut tmp, &workspace.end("window"), WindowLayout {
         relative: Vec2::new(10., 10.),
@@ -52,44 +50,33 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
     })?;
 
 
-    // Create grid segment
-    let segment = GridSegment {
-        cell: vec![
-            GridCell::sized(Vec2::new(5.0, 5.0)),
-            GridCell::sized(Vec2::new(10.0, 10.0)),
-            GridCell::sized(Vec2::new(15.0, 15.0)),
-            GridCell::sized(Vec2::new(20.0, 20.0)),
-        ],
-        gap: vec![
-            5.0,
-            5.0,
-            5.0,
-        ],
-        border: Some([5.0, 5.0])
-    };
+    let n = 100;
 
-    // Generate grid
-    let iter = segment.build_in(tmp, &window, GridOrientation::Horizontal, false)?;
+    let segment = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), n).add_gaps(0.0);
+    let grid = Grid::splat_segment(segment, n).add_gaps(0.0).with_orientation(GridOrientation::Vertical);
+
+
+    let iter = grid.build_in(tmp, &window)?;
 
     // Assign entities to grid cells
-    for x in iter {
-        commands.spawn((
-            ElementBundle::new(x, Element::fullfill()),
-            VectorElementRectangle {
-                color: Color::rgb_u8(200, 200, 200),
-                corner_radii: Vec4::splat(10.0)
-            },
-        ));
+    for x in 0..iter.len() {
+        for y in 0..iter[x].len() {
+            commands.spawn((
+                ElementBundle::new(&iter[x][y], Element::fullfill()),
+                VectorElementRectangle {
+                    color: Color::rgb_u8((x * 255/iter.len()) as u8, (y * 255/iter[x].len()) as u8, (y * 255/iter[x].len()) as u8),
+                    corner_radii: Vec4::splat(0.0)
+                },
+            ));
+        }
     }
 
 
     // Merge the temporary tree to main ui tree
-
     ui_tree.merge(temporary_tree)?;
 
 
     // Spawns the draw entities last
-
     '_Fills: {
 
         commands.spawn((
@@ -109,8 +96,6 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
         ));
 
     }
-
-
 
     Ok(())
 }
