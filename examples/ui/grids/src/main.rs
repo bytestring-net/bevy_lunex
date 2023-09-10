@@ -51,15 +51,16 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
 
 
 
-    let segment1 = GridSegment::splat_cells(GridCell::sized(Vec2::new(10.0, 5.0)), 2).add_gaps(5.0);
-    let segment2 = GridSegment::splat_cells(GridCell::sized(Vec2::new(15.0, 5.0)), 5).add_gaps(5.0);
-    let segment3 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 10.0)), 3).add_gaps(5.0).with_scale(Some(100.0));
-    let segment4 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 15.0)), 7).add_gaps(5.0);
+    let segment1 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 2).add_gaps(5.0);
+    let segment2 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 5).add_gaps(5.0);
+    let segment3 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 3).add_gaps(5.0).with_scale(Some(100.0));
+    let segment4 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 7).add_gaps(5.0);
 
-    let grid = Grid::new().with_segments(vec![segment1,segment2,segment3,segment4]).add_gaps(5.0).with_orientation(GridOrientation::Horizontal);
+    let grid = Grid::new().with_segments(vec![segment1,segment2,segment3,segment4]).add_gaps(5.0).with_orientation(GridOrientation::Vertical);
 
 
-    let iter = grid.build_in(tmp, &window)?;
+    //let iter = grid.build_in(tmp, &window)?;
+    let (_, iter) = grid.build_in_solid(tmp, &window.end("Grid"), SolidLayout::new())?;
 
     // Assign entities to grid cells
     for x in 0..iter.len() {

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 
-use bevy_lunex_core::{UiTree, Widget, WindowLayout, SolidLayout, LunexError};
+use bevy_lunex_core::{UiTree, Widget, WindowLayout, SolidLayout, LunexError, LayoutPackage};
 
 // ===========================================================
 // === GRID DEFINITION ===
@@ -596,7 +596,7 @@ impl Grid {
         }
     }
 
-    /// Builds the grid in the selected widget
+    /// Builds the grid in the selected widget and returns the widget grid
     pub fn build_in(&self, tree: &mut UiTree, widget: impl AsRef<Widget>) -> Result<Vec<Vec<Widget>>, LunexError> {
         let widget = widget.as_ref();
 
@@ -629,6 +629,47 @@ impl Grid {
 
 
         Ok(widget_return)
+    }
+
+    /// # Build In Solid
+    /// Builds the grid in a new widget and returns a tuple containing the new widget and the widget grid
+    /// 
+    /// [`SolidLayout`] provided is used with overwritten width and heigh parameters
+    pub fn build_in_solid(&self, tree: &mut UiTree, path: impl AsRef<str>, layout: SolidLayout) -> Result<(Widget, Vec<Vec<Widget>>), LunexError> {
+
+        let grid_size = self.compute_size();
+        let grid_lenght = self.compute_lenght();
+
+        let size_normalization = 100.0/grid_size;
+        let length_normalization = 100.0/grid_lenght;
+
+        let mut segment_length_so_far = 0.0;
+        let mut gap_length_so_far = 0.0;
+        if let Some(border) = self.border {
+            gap_length_so_far += border[0] * length_normalization
+        }
+        let widget = match self.orientation {
+            GridOrientation::Horizontal => Widget::create(tree, path, layout.with_width(grid_size).with_height(grid_lenght))?,
+            GridOrientation::Vertical => Widget::create(tree, path, layout.with_width(grid_lenght).with_height(grid_size))?,
+        };
+
+        let mut widget_return: Vec<Vec<Widget>> = Vec::new();
+
+        for x in 0..self.segment.len() {
+
+            if x != 0 && x <= self.gap.len(){ gap_length_so_far += self.gap[x-1] * length_normalization }
+
+            let ll = self.segment[x].compute_size(self.orientation) * length_normalization;
+            let ss = self.segment[x].compute_lenght(self.orientation) * size_normalization;
+
+            widget_return.push(self.segment[x].build_in_part_grid(tree, &widget, self.orientation, x, segment_length_so_far + gap_length_so_far, ll, ss)?);
+
+            segment_length_so_far += ll;
+        }
+
+
+
+        Ok((widget, widget_return))
     }
 }
 impl Default for Grid {
