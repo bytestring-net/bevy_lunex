@@ -25,6 +25,6 @@ pub mod prelude {
     //pub use super::{grid_generate, grid_generate_inside, grid_generate_solid};
     pub use super::{GridCell, GridSegment, GridOrientation, Grid};
 
-    //pub use crate::textrow;
-    //pub use crate::textgrid;
+    pub use crate::textrow;
+    pub use crate::textgrid;
 }

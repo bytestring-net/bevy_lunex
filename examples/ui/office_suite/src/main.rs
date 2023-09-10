@@ -66,9 +66,14 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         font_size: 40.0,
         color: Color::WHITE,
     };
-    let names = textgrid![["file"],["edit"],["preferences"],["help"]];
-    let grid = GridParams::new(&names).with_anchor(bevy::sprite::Anchor::CenterLeft).with_width(70.0).with_height(20.0).with_width_gap(7.0);
-    //let wgrid = grid_generate_solid(tmp, &top_panel.end("navbar"), &grid)?;
+
+    let names = textrow!["file","edit","preferences","help"];
+    let segment1 = GridSegment::text_cells(&names).add_gaps(7.0);
+
+    let grid = Grid::new().with_segments(vec![segment1]).with_orientation(GridOrientation::Horizontal);
+
+    let (_, iter) = grid.build_in_solid(tmp, &top_panel.end("Grid"), SolidLayout::new().with_horizontal_anchor(-1.0))?;
+
 
     ui_tree.merge(temporary_tree)?;
 
@@ -96,21 +101,20 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
             },
         ));
 
-        /*for x in 0..names.len() {
-            for y in 0..names[0].len() {
-                let widget = Widget::new(&wgrid.end(&names[x][y]));
+        for x in 0..iter.len() {
+            for y in 0..iter[x].len() {
                 commands.spawn((
-                    ElementBundle::new(widget.clone(), Element::fullfill()),
+                    ElementBundle::new(&iter[x][y], Element::fullfill()),
                     VectorElementRectangle {
                         color: Color::rgb_u8(36, 29, 41),
                         corner_radii: Vec4::splat(30.0)
                     },
                 ));
                 commands.spawn(
-                    TextElementBundle::new(widget.clone(), &TextParams::center().with_style(&style).with_height(Some(50.0)), &names[x][y])
+                    TextElementBundle::new(&iter[x][y], &TextParams::center().with_style(&style).with_height(Some(50.0)), &names[y])
                 );
             }
-        }*/
+        }
 
     }
 
@@ -159,7 +163,7 @@ impl DropDownElement {
         }
     }
     pub fn build_list(&self, commands: &mut Commands, tree: &mut UiTree, widget: &Widget) {
-        let row = textgrid![["Option 1", "Option 2", "Option 3"]];
+        //let row = textgrid![["Option 1", "Option 2", "Option 3"]];
         
         /*let w = grid_generate(tree, &widget.end("list"), Vec2::new(0.0, 100.0), &GridParams::new(&row)).unwrap();
         
