@@ -151,7 +151,9 @@ impl DropDownElement {
         }
     }
     pub fn build_list(&self, commands: &mut Commands, tree: &mut UiTree, widget: &Widget) {
-        //let row = textgrid![["Option 1", "Option 2", "Option 3"]];
+        let row = textgrid![["Option 1", "Option 2", "Option 3"]];
+
+        let segment = GridSegment::sp
         
         /*let w = grid_generate(tree, &widget.end("list"), Vec2::new(0.0, 100.0), &GridParams::new(&row)).unwrap();
         
