@@ -298,12 +298,16 @@ impl GridSegment {
     }
 
     /// Crate a new segment from the textrow, each cell matching the length of the text
-    pub fn text_cells(textrow: impl AsRef<Vec<String>>) -> Self {
+    pub fn text_cells(textrow: impl AsRef<Vec<String>>, text_size: f32, text_scale: f32) -> Self {
         let text = textrow.as_ref();
         let mut _cell = Vec::new();
         for i in 0..text.len() {
+            let mut estimate = text_compute_size_simple(&text[i], text_size);
+            estimate.x /= 100.0/text_scale;
+            estimate.x += 2.0 * estimate.y/(100.0/text_scale);
+
             _cell.push(
-                GridCell::named(text_compute_size_simple(&text[i], 10.0), &text[i])
+                GridCell::named(estimate, &text[i])
             );
         }
         GridSegment {

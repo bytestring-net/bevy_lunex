@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use bevy::prelude::*;
 use bevy_lunex_core::Widget;
 
@@ -700,8 +702,13 @@ impl TextParams {
     }
 
     /// Text parameters set to a specific text style
-    pub fn with_style(mut self, style: &TextStyle) -> TextParams {
+    pub fn _with_style(mut self, style: &TextStyle) -> TextParams {
         self.style = style.clone();
+        self
+    }
+
+    pub fn with_style(mut self, style: impl Borrow<TextStyle>) -> TextParams {
+        self.style = style.borrow().to_owned();
         self
     }
 

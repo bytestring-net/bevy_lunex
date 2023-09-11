@@ -65,7 +65,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     };
 
     let names = textrow!["file", "edit", "preferences", "help"];
-    let segment = GridSegment::text_cells(&names).add_gaps(7.0);
+    let segment = GridSegment::text_cells(&names, 10.0, 60.0);
     let (_, wlist) = segment.build_in_solid(tmp, &top_panel.end("Grid"), SolidLayout::new().with_horizontal_anchor(-1.0), GridOrientation::Horizontal)?;
 
 
@@ -98,12 +98,12 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
             commands.spawn((
                 ElementBundle::new(&wlist[x], Element::fullfill()),
                 VectorElementRectangle {
-                    color: Color::rgb_u8(36, 29, 41),
-                    corner_radii: Vec4::splat(30.0)
+                    color: Color::rgb_u8(48, 52, 70),
+                    corner_radii: Vec4::splat(4.0)
                 },
             ));
             commands.spawn(
-                TextElementBundle::new(&wlist[x], &TextParams::center().with_style(&style).with_height(Some(50.0)), &names[x])
+                TextElementBundle::new(&wlist[x], &TextParams::center().with_style(&style).with_height(Some(60.0)), &names[x])
             );
         }
     }
@@ -150,27 +150,27 @@ impl DropDownElement {
             options: options,
         }
     }
-    pub fn build_list(&self, commands: &mut Commands, tree: &mut UiTree, widget: &Widget) {
-        let row = textgrid![["Option 1", "Option 2", "Option 3"]];
+    pub fn build_list(&self, commands: &mut Commands, tree: &mut UiTree, widget: &Widget) -> Result<(), LunexError>{
+        let row = textrow!["Option 1", "Option 2", "Option 3"];
 
-        let segment = GridSegment::sp
-        
-        /*let w = grid_generate(tree, &widget.end("list"), Vec2::new(0.0, 100.0), &GridParams::new(&row)).unwrap();
-        
-        for x in 0..row.len() {
-            for y in 0..row[0].len() {
-                let wid = Widget::new(&w.end(&row[x][y]));
-                commands.spawn((
-                    ElementBundle::new(wid.clone(), Element::fullfill()),
-                    VectorElementRectangle {
-                        color: Color::rgb_u8(36, 29, 41),
-                        corner_radii: Vec4::splat(30.0)
-                    },
-                ));
-                commands.spawn(
-                    TextElementBundle::new(wid.clone(), &TextParams::center().with_style(&self.text_style).with_height(Some(50.0)), &row[x][y])
-                );
-            }
-        }*/
+        let segment = GridSegment::splat_cells(GridCell::new(), 5);
+
+        let (_, wlist) = segment.build_in_window(tree, widget.end(""), WindowLayout::new().with_rel(Vec2::new(0.0, 100.0)), GridOrientation::Vertical)?;
+
+
+        for x in 0..wlist.len() {
+            commands.spawn((
+                ElementBundle::new(&wlist[x], Element::fullfill()),
+                VectorElementRectangle {
+                    color: Color::rgb_u8(48, 52, 70),
+                    corner_radii: Vec4::splat(4.0)
+                },
+            ));
+            commands.spawn(
+                TextElementBundle::new(&wlist[x], &TextParams::center().with_style(&self.text_style).with_height(Some(60.0)), &row[x])
+            );
+        }
+
+        Ok(())
     }
 }
