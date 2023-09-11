@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use bevy::prelude::*;
 
 use bevy_lunex_core::{UiTree, Widget, WindowLayout, SolidLayout, LunexError};
@@ -38,10 +40,10 @@ impl Grid {
     }
 
     /// Crate a new grid with this segment copied n times
-    pub fn splat_segment(segment: impl AsRef<GridSegment>, n: usize) -> Self {
+    pub fn splat_segment(segment: impl Borrow<GridSegment>, n: usize) -> Self {
         let mut _segment = Vec::new();
         for _ in 0..n {
-            _segment.push(segment.as_ref().to_owned());
+            _segment.push(segment.borrow().to_owned());
         }
         Grid {
             segment: _segment,
@@ -62,10 +64,10 @@ impl Grid {
     }
 
     /// Adds as many segments of the same size as there are gaps
-    pub fn add_segments(mut self, segment: impl AsRef<GridSegment>) -> Self {
+    pub fn add_segments(mut self, segment: impl Borrow<GridSegment>) -> Self {
         let mut _segment = Vec::new();
         for _ in 0..self.gap.len() {
-            _segment.push(segment.as_ref().to_owned());
+            _segment.push(segment.borrow().to_owned());
         }
         self.segment = _segment;
         self
@@ -136,8 +138,8 @@ impl Grid {
 
     /// # Build In
     /// Builds the grid in the selected widget and returns the widget grid
-    pub fn build_in(&self, tree: &mut UiTree, widget: impl AsRef<Widget>) -> Result<Vec<Vec<Widget>>, LunexError> {
-        let widget = widget.as_ref();
+    pub fn build_in(&self, tree: &mut UiTree, widget: impl Borrow<Widget>) -> Result<Vec<Vec<Widget>>, LunexError> {
+        let widget = widget.borrow();
 
         let grid_size = self.compute_size();
         let grid_lenght = self.compute_lenght();
@@ -160,7 +162,7 @@ impl Grid {
             let ll = self.segment[x].compute_size(self.orientation) * length_normalization;
             let ss = self.segment[x].compute_lenght(self.orientation) * size_normalization;
 
-            widget_return.push(self.segment[x].build_in_part_grid(tree, &widget, self.orientation, x, segment_length_so_far + gap_length_so_far, ll, ss)?);
+            widget_return.push(self.segment[x].build_in_part_grid(tree, widget, self.orientation, x, segment_length_so_far + gap_length_so_far, ll, ss)?);
 
             segment_length_so_far += ll;
         }
@@ -174,7 +176,7 @@ impl Grid {
     /// Builds the grid in a new widget and returns a tuple containing the new widget and the widget grid
     /// 
     /// [`SolidLayout`] provided is used with overwritten width and heigh parameters
-    pub fn build_in_solid(&self, tree: &mut UiTree, path: impl AsRef<str>, layout: SolidLayout) -> Result<(Widget, Vec<Vec<Widget>>), LunexError> {
+    pub fn build_in_solid(&self, tree: &mut UiTree, path: impl Borrow<str>, layout: SolidLayout) -> Result<(Widget, Vec<Vec<Widget>>), LunexError> {
 
         let grid_size = self.compute_size();
         let grid_lenght = self.compute_lenght();
@@ -215,7 +217,7 @@ impl Grid {
     /// Builds the grid in a new widget and returns a tuple containing the new widget and the widget grid
     /// 
     /// [`WindowLayout`] provided is used with overwritten width_relative and heigh_relative parameters
-    pub fn build_in_window(&self, tree: &mut UiTree, path: impl AsRef<str>, layout: WindowLayout) -> Result<(Widget, Vec<Vec<Widget>>), LunexError> {
+    pub fn build_in_window(&self, tree: &mut UiTree, path: impl Borrow<str>, layout: WindowLayout) -> Result<(Widget, Vec<Vec<Widget>>), LunexError> {
 
         let grid_size = self.compute_size();
         let grid_lenght = self.compute_lenght();
@@ -298,8 +300,8 @@ impl GridSegment {
     }
 
     /// Crate a new segment from the textrow, each cell matching the length of the text
-    pub fn text_cells(textrow: impl AsRef<Vec<String>>, text_size: f32, text_scale: f32) -> Self {
-        let text = textrow.as_ref();
+    pub fn text_cells(textrow: impl Borrow<Vec<String>>, text_size: f32, text_scale: f32) -> Self {
+        let text = textrow.borrow();
         let mut _cell = Vec::new();
         for i in 0..text.len() {
             let mut estimate = text_compute_size_simple(&text[i], text_size);
@@ -307,7 +309,7 @@ impl GridSegment {
             estimate.x += 2.0 * estimate.y/(100.0/text_scale);
 
             _cell.push(
-                GridCell::named(estimate, &text[i])
+                GridCell::named(estimate, text[i].clone())
             );
         }
         GridSegment {
@@ -317,10 +319,10 @@ impl GridSegment {
     }
 
     /// Crate a new segment with this segment copied n times
-    pub fn splat_cells(cell: impl AsRef<GridCell>, n: usize) -> Self {
+    pub fn splat_cells(cell: impl Borrow<GridCell>, n: usize) -> Self {
         let mut _cell = Vec::new();
         for _ in 0..n {
-            _cell.push(cell.as_ref().to_owned());
+            _cell.push(cell.borrow().to_owned());
         }
         GridSegment {
             cell: _cell,
@@ -341,10 +343,10 @@ impl GridSegment {
     }
 
     /// Adds as many cells of the same size as there are gaps
-    pub fn add_cells(mut self, cell: impl AsRef<GridCell>) -> Self {
+    pub fn add_cells(mut self, cell: impl Borrow<GridCell>) -> Self {
         let mut _cell = Vec::new();
         for _ in 0..self.gap.len() {
-            _cell.push(cell.as_ref().to_owned());
+            _cell.push(cell.borrow().to_owned());
         }
         self.cell = _cell;
         self
@@ -426,8 +428,8 @@ impl GridSegment {
 
     /// # Build In
     /// Builds the grid segment in the selected widget and returns the widget list
-    pub fn build_in(&self, tree: &mut UiTree, widget: impl AsRef<Widget>, orientation: GridOrientation) -> Result<Vec<Widget>, LunexError> {
-        let widget = widget.as_ref();
+    pub fn build_in(&self, tree: &mut UiTree, widget: impl Borrow<Widget>, orientation: GridOrientation) -> Result<Vec<Widget>, LunexError> {
+        let widget = widget.borrow();
 
         let segment_size = self.compute_size(orientation);
         let segment_lenght = self.compute_lenght(orientation);
@@ -503,7 +505,7 @@ impl GridSegment {
     /// Builds the grid segment in a new widget and returns a tuple containing the new widget and the widget list
     /// 
     /// [`SolidLayout`] provided is used with overwritten width and heigh parameters
-    pub fn build_in_solid(&self, tree: &mut UiTree, path: impl AsRef<str>, layout: SolidLayout, orientation: GridOrientation) -> Result<(Widget, Vec<Widget>), LunexError> {
+    pub fn build_in_solid(&self, tree: &mut UiTree, path: impl Borrow<str>, layout: SolidLayout, orientation: GridOrientation) -> Result<(Widget, Vec<Widget>), LunexError> {
 
         let segment_size = self.compute_size(orientation);
         let segment_lenght = self.compute_lenght(orientation);
@@ -584,7 +586,7 @@ impl GridSegment {
     /// Builds the grid segment in a new widget and returns a tuple containing the new widget and the widget list
     /// 
     /// [`WindowLayout`] provided is used with overwritten width_relative and heigh_relative parameters
-    pub fn build_in_window(&self, tree: &mut UiTree, path: impl AsRef<str>, layout: WindowLayout, orientation: GridOrientation) -> Result<(Widget, Vec<Widget>), LunexError> {
+    pub fn build_in_window(&self, tree: &mut UiTree, path: impl Borrow<str>, layout: WindowLayout, orientation: GridOrientation) -> Result<(Widget, Vec<Widget>), LunexError> {
 
         let segment_size = self.compute_size(orientation);
         let segment_lenght = self.compute_lenght(orientation);
@@ -663,8 +665,8 @@ impl GridSegment {
 
 
     /// Builds the grid segment in the selected widget, but you can specify in which part
-    fn build_in_part_grid(&self, tree: &mut UiTree, widget: impl AsRef<Widget>, orientation: GridOrientation, step: usize, length_pos: f32, size: f32, lenght: f32) -> Result<Vec<Widget>, LunexError> {
-        let widget = widget.as_ref();
+    fn build_in_part_grid(&self, tree: &mut UiTree, widget: impl Borrow<Widget>, orientation: GridOrientation, step: usize, length_pos: f32, size: f32, lenght: f32) -> Result<Vec<Widget>, LunexError> {
+        let widget = widget.borrow();
 
         let segment_size = self.compute_size(orientation);
         let segment_lenght = self.compute_lenght(orientation);
@@ -746,16 +748,6 @@ impl Default for GridSegment {
         }
     }
 }
-impl AsRef<GridSegment> for GridSegment {
-    fn as_ref(&self) -> &GridSegment {
-        &self
-    }
-}
-impl AsMut<GridSegment> for GridSegment {
-    fn as_mut(&mut self) -> &mut GridSegment {
-        self
-    }
-}
 
 
 /// # Grid Cell
@@ -779,10 +771,10 @@ impl GridCell {
             ..default()
         }
     }
-    pub fn named(size: Vec2, name: impl AsRef<str>) -> GridCell {
+    pub fn named(size: Vec2, name: impl Borrow<str>) -> GridCell {
         GridCell {
             size,
-            name: Some(name.as_ref().into()),
+            name: Some(name.borrow().into()),
             ..default()
         }
     }
@@ -796,16 +788,7 @@ impl Default for GridCell{
         }
     }
 }
-impl AsRef<GridCell> for GridCell {
-    fn as_ref(&self) -> &GridCell {
-        &self
-    }
-}
-impl AsMut<GridCell> for GridCell {
-    fn as_mut(&mut self) -> &mut GridCell {
-        self
-    }
-}
+
 
 /// Decides if [`GridSegment`] is row or column
 #[derive(Clone, Debug, Copy)]

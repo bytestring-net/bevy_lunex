@@ -158,9 +158,9 @@ impl ElementBundle {
     /// # Arguments
     /// * `widget` = widget to spawn element for.
     /// * `element` = the element to spawn.
-    pub fn new(widget: impl AsRef<Widget>, element: Element) -> ElementBundle {
+    pub fn new(widget: impl Borrow<Widget>, element: Element) -> ElementBundle {
         ElementBundle {
-            widget: widget.as_ref().to_owned(),
+            widget: widget.borrow().to_owned(),
             element,
             ..default()
         }
@@ -202,10 +202,10 @@ impl ImageElementBundle {
     /// * `params` = dictates how the element should behave and be located.
     /// * `texture` = image handle, you can use `asset_server.load("")`.
     /// * `source_image_dimensions` = `Vec2` with width and height dimensions of the texture.
-    pub fn new(widget: impl AsRef<Widget>, params: impl AsRef<ImageParams>, texture: Handle<Image>, source_image_dimensions: Vec2) -> ImageElementBundle {
-        let params = params.as_ref();
+    pub fn new(widget: impl Borrow<Widget>, params: impl Borrow<ImageParams>, texture: Handle<Image>, source_image_dimensions: Vec2) -> ImageElementBundle {
+        let params = params.borrow();
         ImageElementBundle {
-            widget: widget.as_ref().to_owned(),
+            widget: widget.borrow().to_owned(),
             element: Element {
                 relative: params.relative,
                 absolute: params.absolute,
@@ -447,16 +447,6 @@ impl ImageParams {
         self
     }
 }
-impl AsRef<ImageParams> for ImageParams {
-    fn as_ref(&self) -> &ImageParams {
-        &self
-    }
-}
-impl AsMut<ImageParams> for ImageParams {
-    fn as_mut(&mut self) -> &mut ImageParams {
-        self
-    }
-}
 
 // ===========================================================
 // === TEXT ELEMENT ===
@@ -495,10 +485,10 @@ impl TextElementBundle {
     /// * `widget` = widget to spawn element for.
     /// * `params` = dictates how the element should behave and be located.
     /// * `text` = the text you want to display.
-    pub fn new(widget: impl AsRef<Widget>, params: impl AsRef<TextParams>, text: &str) -> TextElementBundle {
-        let params = params.as_ref();
+    pub fn new(widget: impl Borrow<Widget>, params: impl Borrow<TextParams>, text: &str) -> TextElementBundle {
+        let params = params.borrow();
         TextElementBundle {
-            widget: widget.as_ref().to_owned(),
+            widget: widget.borrow().to_owned(),
             element: Element {
                 relative: params.relative,
                 absolute: params.absolute,
@@ -733,16 +723,6 @@ impl TextParams {
     /// Text parameters set to a custom height
     pub fn with_height(mut self, height: Option<f32>) -> TextParams {
         self.height = height;
-        self
-    }
-}
-impl AsRef<TextParams> for TextParams {
-    fn as_ref(&self) -> &TextParams {
-        &self
-    }
-}
-impl AsMut<TextParams> for TextParams {
-    fn as_mut(&mut self) -> &mut TextParams {
         self
     }
 }

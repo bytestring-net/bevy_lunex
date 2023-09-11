@@ -156,16 +156,7 @@ impl UiTree {
     }
 
 }
-impl AsRef<UiTree> for UiTree {
-    fn as_ref(&self) -> &UiTree {
-        &self
-    }
-}
-impl AsMut<UiTree> for UiTree {
-    fn as_mut(&mut self) -> &mut UiTree {
-        self
-    }
-}
+
 
 // ===========================================================
 // === BRANCH STRUCT ===

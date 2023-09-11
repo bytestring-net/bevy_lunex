@@ -40,7 +40,7 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
 
     let workspace = Widget::create(&mut tmp, "workspace", RelativeLayout::new())?;
 
-    let window = Widget::create(&mut tmp, &workspace.end("window"), WindowLayout {
+    let window = Widget::create(&mut tmp, workspace.end("window"), WindowLayout {
         relative: Vec2::new(10., 10.),
         width_relative: 80.,
         height_relative: 80.,

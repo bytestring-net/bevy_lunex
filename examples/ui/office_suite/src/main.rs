@@ -44,12 +44,12 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     
     let workspace = Widget::create(tmp, "workspace", RelativeLayout::new())?;
 
-    let top_panel = Widget::create(tmp, &workspace.end("top_panel"), RelativeLayout {
+    let top_panel = Widget::create(tmp, workspace.end("top_panel"), RelativeLayout {
         relative_2: Vec2::new(100.0, 0.0),
         absolute_2: Vec2::new(0.0, TOPBAR_SIZE),
         ..default()
     })?;
-    let side_panel = Widget::create(tmp, &workspace.end("side_panel"), RelativeLayout {
+    let side_panel = Widget::create(tmp, workspace.end("side_panel"), RelativeLayout {
         absolute_1: Vec2::new(0.0, TOPBAR_SIZE),
         absolute_2: Vec2::new(SIDEBAR_SIZE, 0.0),
         relative_2: Vec2::new(0.0, 100.0),
@@ -66,7 +66,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
 
     let names = textrow!["file", "edit", "preferences", "help"];
     let segment = GridSegment::text_cells(&names, 10.0, 60.0);
-    let (_, wlist) = segment.build_in_solid(tmp, &top_panel.end("Grid"), SolidLayout::new().with_horizontal_anchor(-1.0), GridOrientation::Horizontal)?;
+    let (_, wlist) = segment.build_in_solid(tmp, top_panel.end("Grid"), SolidLayout::new().with_horizontal_anchor(-1.0), GridOrientation::Horizontal)?;
 
 
     ui_tree.merge(temporary_tree)?;

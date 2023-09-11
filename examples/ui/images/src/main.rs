@@ -45,7 +45,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     let workspace = Widget::create(tmp, "workspace", RelativeLayout::new())?;
 
 
-    let window1 = Widget::create(tmp, &workspace.end("window1"), WindowLayout {
+    let window1 = Widget::create(tmp, workspace.end("window1"), WindowLayout {
         relative: Vec2::new(5., 5.),
         width_relative: 30.,
         height_relative: 20.,
@@ -53,7 +53,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     })?;
 
 
-    let window2 = Widget::create(tmp, &workspace.end("window2"), WindowLayout {
+    let window2 = Widget::create(tmp, workspace.end("window2"), WindowLayout {
         relative: Vec2::new(50., 5.),
         width_relative: 30.,
         height_relative: 20.,
@@ -61,28 +61,28 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     })?;
 
 
-    let window3 = Widget::create(tmp, &workspace.end("window3"), WindowLayout {
+    let window3 = Widget::create(tmp, workspace.end("window3"), WindowLayout {
         relative: Vec2::new(5., 30.),
         width_relative: 30.,
         height_relative: 20.,
         ..default()
     })?;
 
-    let window4 = Widget::create(tmp, &workspace.end("window4"), WindowLayout {
+    let window4 = Widget::create(tmp, workspace.end("window4"), WindowLayout {
         relative: Vec2::new(50., 30.),
         width_relative: 30.,
         height_relative: 20.,
         ..default()
     })?;
 
-    let window5 = Widget::create(tmp, &workspace.end("window5"), WindowLayout {
+    let window5 = Widget::create(tmp, workspace.end("window5"), WindowLayout {
         relative: Vec2::new(5., 60.),
         width_relative: 30.,
         height_relative: 20.,
         ..default()
     })?;
 
-    let window6 = Widget::create(tmp, &workspace.end("window6"), WindowLayout {
+    let window6 = Widget::create(tmp, workspace.end("window6"), WindowLayout {
         relative: Vec2::new(50., 60.),
         width_relative: 30.,
         height_relative: 20.,

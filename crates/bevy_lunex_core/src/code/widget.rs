@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use bevy::prelude::*;
 
 use crate::{LunexError, UiTree, UiBranch, Data, LayoutPackage, Position};
@@ -687,8 +689,8 @@ impl Widget {
     /// ```
     /// In this case the path of ``button_pointer`` is `` #0/#0 `` (The number stands for an order they were created in)
     ///
-    pub fn create(tree: &mut UiTree, path: impl AsRef<str>, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
-        let path = path.as_ref();
+    pub fn create(tree: &mut UiTree, path: impl Borrow<str>, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
+        let path = path.borrow();
 
         let str_list: Vec<&str> = path.split('/').collect();
         let str_list_len = str_list.len();
@@ -840,8 +842,8 @@ impl Widget {
     /// let path = menu.add(&category).end("Button");
     /// assert_eq!("Menu/Category/Button", path);
     /// ```
-    pub fn add(&self, w: &Widget) -> Widget {
-        Widget::new(&format!("{}/{}", self.path, w.name))
+    pub fn add(&self, w: impl Borrow<Widget>) -> Widget {
+        Widget::new(&format!("{}/{}", self.path, w.borrow().name))
     }
     /// # Str
     /// This method is used to create dynamic path to widgets.
@@ -854,8 +856,8 @@ impl Widget {
     /// let path = menu.str("Category").end("Button");
     /// assert_eq!("Menu/Category/Button", path);
     /// ```
-    pub fn str(&self, s: impl AsRef<str>) -> Widget {
-        Widget::new(&format!("{}/{}", self.path, s.as_ref()))
+    pub fn str(&self, s: impl Borrow<str>) -> Widget {
+        Widget::new(&format!("{}/{}", self.path, s.borrow()))
     }
     /// # End
     /// This method is used to create dynamic path to widgets.
@@ -869,8 +871,8 @@ impl Widget {
     /// let path = category.end("Button");
     /// assert_eq!("Menu/Category/Button", path);
     /// ```
-    pub fn end(&self, s: impl AsRef<str>) -> String {
-        format!("{}/{}", self.path, s.as_ref())
+    pub fn end(&self, s: impl Borrow<str>) -> String {
+        format!("{}/{}", self.path, s.borrow())
     }
 
 
@@ -910,13 +912,3 @@ impl Widget {
     }
 }
 
-impl AsRef<Widget> for Widget {
-    fn as_ref(&self) -> &Widget {
-        &self
-    }
-}
-impl AsMut<Widget> for Widget {
-    fn as_mut(&mut self) -> &mut Widget {
-        self
-    }
-}
