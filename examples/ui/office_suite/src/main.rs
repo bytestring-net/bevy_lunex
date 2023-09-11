@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 use bevy_vector_shapes::prelude::*;
@@ -41,38 +43,9 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     let mut temporary_tree = UiTree::new("tmp");
     let tmp = &mut temporary_tree;
 
-    
-    let workspace = Widget::create(tmp, "workspace", RelativeLayout::new())?;
 
-    let top_panel = Widget::create(tmp, workspace.end("top_panel"), RelativeLayout {
-        relative_2: Vec2::new(100.0, 0.0),
-        absolute_2: Vec2::new(0.0, TOPBAR_SIZE),
-        ..default()
-    })?;
-    let side_panel = Widget::create(tmp, workspace.end("side_panel"), RelativeLayout {
-        absolute_1: Vec2::new(0.0, TOPBAR_SIZE),
-        absolute_2: Vec2::new(SIDEBAR_SIZE, 0.0),
-        relative_2: Vec2::new(0.0, 100.0),
-        ..default()
-    })?;
-
-
-
-    let style = TextStyle {
-        font: asset_server.load("Montserrat-Regular.ttf"),
-        font_size: 40.0,
-        color: Color::WHITE,
-    };
-
-    let names = textrow!["file", "edit", "preferences", "help"];
-    let segment = GridSegment::text_cells(&names, 10.0, 60.0);
-    let (_, wlist) = segment.build_in_solid(tmp, top_panel.end("Grid"), SolidLayout::new().with_horizontal_anchor(-1.0), GridOrientation::Horizontal)?;
-
-
-    ui_tree.merge(temporary_tree)?;
-
-    
-    '_Fills: {
+    '_Workspace: {
+        let workspace = Widget::create(tmp, "workspace", RelativeLayout::new())?;
         commands.spawn((
             ElementBundle::new(workspace.clone(), Element::fullfill()),
             VectorElementRectangle {
@@ -80,33 +53,67 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
                 corner_radii: Vec4::splat(0.0)
             },
         ));
-        commands.spawn((
-            ElementBundle::new(top_panel.clone(), Element::fullfill()),
-            VectorElementRectangle {
-                color: Color::rgb_u8(35, 38, 52),
-                corner_radii: Vec4::new(20.0, 0.0, 0.0, 0.0)
-            },
-        ));
-        commands.spawn((
-            ElementBundle::new(side_panel.clone(), Element::fullfill()),
-            VectorElementRectangle {
-                color: Color::rgb_u8(41, 44, 60),
-                corner_radii: Vec4::new(20.0, 0.0, 0.0, 0.0)
-            },
-        ));
-        for x in 0..wlist.len() {
+
+        '_TopPanel: {
+            let top_panel = Widget::create(tmp, workspace.end("top_panel"), RelativeLayout {
+                relative_2: Vec2::new(100.0, 0.0),
+                absolute_2: Vec2::new(0.0, TOPBAR_SIZE),
+                ..default()
+            })?;
             commands.spawn((
-                ElementBundle::new(&wlist[x], Element::fullfill()),
+                ElementBundle::new(top_panel.clone(), Element::fullfill()),
                 VectorElementRectangle {
-                    color: Color::rgb_u8(48, 52, 70),
-                    corner_radii: Vec4::splat(4.0)
+                    color: Color::rgb_u8(35, 38, 52),
+                    corner_radii: Vec4::new(20.0, 0.0, 0.0, 0.0)
                 },
             ));
-            commands.spawn(
-                TextElementBundle::new(&wlist[x], &TextParams::center().with_style(&style).with_height(Some(60.0)), &names[x])
-            );
+
+            '_Grid: {
+                let style = TextStyle {
+                    font: asset_server.load("Montserrat-Regular.ttf"),
+                    font_size: 40.0,
+                    color: Color::WHITE,
+                };
+
+                let names = textrow!["file", "edit", "preferences", "help"];
+                let segment = GridSegment::text_cells(&names, 10.0, 60.0).add_gaps(30.0);
+                let (_, wlist) = segment.build_in_solid(tmp, top_panel.end("Grid"), SolidLayout::new().with_horizontal_anchor(-1.0), GridOrientation::Horizontal)?;
+
+                for x in 0..wlist.len() {
+                    commands.spawn((
+                        ElementBundle::new(&wlist[x], Element::fullfill()),
+                        VectorElementRectangle {
+                            color: Color::rgb_u8(48, 52, 70),
+                            corner_radii: Vec4::splat(4.0)
+                        },
+                    ));
+                    commands.spawn(
+                        TextElementBundle::new(&wlist[x], &TextParams::center().with_style(&style).with_height(Some(60.0)), &names[x])
+                    );
+                    DropDownElement::new(textrow!["Option1", "Option2"], &style).build_list(commands, tmp, &wlist[x])?;
+                }
+            }
         }
+
+        '_SidePanel: {
+            let side_panel = Widget::create(tmp, workspace.end("side_panel"), RelativeLayout {
+                absolute_1: Vec2::new(0.0, TOPBAR_SIZE),
+                absolute_2: Vec2::new(SIDEBAR_SIZE, 0.0),
+                relative_2: Vec2::new(0.0, 100.0),
+                ..default()
+            })?;
+            commands.spawn((
+                ElementBundle::new(side_panel.clone(), Element::fullfill()),
+                VectorElementRectangle {
+                    color: Color::rgb_u8(41, 44, 60),
+                    corner_radii: Vec4::new(20.0, 0.0, 0.0, 0.0)
+                },
+            ));
+        }
+
     }
+
+    ui_tree.merge(temporary_tree)?;
 
     Ok(())
 }
@@ -143,34 +150,34 @@ pub struct DropDownElement {
     select: String,
 }
 impl DropDownElement {
-    pub fn new(options: Vec<String>, text_style: TextStyle) -> DropDownElement {
+    pub fn new(options: Vec<String>, text_style: impl Borrow<TextStyle>) -> DropDownElement {
         DropDownElement {
-            text_style,
+            text_style: text_style.borrow().to_owned(),
             select: options[0].clone(),
             options: options,
         }
     }
     pub fn build_list(&self, commands: &mut Commands, tree: &mut UiTree, widget: &Widget) -> Result<(), LunexError>{
-        let row = textrow!["Option 1", "Option 2", "Option 3"];
-
-        let segment = GridSegment::splat_cells(GridCell::new(), 5);
-
+        
+        let segment = GridSegment::text_cells(&self.options, 100.0, 60.0);
         let (_, wlist) = segment.build_in_window(tree, widget.end(""), WindowLayout::new().with_rel(Vec2::new(0.0, 100.0)), GridOrientation::Vertical)?;
-
 
         for x in 0..wlist.len() {
             commands.spawn((
                 ElementBundle::new(&wlist[x], Element::fullfill()),
                 VectorElementRectangle {
-                    color: Color::rgb_u8(48, 52, 70),
+                    color: Color::rgb_u8(148, 52, 70),
                     corner_radii: Vec4::splat(4.0)
                 },
             ));
             commands.spawn(
-                TextElementBundle::new(&wlist[x], &TextParams::center().with_style(&self.text_style).with_height(Some(60.0)), &row[x])
+                TextElementBundle::new(&wlist[x], &TextParams::centerleft().at(10.0, 50.0).with_style(&self.text_style).with_height(Some(60.0)), &self.options[x])
             );
         }
 
         Ok(())
     }
+}
+pub fn dropdown_element_update (query: Query<(&Transform, &VectorElementRectangle)>) {
+
 }
