@@ -86,8 +86,13 @@ pub fn cursor_update(
                 transform.translation.y = cursorinfo.cursor_world.y;
             }
             None => {
-                transform.translation.x = -window.resolution.width();
-                transform.translation.y = -window.resolution.height();
+                transform.translation.x = -window.resolution.width()*2.0;
+                transform.translation.y = -window.resolution.height()*2.0;
+
+                cursorinfo.cursor_world = Vec2 {
+                    x: -10000.0,
+                    y: -10000.0,
+                };
             }
         }
     }

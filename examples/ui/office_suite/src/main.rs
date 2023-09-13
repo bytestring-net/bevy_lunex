@@ -82,7 +82,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
                 };
 
                 let names = textrow!["file", "edit", "preferences", "help"];
-                let segment = GridSegment::text_cells(&names, 10.0, 60.0).add_gaps(1.0);
+                let segment = GridSegment::text_cells(&names, 100.0, 60.0).add_gaps(1.0);
                 let (_, wlist) = segment.build_in_solid(tmp, top_panel.end("Grid"), SolidLayout::new().with_horizontal_anchor(-1.0), GridOrientation::Horizontal)?;
 
                 for x in 0..wlist.len() {
@@ -170,8 +170,8 @@ impl DropDownElement {
     }
     pub fn build_list(&self, commands: &mut Commands, tree: &mut UiTree, widget: &Widget) -> Result<(), LunexError>{
         
-        let segment = GridSegment::text_cells(&self.options, 100.0, 60.0);
-        let (_, wlist) = segment.build_in_window(tree, widget.end("Droplist"), WindowLayout::new().with_rel(Vec2::new(0.0, 100.0)), GridOrientation::Vertical)?;
+        let segment = GridSegment::text_cells(&self.options, 50.0, 60.0).add_gaps(1.0);
+        let (_, wlist) = segment.build_in_window_absolute(tree, widget.end("Droplist"), WindowLayout::empty().with_rel(Vec2::new(0.0, 100.0)), GridOrientation::Vertical)?;
 
         for x in 0..wlist.len() {
             commands.spawn((

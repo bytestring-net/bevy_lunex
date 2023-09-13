@@ -33,9 +33,21 @@ pub struct WindowLayout {
     pub height_relative: f32,
 }
 impl WindowLayout {
-    /// Creates new window layout from default.
+    /// Creates new window layout from default. Covers relatively 100% of the widget by default.
     pub fn new() -> WindowLayout {
         WindowLayout::default()
+    }
+
+    /// Creates new window layout where everything is set to 0.
+    pub fn empty() -> WindowLayout {
+        WindowLayout {
+            absolute: Vec2::splat(0.0),
+            relative: Vec2::splat(0.0),
+            width_absolute: 0.0,
+            width_relative: 0.0,
+            height_absolute: 0.0,
+            height_relative: 0.0,
+        }
     }
 
     /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
@@ -132,9 +144,19 @@ pub struct RelativeLayout {
     pub relative_2: Vec2,
 }
 impl RelativeLayout {
-    /// Creates new relative layout from default.
+    /// Creates new relative layout from default. Covers 100% of the widget by default.
     pub fn new() -> RelativeLayout {
         RelativeLayout::default()
+    }
+
+    /// Creates new relative layout where everything is set to 0.
+    pub fn empty() -> RelativeLayout {
+        RelativeLayout {
+            relative_1: Vec2::splat(0.0),
+            relative_2: Vec2::splat(0.0),
+            absolute_1: Vec2::splat(0.0),
+            absolute_2: Vec2::splat(0.0),
+        }
     }
 
     /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
@@ -229,6 +251,11 @@ impl SolidLayout {
     /// Creates new solid layout from default.
     pub fn new() -> SolidLayout {
         SolidLayout::default()
+    }
+
+    /// Creates new solid layout where everything that can be set to 0 is set to 0.
+    pub fn empty() -> SolidLayout {
+        SolidLayout::new()
     }
 
     /// This method calculates the position of the widget from this layout. As argument you supply parenting widget position and dimensions.
