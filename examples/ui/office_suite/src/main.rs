@@ -13,6 +13,8 @@ fn main() {
 
         .add_systems(Startup, setup)
 
+        .add_systems(Update, dropdown_element_update)
+
         .add_systems(Update, (
             vector_rectangle_update,
         ).after(element_update))
@@ -20,6 +22,10 @@ fn main() {
         .run()
 }
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn((
+        Cursor::new(0.0),
+        Transform::default(),
+    ));
     commands.spawn(
         Camera2dBundle {
             transform: Transform {
@@ -76,7 +82,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
                 };
 
                 let names = textrow!["file", "edit", "preferences", "help"];
-                let segment = GridSegment::text_cells(&names, 10.0, 60.0).add_gaps(30.0);
+                let segment = GridSegment::text_cells(&names, 10.0, 60.0).add_gaps(1.0);
                 let (_, wlist) = segment.build_in_solid(tmp, top_panel.end("Grid"), SolidLayout::new().with_horizontal_anchor(-1.0), GridOrientation::Horizontal)?;
 
                 for x in 0..wlist.len() {
@@ -87,10 +93,14 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
                             corner_radii: Vec4::splat(4.0)
                         },
                     ));
-                    commands.spawn(
-                        TextElementBundle::new(&wlist[x], &TextParams::center().with_style(&style).with_height(Some(60.0)), &names[x])
-                    );
-                    DropDownElement::new(textrow!["Option1", "Option2"], &style).build_list(commands, tmp, &wlist[x])?;
+                    commands.spawn((
+                        TextElementBundle::new(&wlist[x], &TextParams::center().with_style(&style).with_height(Some(60.0)), &names[x]),
+                        //DropDownElement::new(textrow!["Option1", "Option2"], &style)
+                    ));
+                    commands.spawn((
+                        wlist[x].clone(),
+                        DropDownElement::new(textrow!["Option1", "Option2"], &style)
+                    ));
                 }
             }
         }
@@ -144,6 +154,7 @@ pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transf
 }
 
 
+#[derive(Component)]
 pub struct DropDownElement {
     text_style: TextStyle,
     options: Vec<String>,
@@ -160,7 +171,7 @@ impl DropDownElement {
     pub fn build_list(&self, commands: &mut Commands, tree: &mut UiTree, widget: &Widget) -> Result<(), LunexError>{
         
         let segment = GridSegment::text_cells(&self.options, 100.0, 60.0);
-        let (_, wlist) = segment.build_in_window(tree, widget.end(""), WindowLayout::new().with_rel(Vec2::new(0.0, 100.0)), GridOrientation::Vertical)?;
+        let (_, wlist) = segment.build_in_window(tree, widget.end("Droplist"), WindowLayout::new().with_rel(Vec2::new(0.0, 100.0)), GridOrientation::Vertical)?;
 
         for x in 0..wlist.len() {
             commands.spawn((
@@ -178,6 +189,43 @@ impl DropDownElement {
         Ok(())
     }
 }
-pub fn dropdown_element_update (query: Query<(&Transform, &VectorElementRectangle)>) {
+pub fn dropdown_element_update (mut commands: Commands, mut trees: Query<&mut UiTree>, cursors: Query<&Cursor>, mut query: Query<(&Widget, &DropDownElement)>) {
+    for mut tree in &mut trees {
+        for (widget, dropdown) in &mut query {
+            let mut trigger = false;
+            for cursor in &cursors {
+                if widget.contains_position(&tree, &cursor.position_world().as_lunex(tree.offset)).unwrap() {
+                    trigger = true;
+                    break;
+                }
+            }
 
+            if trigger {
+                match widget.fetch_ext(&tree, "Droplist") {
+                    Err(..) => {
+                        //println!("Building list");
+                        dropdown.build_list(&mut commands, &mut tree, widget).unwrap();
+                    },
+                    Ok (..) => {},
+                }
+            } else {
+                match widget.fetch_ext(&tree, "Droplist") {
+                    Err(..) => {},
+                    Ok (..) => {
+                        //println!("Dropping list");
+                        let mut trigger = false;
+                        for cursor in &cursors {
+                            if widget.contains_position_ext(&tree, "Droplist", &cursor.position_world().as_lunex(tree.offset)).unwrap() {
+                                trigger = true;
+                                break;
+                            }
+                        }
+                        if trigger == false {
+                            widget.remove(&mut tree, "Droplist").unwrap();
+                        }
+                    },
+                }
+            }
+        }
+    }
 }

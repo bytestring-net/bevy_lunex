@@ -10,6 +10,7 @@ use bevy::prelude::*;
 /// * `position_screen` mirrors the window.cursor_position.
 #[derive(Component, Default)]
 pub struct Cursor {
+    hide_os_cursor: bool,
     depth: f32,
     offset: f32,
     cursor_world: Vec2,
@@ -43,6 +44,12 @@ impl Cursor {
     pub fn position_screen(&self) -> &Vec2 {
         &self.cursor_screen
     }
+
+    /// Create new cursor. `Offset` is used for offsetting the image of the cursor.
+    pub fn with_hide_os_cursor(mut self, hide: bool) -> Self {
+        self.hide_os_cursor = hide;
+        self
+    }
 }
 
 /// # Cursor update
@@ -58,7 +65,7 @@ pub fn cursor_update(
 
         match window.cursor_position() {
             Some(cursor) => {
-                window.cursor.visible = false;
+                if cursorinfo.hide_os_cursor { window.cursor.visible = false }
 
                 let offset_x =
                     window.resolution.width() / 2.0 + cursorinfo.offset * transform.scale.x;
