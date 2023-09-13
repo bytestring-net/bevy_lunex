@@ -158,13 +158,13 @@ pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transf
 pub struct DropDownElement {
     text_style: TextStyle,
     options: Vec<String>,
-    select: String,
+    selected: (String, usize),
 }
 impl DropDownElement {
     pub fn new(options: Vec<String>, text_style: impl Borrow<TextStyle>) -> DropDownElement {
         DropDownElement {
             text_style: text_style.borrow().to_owned(),
-            select: options[0].clone(),
+            selected: (options[0].clone(), 0),
             options: options,
         }
     }
