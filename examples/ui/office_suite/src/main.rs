@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 use bevy_vector_shapes::prelude::*;
 
@@ -21,7 +21,7 @@ fn main() {
 
         .run()
 }
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>, window: Query<(&Window, &PrimaryWindow, &mut Entity)>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         Cursor::new(0.0),
         Transform::default(),

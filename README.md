@@ -145,7 +145,7 @@ By nesting branches of these 3 types, you can precisely define the position and 
 ## === Versions ===
 |  Bevy  | Bevy Lunex |
 |--------|------------|
-| 0.11.2 |  <= 0.0.5  |
+| 0.11.2 |  <= 0.0.6  |
 
 ## === Contributing ===
 
