@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_lunex::prelude::*;
 use bevy_vector_shapes::prelude::*;
 
@@ -21,7 +21,7 @@ fn main() {
 
         .run()
 }
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, window: Query<(&Window, &PrimaryWindow, &mut Entity)>) {
     commands.spawn((
         Cursor::new(0.0),
         Transform::default(),
@@ -38,6 +38,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut ui_tree = UiTree::new("interface");
     build_interface(&mut commands, &asset_server, &mut ui_tree).unwrap();
     println!("{}", ui_tree.generate_map_debug());
+
     commands.spawn (ui_tree);
 }
 
