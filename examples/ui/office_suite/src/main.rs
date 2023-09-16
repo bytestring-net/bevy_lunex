@@ -2,6 +2,7 @@ use std::borrow::Borrow;
 
 use bevy::prelude::*;
 use bevy_lunex::prelude::*;
+use bevy_lunex_ui_prefab::*;
 use bevy_vector_shapes::prelude::*;
 
 

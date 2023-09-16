@@ -6,6 +6,7 @@ publish = false
 
 [dependencies]
 bevy_lunex = { path = "../../../../bevy-lunex"}
+bevy_lunex_ui_prefab = { path = "../../../../bevy-lunex/crates/bevy_lunex_ui_prefab"}
 
 bevy = { version = "0.11.2", features = ["dynamic_linking"] }
 bevy_vector_shapes = "0.5.1"
