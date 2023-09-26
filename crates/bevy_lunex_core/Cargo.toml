@@ -13,5 +13,6 @@ readme = "README.md"
 [dependencies]
 ahash = "0.8.3"
 colored = "2.0.0"
+pathio = { version = "0.1.4", features = ["bevy"] }
 
 bevy = { version = "0.11.2", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }

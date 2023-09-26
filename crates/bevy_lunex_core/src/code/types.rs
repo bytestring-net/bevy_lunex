@@ -1,44 +1,47 @@
 use bevy::utils::thiserror::Error;
-use std::num::ParseIntError;
+use pathio::PathioError;
 
 #[derive(Debug, Error)]
 pub enum LunexError {
-    /// Error that happens when merging branches. 2 child branches have the same name.
-    #[error("duplicate name '{0:}'")]
-    DuplicateName(String),
+    /// Error that happens when merging branches. Two branches have the same name.
+    #[error("Container from merging branch was not dropped before merging")]
+    ContainerConflict,
 
-    /// Error that happens when attempted to create a branch with a name that is used by another branch already.
-    #[error("name '{0:}' already in use")]
-    NameInUse(String),
+    /// Error that happens when merging branches. Two branches have the same name.
+    #[error("Duplicate name conflict for '{0:}' when trying to merge directory")]
+    DuplicateName (String),
 
-    /// Error that happens when you try to locate a branch by name that doesn't exist.
-    #[error("no shortcut for '{0:}'")]
-    NoShortcut(String),
+    /// Error that happens when merging branches. Two branches have the same name.
+    #[error("Name '{0:}' is already in use")]
+    NameInUse (String),
 
-    /// Error that happens when you try to locate a branch by ID that doesn't exist.
-    #[error("branch with ID #{0:} doesn't exist")]
-    NoBranch(usize),
+    /// Error that happens when path provided is not allowed.
+    #[error("Path '{0:}' is not allowed")]
+    InvalidPath (String),
 
-    /// Syntax error that happens when provided ID string is invalid.
-    #[error("invalid branch ID: {0:}")]
-    InvalidId(ParseIntError),
+    /// Error that happens when you try to locate a branch that doesn't exist.
+    #[error("Unable to locate '{0:}' branch")]
+    NoBranch (String),
 
-    /// Syntax error that happens when the path provided is invalid (miss-use of '/' or is empty string).
-    #[error("the path syntax is invalid")]
-    InvalidPathSyntax,
 
-    /// Error that happens when [`crate::Widget`] fails in locating itself in [`crate::UiTree`].
+
+
+    /// Error that happens when [`crate::Widget`] fails to locate itself in [`crate::UiTree`].
     #[error("could not find '{path:}': {cause:}")]
     FetchError {
         path: String,
         cause: Box<LunexError>,
     },
-
-    /// Error that happens when provided 2D vec is not suitable to be turned to grid.
-    #[error("Grid column {c1:} (len: {len_c1:}) has a different length to column 0 (len: {len_c0:})")]
-    GridFormat {
-        c1: usize,
-        len_c1: usize,
-        len_c0: usize,
-    },
+}
+impl From<PathioError> for LunexError {
+    fn from(value: PathioError) -> Self {
+        match value {
+            PathioError::FileConflict => LunexError::ContainerConflict,
+            PathioError::DuplicateName (v) => LunexError::DuplicateName (v),
+            PathioError::NameInUse (v) => LunexError::NameInUse (v),
+            PathioError::NoDirectory (v) => LunexError::NoBranch (v),
+            PathioError::NoFile (_) => panic!("API should NOT ALLOW you to get this error"),
+            PathioError::InvalidPath (v) => LunexError::InvalidPath (v),
+        }
+    }
 }
