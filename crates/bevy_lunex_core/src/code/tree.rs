@@ -1,6 +1,5 @@
 use std::borrow::Borrow;
 
-use ahash::AHashMap as HashMap;
 use bevy::prelude::*;
 use pathio::{prelude::*, PathTreeSingle, DirectorySingle};
 
@@ -31,7 +30,7 @@ pub trait UiT {
 
 impl UiT for PathTreeSingle<Container> {
     fn new (name: impl Borrow<str>) -> Self {
-        let mut tree: PathTreeSingle<Container> = PathTreeSingle::new(name);
+        let mut tree: PathTreeSingle<Container> = <PathTreeSingle<Container> as pathio::PathTreeInit>::new(name);
         let mut container = Container::new();
         container.layout_set(RelativeLayout::new());
         tree.add_file(container);

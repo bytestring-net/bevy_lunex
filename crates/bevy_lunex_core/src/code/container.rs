@@ -430,7 +430,7 @@ pub struct Position {
     pub point_2: Vec2,
     pub width: f32,
     pub height: f32,
-    pub depth: f32,
+    pub depth: f32, //???
 }
 impl Position {
     /// This function will offset the coordination values by given offset.
@@ -500,13 +500,39 @@ pub struct Container {
     position_layout: LayoutPackage,
     //control_layout: Option<Layout>,
     //elementary_layout: Elementarylayout,
+
+    visible: bool,
+    parent_visible: bool,
+    depth: f32,
+
 }
 impl Container {
+    pub fn point_1(&self) -> Vec2 {
+        self.position_get().point_1
+    }
+
+    pub fn point_2(&self) -> Vec2 {
+        self.position_get().point_2
+    }
+
+    pub fn width(&self) -> f32 {
+        self.position_get().width
+    }
+
+    pub fn height(&self) -> f32 {
+        self.position_get().height
+    }
+
+
     /// Creates a new container
     pub(super) fn new() -> Container {
         Container {
             position_cached: Position::default(),
             position_layout: LayoutPackage::default(),
+
+            visible: true,
+            parent_visible: true,
+            depth: 100.0,
         }
     }
 

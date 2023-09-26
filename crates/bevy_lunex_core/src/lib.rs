@@ -35,19 +35,16 @@ pub mod prelude {
 
 #[cfg(test)]
 pub mod test {
-    //use super::*;
-    use bevy::prelude::*;
-    use super::UiTree;
-    use super::UiT;
-    
+    use super::*;
+    use bevy::prelude::*;    
     #[test]
     fn run () {
         let mut tree = UiTree::new("Ui");
-        //tree.create_branch("Widget 1", RelativeLayout::new()).unwrap();
+        tree.create_branch("Widget 1", RelativeLayout::new()).unwrap();
 
         tree.compute(Vec2::splat(0.0), 100.0, 100.0);
 
-        //let con = tree.borrow_branch("Widget 1").unwrap().get_container();
-        //assert_eq!(100.0, con.position_get().width);
+        let con = tree.borrow_branch("Widget 1").unwrap().get_container();
+        assert_eq!(100.0, con.position_get().width);
     }
 }
