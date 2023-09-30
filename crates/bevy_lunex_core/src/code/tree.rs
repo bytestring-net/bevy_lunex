@@ -26,13 +26,16 @@ pub trait UiT {
 
     /// Borrows a branch on given path
     fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch, LunexError>;
+
+    /// Borrows a branch on given path
+    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError>;
 }
 
 impl UiT for PathTreeSingle<Container> {
     fn new (name: impl Borrow<str>) -> Self {
         let mut tree: PathTreeSingle<Container> = <PathTreeSingle<Container> as pathio::PathTreeInit>::new(name);
         let mut container = Container::new();
-        container.layout_set(RelativeLayout::new());
+        container.set_layout(RelativeLayout::new());
         tree.add_file(container);
         tree
     }
@@ -48,6 +51,10 @@ impl UiT for PathTreeSingle<Container> {
     fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch, LunexError> {
         Ok(self.borrow_directory(path)?)
     }
+
+    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError> {
+        Ok(self.borrow_directory_mut(path)?)
+    }
 }
 
 pub trait UiD {
@@ -60,8 +67,14 @@ pub trait UiD {
     /// Borrows a branch on given path
     fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch, LunexError>;
 
+    /// Borrows a branch on given path
+    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError>;
+
     /// Borrow a container from this branch
     fn get_container(&self) -> &Container;
+
+    /// Borrow a container from this branch
+    fn get_container_mut(&mut self) -> &mut Container;
 }
 
 impl UiD for DirectorySingle<Container> {
@@ -69,7 +82,7 @@ impl UiD for DirectorySingle<Container> {
         let container = self.obtain_file_mut().unwrap();
 
         container.calculate(point, width, height);
-        let pos = container.position_get().clone();
+        let pos = container.get_position().clone();
         for x in &mut self.directory {
             x.1.compute(pos.point_1, pos.width, pos.height);
         }
@@ -78,7 +91,7 @@ impl UiD for DirectorySingle<Container> {
     fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError> {
         self.create_directory(path.borrow())?;
         let mut container = Container::new();
-        container.layout_set(layout);
+        container.set_layout(layout);
         self.insert_file(path, container)?;
         Ok(())
     }
@@ -87,8 +100,16 @@ impl UiD for DirectorySingle<Container> {
         Ok(self.borrow_directory(path)?)
     }
 
+    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError> {
+        Ok(self.borrow_directory_mut(path)?)
+    }
+
     fn get_container(&self) -> &Container {
         self.obtain_file().unwrap()
+    }
+
+    fn get_container_mut(&mut self) -> &mut Container {
+        self.obtain_file_mut().unwrap()
     }
 }
 
@@ -143,7 +164,7 @@ impl UiTree {
     /// Creates a new tree with the given name
     pub fn new(name: &str) -> UiTree {
         let mut branch = UiBranch::new(name.into(), 0, "".into(), 0.0, true);
-        branch.container.layout_set(
+        branch.container.set_layout(
             RelativeLayout::default(),
         );
 
@@ -324,7 +345,7 @@ impl UiBranch {
     pub(super) fn cascade_compute_layout(&mut self, origin: Vec2, width: f32, height: f32) {
         self.container.calculate(origin, width, height);
         for x in &mut self.inventory {
-            let pos = self.container.position_get();
+            let pos = self.container.get_position();
             x.1.cascade_compute_layout(pos.point_1, pos.width, pos.height);
         }
     }

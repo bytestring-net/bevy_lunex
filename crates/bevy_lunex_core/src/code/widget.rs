@@ -2,8 +2,8 @@ use std::borrow::Borrow;
 
 use bevy::prelude::*;
 
-use crate::{LunexError, UiTree, UiBranch, Data, LayoutPackage, Position};
-use crate::{is_numerical_id, split_last};
+use crate::{LunexError, UiTree, UiBranch, LayoutPackage, Position, UiT, UiD};
+use crate::split_last;
 
 // ===========================================================
 // === WIDGET DEFINITION ===
@@ -14,21 +14,36 @@ pub struct Widget {
     name: String,
 }
 impl Widget {
-    /*
-    pub fn fetch_layout<'a> (&'a self, system: &'a  UITree, key: &str) -> Result<&PositionLayout, String> {
-        match self.fetch(system, key){
-            Ok (branch) => Ok(branch.container_get().position_layout_get()),
-            Err (message) => Err(message),
+
+    /// # New
+    /// This function by itself does NOTHING except creating a pointer from provided path.
+    /// It does NOT SYNCHRONIZE with any hierarchy and doesn't change anything.
+    ///
+    /// If you want to actually create new widget, use ``Widget::Create``
+    ///
+    /// This is just a pointer to call on more advanced methods later.
+    ///
+    /// # Examples
+    /// ```
+    /// let button = Widget::new("Button");
+    /// let setting_button = Widget::new("Settings/Button");
+    /// ```
+    pub fn new(path: impl Borrow<str>) -> Widget {
+        Widget {
+            path: path.borrow().to_owned(),
+            name: split_last(path.borrow(), "/").1,
         }
     }
-    pub fn fetch_layout_mut<'a> (&'a self, system: &'a mut UITree, key: &str) -> Result<&mut PositionLayout, String> {
-        match self.fetch_mut(system, key){
-            Ok (branch) => Ok(branch.container_get_mut().position_layout_get_mut()),
-            Err (message) => Err(message),
+
+    
+    pub fn create(tree: &mut UiTree, path: impl Borrow<str>, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
+        let widget = Widget::new(path);
+        //path split once
+        match tree.borrow_branch_mut(path) {
+            Ok(borrowed_branch)
         }
+        tree.create_branch("Widget 1", position);
     }
-    */
-    //add is cursor_within + depth
 
     // ===========================================================
     // === FETCHING ===
@@ -52,7 +67,7 @@ impl Widget {
     ///
     /// ```
     pub fn fetch<'a>(&'a self, tree: &'a UiTree) -> Result<&UiBranch, LunexError> {
-        match tree.main_branch().borrow_linked_checked(&self.path) {
+        match tree.borrow_branch(self.path) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: self.path.to_string(),
@@ -87,7 +102,7 @@ impl Widget {
             extra_path += "/";
             extra_path += path;
         }
-        match tree.main_branch().borrow_linked_checked(&extra_path) {
+        match tree.borrow_branch(extra_path) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: extra_path,
@@ -118,7 +133,7 @@ impl Widget {
         &'a self,
         tree: &'a mut UiTree,
     ) -> Result<&mut UiBranch, LunexError> {
-        match tree.main_branch_mut().borrow_linked_checked_mut(&self.path) {
+        match tree.borrow_branch_mut(self.path) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: self.path.to_string(),
@@ -157,7 +172,7 @@ impl Widget {
             extra_path += "/";
             extra_path += path;
         }
-        match tree.main_branch_mut().borrow_linked_checked_mut(&extra_path) {
+        match tree.borrow_branch_mut(&extra_path) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: extra_path,
@@ -175,7 +190,7 @@ impl Widget {
         tree: &'a UiTree,
     ) -> Result<&Position, LunexError> {
         match self.fetch(tree) {
-            Ok(branch) => Ok(branch.container_get().position_get()),
+            Ok(branch) => Ok(branch.get_container().get_position()),
             Err(e) => Err(e),
         }
     }
@@ -192,11 +207,11 @@ impl Widget {
         path: &str,
     ) -> Result<&Position, LunexError> {
         match self.fetch_ext(tree, path) {
-            Ok(branch) => Ok(branch.container_get().position_get()),
+            Ok(branch) => Ok(branch.get_container().get_position()),
             Err(e) => Err(e),
         }
     }
-
+/* 
     /// # Fetch Data
     /// This function will try to return &option with [`Data`].
     ///
@@ -258,7 +273,8 @@ impl Widget {
             Err(e) => Err(e),
         }
     }
-
+*/
+    /*
     /// # Fetch Data Set f32
     /// This function will try to fetch [`Data`] and create a value on the branch.
     ///
@@ -636,30 +652,10 @@ impl Widget {
             Err(e) => Err(e),
         }
     }
-
+*/
 
     // ===========================================================
     // === CREATION ===
-
-    /// # New
-    /// This function by itself does NOTHING except creating a pointer from provided path.
-    /// It does NOT SYNCHRONIZE with any hierarchy and doesn't change anything.
-    ///
-    /// If you want to actually create new widget, use ``Widget::Create``
-    ///
-    /// This is just a pointer to call on more advanced methods later.
-    ///
-    /// # Examples
-    /// ```
-    /// let button = Widget::new("Button");
-    /// let setting_button = Widget::new("Settings/Button");
-    /// ```
-    pub fn new(path: &str) -> Widget {
-        Widget {
-            path: path.to_string(),
-            name: split_last(path, "/").1,
-        }
-    }
 
     /// # Create
     /// This function is the one you create new widgets with. It creates a [`Widget`] on the path specified inside the hierarchy.
@@ -689,7 +685,7 @@ impl Widget {
     /// ```
     /// In this case the path of ``button_pointer`` is `` #0/#0 `` (The number stands for an order they were created in)
     ///
-    pub fn create(tree: &mut UiTree, path: impl Borrow<str>, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
+    pub fn createe(tree: &mut UiTree, path: impl Borrow<str>, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
         let path = path.borrow();
 
         let str_list: Vec<&str> = path.split('/').collect();
@@ -790,6 +786,7 @@ impl Widget {
     }
 
 
+
     // ===========================================================
     // === REMOVAL ===
 
@@ -884,7 +881,7 @@ impl Widget {
     pub fn contains_position(&self, tree: &UiTree, point: &Vec2) -> Result<bool, LunexError> {
         match self.fetch(&tree) {
             Ok(branch) => {
-                let position = branch.container_get().position_get();
+                let position = branch.container_get().get_position();
                 Ok(
                     (point.x > position.point_1.x && point.x < position.point_2.x)
                         && (point.y > position.point_1.y && point.y < position.point_2.y),
@@ -901,7 +898,7 @@ impl Widget {
     pub fn contains_position_ext(&self, tree: &UiTree, path: &str, point: &Vec2) -> Result<bool, LunexError> {
         match self.fetch_ext(&tree, path) {
             Ok(branch) => {
-                let position = branch.container_get().position_get();
+                let position = branch.container_get().get_position();
                 Ok(
                     (point.x > position.point_1.x && point.x < position.point_2.x)
                         && (point.y > position.point_1.y && point.y < position.point_2.y),

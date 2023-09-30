@@ -361,7 +361,16 @@ pub enum LayoutPackage {
     Solid(SolidLayout),
 }
 impl LayoutPackage {
-    /// Unwrap package into `&WindowLayout`, panic if this is not window.
+    /// Input output function to calculate the layout
+    pub fn calculate(&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
+        match &self {
+            LayoutPackage::Window(container) => container.calculate(point, width, height),
+            LayoutPackage::Relative(container) => container.calculate(point, width, height),
+            LayoutPackage::Solid(container) => container.calculate(point, width, height),
+        }
+    }
+
+    /// Unwrap package into `&WindowLayout`, panic if this is not window
     pub fn expect_window_ref(&self) -> &WindowLayout {
         match self {
             LayoutPackage::Window(window) => window,
@@ -369,7 +378,7 @@ impl LayoutPackage {
         }
     }
 
-    /// Unwrap package into `&RelativeLayout`, panic if this is not window.
+    /// Unwrap package into `&RelativeLayout`, panic if this is not window
     pub fn expect_relative_ref(&self) -> &RelativeLayout {
         match self {
             LayoutPackage::Relative(relative) => relative,
@@ -377,7 +386,7 @@ impl LayoutPackage {
         }
     }
 
-    /// Unwrap package into `&SolidLayout`, panic if this is not window.
+    /// Unwrap package into `&SolidLayout`, panic if this is not window
     pub fn expect_solid_ref(&self) -> &SolidLayout {
         match self {
             LayoutPackage::Solid(solid) => solid,
@@ -385,7 +394,7 @@ impl LayoutPackage {
         }
     }
 
-    /// Unwrap package into `mut &WindowLayout`, panic if this is not window.
+    /// Unwrap package into `mut &WindowLayout`, panic if this is not window
     pub fn expect_window_mut(&mut self) -> &mut WindowLayout {
         match self {
             LayoutPackage::Window(window) => window,
@@ -393,7 +402,7 @@ impl LayoutPackage {
         }
     }
 
-    /// Unwrap package into `mut &RelativeLayout`, panic if this is not window.
+    /// Unwrap package into `mut &RelativeLayout`, panic if this is not window
     pub fn expect_relative_mut(&mut self) -> &mut RelativeLayout {
         match self {
             LayoutPackage::Relative(relative) => relative,
@@ -401,7 +410,7 @@ impl LayoutPackage {
         }
     }
 
-    /// Unwrap package into `mut &SolidLayout`, panic if this is not window.
+    /// Unwrap package into `mut &SolidLayout`, panic if this is not window
     pub fn expect_solid_mut(&mut self) -> &mut SolidLayout {
         match self {
             LayoutPackage::Solid(solid) => solid,
@@ -498,8 +507,8 @@ impl Position {
 pub struct Container {
     position_cached: Position,
     position_layout: LayoutPackage,
-    //control_layout: Option<Layout>,
-    //elementary_layout: Elementarylayout,
+    //main_layout: Option<Layout>,
+    //base_layout: Elementarylayout,
 
     visible: bool,
     parent_visible: bool,
@@ -507,25 +516,8 @@ pub struct Container {
 
 }
 impl Container {
-    pub fn point_1(&self) -> Vec2 {
-        self.position_get().point_1
-    }
-
-    pub fn point_2(&self) -> Vec2 {
-        self.position_get().point_2
-    }
-
-    pub fn width(&self) -> f32 {
-        self.position_get().width
-    }
-
-    pub fn height(&self) -> f32 {
-        self.position_get().height
-    }
-
-
-    /// Creates a new container
-    pub(super) fn new() -> Container {
+    /// Creates a new container autofilled with default values
+    pub fn new() -> Container {
         Container {
             position_cached: Position::default(),
             position_layout: LayoutPackage::default(),
@@ -536,13 +528,9 @@ impl Container {
         }
     }
 
-    /// Calculates the layout and saves the output to `position_cached` field
-    pub(super) fn calculate(&mut self, point: Vec2, width: f32, height: f32) {
-        let values = match &self.position_layout {
-            LayoutPackage::Window(container) => container.calculate(point, width, height),
-            LayoutPackage::Relative(container) => container.calculate(point, width, height),
-            LayoutPackage::Solid(container) => container.calculate(point, width, height),
-        };
+    /// Calculates the layout and updates the structs fields with the result
+    pub fn calculate(&mut self, point: Vec2, width: f32, height: f32) {
+        let values = self.position_layout.calculate(point, width, height);
         self.position_cached.point_1 = values.0;
         self.position_cached.width = values.1;
         self.position_cached.height = values.2;
@@ -552,23 +540,43 @@ impl Container {
         );
     }
 
+    /// Returns top left corner of the calculated container
+    pub fn point_1(&self) -> Vec2 {
+        self.get_position().point_1
+    }
+
+    /// Returns bottom right corner of the calculated container
+    pub fn point_2(&self) -> Vec2 {
+        self.get_position().point_2
+    }
+
+    /// Returns width of the calculated container
+    pub fn width(&self) -> f32 {
+        self.get_position().width
+    }
+
+    /// Returns height of the calculated container
+    pub fn height(&self) -> f32 {
+        self.get_position().height
+    }
+
     /// Returns a read only reference to a container position
-    pub fn position_get(&self) -> &Position {
+    pub fn get_position(&self) -> &Position {
         &self.position_cached
     }
 
-    /// Set a new layout to a container
-    pub fn layout_set(&mut self, position: impl Into<LayoutPackage>) {
+    /// Set a new layout to the container
+    pub fn set_layout(&mut self, position: impl Into<LayoutPackage>) {
         self.position_layout = position.into();
     }
 
-    /// Returns a read only reference to a layout
-    pub fn layout_get(&self) -> &LayoutPackage {
+    /// Returns a read only reference to the layout
+    pub fn get_layout(&self) -> &LayoutPackage {
         &self.position_layout
     }
 
-    /// Returns mutable reference to a layout
-    pub fn layout_get_mut(&mut self) -> &mut LayoutPackage {
+    /// Returns mutable reference to the layout
+    pub fn get_layout_mut(&mut self) -> &mut LayoutPackage {
         &mut self.position_layout
     }
 }

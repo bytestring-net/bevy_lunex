@@ -20,7 +20,7 @@ pub use code::types::LunexError;
 // ===========================================================
 // === CRATE SPECIFIC ===
 
-//pub(crate) use code::util::{is_numerical_id, split_last, extract_id};
+pub(crate) use code::util::split_last;
 
 // ===========================================================
 // === PRELUDE ===
@@ -30,7 +30,7 @@ pub mod prelude {
     pub use super::{SolidScale, LayoutPackage};
     pub use super::LunexError;
     pub use super::UiTree;
-    //pub use super::Widget;
+    pub use super::Widget;
 }
 
 #[cfg(test)]
@@ -45,6 +45,6 @@ pub mod test {
         tree.compute(Vec2::splat(0.0), 100.0, 100.0);
 
         let con = tree.borrow_branch("Widget 1").unwrap().get_container();
-        assert_eq!(100.0, con.position_get().width);
+        assert_eq!(100.0, con.get_position().width);
     }
 }
