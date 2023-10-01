@@ -32,10 +32,10 @@ pub mod prelude {
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use bevy::prelude::*;    
+    use bevy::prelude::*;
+    use pathio::PathioHierarchy;    
     #[test]
     fn run () {
-
         let mut tree = UiTree::new("Ui");
         tree.create_branch("Widget 1", RelativeLayout::new()).unwrap();
         Widget::create(&mut tree, "Widget 2", RelativeLayout::new()).unwrap();
@@ -43,6 +43,7 @@ pub mod test {
         Widget::create(&mut tree, "Widget 2/Widget 3", RelativeLayout::new()).unwrap();
 
         tree.compute(Vec2::splat(0.0), 100.0, 100.0);
+        println!("{}", tree.list());
 
         let con = tree.borrow_branch("Widget 2/Widget 3").unwrap().get_container();
         assert_eq!(100.0, con.width());

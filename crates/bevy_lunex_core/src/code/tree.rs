@@ -6,14 +6,20 @@ use pathio::{prelude::*, PathTreeSingle, DirectorySingle};
 use crate::{RelativeLayout, Container, LayoutPackage};
 use crate::LunexError;
 
+/*
 const ROOT_STARTING_DEPTH: f32 = 100.0;
 const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
 const HIGHLIGHT_DEPTH_ADDED: f32 = 5.0;
+*/
 
 // ===========================================================
-// === UITREE STRUCT ===
+// === PATHIO IMPLEMENTATION ===
 
-
+/// # UiT
+/// This trait is required whenewer you iteract with [`UiTree`].
+/// It abstacts and unifies complex hierarchy logic added by pathio crate into one trait.
+/// 
+/// It implements every function you expect [`UiTree`] to have.
 pub trait UiT {
     /// Creates a new UiTree
     fn new (name: impl Borrow<str>) -> Self;
@@ -29,8 +35,10 @@ pub trait UiT {
 
     /// Borrows a branch on given path
     fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError>;
-}
 
+    /// Drops a branch on given path
+    fn drop_branch(&mut self, path: impl Borrow<str>) -> Result<(), LunexError>;
+}
 impl UiT for PathTreeSingle<Container> {
     fn new (name: impl Borrow<str>) -> Self {
         let mut tree: PathTreeSingle<Container> = <PathTreeSingle<Container> as pathio::PathTreeInit>::new(name);
@@ -55,8 +63,20 @@ impl UiT for PathTreeSingle<Container> {
     fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError> {
         Ok(self.borrow_directory_mut(path)?)
     }
+
+    fn drop_branch(&mut self, path: impl Borrow<str>) -> Result<(), LunexError> {
+        match self.remove_directory(path) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e.into()),
+        }
+    }
 }
 
+/// # UiD
+/// This trait is required whenewer you iteract with [`UiBranch`].
+/// It abstacts and unifies complex hierarchy logic added by pathio crate into one trait.
+/// 
+/// It implements every function you expect [`UiBranch`] to have.
 pub trait UiD {
     /// Compute the layout starting at origin
     fn compute(&mut self, point: Vec2, width: f32, height: f32);
@@ -70,13 +90,15 @@ pub trait UiD {
     /// Borrows a branch on given path
     fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError>;
 
+    /// Drops a branch on given path
+    fn drop_branch(&mut self, path: impl Borrow<str>) -> Result<(), LunexError>;
+
     /// Borrow a container from this branch
     fn get_container(&self) -> &Container;
 
     /// Borrow a container from this branch
     fn get_container_mut(&mut self) -> &mut Container;
 }
-
 impl UiD for DirectorySingle<Container> {
     fn compute(&mut self, point: Vec2, width: f32, height: f32) {
         let container = self.obtain_file_mut().unwrap();
@@ -104,6 +126,13 @@ impl UiD for DirectorySingle<Container> {
         Ok(self.borrow_directory_mut(path)?)
     }
 
+    fn drop_branch(&mut self, path: impl Borrow<str>) -> Result<(), LunexError> {
+        match self.remove_directory(path) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e.into()),
+        }
+    }
+
     fn get_container(&self) -> &Container {
         self.obtain_file().unwrap()
     }
@@ -113,127 +142,12 @@ impl UiD for DirectorySingle<Container> {
     }
 }
 
+
 pub type UiTree = PathTreeSingle<Container>;
 pub type UiBranch = DirectorySingle<Container>;
 
 
 
-/*
-/// # UiTree
-/// A tree-like data structure holding all UI layout data and information, similar to hierarchy.
-///
-/// You can retrieve data from this structure using paths.
-/// * `settings`
-/// * `settings/display`
-/// * `settings/display/button_1`
-///
-#[derive(Component, Default, Clone, Debug, PartialEq)]
-pub struct UiTree {
-    pub width: f32,
-    pub height: f32,
-    pub offset: Vec2,
-    branch: UiBranch,
-}
-impl UiTree {
-    // ===========================================================
-    // === EXPOSED BRANCH BORROW ===
-
-    /// Returns borrow of the main [`UiBranch`] that this [`UiTree`] is wrapped around
-    pub(super) fn main_branch(&self) -> &UiBranch {
-        &self.branch
-    }
-
-    /// Returns mut borrow of the main [`UiBranch`] that this [`UiTree`] is wrapped around
-    pub(super) fn main_branch_mut(&mut self) -> &mut UiBranch {
-        &mut self.branch
-    }
-
-    /// Returns borrow of [`UiBranch`], a branch nested within this tree on a given path
-    pub fn branch_get(&self, path: &str) -> Result<&UiBranch, LunexError> {
-        self.branch.borrow_linked_checked(path)
-    }
-
-    /// Returns mut borrow of [`UiBranch`], a branch nested within this tree on a given path
-    pub fn branch_get_mut(&mut self, path: &str) -> Result<&mut UiBranch, LunexError> {
-        self.branch.borrow_linked_checked_mut(path)
-    }
-
-    // ===========================================================
-    // === EXPOSED TREE CONTROL ===
-
-    /// Creates a new tree with the given name
-    pub fn new(name: &str) -> UiTree {
-        let mut branch = UiBranch::new(name.into(), 0, "".into(), 0.0, true);
-        branch.container.set_layout(
-            RelativeLayout::default(),
-        );
-
-        UiTree {
-            width: 0.0,
-            height: 0.0,
-            offset: Vec2::new(0.0, 0.0),
-            branch,
-        }
-    }
-
-    /// Compute the layout starting at origin
-    pub fn compute_at_origin(&mut self) {
-        self.branch.cascade_compute_layout(Vec2::default(), self.width, self.height);
-    }
-
-    /// Compute the layout starting at offset instead
-    pub fn compute_with_offset(&mut self) {
-        self.branch.cascade_compute_layout(self.offset, self.width, self.height);
-    }
-
-
-
-    /// Returns the name of the tree
-    pub fn get_name(&self) -> &String {
-        &self.branch.name
-    }
-
-    /// Returns current depth
-    pub fn get_depth(&self) -> f32 {
-        self.branch.get_depth()
-    }
-
-    /// Set depth of the tree and all its branches
-    pub fn set_depth(&mut self, depth: f32) {
-        self.branch.set_depth(depth);
-    }
-
-    /// This will return visibility of the tree
-    pub fn get_visibility(&self) -> bool {
-        self.branch.get_visibility()
-    }
-
-    /// This will set visibility to the value given
-    pub fn set_visibility(&mut self, visible: bool) {
-        self.branch.set_visibility(visible)
-    }
-
-
-    // ===========================================================
-    // === EXPOSED TREE DEBUG ===
-
-    /// Generate overview of the inner tree in a stringified form
-    pub fn generate_map(&self) -> String {
-        self.branch.generate_map()
-    }
-
-    /// Generate debug view of the inner tree in a stringified form
-    pub fn generate_map_debug(&self) -> String {
-        self.branch.generate_map_debug()
-    }
-    
-    /// Return a vector to iterate over containing all paths to all sub-branches
-    pub fn collect_paths(&self) -> Vec<String> {
-        self.branch.collect_paths()
-    }
-
-}
-*/
 
 // ===========================================================
 // === BRANCH STRUCT ===
@@ -436,9 +350,3 @@ impl Data {
     }
 }
 */
-/*
-pub struct Spawner {
-    list1: Vec<Box<dyn Bundle>>,
-    //or
-    list2: Vec<Box<impl Bundle>>,
-}*/
