@@ -24,7 +24,7 @@ pub fn lunex_setup_debug(
     systems: Query<&UiTree>,
 ) {
     for system in systems.iter() {
-        for x in system.collect_paths() {
+        /*for x in system.collect_paths() {
             let widget = Widget::new(&x);
             match widget.fetch(system) {
                 Err(_) => {}
@@ -41,7 +41,7 @@ pub fn lunex_setup_debug(
                     ));
                 }
             }
-        }
+        }*/
     }
 }
 

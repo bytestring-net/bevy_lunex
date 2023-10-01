@@ -1,29 +1,41 @@
 use bevy::prelude::*;
-use bevy_lunex_core::{UiTree, Widget};
+use bevy_lunex_core::{UiTree, Widget, UiT};
 use bevy_lunex_utility::Element;
 
 use crate::cursor_update;
 
+#[derive(Component)]
+pub struct Rectangle {
+    pos: Vec2,
+    width: f32,
+    height: f32,
+}
+
 // ===========================================================
 // === SYSTEMS ===
 
-/// # Tree Update
-/// A system that transforms every [`UiTree`] into an immidiete mode UI framework.
-/// 
-/// It does that by pulling width and height from the first [`Window`] it queries (multiple windows not supported yet) and feeding it to the [`UiTree`].
-/// Then it calls `.compute_at_origin()`.
+/// # Tree Pull Window
+/// A system that pulls [`Window`] dimensions into UiTree's [`Rectangle`] component.
 /// 
 /// This is repeated every frame.
-pub fn tree_update(mut query: Query<&mut UiTree>, windows: Query<&Window>) {
-    for window in &windows {
-        for mut system in &mut query {
-            system.width = window.resolution.width();
-            system.height = window.resolution.height();
-            system.offset.x = -system.width/2.0;
-            system.offset.y = system.height/2.0;
-            system.compute_at_origin();
-        }
-        break;  //Currently support only 1 window.
+pub fn tree_pull_window(mut query: Query<(&UiTree, &mut Rectangle, &Window)>) {
+    for (_, mut rectangle, window) in &mut query {
+        rectangle.width = window.resolution.width();
+        rectangle.height = window.resolution.height();
+        rectangle.pos.x = -rectangle.width/2.0;
+        rectangle.pos.y = rectangle.height/2.0;
+    }
+}
+
+// FUTURE ADD TREE_PULL_CAMERA 
+
+/// # Tree Compute
+/// A system that calls `.compute()` with data from UiTree's [`Rectangle`] component.
+/// 
+/// This is repeated every frame.
+pub fn tree_compute(mut query: Query<(&mut UiTree, &Rectangle)>) {
+    for (mut tree, rectangle) in &mut query {
+        tree.compute(rectangle.pos, rectangle.width, rectangle.height);
     }
 }
 
@@ -106,7 +118,8 @@ pub fn element_update(systems: Query<&UiTree>, mut query: Query<(&Widget, &Eleme
 pub struct LunexUiPlugin;
 impl Plugin for LunexUiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (tree_update, element_update).chain())
+        app.add_systems(Update, (tree_pull_window).before(tree_compute))
+           .add_systems(Update, (tree_compute, element_update).chain())
            .add_systems(Update, cursor_update);
     }
 }
