@@ -1,9 +1,8 @@
-use std::borrow::Borrow;
+use std::borrow::{Borrow, BorrowMut};
 
 use bevy::prelude::*;
 
 use crate::{LunexError, UiTree, UiBranch, LayoutPackage, Position, UiT, UiD};
-use crate::split_last;
 
 // ===========================================================
 // === WIDGET DEFINITION ===
@@ -16,33 +15,104 @@ pub struct Widget {
 impl Widget {
 
     /// # New
-    /// This function by itself does NOTHING except creating a pointer from provided path.
-    /// It does NOT SYNCHRONIZE with any hierarchy and doesn't change anything.
+    /// This function by itself does NOTHING except creating a smart pointer from provided path.
+    /// It does NOT SYNCHRONIZE with any tree and doesn't change anything.
     ///
-    /// If you want to actually create new widget, use ``Widget::Create``
-    ///
-    /// This is just a pointer to call on more advanced methods later.
+    /// If you want to actually create new widget, use `Widget::Create`
     ///
     /// # Examples
     /// ```
+    /// use bevy_lunex_core::Widget;
+    /// 
     /// let button = Widget::new("Button");
     /// let setting_button = Widget::new("Settings/Button");
     /// ```
     pub fn new(path: impl Borrow<str>) -> Widget {
         Widget {
             path: path.borrow().to_owned(),
-            name: split_last(path.borrow(), "/").1,
+            name: path.borrow().rsplit_once('/').unwrap_or(("", path.borrow())).1.to_owned(),
+        }
+    }
+    
+    /// # Create
+    /// This function creates new [`UiBranch`] inside of provided [`UiTree`] and returns a smart pointer to it ([`Widget`]).
+    /// 
+    /// The location and structure is defined by paths:
+    /// * `Menu` -> Create `Menu` in root directory
+    /// * `Menu/Settings` -> Create `Settings` inside `Menu`
+    /// * `Menu/Settings/Button` -> Create `Button` inside `Settings` which is inside `Menu`
+    ///
+    /// # Simple example
+    /// ```
+    /// use bevy_lunex_core::{UiTree, UiT, Widget, LayoutPackage};
+    /// 
+    /// let mut tree = UiTree::new("Ui");
+    /// 
+    /// let menu = Widget::create(&mut tree, "Menu", LayoutPackage::default()).unwrap();
+    /// let menu_button = Widget::create(&mut tree, "Menu/Button", LayoutPackage::default()).unwrap();
+    /// ```
+    ///
+    /// # Recommended example
+    /// It is best to use so called `dynamic paths` to define the path rather than hardcoding it.
+    /// The method `Widget::end()` returns the current path at that point in time ending with custom string.
+    /// ```
+    /// use bevy_lunex_core::{UiTree, UiT, Widget, LayoutPackage};
+    /// 
+    /// let mut tree = UiTree::new("Ui");
+    /// 
+    /// let menu = Widget::create(&mut tree, "Menu", LayoutPackage::default()).unwrap();
+    /// let menu_button = Widget::create(&mut tree, menu.end("Button"), LayoutPackage::default()).unwrap();
+    /// ```
+    /// 
+    pub fn create(mut tree: impl BorrowMut<UiTree>, path: impl Borrow<str>, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
+        let (_path, _name) = path.borrow().rsplit_once('/').unwrap_or((".", path.borrow()));
+        match tree.borrow_mut().borrow_branch_mut(_path) {
+            Ok(borrowed_branch) => match borrowed_branch.create_branch(_name, position) {
+                Ok(_) => Ok(Widget::new(path)),
+                Err(e) => Err(e),
+            },
+            Err(e) => Err(e),
         }
     }
 
-    
-    pub fn create(tree: &mut UiTree, path: impl Borrow<str>, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
-        let widget = Widget::new(path);
-        //path split once
-        match tree.borrow_branch_mut(path) {
-            Ok(borrowed_branch)
-        }
-        tree.create_branch("Widget 1", position);
+    /// # End
+    /// This method is used to create `dynamic paths` from [`Widget`].
+    /// 
+    /// It returns the path stored inside the struct and adds custom string to the end.
+    /// # Examples
+    /// ```
+    /// use bevy_lunex_core::{UiTree, UiT, Widget, LayoutPackage};
+    /// 
+    /// let mut tree = UiTree::new("Ui");
+    /// 
+    /// let menu = Widget::create(&mut tree, "Menu", LayoutPackage::default()).unwrap();
+    /// let settings = Widget::create(&mut tree, menu.end("Settings"), LayoutPackage::default()).unwrap();
+    /// let button = Widget::create(&mut tree, settings.end("Button"), LayoutPackage::default()).unwrap();
+    ///
+    /// assert_eq!("Menu/Settings/Button", settings.end("Button"));
+    /// assert_eq!("Menu/Settings/Button/Foo", button.end("Foo"));
+    /// ```
+    pub fn end(&self, s: impl Borrow<str>) -> String {
+        format!("{}/{}", self.path, s.borrow())
+    }
+
+    /// # Path
+    /// This method returns the path stored inside the struct.
+    /// # Examples
+    /// ```
+    /// use bevy_lunex_core::{UiTree, UiT, Widget, LayoutPackage};
+    /// 
+    /// let mut tree = UiTree::new("Ui");
+    /// 
+    /// let menu = Widget::create(&mut tree, "Menu", LayoutPackage::default()).unwrap();
+    /// let settings = Widget::create(&mut tree, menu.end("Settings"), LayoutPackage::default()).unwrap();
+    /// let button = Widget::create(&mut tree, settings.end("Button"), LayoutPackage::default()).unwrap();
+    ///
+    /// assert_eq!("Menu/Settings", settings.path());
+    /// assert_eq!("Menu/Settings/Button", button.path());
+    /// ```
+    pub fn path(&self) -> &str {
+        &self.path
     }
 
     // ===========================================================
@@ -67,7 +137,7 @@ impl Widget {
     ///
     /// ```
     pub fn fetch<'a>(&'a self, tree: &'a UiTree) -> Result<&UiBranch, LunexError> {
-        match tree.borrow_branch(self.path) {
+        match tree.borrow_branch(self.path.borrow()) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: self.path.to_string(),
@@ -96,13 +166,13 @@ impl Widget {
     /// let button: &UiBranch = menu_pointer.fetch_ext(&tree, "Button")?; //You can locate sub-widgets
     ///
     /// ```
-    pub fn fetch_ext<'a>(&'a self, tree: &'a UiTree, path: &str) -> Result<&UiBranch, LunexError> {
+    pub fn fetch_ext<'a>(&'a self, tree: &'a UiTree, path: impl Borrow<str>) -> Result<&UiBranch, LunexError> {
         let mut extra_path = String::from(&self.path);
-        if !path.is_empty() {
+        if !path.borrow().is_empty() {
             extra_path += "/";
-            extra_path += path;
+            extra_path += path.borrow();
         }
-        match tree.borrow_branch(extra_path) {
+        match tree.borrow_branch(extra_path.borrow()) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: extra_path,
@@ -129,11 +199,8 @@ impl Widget {
     /// let button: &mut UiBranch = button_pointer.fetch_mut(&mut tree)?;
     ///
     /// ```
-    pub fn fetch_mut<'a>(
-        &'a self,
-        tree: &'a mut UiTree,
-    ) -> Result<&mut UiBranch, LunexError> {
-        match tree.borrow_branch_mut(self.path) {
+    pub fn fetch_mut<'a>(&'a self, tree: &'a mut UiTree) -> Result<&mut UiBranch, LunexError> {
+        match tree.borrow_branch_mut(self.path.borrow()) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: self.path.to_string(),
@@ -162,17 +229,13 @@ impl Widget {
     /// let button: &mut UiBranch = menu_pointer.fetch_mut_ext(&mut tree, "Button")?; //You can locate sub-widgets
     ///
     /// ```
-    pub fn fetch_mut_ext<'a>(
-        &'a self,
-        tree: &'a mut UiTree,
-        path: &str,
-    ) -> Result<&mut UiBranch, LunexError> {
+    pub fn fetch_mut_ext<'a>(&'a self, tree: &'a mut UiTree, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError> {
         let mut extra_path = String::from(&self.path);
-        if !path.is_empty() {
+        if !path.borrow().is_empty() {
             extra_path += "/";
-            extra_path += path;
+            extra_path += path.borrow();
         }
-        match tree.borrow_branch_mut(&extra_path) {
+        match tree.borrow_branch_mut(extra_path.borrow()) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
                 path: extra_path,
@@ -185,10 +248,7 @@ impl Widget {
     /// This function will try to return &[`Position`].
     ///
     /// This struct is output of the calculated layout data.
-    pub fn fetch_position<'a>(
-        &'a self,
-        tree: &'a UiTree,
-    ) -> Result<&Position, LunexError> {
+    pub fn fetch_position<'a>(&'a self, tree: &'a UiTree) -> Result<&Position, LunexError> {
         match self.fetch(tree) {
             Ok(branch) => Ok(branch.get_container().get_position()),
             Err(e) => Err(e),
@@ -201,17 +261,14 @@ impl Widget {
     /// This struct is output of the calculated layout data.
     /// 
     /// In this extended function you can also specify path to sub-widgets which will be used as target instead.
-    pub fn fetch_position_ext<'a>(
-        &'a self,
-        tree: &'a UiTree,
-        path: &str,
-    ) -> Result<&Position, LunexError> {
+    pub fn fetch_position_ext<'a>(&'a self, tree: &'a UiTree, path: impl Borrow<str>) -> Result<&Position, LunexError> {
         match self.fetch_ext(tree, path) {
             Ok(branch) => Ok(branch.get_container().get_position()),
             Err(e) => Err(e),
         }
     }
-/* 
+
+    /* 
     /// # Fetch Data
     /// This function will try to return &option with [`Data`].
     ///
@@ -656,7 +713,7 @@ impl Widget {
 
     // ===========================================================
     // === CREATION ===
-
+/*
     /// # Create
     /// This function is the one you create new widgets with. It creates a [`Widget`] on the path specified inside the hierarchy.
     ///
@@ -907,5 +964,6 @@ impl Widget {
             Err(e) => Err(e),
         }
     }
+*/
 }
 

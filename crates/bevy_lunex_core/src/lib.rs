@@ -15,12 +15,8 @@ pub use code::tree::{UiTree, UiBranch, UiT, UiD};
 
 pub use code::types::LunexError;
 
-//pub use code::widget::Widget;
+pub use code::widget::Widget;
 
-// ===========================================================
-// === CRATE SPECIFIC ===
-
-pub(crate) use code::util::split_last;
 
 // ===========================================================
 // === PRELUDE ===
@@ -39,12 +35,16 @@ pub mod test {
     use bevy::prelude::*;    
     #[test]
     fn run () {
+
         let mut tree = UiTree::new("Ui");
         tree.create_branch("Widget 1", RelativeLayout::new()).unwrap();
+        Widget::create(&mut tree, "Widget 2", RelativeLayout::new()).unwrap();
+
+        Widget::create(&mut tree, "Widget 2/Widget 3", RelativeLayout::new()).unwrap();
 
         tree.compute(Vec2::splat(0.0), 100.0, 100.0);
 
-        let con = tree.borrow_branch("Widget 1").unwrap().get_container();
-        assert_eq!(100.0, con.get_position().width);
+        let con = tree.borrow_branch("Widget 2/Widget 3").unwrap().get_container();
+        assert_eq!(100.0, con.width());
     }
 }

@@ -9,21 +9,6 @@ pub(crate) fn is_numerical_id(str: &str) -> bool {
     }
 }
 
-/// Same as `split_once`, but inverted.
-pub(crate) fn split_last(string: &str, delimiter: &str) -> (String, String) {
-    let str_list: Vec<&str> = string.split(delimiter).collect();
-    let mut output = String::new();
-    let mut is_first = true;
-    for x in str_list.iter().take(str_list.len() - 1) {
-        if !is_first {
-            output += delimiter
-        } else {
-            is_first = false
-        };
-        output += x;
-    }
-    (output, String::from(str_list[str_list.len() - 1]))
-}
 
 /// ### Extract ID
 /// This will extract id from numeric path
