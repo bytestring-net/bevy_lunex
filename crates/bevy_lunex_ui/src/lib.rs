@@ -13,7 +13,7 @@ pub use code::conversion::AsLunexVec2;
 pub use code::cursor::Cursor;
 pub use code::cursor::cursor_update;
 
-pub use code::system::{tree_update, element_update};
+pub use code::system::{tree_compute, tree_pull_window, element_update};
 pub use code::system::LunexUiPlugin;
 
 pub use code::debug::LunexUiDebugPlugin;
@@ -29,6 +29,6 @@ pub mod prelude {
     pub use super::Cursor;
 
     pub use super::LunexUiPlugin;
-    pub use super::{tree_update, element_update};
+    pub use super::{tree_compute, tree_pull_window, element_update};
     pub use super::LunexUiDebugPlugin;
 }

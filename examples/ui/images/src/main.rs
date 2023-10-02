@@ -30,7 +30,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     );
     let mut ui_tree = UiTree::new("interface");
     build_interface(&mut commands, &asset_server, &mut ui_tree).unwrap();
-    println!("{}", ui_tree.generate_map_debug());
+    println!("{}", ui_tree.list());
     commands.spawn (ui_tree);
 }
 

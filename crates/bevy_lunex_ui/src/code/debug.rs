@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use colored::Colorize;
 
-use bevy_lunex_core::{UiTree, Widget};
+use bevy_lunex_core::{UiTree, Widget, UiD};
 use bevy_lunex_utility::{ImageElementBundle, ImageParams};
 
 use crate::cursor_update;

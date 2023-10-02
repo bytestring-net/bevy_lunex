@@ -510,9 +510,8 @@ pub struct Container {
     //main_layout: Option<Layout>,
     //base_layout: Elementarylayout,
 
-    visible: bool,
-    parent_visible: bool,
-    depth: f32,
+    visibility: bool,
+    inherited_visibility: bool,
 
 }
 impl Container {
@@ -522,9 +521,8 @@ impl Container {
             position_cached: Position::default(),
             position_layout: LayoutPackage::default(),
 
-            visible: true,
-            parent_visible: true,
-            depth: 100.0,
+            visibility: true,
+            inherited_visibility: true,
         }
     }
 
@@ -559,6 +557,33 @@ impl Container {
     pub fn height(&self) -> f32 {
         self.get_position().height
     }
+
+    /// Return container's visibility. Does not mean the container is going to be visible due to inherited visibility
+    pub fn get_visibility(&self) -> bool {
+        self.visibility
+    }
+
+    /// Return container's inherited visibility.
+    pub fn get_inherited_visibility(&self) -> bool {
+        self.inherited_visibility
+    }
+
+    /// Set container's visibility. Does not mean the container is going to be visible due to inherited visibility
+    pub fn set_visibility(&mut self, visibility: bool) {
+        self.visibility = visibility;
+    }
+
+    /// Set container's inherited visibility.
+    pub fn set_inherited_visibility(&mut self, visibility: bool) {
+        self.inherited_visibility = visibility;
+    }
+
+    /// Returns if container is visible or not. Counts in inherited visibility
+    pub fn is_visible(&self) -> bool {
+        self.visibility && self.inherited_visibility
+    }
+
+
 
     /// Returns a read only reference to a container position
     pub fn get_position(&self) -> &Position {

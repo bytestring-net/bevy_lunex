@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_lunex_core::{UiTree, Widget, UiT};
+use bevy_lunex_core::{UiTree, Widget, UiT, UiD};
 use bevy_lunex_utility::Element;
 
 use crate::cursor_update;
@@ -49,26 +49,27 @@ pub fn tree_compute(mut query: Query<(&mut UiTree, &Rectangle)>) {
 /// 
 /// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**.
 /// When [`Widget`] visibility is set to `false`, X and Y transform will be set to `-10 000`.
-pub fn element_update(systems: Query<&UiTree>, mut query: Query<(&Widget, &Element, &mut Transform)>) {
-    for system in systems.iter() {
-        for (widget, element, mut transform) in &mut query {
-            match widget.fetch(&system) {
+pub fn element_update(systems: Query<(&UiTree, &Rectangle, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility)>) {
+    for (tree, tree_rectangle, tree_transform) in systems.iter() {
+        for (widget, element, mut transform, mut visibility) in &mut query {
+            match widget.fetch(&tree) {
                 Err(_) => {
-                    transform.translation.x = -10000.0;
-                    transform.translation.y = -10000.0;
+                    // DESPAWN
+                    *visibility = Visibility::Hidden;
                 },
                 Ok(branch) => {
                     if !branch.is_visible() {
-                        transform.translation.x = -10000.0;
-                        transform.translation.y = -10000.0;
+                        *visibility = Visibility::Hidden;
+
                     } else {
+                        *visibility = Visibility::Inherited;
     
-                        transform.translation.z = branch.get_depth() + element.depth;
+                        transform.translation.z = branch.get_depth() + element.depth + tree_transform.translation.z;
     
-                        let pos = widget.fetch(&system).unwrap().container_get().position_get().clone().invert_y();
+                        let pos = widget.fetch(&tree).unwrap().get_container().get_position().clone().invert_y();
                         let vec = pos.get_pos_y_inverted(element.relative);
-                        transform.translation.x = vec.x + system.offset.x;
-                        transform.translation.y = vec.y + system.offset.y;
+                        transform.translation.x = vec.x + tree_rectangle.pos.x;
+                        transform.translation.y = vec.y + tree_rectangle.pos.y;
     
                         match element.width {
                             Some (w) => {

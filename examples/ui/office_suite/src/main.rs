@@ -2,7 +2,6 @@ use std::borrow::Borrow;
 
 use bevy::prelude::*;
 use bevy_lunex::prelude::*;
-use bevy_lunex_ui_prefab::*;
 use bevy_vector_shapes::prelude::*;
 
 
@@ -38,7 +37,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     );
     let mut ui_tree = UiTree::new("interface");
     build_interface(&mut commands, &asset_server, &mut ui_tree).unwrap();
-    println!("{}", ui_tree.generate_map_debug());
+    println!("{}", ui_tree.list());
 
     commands.spawn (ui_tree);
 }
@@ -191,7 +190,7 @@ impl DropDownElement {
         Ok(())
     }
 }
-pub fn dropdown_element_update (mut commands: Commands, mut trees: Query<&mut UiTree>, cursors: Query<&Cursor>, mut query: Query<(&Widget, &DropDownElement)>) {
+pub fn dropdown_element_update (mut commands: Commands, mut trees: Query<&mut UiTree, Rectangle>, cursors: Query<&Cursor>, mut query: Query<(&Widget, &DropDownElement)>) {
     for mut tree in &mut trees {
         for (widget, dropdown) in &mut query {
             let mut trigger = false;
@@ -223,7 +222,7 @@ pub fn dropdown_element_update (mut commands: Commands, mut trees: Query<&mut Ui
                             }
                         }
                         if trigger == false {
-                            widget.remove(&mut tree, "Droplist").unwrap();
+                            widget.drop_branch(&mut tree, "Droplist").unwrap();
                         }
                     },
                 }

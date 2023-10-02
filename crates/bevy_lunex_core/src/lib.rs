@@ -25,15 +25,14 @@ pub mod prelude {
     pub use super::{WindowLayout, RelativeLayout, SolidLayout};
     pub use super::{SolidScale, LayoutPackage};
     pub use super::LunexError;
-    pub use super::UiTree;
+    pub use super::{UiTree, UiT, UiD};
     pub use super::Widget;
 }
 
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use bevy::prelude::*;
-    use pathio::PathioHierarchy;    
+    use bevy::prelude::*; 
     #[test]
     fn run () {
         let mut tree = UiTree::new("Ui");

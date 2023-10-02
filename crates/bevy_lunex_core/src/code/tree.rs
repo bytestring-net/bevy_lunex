@@ -6,11 +6,8 @@ use pathio::{prelude::*, PathTreeSingle, DirectorySingle};
 use crate::{RelativeLayout, Container, LayoutPackage};
 use crate::LunexError;
 
-/*
-const ROOT_STARTING_DEPTH: f32 = 100.0;
+
 const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
-const HIGHLIGHT_DEPTH_ADDED: f32 = 5.0;
-*/
 
 // ===========================================================
 // === PATHIO IMPLEMENTATION ===
@@ -38,6 +35,24 @@ pub trait UiT {
 
     /// Drops a branch on given path
     fn drop_branch(&mut self, path: impl Borrow<str>) -> Result<(), LunexError>;
+
+    /// Merges UiTree or UiBranch content into itself
+    fn merge(&mut self, directory: impl Into<DirectorySingle<Container>>) -> Result<(), LunexError>;
+
+    /// Generate a tree-like printable structure of the dir
+    fn list(&self) -> String;
+
+    /// Return branch depth
+    fn get_depth(&self) -> f32;
+
+    /// Return branch visibility. Does not mean the branch is going to be visible due to inherited visibility
+    fn get_visibility(&self) -> bool;
+
+    /// Set branch visibility
+    fn set_visibility(&mut self, visibility: bool);
+
+    /// Return if branch is visible or not. Counts in inherited visibility
+    fn is_visible(&self) -> bool;
 }
 impl UiT for PathTreeSingle<Container> {
     fn new (name: impl Borrow<str>) -> Self {
@@ -70,6 +85,33 @@ impl UiT for PathTreeSingle<Container> {
             Err(e) => Err(e.into()),
         }
     }
+
+    fn merge(&mut self, directory: impl Into<DirectorySingle<Container>>) -> Result<(), LunexError> {
+        let mut dir:DirectorySingle<Container> = directory.into();
+        let _ = dir.take_file();
+        Ok(pathio::PathioHierarchy::merge(self, dir)?)
+    }
+
+    fn list(&self) -> String {
+        pathio::PathioHierarchy::list(self)
+    }
+
+    fn get_depth(&self) -> f32 {
+        0.0 //pathio::PathioHierarchy::get_depth(self)
+    }
+
+    fn get_visibility(&self) -> bool {
+        self.obtain_file().unwrap().get_visibility()
+    }
+
+    fn set_visibility(&mut self, visibility: bool) {
+        self.obtain_file_mut().unwrap().set_visibility(visibility);
+        self.cascade_update_inherited_visibility();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.obtain_file().unwrap().is_visible()
+    }
 }
 
 /// # UiD
@@ -93,11 +135,29 @@ pub trait UiD {
     /// Drops a branch on given path
     fn drop_branch(&mut self, path: impl Borrow<str>) -> Result<(), LunexError>;
 
+    /// Merges UiTree or UiBranch content into itself
+    fn merge(&mut self, directory: impl Into<DirectorySingle<Container>>) -> Result<(), LunexError>;
+
+    /// Generate a tree-like printable structure of the dir
+    fn list(&self) -> String;
+
     /// Borrow a container from this branch
     fn get_container(&self) -> &Container;
 
     /// Borrow a container from this branch
     fn get_container_mut(&mut self) -> &mut Container;
+
+    /// Return branch depth
+    fn get_depth(&self) -> f32;
+
+    /// Return branch visibility. Does not mean the branch is going to be visible due to inherited visibility
+    fn get_visibility(&self) -> bool;
+
+    /// Set branch visibility
+    fn set_visibility(&mut self, visibility: bool);
+
+    /// Return if branch is visible or not. Counts in inherited visibility
+    fn is_visible(&self) -> bool;
 }
 impl UiD for DirectorySingle<Container> {
     fn compute(&mut self, point: Vec2, width: f32, height: f32) {
@@ -133,6 +193,16 @@ impl UiD for DirectorySingle<Container> {
         }
     }
 
+    fn merge(&mut self, directory: impl Into<DirectorySingle<Container>>) -> Result<(), LunexError> {
+        let mut dir:DirectorySingle<Container> = directory.into();
+        let _ = dir.take_file();
+        Ok(pathio::PathioHierarchy::merge(self, dir)?)
+    }
+
+    fn list(&self) -> String {
+        pathio::PathioHierarchy::list(self)
+    }
+
     fn get_container(&self) -> &Container {
         self.obtain_file().unwrap()
     }
@@ -140,8 +210,44 @@ impl UiD for DirectorySingle<Container> {
     fn get_container_mut(&mut self) -> &mut Container {
         self.obtain_file_mut().unwrap()
     }
+
+    fn get_depth(&self) -> f32 {
+        pathio::PathioHierarchy::get_depth(self) * LEVEL_DEPTH_DIFFERENCE
+    }
+
+    fn get_visibility(&self) -> bool {
+        self.obtain_file().unwrap().get_visibility()
+    }
+
+    fn set_visibility(&mut self, visibility: bool) {
+        self.obtain_file_mut().unwrap().set_visibility(visibility);
+        self.cascade_update_inherited_visibility();
+    }
+
+    fn is_visible(&self) -> bool {
+        self.obtain_file().unwrap().is_visible()
+    }
 }
 
+trait CustomDirectoryRecursion {
+    fn cascade_update_inherited_visibility(&mut self);
+}
+impl CustomDirectoryRecursion for DirectorySingle<Container> {
+    fn cascade_update_inherited_visibility(&mut self) {
+        let visibility = self.is_visible();
+        for (_, subdir) in &mut self.directory {
+            subdir.obtain_file_mut().unwrap().set_inherited_visibility(visibility);
+            subdir.cascade_update_inherited_visibility();
+        }
+    }
+}
+impl CustomDirectoryRecursion for PathTreeSingle<Container> {
+    fn cascade_update_inherited_visibility(&mut self) {
+        let visibility = self.is_visible();
+        self.directory.obtain_file_mut().unwrap().set_inherited_visibility(visibility);
+        self.directory.cascade_update_inherited_visibility();
+    }
+}
 
 pub type UiTree = PathTreeSingle<Container>;
 pub type UiBranch = DirectorySingle<Container>;
