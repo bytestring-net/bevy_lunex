@@ -18,7 +18,7 @@ fn main() {
         .run()
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Query<(&mut Window, Entity)>) {
     commands.spawn(
         Camera2dBundle {
             transform: Transform {
@@ -31,7 +31,10 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut ui_tree = UiTree::new("interface");
     build_interface(&mut commands, &asset_server, &mut ui_tree).unwrap();
     println!("{}", ui_tree.list());
-    commands.spawn (ui_tree);
+
+    let _window = window.get_single_mut().unwrap();
+    commands.entity(_window.1).insert((ui_tree, Transform::default()));
+    //commands.spawn (ui_tree);
 }
 
 

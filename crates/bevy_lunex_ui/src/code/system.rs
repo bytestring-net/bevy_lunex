@@ -49,9 +49,9 @@ pub fn tree_compute(mut query: Query<(&mut UiTree, &Rectangle)>) {
 /// 
 /// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**.
 /// When [`Widget`] visibility is set to `false`, X and Y transform will be set to `-10 000`.
-pub fn element_update(systems: Query<(&UiTree, &Rectangle, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility)>) {
+pub fn element_update(systems: Query<(&UiTree, &Rectangle, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility, Without<Rectangle>)>) {
     for (tree, tree_rectangle, tree_transform) in systems.iter() {
-        for (widget, element, mut transform, mut visibility) in &mut query {
+        for (widget, element, mut transform, mut visibility, _) in &mut query {
             match widget.fetch(&tree) {
                 Err(_) => {
                     // DESPAWN
