@@ -8,7 +8,9 @@
         "./examples/ui/grids/Cargo.toml",
         "./examples/ui/images/Cargo.toml",
         "./examples/ui/layouting/Cargo.toml",
+        "./examples/ui/nesting/Cargo.toml",
         "./examples/ui/office_suite/Cargo.toml",
         "./crates/bevy_lunex_ui_prefab/Cargo.toml"
-    ]
+    ],
+    "rust-analyzer.showUnlinkedFileNotification": false
 }

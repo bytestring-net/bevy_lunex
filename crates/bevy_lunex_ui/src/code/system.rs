@@ -4,9 +4,8 @@ use bevy_lunex_utility::Element;
 
 use crate::cursor_update;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Rectangle {
-    pos: Vec2,
     width: f32,
     height: f32,
 }
@@ -18,12 +17,12 @@ pub struct Rectangle {
 /// A system that pulls [`Window`] dimensions into UiTree's [`Rectangle`] component.
 /// 
 /// This is repeated every frame.
-pub fn tree_pull_window(mut query: Query<(&UiTree, &mut Rectangle, &Window)>) {
-    for (_, mut rectangle, window) in &mut query {
+pub fn tree_pull_window(mut query: Query<(&UiTree, &mut Rectangle, &mut Transform, &Window)>) {
+    for (_, mut rectangle, mut transform, window) in &mut query {
         rectangle.width = window.resolution.width();
         rectangle.height = window.resolution.height();
-        rectangle.pos.x = -rectangle.width/2.0;
-        rectangle.pos.y = rectangle.height/2.0;
+        transform.translation.x = -rectangle.width/2.0;
+        transform.translation.y = -rectangle.height/2.0;
     }
 }
 
@@ -33,9 +32,9 @@ pub fn tree_pull_window(mut query: Query<(&UiTree, &mut Rectangle, &Window)>) {
 /// A system that calls `.compute()` with data from UiTree's [`Rectangle`] component.
 /// 
 /// This is repeated every frame.
-pub fn tree_compute(mut query: Query<(&mut UiTree, &Rectangle)>) {
-    for (mut tree, rectangle) in &mut query {
-        tree.compute(rectangle.pos, rectangle.width, rectangle.height);
+pub fn tree_compute(mut query: Query<(&mut UiTree, &Rectangle, &Transform)>) {
+    for (mut tree, rectangle, transform) in &mut query {
+        tree.compute(transform.translation.truncate(), rectangle.width, rectangle.height);
     }
 }
 
@@ -49,8 +48,8 @@ pub fn tree_compute(mut query: Query<(&mut UiTree, &Rectangle)>) {
 /// 
 /// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**.
 /// When [`Widget`] visibility is set to `false`, X and Y transform will be set to `-10 000`.
-pub fn element_update(systems: Query<(&UiTree, &Rectangle, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility, Without<Rectangle>)>) {
-    for (tree, tree_rectangle, tree_transform) in systems.iter() {
+pub fn element_update(systems: Query<(&UiTree, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility, Without<UiTree>)>) {
+    for (tree, tree_transform) in systems.iter() {
         for (widget, element, mut transform, mut visibility, _) in &mut query {
             match widget.fetch(&tree) {
                 Err(_) => {
@@ -60,16 +59,16 @@ pub fn element_update(systems: Query<(&UiTree, &Rectangle, &Transform)>, mut que
                 Ok(branch) => {
                     if !branch.is_visible() {
                         *visibility = Visibility::Hidden;
-
                     } else {
                         *visibility = Visibility::Inherited;
     
                         transform.translation.z = branch.get_depth() + element.depth + tree_transform.translation.z;
     
-                        let pos = widget.fetch(&tree).unwrap().get_container().get_position().clone().invert_y();
+                        //let pos = widget.fetch(&tree).unwrap().get_container().get_position().clone().invert_y();
+                        let pos = branch.get_container().get_position().clone().invert_y();
                         let vec = pos.get_pos_y_inverted(element.relative);
-                        transform.translation.x = vec.x + tree_rectangle.pos.x;
-                        transform.translation.y = vec.y + tree_rectangle.pos.y;
+                        transform.translation.x = vec.x;
+                        transform.translation.y = vec.y;
     
                         match element.width {
                             Some (w) => {

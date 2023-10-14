@@ -1,0 +1,17 @@
+[package]
+name = "bevy_lunex_macros"
+version = "0.0.6"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["Dominik Kaspar <dominik0kaspar@gmail.com>"]
+repository = "https://github.com/bytestring-net/bevy-lunex"
+keywords = ["ui", "layout", "bevy", "lunex", "bevy-lunex"]
+categories = ["gui", "mathematics", "game-development"]
+description = "Supporting crate for bevy_lunex"
+readme = "README.md"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+bevy = { version = "0.11.2", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }

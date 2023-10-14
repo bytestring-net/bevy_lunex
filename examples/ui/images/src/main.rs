@@ -33,8 +33,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Que
     println!("{}", ui_tree.list());
 
     let _window = window.get_single_mut().unwrap();
-    commands.entity(_window.1).insert((ui_tree, Transform::default()));
-    //commands.spawn (ui_tree);
+    commands.entity(_window.1).insert((ui_tree, Transform::default(), bevy_lunex::prelude::Rectangle::default()));
 }
 
 
