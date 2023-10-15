@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 use bevy_vector_shapes::prelude::*;
-use div::ThemePlugin;
+use theme::ThemePlugin;
 
-use crate::div::UColor;
+use crate::theme::UColor;
 
+mod theme;
 mod div;
 
 fn main() {
@@ -26,9 +27,26 @@ fn main() {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Query<(&mut Window, Entity)>) {
 
+    /*let mut pro = div::Div {
+        class: div::DivClass::Break,
+        placement: div::Placement::Fixed,
+        content_size: Vec2::ZERO,
+        nested_div: vec![div::TestBox::new().tiny().medium().large().into()],
+    };
 
-    let btn = div::UButton::new().primary();
-    println!("{:?}", btn);
+    pro.compute_content();
+
+    println!("Content size: {}", pro.content_size);*/
+
+
+    println!("Button: {:?}", div::Button::from("number: 5"));
+
+
+
+
+
+    let btn = theme::UButton::new().primary();
+    //println!("{:?}", btn);
     commands.spawn(btn);
 
 
