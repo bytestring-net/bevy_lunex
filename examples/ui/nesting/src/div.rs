@@ -77,10 +77,64 @@ pub enum Placement {
 
 
 pub enum DivClass {
+    //Provided Defaults
+    Alert,
+    Avatar,
+    Badge,
+    BottomNavbar,
+    Breadcrumbs,
+    Button,
+    Card,
+    Carousel,
+    ChatBubble,
+    Checkbox,
+    Collapse,
+    Countdown,
+    Divider,
+    Drawer,
+    Dropdown,
+    FileInput,
+    Footer,
+    Hero,
+    Indicator,
+    InputGroup,
+    TextInput,
+    Join,
+    Keyboard,
+    Link,
+    Loading,
+    Mask,
+    Menu,
+    BrowserMockup,
+    CodeMockup,
+    PhoneMockup,
+    WindowMockup,
+    Modal,
+    Navbar,
+    Pagination,
+    Progress,
+    RadialProgress,
+    Radio,
+    RangeSlider,
+    Rating,
+    Select,
+    Stack,
+    Stat,
+    Steps,
+    Swap,
+    Tabs,
+    Table,
+    TextArea,
+    Toast,
+    Toggle,
+    Tooltip,
+
+    // Basic elements
     Relative, // -> Provides their behaivour
     Solid,
     Window,
 
+    // My defaults
     List,
     Cell,
 
@@ -224,9 +278,9 @@ impl Button {
 
 #[derive(Debug)]
 pub enum Parameter {
-    Simple (String),
-    Defined ((String, String)),
-    Complex ((String, Vec<String>)),
+    Simple (String),                    //Arg0
+    Defined ((String, String)),         //Arg1
+    Complex ((String, Vec<String>)),    //Arg2 ... (,,,) (,,,,)
 }
 
 pub fn process_parameter(input: impl Borrow<str>) -> Vec<Parameter> {

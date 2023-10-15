@@ -39,7 +39,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Que
     println!("Content size: {}", pro.content_size);*/
 
 
-    println!("Button: {:?}", div::Button::from("number: 5"));
+    println!("Button: {:?}", div::Button::from("large, number: 7"));
+    println!("Button: {:?}", div::Button::new().large().number(7.0));
 
 
 
