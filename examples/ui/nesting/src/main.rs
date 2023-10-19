@@ -6,6 +6,7 @@ use theme::ThemePlugin;
 use crate::theme::UColor;
 
 mod theme;
+mod parameter;
 mod div;
 
 fn main() {
