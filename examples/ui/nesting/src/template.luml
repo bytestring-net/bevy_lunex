@@ -18,13 +18,14 @@ MAIN_MENU = Relative {
         Solid (width: 2560, height: 1440, scaling: fill) [
             Image (path: "images/main_menu/53_.png", depth: -0.5)       // WHY IS IMAGE EVEN HERE? CAN IT BE IN NESTED AS IT RETURNS SIZE?
         ]
-    }
+    } //,
 
     Solid (width: 807, height: 1432, anchor: -0.8) [
         Image (path: "images/main_menu/board.png")
     ] {
         Segment (vertical) {
             Segment (horizontal, gaps: 1em, size: grow, overflow: crop/scale) {       //Grow means size is dependant on children content
+                LineAlign (-1.0),
                 Cell (width: 100%, height: auto) {  //Auto -> Use child returned size
                     Button (label: "CONTINUE", primary, at_x: 50%, at_y: 50%) [Link (url: "/SETTINGS")] // -> Returns ABS size
                     Button (label: "CONTINUE", primary, at_x: 100%, at_y: 50%) [Link (url: "/SETTINGS")] // -> Returns ABS size
@@ -47,3 +48,7 @@ MAIN_MENU = Relative {
         }
     }
 }
+
+div = empty rec with x for width and y for height
+
+magnet: Vec2

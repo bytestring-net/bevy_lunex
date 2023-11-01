@@ -18,7 +18,7 @@ fn main() {
         .run()
 }
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, mut window: Query<(&mut Window, Entity)>) {
     commands.spawn(
         Camera2dBundle {
             transform: Transform {
@@ -30,10 +30,11 @@ fn setup(mut commands: Commands) {
     );
     let mut ui_tree = UiTree::new("interface");
     build_interface(&mut commands, &mut ui_tree).unwrap();
-    println!("{}", ui_tree.generate_map_debug());
-    commands.spawn (ui_tree);
+    println!("{}", ui_tree.list());
+    
+    let _window = window.get_single_mut().unwrap();
+    commands.entity(_window.1).insert((ui_tree, Transform::default(), bevy_lunex::prelude::Rectangle::default()));
 }
-
 
 
 pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result<(), LunexError> {
@@ -86,8 +87,6 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
 
     Ok(())
 }
-
-
 
 /// Renders the widget
 #[derive(Component)]

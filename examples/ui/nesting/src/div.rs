@@ -234,6 +234,10 @@ pub struct ParseError;
 
 #[derive(Clone, Debug, Default)]
 pub struct Button {
+    //INHERITED
+
+
+
     large: bool,
     medium: bool,
     tiny: bool,

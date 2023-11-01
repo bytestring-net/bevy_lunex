@@ -21,7 +21,7 @@ fn main() {
 
         .run()
 }
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Query<(&mut Window, Entity)>) {
     commands.spawn((
         Cursor::new(0.0),
         Transform::default(),
@@ -39,7 +39,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     build_interface(&mut commands, &asset_server, &mut ui_tree).unwrap();
     println!("{}", ui_tree.list());
 
-    commands.spawn (ui_tree);
+    let _window = window.get_single_mut().unwrap();
+    commands.entity(_window.1).insert((ui_tree, Transform::default(), bevy_lunex::prelude::Rectangle::default()));
 }
 
 pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree) -> Result<(), LunexError> {
@@ -190,12 +191,12 @@ impl DropDownElement {
         Ok(())
     }
 }
-pub fn dropdown_element_update (mut commands: Commands, mut trees: Query<&mut UiTree, Rectangle>, cursors: Query<&Cursor>, mut query: Query<(&Widget, &DropDownElement)>) {
-    for mut tree in &mut trees {
+pub fn dropdown_element_update (mut commands: Commands, mut trees: Query<(&mut UiTree, &Transform)>, cursors: Query<&Cursor>, mut query: Query<(&Widget, &DropDownElement)>) {
+    for (mut tree, mut rectangle) in &mut trees {
         for (widget, dropdown) in &mut query {
             let mut trigger = false;
             for cursor in &cursors {
-                if widget.contains_position(&tree, &cursor.position_world().as_lunex(tree.offset)).unwrap() {
+                if widget.contains_position(&tree, &cursor.position_world().as_lunex(rectangle.translation.truncate())).unwrap() {
                     trigger = true;
                     break;
                 }
@@ -216,7 +217,7 @@ pub fn dropdown_element_update (mut commands: Commands, mut trees: Query<&mut Ui
                         //println!("Dropping list");
                         let mut trigger = false;
                         for cursor in &cursors {
-                            if widget.contains_position_ext(&tree, "Droplist", &cursor.position_world().as_lunex(tree.offset)).unwrap() {
+                            if widget.contains_position_ext(&tree, "Droplist", &cursor.position_world().as_lunex(rectangle.translation.truncate())).unwrap() {
                                 trigger = true;
                                 break;
                             }
