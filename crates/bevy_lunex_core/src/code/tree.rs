@@ -40,7 +40,7 @@ pub trait UiT {
     fn merge(&mut self, directory: impl Into<DirectorySingle<Container>>) -> Result<(), LunexError>;
 
     /// Generate a tree-like printable structure of the dir
-    fn list(&self) -> String;
+    fn tree(&self) -> String;
 
     /// Return branch depth
     fn get_depth(&self) -> f32;
@@ -59,6 +59,7 @@ impl UiT for PathTreeSingle<Container> {
         let mut tree: PathTreeSingle<Container> = <PathTreeSingle<Container> as pathio::PathTreeInit>::new(name);
         let mut container = Container::new();
         container.set_layout(RelativeLayout::new());
+        container.set_render_depth(100.0);
         tree.add_file(container);
         tree
     }
@@ -92,8 +93,8 @@ impl UiT for PathTreeSingle<Container> {
         Ok(pathio::PathioHierarchy::merge(self, dir)?)
     }
 
-    fn list(&self) -> String {
-        pathio::PathioHierarchy::list(self)
+    fn tree(&self) -> String {
+        pathio::PathioHierarchy::tree(self)
     }
 
     fn get_depth(&self) -> f32 {
@@ -139,7 +140,7 @@ pub trait UiD {
     fn merge(&mut self, directory: impl Into<DirectorySingle<Container>>) -> Result<(), LunexError>;
 
     /// Generate a tree-like printable structure of the dir
-    fn list(&self) -> String;
+    fn tree(&self) -> String;
 
     /// Borrow a container from this branch
     fn get_container(&self) -> &Container;
@@ -174,6 +175,8 @@ impl UiD for DirectorySingle<Container> {
         self.create_directory(path.borrow())?;
         let mut container = Container::new();
         container.set_layout(layout);
+        container.set_inherited_visibility(self.file.as_ref().unwrap().is_visible());
+        container.set_render_depth(self.file.as_ref().unwrap().get_render_depth());
         self.insert_file(path, container)?;
         Ok(())
     }
@@ -199,8 +202,8 @@ impl UiD for DirectorySingle<Container> {
         Ok(pathio::PathioHierarchy::merge(self, dir)?)
     }
 
-    fn list(&self) -> String {
-        pathio::PathioHierarchy::list(self)
+    fn tree(&self) -> String {
+        pathio::PathioHierarchy::tree(self)
     }
 
     fn get_container(&self) -> &Container {

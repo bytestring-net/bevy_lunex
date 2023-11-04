@@ -510,8 +510,10 @@ pub struct Container {
     //main_layout: Option<Layout>,
     //base_layout: Elementarylayout,
 
+    
     visibility: bool,
     inherited_visibility: bool,
+    render_depth: f32,
 
 }
 impl Container {
@@ -523,6 +525,7 @@ impl Container {
 
             visibility: true,
             inherited_visibility: true,
+            render_depth: 0.0,
         }
     }
 
@@ -548,6 +551,11 @@ impl Container {
         self.get_position().point_2
     }
 
+    /// Returns size of the calculated container
+    pub fn size(&self) -> Vec2 {
+        Vec2::new(self.get_position().width, self.get_position().height)
+    }
+
     /// Returns width of the calculated container
     pub fn width(&self) -> f32 {
         self.get_position().width
@@ -568,6 +576,11 @@ impl Container {
         self.inherited_visibility
     }
 
+    /// Return container's render depth.
+    pub fn get_render_depth(&self) -> f32 {
+        self.render_depth
+    }
+
     /// Set container's visibility. Does not mean the container is going to be visible due to inherited visibility
     pub fn set_visibility(&mut self, visibility: bool) {
         self.visibility = visibility;
@@ -576,6 +589,11 @@ impl Container {
     /// Set container's inherited visibility.
     pub fn set_inherited_visibility(&mut self, visibility: bool) {
         self.inherited_visibility = visibility;
+    }
+
+    /// Set container's render_depth.
+    pub fn set_render_depth(&mut self, render_depth: f32) {
+        self.render_depth = render_depth;
     }
 
     /// Returns if container is visible or not. Counts in inherited visibility

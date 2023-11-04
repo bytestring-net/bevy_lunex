@@ -5,7 +5,7 @@ use bevy_lunex_utility::Element;
 use crate::cursor_update;
 
 #[derive(Component, Default)]
-pub struct Rectangle {
+pub struct Size {
     width: f32,
     height: f32,
 }
@@ -14,27 +14,27 @@ pub struct Rectangle {
 // === SYSTEMS ===
 
 /// # Tree Pull Window
-/// A system that pulls [`Window`] dimensions into UiTree's [`Rectangle`] component.
+/// A system that pulls [`Window`] dimensions into UiTree's [`Size`] component.
 /// 
 /// This is repeated every frame.
-pub fn tree_pull_window(mut query: Query<(&UiTree, &mut Rectangle, &mut Transform, &Window)>) {
-    for (_, mut rectangle, mut transform, window) in &mut query {
-        rectangle.width = window.resolution.width();
-        rectangle.height = window.resolution.height();
-        transform.translation.x = -rectangle.width/2.0;
-        transform.translation.y = -rectangle.height/2.0;
+pub fn tree_pull_window(mut query: Query<(&UiTree, &mut Size, &mut Transform, &Window)>) {
+    for (_, mut size, mut transform, window) in &mut query {
+        size.width = window.resolution.width();
+        size.height = window.resolution.height();
+        transform.translation.x = -size.width/2.0;
+        transform.translation.y = -size.height/2.0;
     }
 }
 
 // FUTURE ADD TREE_PULL_CAMERA 
 
 /// # Tree Compute
-/// A system that calls `.compute()` with data from UiTree's [`Rectangle`] component.
+/// A system that calls `.compute()` with data from UiTree's [`Size`] component.
 /// 
 /// This is repeated every frame.
-pub fn tree_compute(mut query: Query<(&mut UiTree, &Rectangle, &Transform)>) {
-    for (mut tree, rectangle, transform) in &mut query {
-        tree.compute(transform.translation.truncate(), rectangle.width, rectangle.height);
+pub fn tree_compute(mut query: Query<(&mut UiTree, &Size, &Transform)>) {
+    for (mut tree, size, transform) in &mut query {
+        tree.compute(transform.translation.truncate(), size.width, size.height);
     }
 }
 

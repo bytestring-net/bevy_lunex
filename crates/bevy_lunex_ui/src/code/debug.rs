@@ -1,8 +1,6 @@
 use bevy::prelude::*;
-use colored::Colorize;
 
-use bevy_lunex_core::{UiTree, Widget, UiD};
-use bevy_lunex_utility::{ImageElementBundle, ImageParams};
+use bevy_lunex_core::UiTree;
 
 use crate::cursor_update;
 use crate::element_update;
@@ -11,57 +9,22 @@ use crate::element_update;
 // ===========================================================
 // === DEBUGGING FUNCTIONALITY ===
 
-/// ### Debug Image
-/// A marker for ImageBundles spawned by debug functions, ***NOT INTENDED*** to be used by user!
-#[derive(Component)]
-pub struct DebugImage;
 
-/// ### Lunex setup debug
-/// A system that will create debug sprites for all valid widgets
-pub fn lunex_setup_debug(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    systems: Query<&UiTree>,
+/// # Lunex setup debug
+pub fn lunex_drawlines_debug(
+    mut query: Query<&UiTree>,
+    mut gizmos: Gizmos,
 ) {
-    for system in systems.iter() {
-        /*for x in system.collect_paths() {
-            let widget = Widget::new(&x);
-            match widget.fetch(system) {
-                Err(_) => {}
-                Ok(..) => {
-                    println!(
-                        "{} {} {}",
-                        "Debug".green().bold(),
-                        "sprite created for:".black().italic(),
-                        x.yellow().bold()
-                    );
-                    commands.spawn((
-                        ImageElementBundle::new(widget, ImageParams::default().with_width(Some(100.0)).with_height(Some(100.0)), asset_server.load("debug.png"), Vec2::new(300.0,200.0)),
-                        DebugImage
-                    ));
-                }
-            }
-        }*/
-    }
-}
-
-/// ### Lunex setup debug
-/// A system that will update debug sprites to have + 400 Z
-pub fn lunex_update_debug(
-    systems: Query<&UiTree>,
-    mut query: Query<(&mut Widget, &mut Transform, &DebugImage)>,
-) {
-    let system = systems.get_single().unwrap();
-    for (widget, mut transform, _) in &mut query {
-        match widget.fetch(&system) {
-            Err(_) => {
-                transform.translation.x = -10000.0;
-                transform.translation.y = -10000.0;
-            }
-            Ok(branch) => {
-                transform.translation.z = branch.get_depth() + 400.0;
-            }
-        };
+    for tree in &mut query {
+        let vector = pathio::PathioHierarchy::crawl(tree);
+        for bb in vector {
+            gizmos.rect_2d(
+                bb.file.as_ref().unwrap().point_1(),
+                0.0,
+                bb.file.as_ref().unwrap().size(),
+                Color::ORANGE_RED,
+            );
+        }
     }
 }
 
@@ -91,8 +54,7 @@ pub fn lunex_camera_move_debug(
 pub struct LunexUiDebugPlugin;
 impl Plugin for LunexUiDebugPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PostStartup, lunex_setup_debug)
-            .add_systems(Update, lunex_update_debug.after(element_update))
+        app.add_systems(Update, lunex_drawlines_debug.after(element_update))
             .add_systems(Update, lunex_camera_move_debug.before(cursor_update));
     }
 }

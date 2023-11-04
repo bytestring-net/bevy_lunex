@@ -9,6 +9,8 @@ fn main() {
         .add_plugins(Shape2dPlugin::default())
         .add_plugins(LunexUiPlugin)
 
+        .add_plugins(LunexUiDebugPlugin)
+
         .add_systems(Startup, setup)
 
         .add_systems(Update, (
@@ -30,10 +32,10 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Que
     );
     let mut ui_tree = UiTree::new("interface");
     build_interface(&mut commands, &asset_server, &mut ui_tree).unwrap();
-    println!("{}", ui_tree.list());
+    println!("{}", ui_tree.tree());
 
     let _window = window.get_single_mut().unwrap();
-    commands.entity(_window.1).insert((ui_tree, Transform::default(), bevy_lunex::prelude::Rectangle::default()));
+    commands.entity(_window.1).insert((ui_tree, Transform::default(), bevy_lunex::prelude::Size::default()));
 }
 
 
