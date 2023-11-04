@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 // ===========================================================
-// === CURSOR FUNCTIONALITY ===
+// === CURSOR ===
 
 /// # Cursor
 /// Component holding the cursor information. The transform component is overwritten by [`cursor_update`] system.

@@ -1,7 +1,13 @@
+use std::borrow::Borrow;
+
 use bevy::prelude::Vec2;
+
+use crate::{Widget, UiTree, LunexError};
 
 // ===========================================================
 // === LAYOUT VARIANTS ===
+
+
 
 /// # Window Layout
 /// Under the hood it works the exact same way as [`RelativeLayout`], but is defined in a way that makes it easier to animate.
@@ -36,6 +42,11 @@ impl WindowLayout {
     /// Creates new window layout from default. Covers relatively 100% of the widget by default.
     pub fn new() -> WindowLayout {
         WindowLayout::default()
+    }
+
+    /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build(self, tree: &mut UiTree, path: impl Borrow<str>) -> Result<Widget, LunexError> {
+        Widget::create(tree, path, self)
     }
 
     /// Creates new window layout where everything is set to 0.
@@ -149,6 +160,11 @@ impl RelativeLayout {
         RelativeLayout::default()
     }
 
+    /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build(self, tree: &mut UiTree, path: impl Borrow<str>) -> Result<Widget, LunexError> {
+        Widget::create(tree, path, self)
+    }
+
     /// Creates new relative layout where everything is set to 0.
     pub fn empty() -> RelativeLayout {
         RelativeLayout {
@@ -251,6 +267,11 @@ impl SolidLayout {
     /// Creates new solid layout from default.
     pub fn new() -> SolidLayout {
         SolidLayout::default()
+    }
+
+    /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build(self, tree: &mut UiTree, path: impl Borrow<str>) -> Result<Widget, LunexError> {
+        Widget::create(tree, path, self)
     }
 
     /// Creates new solid layout where everything that can be set to 0 is set to 0.
