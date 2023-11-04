@@ -9,7 +9,7 @@ fn main() {
         .add_plugins(Shape2dPlugin::default())
         .add_plugins(LunexUiPlugin)
 
-        .add_plugins(LunexUiDebugPlugin)
+        .add_plugins(LunexUiDebugPlugin2D)
 
         .add_systems(Startup, setup)
 
@@ -19,7 +19,6 @@ fn main() {
 
         .run()
 }
-
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Query<(&mut Window, Entity)>) {
     commands.spawn(
         Camera2dBundle {
@@ -39,7 +38,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Que
 }
 
 
-
 pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree) -> Result<(), LunexError> {
 
     let mut temporary_tree = UiTree::new("tmp");
@@ -48,7 +46,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     
     let workspace = Widget::create(tmp, "workspace", RelativeLayout::new())?;
 
-
+    
     let window1 = Widget::create(tmp, workspace.end("window1"), WindowLayout {
         relative: Vec2::new(5., 5.),
         width_relative: 30.,
@@ -56,14 +54,12 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         ..default()
     })?;
 
-
     let window2 = Widget::create(tmp, workspace.end("window2"), WindowLayout {
         relative: Vec2::new(50., 5.),
         width_relative: 30.,
         height_relative: 20.,
         ..default()
     })?;
-
 
     let window3 = Widget::create(tmp, workspace.end("window3"), WindowLayout {
         relative: Vec2::new(5., 30.),
@@ -94,15 +90,10 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     })?;
 
 
-
     // Merge the temporary tree to main ui tree
-
     ui_tree.merge(temporary_tree)?;
 
-
-
     // Spawn the image entity
-
     '_Fills: {
         commands.spawn(ImageElementBundle::new(window1.clone(), &ImageParams::topleft().with_depth(1.0), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
         commands.spawn((
@@ -159,12 +150,8 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         ));
     }
 
-
-
     Ok(())
 }
-
-
 
 
 /// Renders the widget

@@ -42,7 +42,7 @@ pub mod test {
         Widget::create(&mut tree, "Widget 2/Widget 3", RelativeLayout::new()).unwrap();
 
         tree.compute(Vec2::splat(0.0), 100.0, 100.0);
-        println!("{}", tree.list());
+        println!("{}", tree.tree());
 
         let con = tree.borrow_branch("Widget 2/Widget 3").unwrap().get_container();
         assert_eq!(100.0, con.width());

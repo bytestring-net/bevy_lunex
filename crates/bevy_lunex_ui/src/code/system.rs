@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_lunex_core::{UiTree, Widget, UiT, UiD};
 use bevy_lunex_utility::Element;
 
-use crate::cursor_update;
+use crate::{cursor_update, InvertY};
 
 #[derive(Component, Default)]
 pub struct Size {
@@ -14,11 +14,11 @@ pub struct Size {
 // === SYSTEMS ===
 
 /// # Tree Pull Window
-/// A system that pulls [`Window`] dimensions into UiTree's [`Size`] component.
+/// A system that pulls [`Window`] dimensions into UiTree's [`Size`] and [`Transform`] component.
 /// 
 /// This is repeated every frame.
-pub fn tree_pull_window(mut query: Query<(&UiTree, &mut Size, &mut Transform, &Window)>) {
-    for (_, mut size, mut transform, window) in &mut query {
+pub fn tree_pull_window(mut query: Query<(&mut Size, &mut Transform, &Window), With<UiTree>>) {
+    for (mut size, mut transform, window) in &mut query {
         size.width = window.resolution.width();
         size.height = window.resolution.height();
         transform.translation.x = -size.width/2.0;
@@ -29,7 +29,7 @@ pub fn tree_pull_window(mut query: Query<(&UiTree, &mut Size, &mut Transform, &W
 // FUTURE ADD TREE_PULL_CAMERA 
 
 /// # Tree Compute
-/// A system that calls `.compute()` with data from UiTree's [`Size`] component.
+/// A system that calls `.compute()` with data from UiTree's [`Size`] and [`Transform`] component.
 /// 
 /// This is repeated every frame.
 pub fn tree_compute(mut query: Query<(&mut UiTree, &Size, &Transform)>) {
@@ -41,19 +41,19 @@ pub fn tree_compute(mut query: Query<(&mut UiTree, &Size, &Transform)>) {
 /// # Element Update
 /// A system that re-positions and re-scales every [`Element`] to match the calculated layout.
 /// 
-/// Requires that entity has [`Element`] + [`Widget`] + [`Transform`] components.
+/// Requires that entity has [`Element`] + [`Widget`] + [`Transform`] + [`Visibility`] components.
 /// * [`Element`] contains the data how to position the entity relative to the widget.
 /// * [`Widget`] constains the path link.
 /// * [`Transform`] fields will be overwritten by this system.
+/// * [`Visibility`] enum will be changed by this system.
 /// 
-/// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**.
-/// When [`Widget`] visibility is set to `false`, X and Y transform will be set to `-10 000`.
+/// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`** (Not working, WIP - Currently it will just be Hidden).
 pub fn element_update(systems: Query<(&UiTree, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility, Without<UiTree>)>) {
     for (tree, tree_transform) in systems.iter() {
         for (widget, element, mut transform, mut visibility, _) in &mut query {
             match widget.fetch(&tree) {
                 Err(_) => {
-                    // DESPAWN
+                    // DESPAWN here, WIP - Temporary solution is to hide it
                     *visibility = Visibility::Hidden;
                 },
                 Ok(branch) => {
@@ -64,9 +64,8 @@ pub fn element_update(systems: Query<(&UiTree, &Transform)>, mut query: Query<(&
     
                         transform.translation.z = branch.get_depth() + element.depth + tree_transform.translation.z;
     
-                        //let pos = widget.fetch(&tree).unwrap().get_container().get_position().clone().invert_y();
-                        let pos = branch.get_container().get_position().clone().invert_y();
-                        let vec = pos.get_pos_y_inverted(element.relative);
+                        let pos = branch.get_container().get_position().clone();
+                        let vec = pos.get_pos(element.relative).invert_y();
                         transform.translation.x = vec.x;
                         transform.translation.y = vec.y;
     
@@ -101,7 +100,7 @@ pub fn element_update(systems: Query<(&UiTree, &Transform)>, mut query: Query<(&
                         }
                     }
                 }
-            };
+            }
         }
     }
 }
@@ -111,10 +110,12 @@ pub fn element_update(systems: Query<(&UiTree, &Transform)>, mut query: Query<(&
 // === PLUGIN ===
 
 /// # Lunex Ui Plugin
-/// A main plugin adding Lunex UI functionality for 2D plane.
-/// # Systems
-/// * [`tree_update`]
+/// A main plugin adding Lunex UI functionality for a 2D plane.
+/// ## Systems
+/// * [`tree_pull_window`]
+/// * [`tree_compute`]
 /// * [`element_update`]
+/// * [`cursor_update`]
 pub struct LunexUiPlugin;
 impl Plugin for LunexUiPlugin {
     fn build(&self, app: &mut App) {

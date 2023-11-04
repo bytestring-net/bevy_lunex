@@ -442,56 +442,11 @@ pub struct Position {
     pub depth: f32, //???
 }
 impl Position {
-    /// This function will offset the coordination values by given offset.
-    pub fn offset(mut self, offset: Vec2) -> Position {
-        self.point_1 += offset;
-        self.point_2 += offset;
-        self
-    }
-
-    /// This function will invert coordination value x.
-    pub fn invert_x(mut self) -> Position {
-        self.point_1.x = -self.point_1.x;
-        self.point_2.x = -self.point_1.x;
-        self
-    }
-
-    /// This function will invert coordination value y.
-    pub fn invert_y(mut self) -> Position {
-        self.point_1.y = -self.point_1.y;
-        self.point_2.y = -self.point_1.y;
-        self
-    }
-
     /// Returns a position from a custom relative point on this widget.
     pub fn get_pos(&self, relative: Vec2) -> Vec2 {
         Vec2::new(
             self.point_1.x + self.width * relative.x / 100.0,
             self.point_1.y + self.height * relative.y / 100.0,
-        )
-    }
-
-    /// Returns a position from a custom relative point on this widget, but X is inverted.
-    pub fn get_pos_x_inverted(&self, relative: Vec2) -> Vec2 {
-        Vec2::new(
-            self.point_1.x + self.width * -relative.x / 100.0,
-            self.point_1.y + self.height * relative.y / 100.0,
-        )
-    }
-    
-    /// Returns a position from a custom relative point on this widget, but Y is inverted.
-    pub fn get_pos_y_inverted(&self, relative: Vec2) -> Vec2 {
-        Vec2::new(
-            self.point_1.x + self.width * relative.x / 100.0,
-            self.point_1.y + self.height * -relative.y / 100.0,
-        )
-    }
-
-    /// Returns a position from a custom relative point on this widget, but X and Y is inverted.
-    pub fn get_pos_xy_inverted(&self, relative: Vec2) -> Vec2 {
-        Vec2::new(
-            self.point_1.x + self.width * -relative.x / 100.0,
-            self.point_1.y + self.height * -relative.y / 100.0,
         )
     }
 }
@@ -600,8 +555,6 @@ impl Container {
     pub fn is_visible(&self) -> bool {
         self.visibility && self.inherited_visibility
     }
-
-
 
     /// Returns a read only reference to a container position
     pub fn get_position(&self) -> &Position {
