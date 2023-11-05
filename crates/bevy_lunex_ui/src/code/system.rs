@@ -109,15 +109,15 @@ pub fn element_update(systems: Query<(&UiTree, &Transform)>, mut query: Query<(&
 // ===========================================================
 // === PLUGIN ===
 
-/// # Lunex Ui Plugin
+/// # Lunex Ui Plugin 2D
 /// A main plugin adding Lunex UI functionality for a 2D plane.
 /// ## Systems
 /// * [`tree_pull_window`]
 /// * [`tree_compute`]
 /// * [`element_update`]
 /// * [`cursor_update`]
-pub struct LunexUiPlugin;
-impl Plugin for LunexUiPlugin {
+pub struct LunexUiPlugin2D;
+impl Plugin for LunexUiPlugin2D {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, (tree_pull_window).before(tree_compute))
            .add_systems(Update, (tree_compute, element_update).chain())

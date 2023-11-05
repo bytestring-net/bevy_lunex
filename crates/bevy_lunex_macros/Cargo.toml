@@ -1,6 +1,6 @@
 [package]
 name = "bevy_lunex_macros"
-version = "0.0.6"
+version = "0.0.7"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["Dominik Kaspar <dominik0kaspar@gmail.com>"]
@@ -14,4 +14,4 @@ readme = "README.md"
 proc-macro = true
 
 [dependencies]
-bevy = { version = "0.11.2", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
+bevy = { version = "0.12.0", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }

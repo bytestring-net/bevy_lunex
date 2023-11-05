@@ -17,7 +17,7 @@ pub use code::cursor::Cursor;
 pub use code::cursor::cursor_update;
 
 pub use code::system::{tree_compute, tree_pull_window, element_update};
-pub use code::system::LunexUiPlugin;
+pub use code::system::LunexUiPlugin2D;
 pub use code::system::Size;
 
 pub use code::debug::LunexUiDebugPlugin2D;
@@ -32,7 +32,7 @@ pub mod prelude {
 
     pub use super::Cursor;
 
-    pub use super::LunexUiPlugin;
+    pub use super::LunexUiPlugin2D;
     pub use super::Size;
     pub use super::{tree_compute, tree_pull_window, element_update};
     pub use super::LunexUiDebugPlugin2D;

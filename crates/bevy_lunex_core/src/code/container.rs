@@ -304,6 +304,13 @@ impl SolidLayout {
         )
     }
 
+    /// Solid layout set to a custom size
+    pub fn with_size(mut self, width: f32, height: f32) -> SolidLayout {
+        self.width = width;
+        self.height = height;
+        self
+    }
+
     /// Solid layout set to a custom width
     pub fn with_width(mut self, width: f32) -> SolidLayout {
         self.width = width;

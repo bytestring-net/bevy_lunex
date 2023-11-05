@@ -94,7 +94,7 @@ impl UiT for PathTreeSingle<Container> {
     }
 
     fn tree(&self) -> String {
-        pathio::PathioHierarchy::tree(self)
+        pathio::PathioHierarchy::tree_dir(self)
     }
 
     fn get_depth(&self) -> f32 {
@@ -203,7 +203,7 @@ impl UiD for DirectorySingle<Container> {
     }
 
     fn tree(&self) -> String {
-        pathio::PathioHierarchy::tree(self)
+        pathio::PathioHierarchy::tree_dir(self)
     }
 
     fn get_container(&self) -> &Container {
