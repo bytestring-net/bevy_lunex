@@ -342,6 +342,11 @@ impl GridSegment {
         }
     }
 
+    /// Add cell to the segment
+    pub fn add_cell(&mut self, cell: impl Borrow<GridCell>) {
+        self.cell.push(cell.borrow().to_owned());
+    }
+
     /// Adds as many cells of the same size as there are gaps
     pub fn add_cells(mut self, cell: impl Borrow<GridCell>) -> Self {
         let mut _cell = Vec::new();
@@ -350,6 +355,11 @@ impl GridSegment {
         }
         self.cell = _cell;
         self
+    }
+
+    /// Add cell to the segment
+    pub fn add_gap(&mut self, gap: f32) {
+        self.gap.push(gap);
     }
 
     /// Adds as many gaps of the same size as there are cells
