@@ -85,16 +85,16 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
 
     // Spawn the image entity
     '_Fills: {
-        commands.spawn(ImageElementBundle::new(window1.clone(), &ImageParams::topleft().with_depth(1.0), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
+        commands.spawn(ImageElementBundle::new(&window1, ImageParams::topleft().with_depth(1.0), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
         commands.spawn((
-            ElementBundle::new(window1.clone(), Element::fullfill()),
+            ElementBundle::new(window1, Element::fullfill()),
             VectorElementRectangle {
                 color: Color::rgb_u8(30, 30, 30),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
 
-        commands.spawn(ImageElementBundle::new(window2.clone(), &ImageParams::center().with_depth(1.0), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
+        commands.spawn(ImageElementBundle::new(&window2, ImageParams::center().with_depth(1.0), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
         commands.spawn((
             ElementBundle::new(window2.clone(), Element::fullfill()),
             VectorElementRectangle {
@@ -103,36 +103,36 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
             },
         ));
 
-        commands.spawn(ImageElementBundle::new(window3.clone(), &ImageParams::topleft().with_depth(1.0).with_width(Some(100.0)), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
+        commands.spawn(ImageElementBundle::new(&window3, ImageParams::topleft().with_depth(1.0).with_width(Some(100.0)), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
         commands.spawn((
-            ElementBundle::new(window3.clone(), Element::fullfill()),
+            ElementBundle::new(window3, Element::fullfill()),
             VectorElementRectangle {
                 color: Color::rgb_u8(30, 30, 30),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
 
-        commands.spawn(ImageElementBundle::new(window4.clone(), &ImageParams::topleft().with_depth(1.0).with_width(Some(100.0)).with_height(Some(100.0)), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
+        commands.spawn(ImageElementBundle::new(&window4, ImageParams::topleft().with_depth(1.0).with_width(Some(100.0)).with_height(Some(100.0)), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
         commands.spawn((
-            ElementBundle::new(window4.clone(), Element::fullfill()),
+            ElementBundle::new(window4, Element::fullfill()),
             VectorElementRectangle {
                 color: Color::rgb_u8(30, 30, 30),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
 
-        commands.spawn(ImageElementBundle::new(window5.clone(), &ImageParams::center().at(100.0, 50.0).with_depth(1.0).with_scale(50.0), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
+        commands.spawn(ImageElementBundle::new(&window5, ImageParams::center().at(100.0, 50.0).with_depth(1.0).with_scale(50.0), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
         commands.spawn((
-            ElementBundle::new(window5.clone(), Element::fullfill()),
+            ElementBundle::new(window5, Element::fullfill()),
             VectorElementRectangle {
                 color: Color::rgb_u8(30, 30, 30),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
 
-        commands.spawn(ImageElementBundle::new(window6.clone(), &ImageParams::bottomcenter().with_depth(1.0), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
+        commands.spawn(ImageElementBundle::new(&window6, ImageParams::bottomcenter().with_depth(1.0), asset_server.load("image.png"), Vec2::new(510.0, 200.0)));
         commands.spawn((
-            ElementBundle::new(window6.clone(), Element::fullfill()),
+            ElementBundle::new(window6, Element::fullfill()),
             VectorElementRectangle {
                 color: Color::rgb_u8(30, 30, 30),
                 corner_radii: Vec4::splat(10.0)
