@@ -14,6 +14,6 @@ readme = "README.md"
 bevy = { version = "0.12.0", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text", "bevy_gizmos"] }
 bevy_lunex_core = { path = "../bevy_lunex_core", version = "0.0.7"}
 bevy_lunex_utility = { path = "../bevy_lunex_utility", version = "0.0.7"}
-pathio = { version = "0.2.0", features = ["bevy"] }
+pathio = { version = "0.2.1", features = ["bevy"] }
 mathio = "0.2.1"
 colored = "2.0.0"
