@@ -47,14 +47,13 @@ pub fn tree_compute(mut query: Query<(&mut UiTree, &Size, &Transform)>) {
 /// * [`Transform`] fields will be overwritten by this system.
 /// * [`Visibility`] enum will be changed by this system.
 /// 
-/// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`** (Not working, WIP - Currently it will just be Hidden).
-pub fn element_update(systems: Query<(&UiTree, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility, Without<UiTree>)>) {
+/// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**
+pub fn element_update(mut commands: Commands, systems: Query<(&UiTree, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility, Entity), Without<UiTree>>) {
     for (tree, tree_transform) in systems.iter() {
-        for (widget, element, mut transform, mut visibility, _) in &mut query {
+        for (widget, element, mut transform, mut visibility, entity) in &mut query {
             match widget.fetch(&tree) {
                 Err(_) => {
-                    // DESPAWN here, WIP - Temporary solution is to hide it
-                    *visibility = Visibility::Hidden;
+                    commands.entity(entity).despawn();
                 },
                 Ok(branch) => {
                     if !branch.is_visible() {

@@ -7,7 +7,8 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(Shape2dPlugin::default())
-        .add_plugins(LunexUiPlugin)
+        .add_plugins(LunexUiPlugin2D)
+        //.add_plugins(LunexUiDebugPlugin2D)
 
         .add_systems(Startup, setup)
 
@@ -17,7 +18,6 @@ fn main() {
 
         .run()
 }
-
 fn setup(mut commands: Commands, mut window: Query<(&mut Window, Entity)>) {
     commands.spawn(
         Camera2dBundle {
@@ -30,10 +30,10 @@ fn setup(mut commands: Commands, mut window: Query<(&mut Window, Entity)>) {
     );
     let mut ui_tree = UiTree::new("interface");
     build_interface(&mut commands, &mut ui_tree).unwrap();
-    println!("{}", ui_tree.list());
+    println!("{}", ui_tree.tree());
     
     let _window = window.get_single_mut().unwrap();
-    commands.entity(_window.1).insert((ui_tree, Transform::default(), bevy_lunex::prelude::Rectangle::default()));
+    commands.entity(_window.1).insert((ui_tree, Transform::default(), Size::default()));
 }
 
 

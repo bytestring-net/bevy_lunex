@@ -7,9 +7,8 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(Shape2dPlugin::default())
-        .add_plugins(LunexUiPlugin)
-
-        .add_plugins(LunexUiDebugPlugin2D)
+        .add_plugins(LunexUiPlugin2D)
+        //.add_plugins(LunexUiDebugPlugin2D)
 
         .add_systems(Startup, setup)
 
@@ -34,7 +33,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Que
     println!("{}", ui_tree.tree());
 
     let _window = window.get_single_mut().unwrap();
-    commands.entity(_window.1).insert((ui_tree, Transform::default(), bevy_lunex::prelude::Size::default()));
+    commands.entity(_window.1).insert((ui_tree, Transform::default(), Size::default()));
 }
 
 
@@ -42,53 +41,44 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
 
     let mut temporary_tree = UiTree::new("tmp");
     let tmp = &mut temporary_tree;
-
     
-    let workspace = Widget::create(tmp, "workspace", RelativeLayout::new())?;
+    let workspace = RelativeLayout::new().build(tmp, "workspace")?;
 
-    
-    let window1 = Widget::create(tmp, workspace.end("window1"), WindowLayout {
-        relative: Vec2::new(5., 5.),
-        width_relative: 30.,
-        height_relative: 20.,
-        ..default()
-    })?;
+    let window1 = WindowLayout::empty()
+        .with_rel(Vec2::new(5., 5.))
+        .with_width_rel(40.0)
+        .with_height_rel(25.0)
+        .build(tmp, workspace.end("window1"))?;
 
-    let window2 = Widget::create(tmp, workspace.end("window2"), WindowLayout {
-        relative: Vec2::new(50., 5.),
-        width_relative: 30.,
-        height_relative: 20.,
-        ..default()
-    })?;
+    let window2 = WindowLayout::empty()
+        .with_rel(Vec2::new(50., 5.))
+        .with_width_rel(40.0)
+        .with_height_rel(25.0)
+        .build(tmp, workspace.end("window2"))?;
 
-    let window3 = Widget::create(tmp, workspace.end("window3"), WindowLayout {
-        relative: Vec2::new(5., 30.),
-        width_relative: 30.,
-        height_relative: 20.,
-        ..default()
-    })?;
+    let window3 = WindowLayout::empty()
+        .with_rel(Vec2::new(5., 35.))
+        .with_width_rel(40.0)
+        .with_height_rel(25.0)
+        .build(tmp, workspace.end("window3"))?;
 
-    let window4 = Widget::create(tmp, workspace.end("window4"), WindowLayout {
-        relative: Vec2::new(50., 30.),
-        width_relative: 30.,
-        height_relative: 20.,
-        ..default()
-    })?;
+    let window4 = WindowLayout::empty()
+        .with_rel(Vec2::new(50., 35.))
+        .with_width_rel(40.0)
+        .with_height_rel(25.0)
+        .build(tmp, workspace.end("window4"))?;
 
-    let window5 = Widget::create(tmp, workspace.end("window5"), WindowLayout {
-        relative: Vec2::new(5., 60.),
-        width_relative: 30.,
-        height_relative: 20.,
-        ..default()
-    })?;
+    let window5 = WindowLayout::empty()
+        .with_rel(Vec2::new(5., 65.))
+        .with_width_rel(40.0)
+        .with_height_rel(25.0)
+        .build(tmp, workspace.end("window5"))?;
 
-    let window6 = Widget::create(tmp, workspace.end("window6"), WindowLayout {
-        relative: Vec2::new(50., 60.),
-        width_relative: 30.,
-        height_relative: 20.,
-        ..default()
-    })?;
-
+    let window6 = WindowLayout::empty()
+        .with_rel(Vec2::new(50., 65.))
+        .with_width_rel(40.0)
+        .with_height_rel(25.0)
+        .build(tmp, workspace.end("window6"))?;
 
     // Merge the temporary tree to main ui tree
     ui_tree.merge(temporary_tree)?;
@@ -99,7 +89,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window1.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb_u8(40, 40, 40),
+                color: Color::rgb_u8(30, 30, 30),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
@@ -108,7 +98,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window2.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb_u8(40, 40, 40),
+                color: Color::rgb_u8(30, 30, 30),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
@@ -117,7 +107,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window3.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb_u8(40, 40, 40),
+                color: Color::rgb_u8(30, 30, 30),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
@@ -126,7 +116,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window4.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb_u8(40, 40, 40),
+                color: Color::rgb_u8(30, 30, 30),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
@@ -135,7 +125,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window5.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb_u8(40, 40, 40),
+                color: Color::rgb_u8(30, 30, 30),
                 corner_radii: Vec4::splat(10.0)
             },
         ));
@@ -144,7 +134,7 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
         commands.spawn((
             ElementBundle::new(window6.clone(), Element::fullfill()),
             VectorElementRectangle {
-                color: Color::rgb_u8(40, 40, 40),
+                color: Color::rgb_u8(30, 30, 30),
                 corner_radii: Vec4::splat(10.0)
             },
         ));

@@ -8,4 +8,4 @@ publish = false
 bevy_lunex = { path = "../../../../bevy-lunex"}
 
 bevy = { version = "0.12.0", features = ["dynamic_linking"] }
-bevy_vector_shapes = "0.5.1"
+bevy_vector_shapes = "0.6.0"

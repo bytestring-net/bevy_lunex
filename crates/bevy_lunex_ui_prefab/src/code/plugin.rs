@@ -17,7 +17,7 @@ impl Plugin for LunexUiPrefabPlugin {
     fn build(&self, app: &mut App) {
         app
         .add_plugins(Shape2dPlugin::default())
-        .add_plugins(LunexUiPlugin)
+        .add_plugins(LunexUiPlugin2D)
 
         .add_systems(Update, (
             crate::code::boxes::vector_rectangle_update,

@@ -6,7 +6,7 @@ mod code;
 // ===========================================================
 // === EXPORT ===
 
-pub use code::color::{tween_color_rgba/*, tween_color_hsla_long, tween_color_hsla_short*/};
+pub use code::color::{tween_color_rgba, tween_color_hsla_long, tween_color_hsla_short};
 
 pub use code::conversion::AsLunexVec2;
 pub use code::conversion::InvertX;
@@ -26,9 +26,12 @@ pub use code::debug::LunexUiDebugPlugin2D;
 // === PRELUDE ===
 
 pub mod prelude {
-    pub use super::{tween_color_rgba/*, tween_color_hsla_long, tween_color_hsla_short*/};
+    pub use super::{tween_color_rgba, tween_color_hsla_long, tween_color_hsla_short};
 
     pub use super::AsLunexVec2;
+    pub use super::InvertX;
+    pub use super::InvertY;
+    pub use super::InvertXY;
 
     pub use super::Cursor;
 

@@ -9,7 +9,7 @@ pub fn tween_color_rgba(color1: Color, color2: Color, slide: f32) -> Color {
         tween(color1.a(), color2.a(), slide),
     )
 }
-/*
+
 pub fn tween_color_hsla_short(color1: Color, color2: Color, slider: f32) -> Color {
     Color::hsla(
         periodical_tween_short(360.0, color1.h(), color2.h(), slider),
@@ -26,4 +26,4 @@ pub fn tween_color_hsla_long(color1: Color, color2: Color, slider: f32) -> Color
         tween(color1.l(), color2.l(), slider),
         tween(color1.a(), color2.a(), slider),
     )
-}*/
+}

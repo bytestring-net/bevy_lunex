@@ -87,6 +87,20 @@ impl WindowLayout {
         self
     }
 
+    /// Window layout set with a custom absolute size
+    pub fn with_size_abs(mut self, width: f32, height: f32) -> WindowLayout {
+        self.width_absolute = width;
+        self.height_absolute = height;
+        self
+    }
+
+    /// Window layout set with a custom relative size
+    pub fn with_size_rel(mut self, width: f32, height: f32) -> WindowLayout {
+        self.width_relative = width;
+        self.height_relative = height;
+        self
+    }
+
     /// Window layout set with a custom width_absolute
     pub fn with_width_abs(mut self, abs: f32) -> WindowLayout {
         self.width_absolute = abs;
