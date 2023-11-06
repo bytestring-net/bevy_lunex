@@ -10,14 +10,14 @@ use crate::InvertY;
 
 /// # Lunex Draw Lines Debug 2D
 /// A system that uses 2D gizmos to draw `LIME_GREEN` rectangles over location of every widget.
-pub fn lunex_draw_lines_debug_2d(
-    mut query: Query<&UiTree>,
+pub fn lunex_draw_lines_debug_2d<T:Component>(
+    mut query: Query<&UiTree<T>>,
     mut gizmos: Gizmos,
 ) {
     for tree in &mut query {
         let vector = pathio::PathioHierarchy::crawl(tree);
         for bb in vector {
-            let container = bb.file.as_ref().unwrap();
+            let container = bb.file.as_ref().unwrap().container();
             gizmos.rect_2d(
                 (container.point_1() + container.size() / 2.0).invert_y(),
                 0.0,
@@ -51,10 +51,10 @@ pub fn lunex_camera_move_debug_2d(
 /// ## Systems
 /// * [`lunex_draw_lines_debug_2d`]
 /// * [`lunex_camera_move_debug_2d`]
-pub struct LunexUiDebugPlugin2D;
-impl Plugin for LunexUiDebugPlugin2D {
+pub struct LunexUiDebugPlugin2D<T:Component>(std::marker::PhantomData<T>);
+impl <T: Component> Plugin for LunexUiDebugPlugin2D<T> {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, lunex_draw_lines_debug_2d.after(element_update))
+        app.add_systems(Update, lunex_draw_lines_debug_2d::<T>.after(element_update::<T>))
             .add_systems(Update, lunex_camera_move_debug_2d.before(cursor_update));
     }
 }

@@ -65,7 +65,7 @@ impl Widget {
     /// let menu_button = Widget::create(&mut tree, menu.end("Button"), LayoutPackage::default()).unwrap();
     /// ```
     /// 
-    pub fn create(tree: &mut UiTree, path: impl Borrow<str>, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
+    pub fn create<T>(tree: &mut UiTree<T>, path: impl Borrow<str>, position: impl Into<LayoutPackage>) -> Result<Widget, LunexError> {
         let (_path, _name) = path.borrow().rsplit_once('/').unwrap_or((".", path.borrow()));
         match tree.borrow_branch_mut(_path) {
             Ok(borrowed_branch) => match borrowed_branch.create_branch(_name, position) {
@@ -112,7 +112,7 @@ impl Widget {
     /// button.fetch(&mut tree).unwrap(); // This will panic, because the fetching will return error type that will get unwrapped
     ///
     /// ```
-    pub fn drop_branch (&self, tree: &mut UiTree, path: impl Borrow<str>) -> Result<(), LunexError> {
+    pub fn drop_branch<T>(&self, tree: &mut UiTree<T>, path: impl Borrow<str>) -> Result<(), LunexError> {
         match self.fetch_mut(tree) {
             Ok(branch) => branch.drop_branch(path),
             Err(e) => Err(e),
@@ -174,7 +174,7 @@ impl Widget {
     /// let _menu: &UiBranch = menu.fetch(&tree).unwrap();
     /// let _button: &UiBranch = button.fetch(&tree).unwrap();
     /// ```
-    pub fn fetch<'a>(&'a self, tree: &'a UiTree) -> Result<&UiBranch, LunexError> {
+    pub fn fetch<'a, T> (&'a self, tree: &'a UiTree<T>) -> Result<&UiBranch<T>, LunexError> {
         match tree.borrow_branch(self.path.borrow()) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
@@ -201,7 +201,7 @@ impl Widget {
     /// let _button: &UiBranch = menu.fetch_ext(&tree, "Button").unwrap();
     /// let _button: &UiBranch = button.fetch_ext(&tree, "").unwrap();
     /// ```
-    pub fn fetch_ext<'a>(&'a self, tree: &'a UiTree, path: impl Borrow<str>) -> Result<&UiBranch, LunexError> {
+    pub fn fetch_ext<'a, T>(&'a self, tree: &'a UiTree<T>, path: impl Borrow<str>) -> Result<&UiBranch<T>, LunexError> {
         let mut extra_path = String::from(&self.path);
         if !path.borrow().is_empty() {
             extra_path += "/";
@@ -231,7 +231,7 @@ impl Widget {
     /// let _menu: &mut UiBranch = menu.fetch_mut(&mut tree).unwrap();
     /// let _button: &mut UiBranch = button.fetch_mut(&mut tree).unwrap();
     /// ```
-    pub fn fetch_mut<'a>(&'a self, tree: &'a mut UiTree) -> Result<&mut UiBranch, LunexError> {
+    pub fn fetch_mut<'a, T>(&'a self, tree: &'a mut UiTree<T>) -> Result<&mut UiBranch<T>, LunexError> {
         match tree.borrow_branch_mut(self.path.borrow()) {
             Ok(branch) => Ok(branch),
             Err(cause) => Err(LunexError::FetchError {
@@ -258,7 +258,7 @@ impl Widget {
     /// let _button: &mut UiBranch = menu.fetch_mut_ext(&mut tree, "Button").unwrap();
     /// let _button: &mut UiBranch = button.fetch_mut_ext(&mut tree, "").unwrap();
     /// ```
-    pub fn fetch_mut_ext<'a>(&'a self, tree: &'a mut UiTree, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError> {
+    pub fn fetch_mut_ext<'a, T>(&'a self, tree: &'a mut UiTree<T>, path: impl Borrow<str>) -> Result<&mut UiBranch<T>, LunexError> {
         let mut extra_path = String::from(&self.path);
         if !path.borrow().is_empty() {
             extra_path += "/";
@@ -289,7 +289,7 @@ impl Widget {
     /// 
     /// assert_eq!(true, button.contains_position(&mut tree, Vec2::new(50.0, 50.0)).unwrap());
     /// ```
-    pub fn contains_position(&self, tree: &UiTree, point: impl Borrow<Vec2>) -> Result<bool, LunexError> {
+    pub fn contains_position<T>(&self, tree: &UiTree<T>, point: impl Borrow<Vec2>) -> Result<bool, LunexError> {
         match self.fetch(&tree) {
             Ok(branch) => {
                 let position = branch.get_container().get_position();
@@ -319,7 +319,7 @@ impl Widget {
     /// 
     /// assert_eq!(true, menu.contains_position_ext(&mut tree, "Button", Vec2::new(50.0, 50.0)).unwrap());
     /// ```
-    pub fn contains_position_ext(&self, tree: &UiTree, path: impl Borrow<str>, point: impl Borrow<Vec2>) -> Result<bool, LunexError> {
+    pub fn contains_position_ext<T>(&self, tree: &UiTree<T>, path: impl Borrow<str>, point: impl Borrow<Vec2>) -> Result<bool, LunexError> {
         match self.fetch_ext(&tree, path) {
             Ok(branch) => {
                 let position = branch.get_container().get_position();

@@ -1,20 +1,24 @@
+use std::marker::PhantomData;
+
 use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 use bevy_vector_shapes::prelude::*;
 
+#[derive(Component)]
+pub struct Dat (f32);
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(Shape2dPlugin::default())
-        .add_plugins(LunexUiPlugin2D)
+        .add_plugins(LunexUiPlugin2D::<Dat>(PhantomData))
         //.add_plugins(LunexUiDebugPlugin2D)
 
         .add_systems(Startup, setup)
 
         .add_systems(Update, (
             vector_rectangle_update,
-        ).after(element_update))
+        ).after(element_update::<Dat>))
 
         .run()
 }
@@ -28,7 +32,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Que
             ..default()
         }
     );
-    let mut ui_tree = UiTree::new("interface");
+    let mut ui_tree: UiTree<Dat> = UiTree::new("interface");
     build_interface(&mut commands, &asset_server, &mut ui_tree).unwrap();
     println!("{}", ui_tree.tree());
 
@@ -37,7 +41,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Que
 }
 
 
-pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree) -> Result<(), LunexError> {
+pub fn build_interface<T>(commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree<T>) -> Result<(), LunexError> {
 
     let mut temporary_tree = UiTree::new("tmp");
     let tmp = &mut temporary_tree;

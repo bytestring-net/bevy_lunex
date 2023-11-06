@@ -1,5 +1,4 @@
 use std::borrow::Borrow;
-
 use bevy::prelude::*;
 use pathio::{prelude::*, PathTreeSingle, DirectorySingle};
 
@@ -17,7 +16,7 @@ const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
 /// It abstacts and unifies complex hierarchy logic added by pathio crate into one trait.
 /// 
 /// It implements every function you expect [`UiTree`] to have.
-pub trait UiT {
+pub trait UiT<T> {
     /// Creates a new UiTree
     fn new (name: impl Borrow<str>) -> Self;
 
@@ -28,16 +27,16 @@ pub trait UiT {
     fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError>;
 
     /// Borrows a branch on given path
-    fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch, LunexError>;
+    fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch<T>, LunexError>;
 
     /// Borrows a branch on given path
-    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError>;
+    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch<T>, LunexError>;
 
     /// Drops a branch on given path
     fn drop_branch(&mut self, path: impl Borrow<str>) -> Result<(), LunexError>;
 
     /// Merges UiTree or UiBranch content into itself
-    fn merge(&mut self, directory: impl Into<DirectorySingle<Container>>) -> Result<(), LunexError>;
+    fn merge(&mut self, directory: impl Into<UiBranch<T>>) -> Result<(), LunexError>;
 
     /// Generate a tree-like printable structure of the dir
     fn tree(&self) -> String;
@@ -54,13 +53,13 @@ pub trait UiT {
     /// Return if branch is visible or not. Counts in inherited visibility
     fn is_visible(&self) -> bool;
 }
-impl UiT for PathTreeSingle<Container> {
+impl <T> UiT<T> for UiTree<T> {
     fn new (name: impl Borrow<str>) -> Self {
-        let mut tree: PathTreeSingle<Container> = <PathTreeSingle<Container> as pathio::PathTreeInit>::new(name);
+        let mut tree: UiTree<T> = pathio::PathTreeInit::new(name);
         let mut container = Container::new();
         container.set_layout(RelativeLayout::new());
         container.set_render_depth(100.0);
-        tree.add_file(container);
+        tree.add_file(DataWrap::new(container));
         tree
     }
 
@@ -72,11 +71,11 @@ impl UiT for PathTreeSingle<Container> {
         self.directory.create_branch(path, layout)
     }
 
-    fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch, LunexError> {
+    fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch<T>, LunexError> {
         Ok(self.borrow_directory(path)?)
     }
 
-    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError> {
+    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch<T>, LunexError> {
         Ok(self.borrow_directory_mut(path)?)
     }
 
@@ -87,8 +86,8 @@ impl UiT for PathTreeSingle<Container> {
         }
     }
 
-    fn merge(&mut self, directory: impl Into<DirectorySingle<Container>>) -> Result<(), LunexError> {
-        let mut dir:DirectorySingle<Container> = directory.into();
+    fn merge(&mut self, directory: impl Into<UiBranch<T>>) -> Result<(), LunexError> {
+        let mut dir:UiBranch<T> = directory.into();
         let _ = dir.take_file();
         Ok(pathio::PathioHierarchy::merge(self, dir)?)
     }
@@ -102,16 +101,16 @@ impl UiT for PathTreeSingle<Container> {
     }
 
     fn get_visibility(&self) -> bool {
-        self.obtain_file().unwrap().get_visibility()
+        self.obtain_file().unwrap().container().get_visibility()
     }
 
     fn set_visibility(&mut self, visibility: bool) {
-        self.obtain_file_mut().unwrap().set_visibility(visibility);
+        self.obtain_file_mut().unwrap().container_mut().set_visibility(visibility);
         self.cascade_update_inherited_visibility();
     }
 
     fn is_visible(&self) -> bool {
-        self.obtain_file().unwrap().is_visible()
+        self.obtain_file().unwrap().container().is_visible()
     }
 }
 
@@ -120,7 +119,7 @@ impl UiT for PathTreeSingle<Container> {
 /// It abstacts and unifies complex hierarchy logic added by pathio crate into one trait.
 /// 
 /// It implements every function you expect [`UiBranch`] to have.
-pub trait UiD {
+pub trait UiD<T> {
     /// Compute the layout starting at origin
     fn compute(&mut self, point: Vec2, width: f32, height: f32);
     
@@ -128,16 +127,16 @@ pub trait UiD {
     fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError>;
 
     /// Borrows a branch on given path
-    fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch, LunexError>;
+    fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch<T>, LunexError>;
 
     /// Borrows a branch on given path
-    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError>;
+    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch<T>, LunexError>;
 
     /// Drops a branch on given path
     fn drop_branch(&mut self, path: impl Borrow<str>) -> Result<(), LunexError>;
 
     /// Merges UiTree or UiBranch content into itself
-    fn merge(&mut self, directory: impl Into<DirectorySingle<Container>>) -> Result<(), LunexError>;
+    fn merge(&mut self, directory: impl Into<UiBranch<T>>) -> Result<(), LunexError>;
 
     /// Generate a tree-like printable structure of the dir
     fn tree(&self) -> String;
@@ -160,9 +159,9 @@ pub trait UiD {
     /// Return if branch is visible or not. Counts in inherited visibility
     fn is_visible(&self) -> bool;
 }
-impl UiD for DirectorySingle<Container> {
+impl <T> UiD<T> for UiBranch<T> {
     fn compute(&mut self, point: Vec2, width: f32, height: f32) {
-        let container = self.obtain_file_mut().unwrap();
+        let container = self.get_container_mut();
 
         container.calculate(point, width, height);
         let pos = container.get_position().clone();
@@ -173,19 +172,20 @@ impl UiD for DirectorySingle<Container> {
     
     fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError> {
         self.create_directory(path.borrow())?;
+        let parent = self.get_container();
         let mut container = Container::new();
         container.set_layout(layout);
-        container.set_inherited_visibility(self.file.as_ref().unwrap().is_visible());
-        container.set_render_depth(self.file.as_ref().unwrap().get_render_depth());
-        self.insert_file(path, container)?;
+        container.set_inherited_visibility(parent.is_visible());
+        container.set_render_depth(parent.get_render_depth());
+        self.insert_file(path, DataWrap::new(container))?;
         Ok(())
     }
 
-    fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch, LunexError> {
+    fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch<T>, LunexError> {
         Ok(self.borrow_directory(path)?)
     }
 
-    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch, LunexError> {
+    fn borrow_branch_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiBranch<T>, LunexError> {
         Ok(self.borrow_directory_mut(path)?)
     }
 
@@ -196,8 +196,8 @@ impl UiD for DirectorySingle<Container> {
         }
     }
 
-    fn merge(&mut self, directory: impl Into<DirectorySingle<Container>>) -> Result<(), LunexError> {
-        let mut dir:DirectorySingle<Container> = directory.into();
+    fn merge(&mut self, directory: impl Into<UiBranch<T>>) -> Result<(), LunexError> {
+        let mut dir:UiBranch<T> = directory.into();
         let _ = dir.take_file();
         Ok(pathio::PathioHierarchy::merge(self, dir)?)
     }
@@ -207,11 +207,11 @@ impl UiD for DirectorySingle<Container> {
     }
 
     fn get_container(&self) -> &Container {
-        self.obtain_file().unwrap()
+        self.obtain_file().unwrap().container()
     }
 
     fn get_container_mut(&mut self) -> &mut Container {
-        self.obtain_file_mut().unwrap()
+        self.obtain_file_mut().unwrap().container_mut()
     }
 
     fn get_depth(&self) -> f32 {
@@ -219,41 +219,66 @@ impl UiD for DirectorySingle<Container> {
     }
 
     fn get_visibility(&self) -> bool {
-        self.obtain_file().unwrap().get_visibility()
+        self.get_container().get_visibility()
     }
 
     fn set_visibility(&mut self, visibility: bool) {
-        self.obtain_file_mut().unwrap().set_visibility(visibility);
+        self.get_container_mut().set_visibility(visibility);
         self.cascade_update_inherited_visibility();
     }
 
     fn is_visible(&self) -> bool {
-        self.obtain_file().unwrap().is_visible()
+        self.get_container().is_visible()
     }
 }
 
 trait CustomDirectoryRecursion {
     fn cascade_update_inherited_visibility(&mut self);
 }
-impl CustomDirectoryRecursion for DirectorySingle<Container> {
+impl <T> CustomDirectoryRecursion for UiBranch<T> {
     fn cascade_update_inherited_visibility(&mut self) {
         let visibility = self.is_visible();
         for (_, subdir) in &mut self.directory {
-            subdir.obtain_file_mut().unwrap().set_inherited_visibility(visibility);
+            subdir.get_container_mut().set_inherited_visibility(visibility);
             subdir.cascade_update_inherited_visibility();
         }
     }
 }
-impl CustomDirectoryRecursion for PathTreeSingle<Container> {
+impl <T> CustomDirectoryRecursion for UiTree<T> {
     fn cascade_update_inherited_visibility(&mut self) {
         let visibility = self.is_visible();
-        self.directory.obtain_file_mut().unwrap().set_inherited_visibility(visibility);
+        self.directory.get_container_mut().set_inherited_visibility(visibility);
         self.directory.cascade_update_inherited_visibility();
     }
 }
 
-pub type UiTree = PathTreeSingle<Container>;
-pub type UiBranch = DirectorySingle<Container>;
+pub type UiTree<T> = PathTreeSingle<DataWrap<T>>;
+pub type UiBranch<T> = DirectorySingle<DataWrap<T>>;
+
+pub struct DataWrap<T> {
+    container: Container,
+    data: Option<T>,
+}
+impl <T> DataWrap<T> {
+    pub fn new(container: Container) -> Self {
+        DataWrap {
+            container,
+            data: None,
+        }
+    }
+    pub fn container(&self) -> &Container {
+        &self.container
+    }
+    pub fn container_mut(&mut self) -> &mut Container {
+        &mut self.container
+    }
+    pub fn data(&self) -> &Option<T> {
+        &self.data
+    }
+    pub fn data_mut(&mut self) -> &mut Option<T> {
+        &mut self.data
+    }
+}
 
 
 

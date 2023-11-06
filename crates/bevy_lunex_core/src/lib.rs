@@ -35,7 +35,7 @@ pub mod test {
     use bevy::prelude::*; 
     #[test]
     fn run () {
-        let mut tree = UiTree::new("Ui");
+        let mut tree:UiTree<f32> = UiTree::new("Ui");
         tree.create_branch("Widget 1", RelativeLayout::new()).unwrap();
         Widget::create(&mut tree, "Widget 2", RelativeLayout::new()).unwrap();
 

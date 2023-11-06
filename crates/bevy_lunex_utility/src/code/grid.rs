@@ -138,7 +138,7 @@ impl Grid {
 
     /// # Build In
     /// Builds the grid in the selected widget and returns the widget grid
-    pub fn build_in(&self, tree: &mut UiTree, widget: impl Borrow<Widget>) -> Result<Vec<Vec<Widget>>, LunexError> {
+    pub fn build_in<T>(&self, tree: &mut UiTree<T>, widget: impl Borrow<Widget>) -> Result<Vec<Vec<Widget>>, LunexError> {
         let widget = widget.borrow();
 
         let grid_size = self.compute_size();
@@ -176,7 +176,7 @@ impl Grid {
     /// Builds the grid in a new widget and returns a tuple containing the new widget and the widget grid
     /// 
     /// [`SolidLayout`] provided is used with overwritten width and heigh parameters
-    pub fn build_in_solid(&self, tree: &mut UiTree, path: impl Borrow<str>, layout: SolidLayout) -> Result<(Widget, Vec<Vec<Widget>>), LunexError> {
+    pub fn build_in_solid<T>(&self, tree: &mut UiTree<T>, path: impl Borrow<str>, layout: SolidLayout) -> Result<(Widget, Vec<Vec<Widget>>), LunexError> {
 
         let grid_size = self.compute_size();
         let grid_lenght = self.compute_lenght();
@@ -217,7 +217,7 @@ impl Grid {
     /// Builds the grid in a new widget and returns a tuple containing the new widget and the widget grid
     /// 
     /// [`WindowLayout`] provided is used with overwritten width_relative and heigh_relative parameters
-    pub fn build_in_window(&self, tree: &mut UiTree, path: impl Borrow<str>, layout: WindowLayout) -> Result<(Widget, Vec<Vec<Widget>>), LunexError> {
+    pub fn build_in_window<T>(&self, tree: &mut UiTree<T>, path: impl Borrow<str>, layout: WindowLayout) -> Result<(Widget, Vec<Vec<Widget>>), LunexError> {
 
         let grid_size = self.compute_size();
         let grid_lenght = self.compute_lenght();
@@ -438,7 +438,7 @@ impl GridSegment {
 
     /// # Build In
     /// Builds the grid segment in the selected widget and returns the widget list
-    pub fn build_in(&self, tree: &mut UiTree, widget: impl Borrow<Widget>, orientation: GridOrientation) -> Result<Vec<Widget>, LunexError> {
+    pub fn build_in<T>(&self, tree: &mut UiTree<T>, widget: impl Borrow<Widget>, orientation: GridOrientation) -> Result<Vec<Widget>, LunexError> {
         let widget = widget.borrow();
 
         let segment_size = self.compute_size(orientation);
@@ -515,7 +515,7 @@ impl GridSegment {
     /// Builds the grid segment in a new widget and returns a tuple containing the new widget and the widget list
     /// 
     /// [`SolidLayout`] provided is used with overwritten width and heigh parameters
-    pub fn build_in_solid(&self, tree: &mut UiTree, path: impl Borrow<str>, layout: SolidLayout, orientation: GridOrientation) -> Result<(Widget, Vec<Widget>), LunexError> {
+    pub fn build_in_solid<T>(&self, tree: &mut UiTree<T>, path: impl Borrow<str>, layout: SolidLayout, orientation: GridOrientation) -> Result<(Widget, Vec<Widget>), LunexError> {
 
         let segment_size = self.compute_size(orientation);
         let segment_lenght = self.compute_lenght(orientation);
@@ -596,7 +596,7 @@ impl GridSegment {
     /// Builds the grid segment in a new widget and returns a tuple containing the new widget and the widget list
     /// 
     /// [`WindowLayout`] provided is used with overwritten width_relative and heigh_relative parameters
-    pub fn build_in_window(&self, tree: &mut UiTree, path: impl Borrow<str>, layout: WindowLayout, orientation: GridOrientation) -> Result<(Widget, Vec<Widget>), LunexError> {
+    pub fn build_in_window<T>(&self, tree: &mut UiTree<T>, path: impl Borrow<str>, layout: WindowLayout, orientation: GridOrientation) -> Result<(Widget, Vec<Widget>), LunexError> {
 
         let segment_size = self.compute_size(orientation);
         let segment_lenght = self.compute_lenght(orientation);
@@ -677,7 +677,7 @@ impl GridSegment {
     /// Builds the grid segment in a new widget and returns a tuple containing the new widget and the widget list
     /// 
     /// [`WindowLayout`] provided is used with overwritten width_absolute and heigh_relative parameters
-    pub fn build_in_window_absolute(&self, tree: &mut UiTree, path: impl Borrow<str>, layout: WindowLayout, orientation: GridOrientation) -> Result<(Widget, Vec<Widget>), LunexError> {
+    pub fn build_in_window_absolute<T>(&self, tree: &mut UiTree<T>, path: impl Borrow<str>, layout: WindowLayout, orientation: GridOrientation) -> Result<(Widget, Vec<Widget>), LunexError> {
 
         let segment_size = self.compute_size(orientation);
         let segment_lenght = self.compute_lenght(orientation);
@@ -756,7 +756,7 @@ impl GridSegment {
 
 
     /// Builds the grid segment in the selected widget, but you can specify in which part
-    fn build_in_part_grid(&self, tree: &mut UiTree, widget: impl Borrow<Widget>, orientation: GridOrientation, step: usize, length_pos: f32, size: f32, lenght: f32) -> Result<Vec<Widget>, LunexError> {
+    fn build_in_part_grid<T>(&self, tree: &mut UiTree<T>, widget: impl Borrow<Widget>, orientation: GridOrientation, step: usize, length_pos: f32, size: f32, lenght: f32) -> Result<Vec<Widget>, LunexError> {
         let widget = widget.borrow();
 
         let segment_size = self.compute_size(orientation);
