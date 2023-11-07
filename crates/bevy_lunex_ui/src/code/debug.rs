@@ -51,7 +51,7 @@ pub fn lunex_camera_move_debug_2d(
 /// ## Systems
 /// * [`lunex_draw_lines_debug_2d`]
 /// * [`lunex_camera_move_debug_2d`]
-pub struct LunexUiDebugPlugin2D<T:Component>(std::marker::PhantomData<T>);
+pub struct LunexUiDebugPlugin2D<T:Component>(pub std::marker::PhantomData<T>);
 impl <T: Component> Plugin for LunexUiDebugPlugin2D<T> {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, lunex_draw_lines_debug_2d::<T>.after(element_update::<T>))

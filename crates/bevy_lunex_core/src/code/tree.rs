@@ -147,6 +147,12 @@ pub trait UiD<T> {
     /// Borrow a container from this branch
     fn get_container_mut(&mut self) -> &mut Container;
 
+    /// Borrow data from this branch
+    fn get_data(&self) -> &Option<T>;
+
+    /// Borrow data from this branch
+    fn get_data_mut(&mut self) -> &mut Option<T>;
+
     /// Return branch depth
     fn get_depth(&self) -> f32;
 
@@ -214,6 +220,14 @@ impl <T> UiD<T> for UiBranch<T> {
         self.obtain_file_mut().unwrap().container_mut()
     }
 
+    fn get_data(&self) -> &Option<T> {
+        self.obtain_file().unwrap().data()
+    }
+
+    fn get_data_mut(&mut self) -> &mut Option<T> {
+        self.obtain_file_mut().unwrap().data_mut()
+    }
+
     fn get_depth(&self) -> f32 {
         pathio::PathioHierarchy::get_depth(self) * LEVEL_DEPTH_DIFFERENCE
     }
@@ -255,7 +269,7 @@ impl <T> CustomDirectoryRecursion for UiTree<T> {
 pub type UiTree<T> = PathTreeSingle<DataWrap<T>>;
 pub type UiBranch<T> = DirectorySingle<DataWrap<T>>;
 
-pub struct DataWrap<T> {
+pub struct DataWrap<T:Default> {
     container: Container,
     data: Option<T>,
 }
