@@ -16,7 +16,7 @@ const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
 /// It abstacts and unifies complex hierarchy logic added by pathio crate into one trait.
 /// 
 /// It implements every function you expect [`UiTree`] to have.
-pub trait UiT<T> {
+pub trait UiT<T:Default> {
     /// Creates a new UiTree
     fn new (name: impl Borrow<str>) -> Self;
 
@@ -53,7 +53,7 @@ pub trait UiT<T> {
     /// Return if branch is visible or not. Counts in inherited visibility
     fn is_visible(&self) -> bool;
 }
-impl <T> UiT<T> for UiTree<T> {
+impl <T:Default> UiT<T> for UiTree<T> {
     fn new (name: impl Borrow<str>) -> Self {
         let mut tree: UiTree<T> = pathio::PathTreeInit::new(name);
         let mut container = Container::new();
@@ -119,7 +119,7 @@ impl <T> UiT<T> for UiTree<T> {
 /// It abstacts and unifies complex hierarchy logic added by pathio crate into one trait.
 /// 
 /// It implements every function you expect [`UiBranch`] to have.
-pub trait UiD<T> {
+pub trait UiD<T:Default> {
     /// Compute the layout starting at origin
     fn compute(&mut self, point: Vec2, width: f32, height: f32);
     
@@ -148,10 +148,10 @@ pub trait UiD<T> {
     fn get_container_mut(&mut self) -> &mut Container;
 
     /// Borrow data from this branch
-    fn get_data(&self) -> &Option<T>;
+    fn get_data(&mut self) -> &T;
 
     /// Borrow data from this branch
-    fn get_data_mut(&mut self) -> &mut Option<T>;
+    fn get_data_mut(&mut self) -> &mut T;
 
     /// Return branch depth
     fn get_depth(&self) -> f32;
@@ -165,7 +165,7 @@ pub trait UiD<T> {
     /// Return if branch is visible or not. Counts in inherited visibility
     fn is_visible(&self) -> bool;
 }
-impl <T> UiD<T> for UiBranch<T> {
+impl <T:Default> UiD<T> for UiBranch<T> {
     fn compute(&mut self, point: Vec2, width: f32, height: f32) {
         let container = self.get_container_mut();
 
@@ -220,11 +220,11 @@ impl <T> UiD<T> for UiBranch<T> {
         self.obtain_file_mut().unwrap().container_mut()
     }
 
-    fn get_data(&self) -> &Option<T> {
-        self.obtain_file().unwrap().data()
+    fn get_data(&mut self) -> &T {
+        self.obtain_file_mut().unwrap().data()
     }
 
-    fn get_data_mut(&mut self) -> &mut Option<T> {
+    fn get_data_mut(&mut self) -> &mut T {
         self.obtain_file_mut().unwrap().data_mut()
     }
 
@@ -249,7 +249,7 @@ impl <T> UiD<T> for UiBranch<T> {
 trait CustomDirectoryRecursion {
     fn cascade_update_inherited_visibility(&mut self);
 }
-impl <T> CustomDirectoryRecursion for UiBranch<T> {
+impl <T:Default> CustomDirectoryRecursion for UiBranch<T> {
     fn cascade_update_inherited_visibility(&mut self) {
         let visibility = self.is_visible();
         for (_, subdir) in &mut self.directory {
@@ -258,7 +258,7 @@ impl <T> CustomDirectoryRecursion for UiBranch<T> {
         }
     }
 }
-impl <T> CustomDirectoryRecursion for UiTree<T> {
+impl <T:Default> CustomDirectoryRecursion for UiTree<T> {
     fn cascade_update_inherited_visibility(&mut self) {
         let visibility = self.is_visible();
         self.directory.get_container_mut().set_inherited_visibility(visibility);
@@ -273,7 +273,7 @@ pub struct DataWrap<T:Default> {
     container: Container,
     data: Option<T>,
 }
-impl <T> DataWrap<T> {
+impl <T: Default> DataWrap<T> {
     pub fn new(container: Container) -> Self {
         DataWrap {
             container,
@@ -286,11 +286,23 @@ impl <T> DataWrap<T> {
     pub fn container_mut(&mut self) -> &mut Container {
         &mut self.container
     }
-    pub fn data(&self) -> &Option<T> {
-        &self.data
+    pub fn data(&mut self) -> &T {
+        if let None = &self.data {
+            self.data = Some(T::default());
+        }
+        match &self.data {
+            Some(t) => t,
+            None => unreachable!()
+        }
     }
-    pub fn data_mut(&mut self) -> &mut Option<T> {
-        &mut self.data
+    pub fn data_mut(&mut self) -> &mut T {
+        if let None = &self.data {
+            self.data = Some(T::default());
+        }
+        match &mut self.data {
+            Some(t) => t,
+            None => unreachable!()
+        }
     }
 }
 

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 use bevy_vector_shapes::prelude::*;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Dat (f32);
 
 fn main() {
@@ -41,7 +41,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Que
 }
 
 
-pub fn build_interface<T>(commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree<T>) -> Result<(), LunexError> {
+pub fn build_interface<T:Default>(commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree<T>) -> Result<(), LunexError> {
 
     let mut temporary_tree = UiTree::new("tmp");
     let tmp = &mut temporary_tree;

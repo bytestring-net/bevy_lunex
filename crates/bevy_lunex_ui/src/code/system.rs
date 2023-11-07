@@ -17,7 +17,7 @@ pub struct Size {
 /// A system that pulls [`Window`] dimensions into UiTree's [`Size`] and [`Transform`] component.
 /// 
 /// This is repeated every frame.
-pub fn tree_pull_window<T:Component>(mut query: Query<(&mut Size, &mut Transform, &Window), With<UiTree<T>>>) {
+pub fn tree_pull_window<T:Component + Default>(mut query: Query<(&mut Size, &mut Transform, &Window), With<UiTree<T>>>) {
     for (mut size, mut transform, window) in &mut query {
         size.width = window.resolution.width();
         size.height = window.resolution.height();
@@ -32,7 +32,7 @@ pub fn tree_pull_window<T:Component>(mut query: Query<(&mut Size, &mut Transform
 /// A system that calls `.compute()` with data from UiTree's [`Size`] and [`Transform`] component.
 /// 
 /// This is repeated every frame.
-pub fn tree_compute<T:Component>(mut query: Query<(&mut UiTree<T>, &Size, &Transform)>) {
+pub fn tree_compute<T:Component + Default>(mut query: Query<(&mut UiTree<T>, &Size, &Transform)>) {
     for (mut tree, size, transform) in &mut query {
         tree.compute(transform.translation.truncate(), size.width, size.height);
     }
@@ -48,7 +48,7 @@ pub fn tree_compute<T:Component>(mut query: Query<(&mut UiTree<T>, &Size, &Trans
 /// * [`Visibility`] enum will be changed by this system.
 /// 
 /// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**
-pub fn element_update<T:Component>(mut commands: Commands, systems: Query<(&UiTree<T>, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility, Entity), Without<UiTree<T>>>) {
+pub fn element_update<T:Component + Default>(mut commands: Commands, systems: Query<(&UiTree<T>, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility, Entity), Without<UiTree<T>>>) {
     for (tree, tree_transform) in systems.iter() {
         for (widget, element, mut transform, mut visibility, entity) in &mut query {
             match widget.fetch(&tree) {
@@ -115,8 +115,8 @@ pub fn element_update<T:Component>(mut commands: Commands, systems: Query<(&UiTr
 /// * [`tree_compute`]
 /// * [`element_update`]
 /// * [`cursor_update`]
-pub struct LunexUiPlugin2D<T:Component>(pub std::marker::PhantomData<T>);
-impl <T: Component> Plugin for LunexUiPlugin2D<T> {
+pub struct LunexUiPlugin2D<T:Component + Default>(pub std::marker::PhantomData<T>);
+impl <T: Component + Default> Plugin for LunexUiPlugin2D<T> {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, (tree_pull_window::<T>).before(tree_compute::<T>))
            .add_systems(Update, (tree_compute::<T>, element_update::<T>).chain())
