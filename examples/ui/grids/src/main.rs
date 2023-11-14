@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 use bevy_vector_shapes::prelude::*;
@@ -7,14 +9,14 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(Shape2dPlugin::default())
-        .add_plugins(LunexUiPlugin2D)
+        .add_plugins(LunexUiPlugin2D::<D>(PhantomData))
         //.add_plugins(LunexUiDebugPlugin2D)
 
         .add_systems(Startup, setup)
 
         .add_systems(Update, (
             vector_rectangle_update,
-        ).after(element_update))
+        ).after(element_update::<D>))
 
         .run()
 }
@@ -37,7 +39,7 @@ fn setup(mut commands: Commands, mut window: Query<(&mut Window, Entity)>) {
 }
 
 
-pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result<(), LunexError> {
+pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree<D>) -> Result<(), LunexError> {
 
     let mut temporary_tree = UiTree::new("tmp");
     let tmp = &mut temporary_tree;
@@ -46,7 +48,6 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
 
     let window = WindowLayout::empty()
         .with_rel(Vec2::splat(10.0))
-        .with_width_rel(80.0)
         .with_size_rel(80.0, 80.0)
         .build(tmp, workspace.end("window"))?;
 
@@ -130,3 +131,6 @@ pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transf
         painter.rect(Vec2::new(ww, hh));
     }
 }
+
+#[derive(Component, Default)]
+pub struct D;

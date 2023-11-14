@@ -2,7 +2,7 @@
 
 <div align="center">
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
-  <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.11.2-white.svg?label=bevy&color=bb86a5"></a>
+  <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.12.0-white.svg?label=bevy&color=bb86a5"></a>
   <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-Apache/MIT-white.svg?label=license&color=9fcec4"></a>
   <a href="https://deps.rs/crate/bevy_lunex"><img src="https://img.shields.io/badge/check-white.svg?label=deps&color=a0f6b9"></a>
   <a href="https://docs.rs/bevy_lunex"><img src="https://img.shields.io/docsrs/bevy_lunex/latest?color=8df7cb"></a>
@@ -10,9 +10,14 @@
 
 # 
 
-Blazingly fast ***path*** based ***modular layout engine*** built on top of **Bevy ECS**. It calculates layout from user-defined ***rectangle positions*** and percentages. Works for ***all aspect ratios***.
+## Version 0.7 RELEASED!
+v0.7 is very close to the release of v1.0!
 
-*Note: Currently WIP development. Most of the features are already implemented, but we are giving ourselves some time to catch bugs and polish our systems. The deadline for the 0.1 release is the 0.12.0 release of Bevy.*
+#
+
+Blazingly fast ***path*** based ***modular layout engine*** built on top of **Bevy ECS**. It calculates layout from user-defined ***rectangle positions*** and percentages. Works for ***all aspect ratios***. Uses retained style UI. (It may develop into full-fledged UI lib in the future)
+
+*Note: I'm currently super busy with school, so the development during the school year is rather slow*
 
 ## === Showcase ===
 
@@ -33,11 +38,14 @@ Blazingly fast ***path*** based ***modular layout engine*** built on top of **Be
 
 **Bevy-Lunex** is a layout engine based on defining and managing rectangles. It strives to be **clean**, **simple** and **intuitive** to the user. The most prominent use case is to use it as a *"building brick"* for your own **user interface**.
 
-The core of this library is **pure math** layout engine, meaning **no styling** or **rendering** is currently included. That's where you come in. You can use the library to hook your own components and custom rendering to make it look exactly the way you want.
+The core of this library is **pure math** layout engine, meaning **no styling** or **rendering** is currently included. That's where you come in. You can use the library to hook your own components and custom rendering to make it look exactly the way you want (May change in the future into full-fledged UI lib :D ).
 
 By attaching entities to coordinates returned by **Bevy Lunex**, you can abstract complex positioning logic away from you. Take a look at these examples:
 * **[`Bevy Lunex Cyberpunk`](https://github.com/IDEDARY/bevy-lunex-cyberpunk)** - *Made by attaching images to Bevy Lunex rectangles and animating them*.
 * **[`Stardawn`](https://github.com/IDEDARY/stardawn)** - *Used [bevy_vector_shapes](https://github.com/james-j-obrien/bevy_vector_shapes) to render resizable dynamic elements*.
+
+Currently the most up-to-date practices and workflow can be found in the **[`Bevy Lunex Cyberpunk`](https://github.com/IDEDARY/bevy-lunex-cyberpunk)** project.
+Every other demo is somewhat broken with the latest "Game-Changing" release (0.7).
 
 ## === Workflow ===
 <details><summary>Expand</summary>
@@ -70,18 +78,18 @@ This is the way to get around the *Rust's borrow checker*.
 ### --- Tree creation ---
 
 First, create a **"UiTree"** struct that will hold all the layout data managed recursively.
+We also need to specify the generic, which is optional field each widget can have and store data in.
 ```rust
-let mut tree = UiTree::new("UI");
+let mut tree: UiTree<MyData> = UiTree::new("UI");
 ```
 
 ### --- Layout definition ---
 To create a new **"Widget"** in the root directory you pass in the **"UiTree"**, specify widget properties and the function returns the smart pointer. 
 ```rust
-let widget = Widget::create(&mut tree, "widget", RelativeLayout {
-    relative_1: Vec2::new(0.0, 0.0),
-    relative_2: Vec2::new(100.0, 100.0),
-    ..default()
-})?;
+let widget: Widget = WindowLayout::empty()
+    .with_rel(Vec2::splat(10.0))
+    .with_size_rel(80.0, 80.0)
+    .build(&mut tree, "widget")?;
 ```
 
 ### --- Logic binding ---
@@ -104,19 +112,28 @@ To add logic to your **"Widgets"**, you use Bevy systems. In this example, we wi
 #[derive(Component)]
 pub struct ButtonHighlightEffect (pub Color);
 
-fn button_highlight_effect_update(
-    systems: Query<&UiTree>,
+fn button_highlight_effect_update<T:Component + Default>(
+    trees: Query<&UiTree<T>>,
     cursors: Query<&Cursor>, 
     mut query: Query<(&Widget, &mut Sprite, &ButtonHighlightEffect)>
 ) {
-    for system in systems.iter() {
+    for tree in trees {
         for (widget, mut sprite, color) in &mut query {
-            for cursor in cursors.iter() {
-                if widget.contains_position(&system, "", &cursor.position_world().as_lunex(system.offset)).unwrap(){
-                    sprite.color = color.0;
-                } else {
-                    sprite.color = Color::WHITE;
+
+            if !widget.fetch(&tree).unwrap().is_visible() {return;}
+
+            let mut trigger = false;
+            for cursor in &cursors {
+                if widget.contains_position(&tree, &cursor.position_world().invert_y()).unwrap() {
+                    trigger = true;
+                    break;
                 }
+            }
+
+            if trigger{
+                sprite.color = color.0;
+            } else {
+                sprite.color = Color::WHITE;
             }
         }
     }
@@ -125,7 +142,7 @@ fn button_highlight_effect_update(
 ### --- Last ---
 Don't forget to add the system to the app.
 ```rust
-.add_systems(Update, button_highlight_effect_update)
+.add_systems(Update, button_highlight_effect_update::<T>)
 ```
 You need to spawn the **"UiTree"** we created in the first step as an entity so we can query for it.
 ```rust
@@ -145,6 +162,7 @@ By nesting branches of these 3 types, you can precisely define the position and 
 ## === Versions ===
 |  Bevy  | Bevy Lunex |
 |--------|------------|
+| 0.12.0 |    0.0.7   |
 | 0.11.2 |  <= 0.0.6  |
 
 ## === Contributing ===
