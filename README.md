@@ -41,10 +41,10 @@ Blazingly fast ***path*** based ***modular layout engine*** built on top of **Be
 The core of this library is **pure math** layout engine, meaning **no styling** or **rendering** is currently included. That's where you come in. You can use the library to hook your own components and custom rendering to make it look exactly the way you want (May change in the future into full-fledged UI lib :D ).
 
 By attaching entities to coordinates returned by **Bevy Lunex**, you can abstract complex positioning logic away from you. Take a look at these examples:
-* **[`Bevy Lunex Cyberpunk`](https://github.com/IDEDARY/Bevypunk)** - *Made by attaching images to Bevy Lunex rectangles and animating them*.
+* **[`Bevypunk`](https://github.com/IDEDARY/Bevypunk)** - *Made by attaching images to Bevy Lunex rectangles and animating them*.
 * **[`Stardawn`](https://github.com/IDEDARY/stardawn)** - *Used [bevy_vector_shapes](https://github.com/james-j-obrien/bevy_vector_shapes) to render resizable dynamic elements*.
 
-Currently the most up-to-date practices and workflow can be found in the **[`Bevy Lunex Cyberpunk`](https://github.com/IDEDARY/Bevypunk)** project.
+Currently the most up-to-date practices and workflow can be found in the **[`Bevypunk`](https://github.com/IDEDARY/Bevypunk)** project.
 Every other demo is somewhat broken with the latest "Game-Changing" release (0.7).
 
 ## === Workflow ===
