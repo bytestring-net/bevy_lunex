@@ -20,6 +20,6 @@ members = [
 
 [dependencies]
 bevy_lunex_core = { path = "crates/bevy_lunex_core", version = "0.0.7"}
-bevy_lunex_macros = { path = "crates/bevy_lunex_macros", version = "0.0.7"}
+#bevy_lunex_macros = { path = "crates/bevy_lunex_macros", version = "0.0.7"}
 bevy_lunex_ui = { path = "crates/bevy_lunex_ui", version = "0.0.7"}
 bevy_lunex_utility = { path = "crates/bevy_lunex_utility", version = "0.0.7"}
