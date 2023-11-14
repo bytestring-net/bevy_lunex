@@ -1,0 +1,59 @@
+# LUML - Lunex markup language
+# Integrate with RHAI or RUNE scripting languages
+
+layers = [
+    background,
+    middleground, #default
+    foreground,
+]
+
+
+CONST_NAME = ELEMENT_DIV (PARAMETERS) [LINKED_LOGIC_OR_STYLE] { NESTED_DIVS }
+The order of parametes matter, they will be executed in order they are put
+
+
+
+MAIN_MENU = Relative {
+    Relative (width: 100% + 2.6% * 2, height: 100% + 2% * 2, layer: background) [SmoothWiggleEffect] {
+        Solid (width: 2560, height: 1440, scaling: fill) [
+            Image (path: "images/main_menu/53_.png", depth: -0.5)       // WHY IS IMAGE EVEN HERE? CAN IT BE IN NESTED AS IT RETURNS SIZE?
+        ]
+    } //,
+
+    Solid (width: 807, height: 1432, anchor: -0.8) [
+        Image (path: "images/main_menu/board.png")
+    ] {
+        Segment (vertical) {
+            Segment (horizontal, gaps: 1em, size: grow, overflow: crop/scale) {       //Grow means size is dependant on children content
+                LineAlign (-1.0),
+                Cell (width: 100%, height: auto) {  //Auto -> Use child returned size
+                    Button (label: "CONTINUE", primary, at_x: 50%, at_y: 50%) [Link (url: "/SETTINGS")] // -> Returns ABS size
+                    Button (label: "CONTINUE", primary, at_x: 100%, at_y: 50%) [Link (url: "/SETTINGS")] // -> Returns ABS size
+                },
+                Gap (2em),  // Overwrites the gap with custom gap
+
+                Cell::Sized (width: 10, height: 10) {  // Pure number means unit -> relative to the grid
+                    Button (label: "CONTINUE", primary, block) [Link (url: "/SETTINGS")] // -> Grows to 100% REL size
+                },
+                Gap (5),
+
+                Cell::Text (label: "NEW GAME"),
+
+                Cell::Text (label: "LOAD GAME"),
+                Cell::Text (label: "SETTINGS"),
+                Cell::Text (label: "ADDITIONAL CONTENT"),
+                Cell::Text (label: "CREDITS"),
+                Cell::Text (label: "QUIT GAME"),
+            }
+        }
+    }
+}
+
+
+
+
+
+
+div = empty rec with x for width and y for height
+
+magnet: Vec2

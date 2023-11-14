@@ -1,6 +1,6 @@
 [package]
 name = "bevy_lunex_ui_prefab"
-version = "0.0.6"
+version = "0.0.7"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["Dominik Kaspar <dominik0kaspar@gmail.com>"]
@@ -11,8 +11,6 @@ description = "Supporting crate for bevy_lunex"
 readme = "README.md"
 
 [dependencies]
-bevy_vector_shapes = "0.5.1"
-
-bevy = { version = "0.11.2", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
-
-bevy_lunex = { path = "../../", version = "0.0.6"}
+bevy = { version = "0.12.0", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
+bevy_vector_shapes = "0.6.0"
+bevy_lunex = { path = "../../", version = "0.0.7"}

@@ -2,7 +2,6 @@ use std::borrow::Borrow;
 
 use bevy::prelude::*;
 use bevy_lunex::prelude::*;
-use bevy_lunex_ui_prefab::*;
 use bevy_vector_shapes::prelude::*;
 
 
@@ -10,19 +9,15 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(Shape2dPlugin::default())
-        .add_plugins(LunexUiPlugin)
+        .add_plugins(LunexUiPlugin2D)
 
         .add_systems(Startup, setup)
-
         .add_systems(Update, dropdown_element_update)
-
-        .add_systems(Update, (
-            vector_rectangle_update,
-        ).after(element_update))
+        .add_systems(Update, vector_rectangle_update.after(element_update))
 
         .run()
 }
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Query<(&mut Window, Entity)>) {
     commands.spawn((
         Cursor::new(0.0),
         Transform::default(),
@@ -38,9 +33,10 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     );
     let mut ui_tree = UiTree::new("interface");
     build_interface(&mut commands, &asset_server, &mut ui_tree).unwrap();
-    println!("{}", ui_tree.generate_map_debug());
+    println!("{}", ui_tree.tree());
 
-    commands.spawn (ui_tree);
+    let _window = window.get_single_mut().unwrap();
+    commands.entity(_window.1).insert((ui_tree, Transform::default(), Size::default()));
 }
 
 pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree) -> Result<(), LunexError> {
@@ -50,7 +46,6 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
 
     let mut temporary_tree = UiTree::new("tmp");
     let tmp = &mut temporary_tree;
-
 
     '_Workspace: {
         let workspace = Widget::create(tmp, "workspace", RelativeLayout::new())?;
@@ -130,9 +125,6 @@ pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>
     Ok(())
 }
 
-
-
-
 /// Renders the widget
 #[derive(Component)]
 pub struct VectorElementRectangle {
@@ -154,7 +146,6 @@ pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transf
         painter.rect(Vec2::new(ww, hh));
     }
 }
-
 
 #[derive(Component)]
 pub struct DropDownElement {
@@ -196,7 +187,7 @@ pub fn dropdown_element_update (mut commands: Commands, mut trees: Query<&mut Ui
         for (widget, dropdown) in &mut query {
             let mut trigger = false;
             for cursor in &cursors {
-                if widget.contains_position(&tree, &cursor.position_world().as_lunex(tree.offset)).unwrap() {
+                if widget.contains_position(&tree, &cursor.position_world().invert_y()).unwrap() {
                     trigger = true;
                     break;
                 }
@@ -205,7 +196,6 @@ pub fn dropdown_element_update (mut commands: Commands, mut trees: Query<&mut Ui
             if trigger {
                 match widget.fetch_ext(&tree, "Droplist") {
                     Err(..) => {
-                        //println!("Building list");
                         dropdown.build_list(&mut commands, &mut tree, widget).unwrap();
                     },
                     Ok (..) => {},
@@ -214,16 +204,14 @@ pub fn dropdown_element_update (mut commands: Commands, mut trees: Query<&mut Ui
                 match widget.fetch_ext(&tree, "Droplist") {
                     Err(..) => {},
                     Ok (..) => {
-                        //println!("Dropping list");
-                        let mut trigger = false;
                         for cursor in &cursors {
-                            if widget.contains_position_ext(&tree, "Droplist", &cursor.position_world().as_lunex(tree.offset)).unwrap() {
+                            if widget.contains_position_ext(&tree, "Droplist", &cursor.position_world().invert_y()).unwrap() {
                                 trigger = true;
                                 break;
                             }
                         }
                         if trigger == false {
-                            widget.remove(&mut tree, "Droplist").unwrap();
+                            widget.drop_branch(&mut tree, "Droplist").unwrap();
                         }
                     },
                 }

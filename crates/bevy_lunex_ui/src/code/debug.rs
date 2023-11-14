@@ -1,73 +1,36 @@
 use bevy::prelude::*;
-use colored::Colorize;
-
-use bevy_lunex_core::{UiTree, Widget};
-use bevy_lunex_utility::{ImageElementBundle, ImageParams};
+use bevy_lunex_core::UiTree;
 
 use crate::cursor_update;
 use crate::element_update;
-
+use crate::InvertY;
 
 // ===========================================================
 // === DEBUGGING FUNCTIONALITY ===
 
-/// ### Debug Image
-/// A marker for ImageBundles spawned by debug functions, ***NOT INTENDED*** to be used by user!
-#[derive(Component)]
-pub struct DebugImage;
-
-/// ### Lunex setup debug
-/// A system that will create debug sprites for all valid widgets
-pub fn lunex_setup_debug(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    systems: Query<&UiTree>,
+/// # Lunex Draw Lines Debug 2D
+/// A system that uses 2D gizmos to draw `LIME_GREEN` rectangles over location of every widget.
+pub fn lunex_draw_lines_debug_2d<T:Component + Default>(
+    mut query: Query<&UiTree<T>>,
+    mut gizmos: Gizmos,
 ) {
-    for system in systems.iter() {
-        for x in system.collect_paths() {
-            let widget = Widget::new(&x);
-            match widget.fetch(system) {
-                Err(_) => {}
-                Ok(..) => {
-                    println!(
-                        "{} {} {}",
-                        "Debug".green().bold(),
-                        "sprite created for:".black().italic(),
-                        x.yellow().bold()
-                    );
-                    commands.spawn((
-                        ImageElementBundle::new(widget, ImageParams::default().with_width(Some(100.0)).with_height(Some(100.0)), asset_server.load("debug.png"), Vec2::new(300.0,200.0)),
-                        DebugImage
-                    ));
-                }
-            }
+    for tree in &mut query {
+        let vector = pathio::PathioHierarchy::crawl(tree);
+        for bb in vector {
+            let container = bb.file.as_ref().unwrap().container();
+            gizmos.rect_2d(
+                (container.point_1() + container.size() / 2.0).invert_y(),
+                0.0,
+                container.size(),
+                Color::LIME_GREEN,
+            );
         }
     }
 }
 
-/// ### Lunex setup debug
-/// A system that will update debug sprites to have + 400 Z
-pub fn lunex_update_debug(
-    systems: Query<&UiTree>,
-    mut query: Query<(&mut Widget, &mut Transform, &DebugImage)>,
-) {
-    let system = systems.get_single().unwrap();
-    for (widget, mut transform, _) in &mut query {
-        match widget.fetch(&system) {
-            Err(_) => {
-                transform.translation.x = -10000.0;
-                transform.translation.y = -10000.0;
-            }
-            Ok(branch) => {
-                transform.translation.z = branch.get_depth() + 400.0;
-            }
-        };
-    }
-}
-
-/// ### Lunex setup debug
-/// A system that will allow the camera to move out of view by WASD.
-pub fn lunex_camera_move_debug(
+/// # Lunex Camera Move Debug 2D
+/// A system that will allow the camera to move out of view by WASD on 2D plane.
+pub fn lunex_camera_move_debug_2d(
     mut query: Query<(&Camera, &mut Transform)>,
     keyboard_input: Res<Input<KeyCode>>,
 ) {
@@ -82,17 +45,16 @@ pub fn lunex_camera_move_debug(
 // ===========================================================
 // === PLUGIN ===
 
-/// ### Lunex Ui Debug Plugin
-/// A plugin holding all systems used for debugging Bevy-Lunex.
-/// ### Systems
-/// * `lunex_setup_debug` = queries and initiates debug sprites for all valid widgets.
-/// * `lunex_update_debug` = updates the debug sprites Z coordinate to be Z + 400.
-/// * `lunex_camera_move_debug` = adds WASD movement to the camera so you can see widgets out of view.
-pub struct LunexUiDebugPlugin;
-impl Plugin for LunexUiDebugPlugin {
+/// # Lunex Ui Debug Plugin 2D
+/// A plugin holding all systems used for debugging Bevy-Lunex in 2D plane.
+/// Contains logic which is undesired for 3D applications.
+/// ## Systems
+/// * [`lunex_draw_lines_debug_2d`]
+/// * [`lunex_camera_move_debug_2d`]
+pub struct LunexUiDebugPlugin2D<T:Component + Default>(pub std::marker::PhantomData<T>);
+impl <T: Component + Default> Plugin for LunexUiDebugPlugin2D<T> {
     fn build(&self, app: &mut App) {
-        app.add_systems(PostStartup, lunex_setup_debug)
-            .add_systems(Update, lunex_update_debug.after(element_update))
-            .add_systems(Update, lunex_camera_move_debug.before(cursor_update));
+        app.add_systems(Update, lunex_draw_lines_debug_2d::<T>.after(element_update::<T>))
+            .add_systems(Update, lunex_camera_move_debug_2d.before(cursor_update));
     }
 }

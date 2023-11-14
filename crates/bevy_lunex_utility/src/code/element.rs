@@ -150,7 +150,8 @@ pub struct ElementBundle {
     pub transform: Transform,
     pub visibility: Visibility,
     pub global_transform: GlobalTransform,
-    pub computed_visibility: ComputedVisibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
 }
 impl ElementBundle {
     /// # New
@@ -192,7 +193,8 @@ pub struct ImageElementBundle {
     pub transform: Transform,
     pub visibility: Visibility,
     pub global_transform: GlobalTransform,
-    pub computed_visibility: ComputedVisibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
 }
 impl ImageElementBundle {
     /// # New
@@ -476,7 +478,8 @@ pub struct TextElementBundle {
     pub transform: Transform,
     pub visibility: Visibility,
     pub global_transform: GlobalTransform,
-    pub computed_visibility: ComputedVisibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
 }
 impl TextElementBundle {
     /// # New

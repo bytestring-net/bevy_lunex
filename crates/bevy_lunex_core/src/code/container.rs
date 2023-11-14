@@ -1,7 +1,13 @@
+use std::borrow::Borrow;
+
 use bevy::prelude::Vec2;
+
+use crate::{Widget, UiTree, LunexError};
 
 // ===========================================================
 // === LAYOUT VARIANTS ===
+
+
 
 /// # Window Layout
 /// Under the hood it works the exact same way as [`RelativeLayout`], but is defined in a way that makes it easier to animate.
@@ -36,6 +42,11 @@ impl WindowLayout {
     /// Creates new window layout from default. Covers relatively 100% of the widget by default.
     pub fn new() -> WindowLayout {
         WindowLayout::default()
+    }
+
+    /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build<T:Default>(self, tree: &mut UiTree<T>, path: impl Borrow<str>) -> Result<Widget, LunexError> {
+        Widget::create(tree, path, self)
     }
 
     /// Creates new window layout where everything is set to 0.
@@ -73,6 +84,20 @@ impl WindowLayout {
     /// Window layout set with a custom relative
     pub fn with_rel(mut self, rel: Vec2) -> WindowLayout {
         self.relative = rel;
+        self
+    }
+
+    /// Window layout set with a custom absolute size
+    pub fn with_size_abs(mut self, width: f32, height: f32) -> WindowLayout {
+        self.width_absolute = width;
+        self.height_absolute = height;
+        self
+    }
+
+    /// Window layout set with a custom relative size
+    pub fn with_size_rel(mut self, width: f32, height: f32) -> WindowLayout {
+        self.width_relative = width;
+        self.height_relative = height;
         self
     }
 
@@ -147,6 +172,11 @@ impl RelativeLayout {
     /// Creates new relative layout from default. Covers 100% of the widget by default.
     pub fn new() -> RelativeLayout {
         RelativeLayout::default()
+    }
+
+    /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build<T:Default>(self, tree: &mut UiTree<T>, path: impl Borrow<str>) -> Result<Widget, LunexError> {
+        Widget::create(tree, path, self)
     }
 
     /// Creates new relative layout where everything is set to 0.
@@ -253,6 +283,11 @@ impl SolidLayout {
         SolidLayout::default()
     }
 
+    /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build<T:Default>(self, tree: &mut UiTree<T>, path: impl Borrow<str>) -> Result<Widget, LunexError> {
+        Widget::create(tree, path, self)
+    }
+
     /// Creates new solid layout where everything that can be set to 0 is set to 0.
     pub fn empty() -> SolidLayout {
         SolidLayout::new()
@@ -281,6 +316,13 @@ impl SolidLayout {
             vanilla_width,
             vanilla_height,
         )
+    }
+
+    /// Solid layout set to a custom size
+    pub fn with_size(mut self, width: f32, height: f32) -> SolidLayout {
+        self.width = width;
+        self.height = height;
+        self
     }
 
     /// Solid layout set to a custom width
@@ -361,7 +403,16 @@ pub enum LayoutPackage {
     Solid(SolidLayout),
 }
 impl LayoutPackage {
-    /// Unwrap package into `&WindowLayout`, panic if this is not window.
+    /// Input output function to calculate the layout
+    pub fn calculate(&self, point: Vec2, width: f32, height: f32) -> (Vec2, f32, f32) {
+        match &self {
+            LayoutPackage::Window(container) => container.calculate(point, width, height),
+            LayoutPackage::Relative(container) => container.calculate(point, width, height),
+            LayoutPackage::Solid(container) => container.calculate(point, width, height),
+        }
+    }
+
+    /// Unwrap package into `&WindowLayout`, panic if this is not window
     pub fn expect_window_ref(&self) -> &WindowLayout {
         match self {
             LayoutPackage::Window(window) => window,
@@ -369,7 +420,7 @@ impl LayoutPackage {
         }
     }
 
-    /// Unwrap package into `&RelativeLayout`, panic if this is not window.
+    /// Unwrap package into `&RelativeLayout`, panic if this is not window
     pub fn expect_relative_ref(&self) -> &RelativeLayout {
         match self {
             LayoutPackage::Relative(relative) => relative,
@@ -377,7 +428,7 @@ impl LayoutPackage {
         }
     }
 
-    /// Unwrap package into `&SolidLayout`, panic if this is not window.
+    /// Unwrap package into `&SolidLayout`, panic if this is not window
     pub fn expect_solid_ref(&self) -> &SolidLayout {
         match self {
             LayoutPackage::Solid(solid) => solid,
@@ -385,7 +436,7 @@ impl LayoutPackage {
         }
     }
 
-    /// Unwrap package into `mut &WindowLayout`, panic if this is not window.
+    /// Unwrap package into `mut &WindowLayout`, panic if this is not window
     pub fn expect_window_mut(&mut self) -> &mut WindowLayout {
         match self {
             LayoutPackage::Window(window) => window,
@@ -393,7 +444,7 @@ impl LayoutPackage {
         }
     }
 
-    /// Unwrap package into `mut &RelativeLayout`, panic if this is not window.
+    /// Unwrap package into `mut &RelativeLayout`, panic if this is not window
     pub fn expect_relative_mut(&mut self) -> &mut RelativeLayout {
         match self {
             LayoutPackage::Relative(relative) => relative,
@@ -401,7 +452,7 @@ impl LayoutPackage {
         }
     }
 
-    /// Unwrap package into `mut &SolidLayout`, panic if this is not window.
+    /// Unwrap package into `mut &SolidLayout`, panic if this is not window
     pub fn expect_solid_mut(&mut self) -> &mut SolidLayout {
         match self {
             LayoutPackage::Solid(solid) => solid,
@@ -430,59 +481,14 @@ pub struct Position {
     pub point_2: Vec2,
     pub width: f32,
     pub height: f32,
-    pub depth: f32,
+    pub depth: f32, //???
 }
 impl Position {
-    /// This function will offset the coordination values by given offset.
-    pub fn offset(mut self, offset: Vec2) -> Position {
-        self.point_1 += offset;
-        self.point_2 += offset;
-        self
-    }
-
-    /// This function will invert coordination value x.
-    pub fn invert_x(mut self) -> Position {
-        self.point_1.x = -self.point_1.x;
-        self.point_2.x = -self.point_1.x;
-        self
-    }
-
-    /// This function will invert coordination value y.
-    pub fn invert_y(mut self) -> Position {
-        self.point_1.y = -self.point_1.y;
-        self.point_2.y = -self.point_1.y;
-        self
-    }
-
     /// Returns a position from a custom relative point on this widget.
     pub fn get_pos(&self, relative: Vec2) -> Vec2 {
         Vec2::new(
             self.point_1.x + self.width * relative.x / 100.0,
             self.point_1.y + self.height * relative.y / 100.0,
-        )
-    }
-
-    /// Returns a position from a custom relative point on this widget, but X is inverted.
-    pub fn get_pos_x_inverted(&self, relative: Vec2) -> Vec2 {
-        Vec2::new(
-            self.point_1.x + self.width * -relative.x / 100.0,
-            self.point_1.y + self.height * relative.y / 100.0,
-        )
-    }
-    
-    /// Returns a position from a custom relative point on this widget, but Y is inverted.
-    pub fn get_pos_y_inverted(&self, relative: Vec2) -> Vec2 {
-        Vec2::new(
-            self.point_1.x + self.width * relative.x / 100.0,
-            self.point_1.y + self.height * -relative.y / 100.0,
-        )
-    }
-
-    /// Returns a position from a custom relative point on this widget, but X and Y is inverted.
-    pub fn get_pos_xy_inverted(&self, relative: Vec2) -> Vec2 {
-        Vec2::new(
-            self.point_1.x + self.width * -relative.x / 100.0,
-            self.point_1.y + self.height * -relative.y / 100.0,
         )
     }
 }
@@ -498,25 +504,31 @@ impl Position {
 pub struct Container {
     position_cached: Position,
     position_layout: LayoutPackage,
-    //control_layout: Option<Layout>,
-    //elementary_layout: Elementarylayout,
+    //main_layout: Option<Layout>,
+    //base_layout: Elementarylayout,
+
+    
+    visibility: bool,
+    inherited_visibility: bool,
+    render_depth: f32,
+
 }
 impl Container {
-    /// Creates a new container
-    pub(super) fn new() -> Container {
+    /// Creates a new container autofilled with default values
+    pub fn new() -> Container {
         Container {
             position_cached: Position::default(),
             position_layout: LayoutPackage::default(),
+
+            visibility: true,
+            inherited_visibility: true,
+            render_depth: 0.0,
         }
     }
 
-    /// Calculates the layout and saves the output to `position_cached` field
-    pub(super) fn calculate(&mut self, point: Vec2, width: f32, height: f32) {
-        let values = match &self.position_layout {
-            LayoutPackage::Window(container) => container.calculate(point, width, height),
-            LayoutPackage::Relative(container) => container.calculate(point, width, height),
-            LayoutPackage::Solid(container) => container.calculate(point, width, height),
-        };
+    /// Calculates the layout and updates the structs fields with the result
+    pub fn calculate(&mut self, point: Vec2, width: f32, height: f32) {
+        let values = self.position_layout.calculate(point, width, height);
         self.position_cached.point_1 = values.0;
         self.position_cached.width = values.1;
         self.position_cached.height = values.2;
@@ -526,23 +538,83 @@ impl Container {
         );
     }
 
+    /// Returns top left corner of the calculated container
+    pub fn point_1(&self) -> Vec2 {
+        self.get_position().point_1
+    }
+
+    /// Returns bottom right corner of the calculated container
+    pub fn point_2(&self) -> Vec2 {
+        self.get_position().point_2
+    }
+
+    /// Returns size of the calculated container
+    pub fn size(&self) -> Vec2 {
+        Vec2::new(self.get_position().width, self.get_position().height)
+    }
+
+    /// Returns width of the calculated container
+    pub fn width(&self) -> f32 {
+        self.get_position().width
+    }
+
+    /// Returns height of the calculated container
+    pub fn height(&self) -> f32 {
+        self.get_position().height
+    }
+
+    /// Return container's visibility. Does not mean the container is going to be visible due to inherited visibility
+    pub fn get_visibility(&self) -> bool {
+        self.visibility
+    }
+
+    /// Return container's inherited visibility.
+    pub fn get_inherited_visibility(&self) -> bool {
+        self.inherited_visibility
+    }
+
+    /// Return container's render depth.
+    pub fn get_render_depth(&self) -> f32 {
+        self.render_depth
+    }
+
+    /// Set container's visibility. Does not mean the container is going to be visible due to inherited visibility
+    pub fn set_visibility(&mut self, visibility: bool) {
+        self.visibility = visibility;
+    }
+
+    /// Set container's inherited visibility.
+    pub fn set_inherited_visibility(&mut self, visibility: bool) {
+        self.inherited_visibility = visibility;
+    }
+
+    /// Set container's render_depth.
+    pub fn set_render_depth(&mut self, render_depth: f32) {
+        self.render_depth = render_depth;
+    }
+
+    /// Returns if container is visible or not. Counts in inherited visibility
+    pub fn is_visible(&self) -> bool {
+        self.visibility && self.inherited_visibility
+    }
+
     /// Returns a read only reference to a container position
-    pub fn position_get(&self) -> &Position {
+    pub fn get_position(&self) -> &Position {
         &self.position_cached
     }
 
-    /// Set a new layout to a container
-    pub fn layout_set(&mut self, position: impl Into<LayoutPackage>) {
+    /// Set a new layout to the container
+    pub fn set_layout(&mut self, position: impl Into<LayoutPackage>) {
         self.position_layout = position.into();
     }
 
-    /// Returns a read only reference to a layout
-    pub fn layout_get(&self) -> &LayoutPackage {
+    /// Returns a read only reference to the layout
+    pub fn get_layout(&self) -> &LayoutPackage {
         &self.position_layout
     }
 
-    /// Returns mutable reference to a layout
-    pub fn layout_get_mut(&mut self) -> &mut LayoutPackage {
+    /// Returns mutable reference to the layout
+    pub fn get_layout_mut(&mut self) -> &mut LayoutPackage {
         &mut self.position_layout
     }
 }

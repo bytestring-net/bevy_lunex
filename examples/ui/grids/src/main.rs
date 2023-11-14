@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 use bevy_vector_shapes::prelude::*;
@@ -7,17 +9,18 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(Shape2dPlugin::default())
-        .add_plugins(LunexUiPlugin)
+        .add_plugins(LunexUiPlugin2D::<D>(PhantomData))
+        //.add_plugins(LunexUiDebugPlugin2D)
 
         .add_systems(Startup, setup)
 
         .add_systems(Update, (
             vector_rectangle_update,
-        ).after(element_update))
+        ).after(element_update::<D>))
 
         .run()
 }
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, mut window: Query<(&mut Window, Entity)>) {
     commands.spawn(
         Camera2dBundle {
             transform: Transform {
@@ -29,36 +32,46 @@ fn setup(mut commands: Commands) {
     );
     let mut ui_tree = UiTree::new("interface");
     build_interface(&mut commands, &mut ui_tree).unwrap();
-    println!("{}", ui_tree.generate_map_debug());
-    commands.spawn (ui_tree);
+    println!("{}", ui_tree.tree());
+    
+    let _window = window.get_single_mut().unwrap();
+    commands.entity(_window.1).insert((ui_tree, Transform::default(), Size::default()));
 }
 
-pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result<(), LunexError> {
+
+pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree<D>) -> Result<(), LunexError> {
 
     let mut temporary_tree = UiTree::new("tmp");
-    let mut tmp = &mut temporary_tree;
+    let tmp = &mut temporary_tree;
 
-    let workspace = Widget::create(&mut tmp, "workspace", RelativeLayout::new())?;
+    let workspace = RelativeLayout::new().build(tmp, "workspace")?;
 
-    let window = Widget::create(&mut tmp, workspace.end("window"), WindowLayout {
-        relative: Vec2::new(10., 10.),
-        width_relative: 80.,
-        height_relative: 80.,
-        ..default()
-    })?;
-
-
+    let window = WindowLayout::empty()
+        .with_rel(Vec2::splat(10.0))
+        .with_size_rel(80.0, 80.0)
+        .build(tmp, workspace.end("window"))?;
 
     let segment1 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 11).add_gaps(2.0);
     let segment2 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 5).add_gaps(5.0);
     let segment3 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 3).add_gaps(7.0).with_scale(Some(100.0));
     let segment4 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 7).add_gaps(5.0);
 
-    let grid = Grid::new().with_segments(vec![segment1,segment2,segment3,segment4]).add_gaps(1.0).with_orientation(GridOrientation::Vertical);
+    let grid = Grid::new().with_segments(vec![segment1, segment2, segment3, segment4]).add_gaps(1.0).with_orientation(GridOrientation::Horizontal);
 
+    let wgrid = if true {
 
-    let wgrid = grid.build_in(tmp, &window)?;
-    //let (_, wgrid) = grid.build_in_window(tmp, &window.end("Grid"), WindowLayout::new())?;
+        // This method builds the grid to fill 100% of the given window. Great for navbars and tabs.
+        // Bad for invetories when you want the cells to have constant size regradless of cell count.
+        grid.build_in(tmp, &window)?
+
+    } else {
+
+        // This method builds the grid inside a new "buffer" widget. The script will ensure that cells will have same size no
+        // matter the number of cells generated. Great for slots and player inventories.
+        let (_, wgrid) = grid.build_in_window(tmp, window.end("Grid"), WindowLayout::new())?;
+
+        wgrid
+    };
 
     // Assign entities to grid cells
     for x in 0..wgrid.len() {
@@ -67,16 +80,14 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
                 ElementBundle::new(&wgrid[x][y], Element::fullfill()),
                 VectorElementRectangle {
                     color: Color::rgb_u8((x * 255/wgrid.len()) as u8, (x * 255/wgrid.len()) as u8, (y * 255/wgrid[x].len()) as u8),
-                    corner_radii: Vec4::splat(0.0)
+                    corner_radii: Vec4::splat(10.0)
                 },
             ));
         }
     }
 
-
     // Merge the temporary tree to main ui tree
     ui_tree.merge(temporary_tree)?;
-
 
     // Spawns the draw entities last
     '_Fills: {
@@ -99,7 +110,6 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree) -> Result
     Ok(())
 }
 
-
 /// Renders the widget
 #[derive(Component)]
 pub struct VectorElementRectangle {
@@ -121,3 +131,6 @@ pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transf
         painter.rect(Vec2::new(ww, hh));
     }
 }
+
+#[derive(Component, Default)]
+pub struct D;

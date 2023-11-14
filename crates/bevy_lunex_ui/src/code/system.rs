@@ -1,62 +1,72 @@
 use bevy::prelude::*;
-use bevy_lunex_core::{UiTree, Widget};
+use bevy_lunex_core::{UiTree, Widget, UiT, UiD};
 use bevy_lunex_utility::Element;
 
-use crate::cursor_update;
+use crate::{cursor_update, InvertY};
+
+#[derive(Component, Default)]
+pub struct Size {
+    width: f32,
+    height: f32,
+}
 
 // ===========================================================
 // === SYSTEMS ===
 
-/// # Tree Update
-/// A system that transforms every [`UiTree`] into an immidiete mode UI framework.
-/// 
-/// It does that by pulling width and height from the first [`Window`] it queries (multiple windows not supported yet) and feeding it to the [`UiTree`].
-/// Then it calls `.compute_at_origin()`.
+/// # Tree Pull Window
+/// A system that pulls [`Window`] dimensions into UiTree's [`Size`] and [`Transform`] component.
 /// 
 /// This is repeated every frame.
-pub fn tree_update(mut query: Query<&mut UiTree>, windows: Query<&Window>) {
-    for window in &windows {
-        for mut system in &mut query {
-            system.width = window.resolution.width();
-            system.height = window.resolution.height();
-            system.offset.x = -system.width/2.0;
-            system.offset.y = system.height/2.0;
-            system.compute_at_origin();
-        }
-        break;  //Currently support only 1 window.
+pub fn tree_pull_window<T:Component + Default>(mut query: Query<(&mut Size, &mut Transform, &Window), With<UiTree<T>>>) {
+    for (mut size, mut transform, window) in &mut query {
+        size.width = window.resolution.width();
+        size.height = window.resolution.height();
+        transform.translation.x = -size.width/2.0;
+        transform.translation.y = -size.height/2.0;
+    }
+}
+
+// FUTURE ADD TREE_PULL_CAMERA 
+
+/// # Tree Compute
+/// A system that calls `.compute()` with data from UiTree's [`Size`] and [`Transform`] component.
+/// 
+/// This is repeated every frame.
+pub fn tree_compute<T:Component + Default>(mut query: Query<(&mut UiTree<T>, &Size, &Transform)>) {
+    for (mut tree, size, transform) in &mut query {
+        tree.compute(transform.translation.truncate(), size.width, size.height);
     }
 }
 
 /// # Element Update
 /// A system that re-positions and re-scales every [`Element`] to match the calculated layout.
 /// 
-/// Requires that entity has [`Element`] + [`Widget`] + [`Transform`] components.
+/// Requires that entity has [`Element`] + [`Widget`] + [`Transform`] + [`Visibility`] components.
 /// * [`Element`] contains the data how to position the entity relative to the widget.
 /// * [`Widget`] constains the path link.
 /// * [`Transform`] fields will be overwritten by this system.
+/// * [`Visibility`] enum will be changed by this system.
 /// 
-/// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**.
-/// When [`Widget`] visibility is set to `false`, X and Y transform will be set to `-10 000`.
-pub fn element_update(systems: Query<&UiTree>, mut query: Query<(&Widget, &Element, &mut Transform)>) {
-    for system in systems.iter() {
-        for (widget, element, mut transform) in &mut query {
-            match widget.fetch(&system) {
+/// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**
+pub fn element_update<T:Component + Default>(mut commands: Commands, systems: Query<(&UiTree<T>, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility, Entity), Without<UiTree<T>>>) {
+    for (tree, tree_transform) in systems.iter() {
+        for (widget, element, mut transform, mut visibility, entity) in &mut query {
+            match widget.fetch(&tree) {
                 Err(_) => {
-                    transform.translation.x = -10000.0;
-                    transform.translation.y = -10000.0;
+                    commands.entity(entity).despawn();
                 },
                 Ok(branch) => {
                     if !branch.is_visible() {
-                        transform.translation.x = -10000.0;
-                        transform.translation.y = -10000.0;
+                        *visibility = Visibility::Hidden;
                     } else {
+                        *visibility = Visibility::Inherited;
     
-                        transform.translation.z = branch.get_depth() + element.depth;
+                        transform.translation.z = branch.get_depth() + element.depth + tree_transform.translation.z;
     
-                        let pos = widget.fetch(&system).unwrap().container_get().position_get().clone().invert_y();
-                        let vec = pos.get_pos_y_inverted(element.relative);
-                        transform.translation.x = vec.x + system.offset.x;
-                        transform.translation.y = vec.y + system.offset.y;
+                        let pos = branch.get_container().get_position().clone();
+                        let vec = pos.get_pos(element.relative).invert_y();
+                        transform.translation.x = vec.x;
+                        transform.translation.y = vec.y;
     
                         match element.width {
                             Some (w) => {
@@ -89,7 +99,7 @@ pub fn element_update(systems: Query<&UiTree>, mut query: Query<(&Widget, &Eleme
                         }
                     }
                 }
-            };
+            }
         }
     }
 }
@@ -98,15 +108,18 @@ pub fn element_update(systems: Query<&UiTree>, mut query: Query<(&Widget, &Eleme
 // ===========================================================
 // === PLUGIN ===
 
-/// # Lunex Ui Plugin
-/// A main plugin adding Lunex UI functionality for 2D plane.
-/// # Systems
-/// * [`tree_update`]
+/// # Lunex Ui Plugin 2D
+/// A main plugin adding Lunex UI functionality for a 2D plane.
+/// ## Systems
+/// * [`tree_pull_window`]
+/// * [`tree_compute`]
 /// * [`element_update`]
-pub struct LunexUiPlugin;
-impl Plugin for LunexUiPlugin {
+/// * [`cursor_update`]
+pub struct LunexUiPlugin2D<T:Component + Default>(pub std::marker::PhantomData<T>);
+impl <T: Component + Default> Plugin for LunexUiPlugin2D<T> {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (tree_update, element_update).chain())
+        app.add_systems(Update, (tree_pull_window::<T>).before(tree_compute::<T>))
+           .add_systems(Update, (tree_compute::<T>, element_update::<T>).chain())
            .add_systems(Update, cursor_update);
     }
 }

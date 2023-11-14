@@ -4,11 +4,15 @@
         "./crates/bevy_lunex_ui/Cargo.toml",
         "./crates/bevy_lunex_ui_prefab/Cargo.toml",
         "./crates/bevy_lunex_utility/Cargo.toml",
+
+        "./crates/bevy_lunex_macros/Cargo.toml",
         
         "./examples/ui/grids/Cargo.toml",
         "./examples/ui/images/Cargo.toml",
-        "./examples/ui/layouting/Cargo.toml",
         "./examples/ui/office_suite/Cargo.toml",
-        "./crates/bevy_lunex_ui_prefab/Cargo.toml"
-    ]
+
+        "./examples/future_WIP/layouting/Cargo.toml",
+        "./examples/future_WIP/nesting/Cargo.toml",
+    ],
+    "rust-analyzer.showUnlinkedFileNotification": false
 }
