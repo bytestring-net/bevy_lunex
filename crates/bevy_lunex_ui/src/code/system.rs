@@ -109,17 +109,68 @@ pub fn element_update<T:Component + Default>(mut commands: Commands, systems: Qu
 // === PLUGIN ===
 
 /// # Lunex Ui Plugin 2D
-/// A main plugin adding Lunex UI functionality for a 2D plane.
+/// A plugin holding all plugins required by Bevy-Lunex to work in 2D plane.
+/// 
+/// Implements logic for [`UiTree`]<`T`> for the generic `T`. If you use more generics for UiTree
+/// add the plugins separetly, [`LunexUiPlugin2DShared`] once and [`LunexUiPlugin2DGeneric`] for every generic.
+/// ## Plugins
+/// * [`LunexUiPlugin2DShared`]
+/// * [`LunexUiPlugin2DGeneric`] for `T`
+#[derive(Debug, Default, Clone)]
+pub struct LunexUiPlugin2D<T:Component + Default>(pub std::marker::PhantomData<T>);
+impl <T:Component + Default>LunexUiPlugin2D<T> {
+    pub fn new() -> Self {
+        LunexUiPlugin2D::<T>(std::marker::PhantomData)
+    }
+}
+impl <T: Component + Default> Plugin for LunexUiPlugin2D<T> {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(LunexUiPlugin2DShared)
+           .add_plugins(LunexUiPlugin2DGeneric::<T>::new());
+    }
+}
+
+
+/// # Lunex Ui Plugin 2D Shared
+/// A plugin holding all **SHARED** systems required by Bevy-Lunex to work in 2D plane.
+/// Contains logic which is undesired for 3D applications.
+/// 
+/// Should be added only once per app. Has no generic.
+/// ## Systems
+/// * [`cursor_update`]
+#[derive(Debug, Default, Clone)]
+pub struct LunexUiPlugin2DShared;
+impl LunexUiPlugin2DShared {
+    pub fn new() -> Self {
+        LunexUiPlugin2DShared
+    }
+}
+impl Plugin for LunexUiPlugin2DShared {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, cursor_update);
+    }
+}
+
+
+/// # Lunex Ui Plugin 2D Generic 
+/// A plugin holding all **GENERIC** systems required by Bevy-Lunex to work in 2D plane.
+/// Contains logic which is undesired for 3D applications.
+/// 
+/// 
+/// Add this plugin for every `T` that you use.
 /// ## Systems
 /// * [`tree_pull_window`]
 /// * [`tree_compute`]
 /// * [`element_update`]
-/// * [`cursor_update`]
-pub struct LunexUiPlugin2D<T:Component + Default>(pub std::marker::PhantomData<T>);
-impl <T: Component + Default> Plugin for LunexUiPlugin2D<T> {
+#[derive(Debug, Default, Clone)]
+pub struct LunexUiPlugin2DGeneric<T:Component + Default>(pub std::marker::PhantomData<T>);
+impl <T:Component + Default>LunexUiPlugin2DGeneric<T> {
+    pub fn new() -> Self {
+        LunexUiPlugin2DGeneric::<T>(std::marker::PhantomData)
+    }
+}
+impl <T: Component + Default> Plugin for LunexUiPlugin2DGeneric<T> {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (tree_pull_window::<T>).before(tree_compute::<T>))
-           .add_systems(Update, (tree_compute::<T>, element_update::<T>).chain())
-           .add_systems(Update, cursor_update);
+        app.add_systems(Update, (tree_pull_window::<T>, tree_compute::<T>, element_update::<T>).chain().before(cursor_update));
     }
 }

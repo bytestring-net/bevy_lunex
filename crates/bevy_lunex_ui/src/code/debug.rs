@@ -46,15 +46,66 @@ pub fn lunex_camera_move_debug_2d(
 // === PLUGIN ===
 
 /// # Lunex Ui Debug Plugin 2D
-/// A plugin holding all systems used for debugging Bevy-Lunex in 2D plane.
-/// Contains logic which is undesired for 3D applications.
-/// ## Systems
-/// * [`lunex_draw_lines_debug_2d`]
-/// * [`lunex_camera_move_debug_2d`]
+/// A plugin holding all plugins required for debugging Bevy-Lunex in 2D plane.
+/// 
+/// Implements logic for [`UiTree`]<`T`> for the generic `T`. If you use more generics for UiTree
+/// add the plugins separetly, [`LunexUiDebugPlugin2DShared`] once and [`LunexUiDebugPlugin2DGeneric`] for every generic.
+/// ## Plugins
+/// * [`LunexUiDebugPlugin2DShared`]
+/// * [`LunexUiDebugPlugin2DGeneric`] for `T`
+#[derive(Debug, Default, Clone)]
 pub struct LunexUiDebugPlugin2D<T:Component + Default>(pub std::marker::PhantomData<T>);
+impl <T:Component + Default>LunexUiDebugPlugin2D<T> {
+    pub fn new() -> Self {
+        LunexUiDebugPlugin2D::<T>(std::marker::PhantomData)
+    }
+}
 impl <T: Component + Default> Plugin for LunexUiDebugPlugin2D<T> {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, lunex_draw_lines_debug_2d::<T>.after(element_update::<T>))
-            .add_systems(Update, lunex_camera_move_debug_2d.before(cursor_update));
+        app.add_plugins(LunexUiDebugPlugin2DShared)
+           .add_plugins(LunexUiDebugPlugin2DGeneric::<T>::new());
+    }
+}
+
+
+/// # Lunex Ui Debug Plugin 2D Shared
+/// A plugin holding all **SHARED** systems used for debugging Bevy-Lunex in 2D plane.
+/// Contains logic which is undesired for 3D applications.
+/// 
+/// Should be added only once per app. Has no generic.
+/// ## Systems
+/// * [`lunex_camera_move_debug_2d`]
+#[derive(Debug, Default, Clone)]
+pub struct LunexUiDebugPlugin2DShared;
+impl LunexUiDebugPlugin2DShared {
+    pub fn new() -> Self {
+        LunexUiDebugPlugin2DShared
+    }
+}
+impl Plugin for LunexUiDebugPlugin2DShared {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, lunex_camera_move_debug_2d.before(cursor_update));
+    }
+}
+
+
+/// # Lunex Ui Debug Plugin 2D Generic 
+/// A plugin holding all **GENERIC** systems used for debugging Bevy-Lunex in 2D plane.
+/// Contains logic which is undesired for 3D applications.
+/// 
+/// 
+/// Add this plugin for every `T` that you use.
+/// ## Systems
+/// * [`lunex_draw_lines_debug_2d`]
+#[derive(Debug, Default, Clone)]
+pub struct LunexUiDebugPlugin2DGeneric<T:Component + Default>(pub std::marker::PhantomData<T>);
+impl <T:Component + Default>LunexUiDebugPlugin2DGeneric<T> {
+    pub fn new() -> Self {
+        LunexUiDebugPlugin2DGeneric::<T>(std::marker::PhantomData)
+    }
+}
+impl <T: Component + Default> Plugin for LunexUiDebugPlugin2DGeneric<T> {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, lunex_draw_lines_debug_2d::<T>.after(element_update::<T>));
     }
 }

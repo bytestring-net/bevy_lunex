@@ -18,9 +18,14 @@ pub use code::cursor::cursor_update;
 
 pub use code::system::{tree_compute, tree_pull_window, element_update};
 pub use code::system::LunexUiPlugin2D;
+pub use code::system::LunexUiPlugin2DShared;
+pub use code::system::LunexUiPlugin2DGeneric;
+
 pub use code::system::Size;
 
 pub use code::debug::LunexUiDebugPlugin2D;
+pub use code::debug::LunexUiDebugPlugin2DShared;
+pub use code::debug::LunexUiDebugPlugin2DGeneric;
 
 // ===========================================================
 // === PRELUDE ===
