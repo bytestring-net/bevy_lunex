@@ -1,6 +1,6 @@
 [package]
 name = "bevy_lunex_core"
-version = "0.0.7"
+version = "0.0.8"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["Dominik Kaspar <dominik0kaspar@gmail.com>"]
@@ -14,4 +14,4 @@ readme = "README.md"
 bevy = { version = "0.12.0", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
 ahash = "0.8.3"
 colored = "2.0.0"
-pathio = { version = "0.2.1", features = ["bevy"] }
+pathio = { version = "0.2.2", features = ["bevy"] }

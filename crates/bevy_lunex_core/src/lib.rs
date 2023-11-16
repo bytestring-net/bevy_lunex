@@ -7,14 +7,10 @@ mod code;
 // === EXPORT ===
 
 pub use code::container::{WindowLayout, RelativeLayout, SolidLayout};
-pub use code::container::SolidScale;
-pub use code::container::LayoutPackage;
+pub use code::container::{SolidScale, LayoutPackage};
 pub use code::container::{Position, Container};
-
 pub use code::tree::{UiTree, UiBranch, UiT, UiD};
-
-pub use code::types::LunexError;
-
+pub use code::types::{LunexError, DataWrap, Size};
 pub use code::widget::Widget;
 
 
@@ -24,8 +20,8 @@ pub use code::widget::Widget;
 pub mod prelude {
     pub use super::{WindowLayout, RelativeLayout, SolidLayout};
     pub use super::{SolidScale, LayoutPackage};
-    pub use super::LunexError;
     pub use super::{UiTree, UiT, UiD};
+    pub use super::LunexError;
     pub use super::Widget;
 }
 

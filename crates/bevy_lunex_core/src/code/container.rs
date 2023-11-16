@@ -500,7 +500,7 @@ impl Position {
 /// # Container
 /// This struct is responsible for all the positioning of the widget.
 /// Through this struct and its methods you can interact with widgets position.
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Container {
     position_cached: Position,
     position_layout: LayoutPackage,

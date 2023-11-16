@@ -160,10 +160,10 @@ By nesting branches of these 3 types, you can precisely define the position and 
 </details>
 
 ## === Versions ===
-|  Bevy  | Bevy Lunex |
-|--------|------------|
-| 0.12.0 |    0.0.7   |
-| 0.11.2 |  <= 0.0.6  |
+|  Bevy  |   Bevy Lunex  |
+|--------|---------------|
+| 0.12.0 | 0.0.7 - 0.0.8 |
+| 0.11.2 |    <= 0.0.6   |
 
 ## === Contributing ===
 
