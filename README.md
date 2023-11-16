@@ -89,7 +89,7 @@ To create a new **"Widget"** in the root directory you pass in the **"UiTree"**,
 let widget: Widget = WindowLayout::empty()
     .with_rel(Vec2::splat(10.0))
     .with_size_rel(80.0, 80.0)
-    .build(&mut tree, "widget")?;
+    .build_as(&mut tree, "widget")?;
 ```
 
 ### --- Logic binding ---

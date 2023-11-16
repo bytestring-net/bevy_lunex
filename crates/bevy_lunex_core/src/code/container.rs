@@ -45,7 +45,12 @@ impl WindowLayout {
     }
 
     /// Builds position into [`Widget`] using `Widget::create()`.
-    pub fn build<T:Default>(self, tree: &mut UiTree<T>, path: impl Borrow<str>) -> Result<Widget, LunexError> {
+    pub fn build<T:Default>(self, tree: &mut UiTree<T>) -> Result<Widget, LunexError> {
+        Widget::create(tree, "", self)
+    }
+
+    /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build_as<T:Default>(self, tree: &mut UiTree<T>, path: impl Borrow<str>) -> Result<Widget, LunexError> {
         Widget::create(tree, path, self)
     }
 
@@ -175,7 +180,12 @@ impl RelativeLayout {
     }
 
     /// Builds position into [`Widget`] using `Widget::create()`.
-    pub fn build<T:Default>(self, tree: &mut UiTree<T>, path: impl Borrow<str>) -> Result<Widget, LunexError> {
+    pub fn build<T:Default>(self, tree: &mut UiTree<T>) -> Result<Widget, LunexError> {
+        Widget::create(tree, "", self)
+    }
+
+    /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build_as<T:Default>(self, tree: &mut UiTree<T>, path: impl Borrow<str>) -> Result<Widget, LunexError> {
         Widget::create(tree, path, self)
     }
 
@@ -284,7 +294,12 @@ impl SolidLayout {
     }
 
     /// Builds position into [`Widget`] using `Widget::create()`.
-    pub fn build<T:Default>(self, tree: &mut UiTree<T>, path: impl Borrow<str>) -> Result<Widget, LunexError> {
+    pub fn build<T:Default>(self, tree: &mut UiTree<T>) -> Result<Widget, LunexError> {
+        Widget::create(tree, "", self)
+    }
+
+    /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build_as<T:Default>(self, tree: &mut UiTree<T>, path: impl Borrow<str>) -> Result<Widget, LunexError> {
         Widget::create(tree, path, self)
     }
 
