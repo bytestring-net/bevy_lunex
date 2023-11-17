@@ -190,7 +190,7 @@ impl <T:Default> UiD<T> for UiBranch<T> {
         container.set_layout(layout);
         container.set_inherited_visibility(parent.is_visible());
         container.set_render_depth(parent.get_render_depth());
-        self.insert_file(path, DataWrap::new(container))?;
+        self.insert_file(name.clone(), DataWrap::new(container))?;      //EXPECTS THAT PATH is NAME only, no "/"
         Ok(name)
     }
 
