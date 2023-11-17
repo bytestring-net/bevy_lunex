@@ -1,17 +1,17 @@
 [package]
 name = "bevy_lunex_core"
-version = "0.0.8"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-authors = ["Dominik Kaspar <dominik0kaspar@gmail.com>"]
-repository = "https://github.com/bytestring-net/bevy-lunex"
-keywords = ["ui", "layout", "bevy", "lunex", "bevy-lunex"]
-categories = ["gui", "mathematics", "game-development"]
-description = "Supporting crate for bevy_lunex"
-readme = "README.md"
+authors.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description.workspace = true
+readme.workspace = true
 
 [dependencies]
-bevy = { version = "0.12.0", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text"] }
-ahash = "0.8.3"
-colored = "2.0.0"
-pathio = { version = "0.2.2", features = ["bevy"] }
+bevy    = { workspace = true }
+ahash   = { workspace = true }
+colored = { workspace = true }
+pathio  = { workspace = true }
