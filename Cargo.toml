@@ -21,6 +21,12 @@ keywords.workspace    = true
 categories.workspace  = true
 readme.workspace      = true
 
+exclude = [
+  "promo/*",
+  ".gitignore",
+  ".vscode",
+]
+
 [workspace]
 exclude = [
   "promo/*",
@@ -28,7 +34,7 @@ exclude = [
 
 members = [
   "crates/*",
-  "examples/ui/*"
+  "examples/ui/*",
 ]
 
 [workspace.dependencies]
