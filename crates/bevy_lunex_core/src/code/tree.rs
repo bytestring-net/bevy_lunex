@@ -1,21 +1,24 @@
 use std::borrow::Borrow;
 use bevy::prelude::*;
 use pathio::{prelude::*, PathTreeSingle, DirectorySingle};
-
 use crate::{RelativeLayout, Container, LayoutPackage};
 use crate::LunexError;
-
+use super::types::DataWrap;
 
 const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
 
 // ===========================================================
 // === PATHIO IMPLEMENTATION ===
 
-/// # UiT
-/// This trait is required whenewer you iteract with [`UiTree`].
-/// It abstacts and unifies complex hierarchy logic added by pathio crate into one trait.
+/// # UiT - UiTree logic
+/// This trait implements every method that you expect from [`UiTree`].
+/// It abstacts and builds on top of hierarchy logic added by `Pathio` crate.
 /// 
-/// It implements every function you expect [`UiTree`] to have.
+/// It is recommended to use methods primarly from this trait, instead of `Pathio` native methods.
+/// 
+/// If you *NEED* more low level control over the struct, you can opt-in by adding Pathio to your cargo file and importing
+/// the [`PathioHierarchy`] trait, which should allow you deeper control over the hierarchy. Note that name conflicts are bound to happen.
+/// Use the turbofish syntax.
 pub trait UiT<T:Default> {
     /// Creates a new UiTree
     fn new (name: impl Borrow<str>) -> Self;
@@ -24,7 +27,7 @@ pub trait UiT<T:Default> {
     fn compute(&mut self, point: Vec2, width: f32, height: f32);
 
     /// Creates a branch with given layout
-    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError>;
+    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<String, LunexError>;
 
     /// Borrows a branch on given path
     fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch<T>, LunexError>;
@@ -67,7 +70,7 @@ impl <T:Default> UiT<T> for UiTree<T> {
         self.directory.compute(point, width, height);
     }
 
-    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError> {
+    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<String, LunexError> {
         self.directory.create_branch(path, layout)
     }
 
@@ -114,17 +117,21 @@ impl <T:Default> UiT<T> for UiTree<T> {
     }
 }
 
-/// # UiD
-/// This trait is required whenewer you iteract with [`UiBranch`].
-/// It abstacts and unifies complex hierarchy logic added by pathio crate into one trait.
+/// # UiD - UiBranch logic (Directory)
+/// This trait implements every method that you expect from [`UiBranch`].
+/// It abstacts and builds on top of hierarchy logic added by `Pathio` crate.
 /// 
-/// It implements every function you expect [`UiBranch`] to have.
+/// It is recommended to use methods primarly from this trait, instead of `Pathio` native methods.
+/// 
+/// If you *NEED* more low level control over the struct, you can opt-in by adding Pathio to your cargo file and importing
+/// the [`PathioHierarchy`] trait, which should allow you deeper control over the hierarchy. Note that name conflicts are bound to happen.
+/// Use the turbofish syntax.
 pub trait UiD<T:Default> {
     /// Compute the layout starting at origin
     fn compute(&mut self, point: Vec2, width: f32, height: f32);
     
     /// Create a branch with given layout
-    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError>;
+    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<String, LunexError>;
 
     /// Borrows a branch on given path
     fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch<T>, LunexError>;
@@ -176,15 +183,15 @@ impl <T:Default> UiD<T> for UiBranch<T> {
         }
     }
     
-    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError> {
-        self.create_directory(path.borrow())?;
+    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<String, LunexError> {
+        let name = self.create_directory(path.borrow())?;
         let parent = self.get_container();
         let mut container = Container::new();
         container.set_layout(layout);
         container.set_inherited_visibility(parent.is_visible());
         container.set_render_depth(parent.get_render_depth());
-        self.insert_file(path, DataWrap::new(container))?;
-        Ok(())
+        self.insert_file(name.clone(), DataWrap::new(container))?;      //EXPECTS THAT PATH is NAME only, no "/"
+        Ok(name)
     }
 
     fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch<T>, LunexError> {
@@ -246,6 +253,8 @@ impl <T:Default> UiD<T> for UiBranch<T> {
     }
 }
 
+/// # Custom Directory Recursion
+/// trait used for recursive logic not exposed in the API, only for inner purposes.
 trait CustomDirectoryRecursion {
     fn cascade_update_inherited_visibility(&mut self);
 }
@@ -266,247 +275,11 @@ impl <T:Default> CustomDirectoryRecursion for UiTree<T> {
     }
 }
 
+/// # UiTree
+/// Special HashMap-like struct for storing widget information.
+/// All data is structured into a tree hierarchy.
 pub type UiTree<T> = PathTreeSingle<DataWrap<T>>;
+
+/// # UiBranch
+/// A type located inside of [`UiTree`]
 pub type UiBranch<T> = DirectorySingle<DataWrap<T>>;
-
-pub struct DataWrap<T:Default> {
-    container: Container,
-    data: Option<T>,
-}
-impl <T: Default> DataWrap<T> {
-    pub fn new(container: Container) -> Self {
-        DataWrap {
-            container,
-            data: None,
-        }
-    }
-    pub fn container(&self) -> &Container {
-        &self.container
-    }
-    pub fn container_mut(&mut self) -> &mut Container {
-        &mut self.container
-    }
-    pub fn data(&mut self) -> &T {
-        if let None = &self.data {
-            self.data = Some(T::default());
-        }
-        match &self.data {
-            Some(t) => t,
-            None => unreachable!()
-        }
-    }
-    pub fn data_mut(&mut self) -> &mut T {
-        if let None = &self.data {
-            self.data = Some(T::default());
-        }
-        match &mut self.data {
-            Some(t) => t,
-            None => unreachable!()
-        }
-    }
-}
-
-
-
-
-// ===========================================================
-// === BRANCH STRUCT ===
-/* 
-/// A struct that can nest another branches inside itself, implemented as tree like structure
-/// 
-/// Holds all data, layout and handles the logic of Lunex.
-#[derive(Default, Clone, Debug, PartialEq)]
-pub struct UiBranch {
-    //# CACHING =======
-    /// Only the name from path
-    name: String,
-    /// The ID it is indexed under
-    id: usize,
-    /// Path without the branch name
-    path: String,
-
-    //# RENDERING =======
-    /// How deep the branch is in UiTree
-    level: f32,
-    /// Z index calculated from branch depth
-    depth: f32,
-    /// If branch is activated, can be used to check for interactivity
-    active: bool,
-    /// If branch has visibility enabled
-    visible: bool,
-    /// If branch is currently highligted
-    in_focus: bool,
-    /// If the parenting container is visible
-    parent_visible: bool,
-
-    //# MOUNTED DATA =======
-    container: Container,
-    data: Option<Data>,
-
-    //# RECURSION =======
-    inventory: HashMap<usize, UiBranch>,
-    shortcuts: HashMap<String, String>,
-}
-impl UiBranch {
-
-
-    /// Returns current depth with focus counted in
-    pub fn get_depth(&self) -> f32 {
-        if self.in_focus {
-            self.level * LEVEL_DEPTH_DIFFERENCE + self.depth + HIGHLIGHT_DEPTH_ADDED
-        } else {
-            self.level * LEVEL_DEPTH_DIFFERENCE + self.depth
-        }
-    }
-
-    /// Set depth of the branch and all its sub-branches
-    pub fn set_depth(&mut self, depth: f32) {
-        self.cascade_set_depth(depth);
-    }
-
-    /// Constructs the path from local cache on the same branch, is not guaranteed to be valid
-    pub fn get_path(&self) -> String {
-        if self.level == 0.0 {
-            "".to_string()
-        } else if !self.path.is_empty() {
-            format!("{}/{}", self.path, self.name)
-        } else {
-            String::from(&self.name)
-        }
-    }
-
-    /// Returns if branch is in focus (highlighted, helps to decide which branch in the same layer to prefer)
-    pub fn get_focus(&self) -> bool {
-        self.in_focus
-    }
-
-    /// Set focus of the current branch (helpful when you have overlaying branches in the same layer)
-    pub fn set_focus(&mut self, focus: bool) {
-        self.in_focus = focus;
-    }
-
-    /// This will check if branch is overall visible, including local and inherited visibility from parent branches
-    pub fn is_visible(&self) -> bool {
-        self.visible == true && self.parent_visible == true
-    }
-
-    /// This will return local visibility of the branch
-    pub fn get_visibility(&self) -> bool {
-        self.visible
-    }
-
-    /// This will set local visibility to the value given, but it doesn't mean the branch will be 100% visible
-    pub fn set_visibility(&mut self, visible: bool) {
-        let old = self.is_visible();
-        self.visible = visible;
-        let new = self.is_visible();
-        if new != old {
-            self.cascade_compute_visibility()
-        }
-    }
-
-
-
-    /// Return a vector to iterate over containing all paths to all sub-branches
-    pub fn collect_paths(&self) -> Vec<String> {
-        let mut list = Vec::new();
-        self.cascade_collect_paths(&mut list, "");
-        list
-    }
-
-
-    /// Computes the branches layout and recursively computes the sub-branches
-    pub(super) fn cascade_compute_layout(&mut self, origin: Vec2, width: f32, height: f32) {
-        self.container.calculate(origin, width, height);
-        for x in &mut self.inventory {
-            let pos = self.container.get_position();
-            x.1.cascade_compute_layout(pos.point_1, pos.width, pos.height);
-        }
-    }
-
-    /// Checks branches visibility and recursively overwrites sub-branches parent visibility
-    pub(super) fn cascade_compute_visibility(&mut self) {
-        let visibility = self.is_visible();
-        for x in &mut self.inventory {
-            x.1.parent_visible = visibility;
-            x.1.cascade_compute_visibility()
-        }
-    }
-
-    /// Recursively overwrites the subbranches depth
-    pub(super) fn cascade_set_depth(&mut self, depth: f32) {
-        self.depth = depth;
-        for x in &mut self.inventory {
-            x.1.cascade_set_depth(depth);
-        }
-    }
-
-
-    // ===========================================================
-    // === BRANCH CREATION ===
-
-    /// Create this struct from given arguments
-    fn new(name: String, id: usize, path: String, level: f32, parent_visible: bool) -> UiBranch {
-        UiBranch {
-            name,
-            id,
-            path,
-
-            level,
-            depth: ROOT_STARTING_DEPTH,
-            active: true,
-            visible: true,
-            in_focus: false,
-            parent_visible,
-
-            container: Container::new(),
-            data: None,
-
-            inventory: HashMap::new(),
-            shortcuts: HashMap::new(),
-        }
-    }
-
-    /// Register new shortcut if any and calls `create_simple` to make new branch
-    pub(super) fn create_linked(&mut self, name: &str, position: LayoutPackage) -> Result<String, LunexError> {
-        if name.is_empty() {
-            Ok(self.create_simple("", position))
-        } else {
-            if !self.shortcuts.contains_key(name) {
-                let path = self.create_simple(name, position);
-                self.shortcuts.insert(name.to_string(), path);
-                Ok(name.into())
-            } else {
-                Err(LunexError::NameInUse(name.into()))
-            }
-        }
-    }
-
-
-}
-
-// ===========================================================
-// === DATA MOUNTED ON BRANCH ===
-
-#[derive(Default, Clone, Debug, PartialEq)]
-pub struct Data {
-    pub f32s: HashMap<String, f32>,
-    pub vec2s: HashMap<String, Vec2>,
-    pub vec3s: HashMap<String, Vec3>,
-    pub vec4s: HashMap<String, Vec4>,
-    pub bools: HashMap<String, bool>,
-    pub strings: HashMap<String, String>,
-}
-impl Data {
-    pub fn new() -> Data {
-        Data {
-            f32s: HashMap::new(),
-            vec2s: HashMap::new(),
-            vec3s: HashMap::new(),
-            vec4s: HashMap::new(),
-            bools: HashMap::new(),
-            strings: HashMap::new(),
-        }
-    }
-}
-*/

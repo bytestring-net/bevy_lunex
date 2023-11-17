@@ -89,7 +89,7 @@ To create a new **"Widget"** in the root directory you pass in the **"UiTree"**,
 let widget: Widget = WindowLayout::empty()
     .with_rel(Vec2::splat(10.0))
     .with_size_rel(80.0, 80.0)
-    .build(&mut tree, "widget")?;
+    .build_as(&mut tree, "widget")?;
 ```
 
 ### --- Logic binding ---
@@ -160,10 +160,10 @@ By nesting branches of these 3 types, you can precisely define the position and 
 </details>
 
 ## === Versions ===
-|  Bevy  | Bevy Lunex |
-|--------|------------|
-| 0.12.0 |    0.0.7   |
-| 0.11.2 |  <= 0.0.6  |
+|  Bevy  |   Bevy Lunex  |
+|--------|---------------|
+| 0.12.0 | 0.0.7 - 0.0.8 |
+| 0.11.2 |    <= 0.0.6   |
 
 ## === Contributing ===
 

@@ -34,8 +34,8 @@ fn setup(mut commands: Commands, mut window: Query<(&mut Window, Entity)>) {
     build_interface(&mut commands, &mut ui_tree).unwrap();
     println!("{}", ui_tree.tree());
     
-    let _window = window.get_single_mut().unwrap();
-    commands.entity(_window.1).insert((ui_tree, Transform::default(), Size::default()));
+    let ww = window.get_single_mut().unwrap().1;
+    commands.entity(ww).insert(ui_tree.bundle());
 }
 
 
@@ -44,12 +44,12 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree<D>) -> Res
     let mut temporary_tree = UiTree::new("tmp");
     let tmp = &mut temporary_tree;
 
-    let workspace = RelativeLayout::new().build(tmp, "workspace")?;
+    let workspace = RelativeLayout::new().build_as(tmp, "workspace")?;
 
     let window = WindowLayout::empty()
         .with_rel(Vec2::splat(10.0))
         .with_size_rel(80.0, 80.0)
-        .build(tmp, workspace.end("window"))?;
+        .build_as(tmp, workspace.end("window"))?;
 
     let segment1 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 11).add_gaps(2.0);
     let segment2 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 5).add_gaps(5.0);

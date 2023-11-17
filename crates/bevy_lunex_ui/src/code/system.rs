@@ -1,14 +1,9 @@
 use bevy::prelude::*;
-use bevy_lunex_core::{UiTree, Widget, UiT, UiD};
+use bevy_lunex_core::{UiTree, Widget, UiT, UiD, Size};
 use bevy_lunex_utility::Element;
 
 use crate::{cursor_update, InvertY};
 
-#[derive(Component, Default)]
-pub struct Size {
-    width: f32,
-    height: f32,
-}
 
 // ===========================================================
 // === SYSTEMS ===
