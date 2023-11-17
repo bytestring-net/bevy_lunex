@@ -27,7 +27,7 @@ pub trait UiT<T:Default> {
     fn compute(&mut self, point: Vec2, width: f32, height: f32);
 
     /// Creates a branch with given layout
-    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError>;
+    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<String, LunexError>;
 
     /// Borrows a branch on given path
     fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch<T>, LunexError>;
@@ -70,7 +70,7 @@ impl <T:Default> UiT<T> for UiTree<T> {
         self.directory.compute(point, width, height);
     }
 
-    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError> {
+    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<String, LunexError> {
         self.directory.create_branch(path, layout)
     }
 
@@ -131,7 +131,7 @@ pub trait UiD<T:Default> {
     fn compute(&mut self, point: Vec2, width: f32, height: f32);
     
     /// Create a branch with given layout
-    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError>;
+    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<String, LunexError>;
 
     /// Borrows a branch on given path
     fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch<T>, LunexError>;
@@ -183,15 +183,15 @@ impl <T:Default> UiD<T> for UiBranch<T> {
         }
     }
     
-    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<(), LunexError> {
-        self.create_directory(path.borrow())?;
+    fn create_branch(&mut self, path: impl Borrow<str>, layout: impl Into<LayoutPackage>) -> Result<String, LunexError> {
+        let name = self.create_directory(path.borrow())?;
         let parent = self.get_container();
         let mut container = Container::new();
         container.set_layout(layout);
         container.set_inherited_visibility(parent.is_visible());
         container.set_render_depth(parent.get_render_depth());
         self.insert_file(path, DataWrap::new(container))?;
-        Ok(())
+        Ok(name)
     }
 
     fn borrow_branch(&self, path: impl Borrow<str>) -> Result<&UiBranch<T>, LunexError> {

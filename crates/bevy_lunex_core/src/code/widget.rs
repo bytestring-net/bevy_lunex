@@ -67,7 +67,7 @@ impl Widget {
         let (_path, _name) = path.borrow().rsplit_once('/').unwrap_or((".", path.borrow()));
         match tree.borrow_branch_mut(_path) {
             Ok(borrowed_branch) => match borrowed_branch.create_branch(_name, position) {
-                Ok(_) => Ok(Widget::new(path)),
+                Ok(new_name) => Ok(Widget::new(format!("{}/{}",_path, new_name))),
                 Err(e) => Err(e),
             },
             Err(e) => Err(e),
