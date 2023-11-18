@@ -1,0 +1,9 @@
+// Place this in your user keybinds
+[
+    { 
+        "key": "f5",
+        "command": "workbench.action.tasks.runTask",
+        "args": "rust: cargo run",
+        "when": "editorLangId == 'rust'"
+    }
+]

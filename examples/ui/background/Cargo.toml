@@ -6,4 +6,4 @@ publish = false
 
 [dependencies]
 bevy_lunex = { path = "../../../../bevy-lunex"}
-bevy = { workspace = true, default-features = true }
+bevy = { workspace = true, default-features = true, features = ["dynamic_linking"] }
