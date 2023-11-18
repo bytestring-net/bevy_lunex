@@ -5,7 +5,7 @@ use bevy_vector_shapes::prelude::*;
 /// Empty struct in this example.
 /// Normally used as storage for widget data.
 #[derive(Component, Default)]
-pub struct D;
+struct D;
 
 fn main() {
     App::new()
@@ -23,10 +23,11 @@ fn main() {
         .run()
 }
 fn setup(mut commands: Commands, window: Query<Entity, (With<Window>, With<PrimaryWindow>)>) {
+    // Spawn camera
     commands.spawn(
         Camera2dBundle {
             transform: Transform {
-                translation: Vec3 { x: 0., y: 0., z: 1000. },
+                translation: Vec3::new(0.0, 0.0, 100.0),
                 ..default()
             },
             ..default()
@@ -44,8 +45,7 @@ fn setup(mut commands: Commands, window: Query<Entity, (With<Window>, With<Prima
     let window = window.single();
     commands.entity(window).insert(tree.bundle());
 }
-
-pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree<D>) -> Result<(), LunexError> {
+fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree<D>) -> Result<(), LunexError> {
 
     let mut temporary_tree = UiTree::new("tmp");
     let tmp = &mut temporary_tree;
@@ -118,11 +118,11 @@ pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree<D>) -> Res
 
 /// Renders the widget
 #[derive(Component)]
-pub struct VectorElementRectangle {
+struct VectorElementRectangle {
     color: Color,
     corner_radii: Vec4
 }
-pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transform, &VectorElementRectangle)>) {
+fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transform, &VectorElementRectangle)>) {
     for (transform, color) in &query {
 
         painter.set_translation(transform.translation);

@@ -6,7 +6,7 @@ use bevy_vector_shapes::prelude::*;
 /// Empty struct in this example.
 /// Normally used as storage for widget data.
 #[derive(Component, Default)]
-pub struct D;
+struct D;
 
 fn main() {
     App::new()
@@ -25,14 +25,17 @@ fn main() {
         .run()
 }
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>, window: Query<Entity, (With<Window>, With<PrimaryWindow>)>) {
+    // Spawn cursor
     commands.spawn((
         Cursor::new(0.0),
         Transform::default(),
     ));
+
+    // Spawn camera
     commands.spawn(
         Camera2dBundle {
             transform: Transform {
-                translation: Vec3 { x: 0., y: 0., z: 1000. },
+                translation: Vec3::new(0.0, 0.0, 100.0),
                 ..default()
             },
             ..default()
@@ -50,8 +53,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, window: Query<E
     let window = window.single();
     commands.entity(window).insert(tree.bundle());
 }
-
-pub fn build_interface<T:Default>(commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree<T>) -> Result<(), LunexError> {
+fn build_interface<T:Default>(commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree<T>) -> Result<(), LunexError> {
 
     const TOPBAR_SIZE: f32 = 25.0;
     const SIDEBAR_SIZE: f32 = 70.0;
@@ -139,11 +141,11 @@ pub fn build_interface<T:Default>(commands: &mut Commands, asset_server: &Res<As
 
 /// Renders the widget
 #[derive(Component)]
-pub struct VectorElementRectangle {
+struct VectorElementRectangle {
     color: Color,
     corner_radii: Vec4
 }
-pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transform, &VectorElementRectangle)>) {
+fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transform, &VectorElementRectangle)>) {
     for (transform, color) in &query {
 
         painter.set_translation(transform.translation);
@@ -160,20 +162,20 @@ pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transf
 }
 
 #[derive(Component)]
-pub struct DropDownElement {
+struct DropDownElement {
     text_style: TextStyle,
     options: Vec<String>,
     _selected: (String, usize),
 }
 impl DropDownElement {
-    pub fn new(options: Vec<String>, text_style: impl Borrow<TextStyle>) -> DropDownElement {
+    fn new(options: Vec<String>, text_style: impl Borrow<TextStyle>) -> DropDownElement {
         DropDownElement {
             text_style: text_style.borrow().to_owned(),
             _selected: (options[0].clone(), 0),
             options: options,
         }
     }
-    pub fn build_list<T:Default>(&self, commands: &mut Commands, tree: &mut UiTree<T>, widget: &Widget) -> Result<(), LunexError>{
+    fn build_list<T:Default>(&self, commands: &mut Commands, tree: &mut UiTree<T>, widget: &Widget) -> Result<(), LunexError>{
         
         let segment = GridSegment::text_cells(&self.options, 50.0, 60.0).add_gaps(1.0);
         let (_, wlist) = segment.build_in_window_absolute(tree, widget.end("Droplist"), WindowLayout::empty().with_rel(Vec2::new(0.0, 100.0)), GridOrientation::Vertical)?;
@@ -194,7 +196,7 @@ impl DropDownElement {
         Ok(())
     }
 }
-pub fn dropdown_element_update<T:Default+Component>(mut commands: Commands, mut trees: Query<&mut UiTree<T>>, cursors: Query<&Cursor>, mut query: Query<(&Widget, &DropDownElement)>) {
+fn dropdown_element_update<T:Default+Component>(mut commands: Commands, mut trees: Query<&mut UiTree<T>>, cursors: Query<&Cursor>, mut query: Query<(&Widget, &DropDownElement)>) {
     for mut tree in &mut trees {
         for (widget, dropdown) in &mut query {
             let mut trigger = false;
