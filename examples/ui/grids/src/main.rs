@@ -1,16 +1,18 @@
-use std::marker::PhantomData;
-
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_lunex::prelude::*;
 use bevy_vector_shapes::prelude::*;
 
+/// Empty struct in this example.
+/// Normally used as storage for widget data.
+#[derive(Component, Default)]
+pub struct D;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(Shape2dPlugin::default())
-        .add_plugins(LunexUiPlugin2D::<D>(PhantomData))
-        //.add_plugins(LunexUiDebugPlugin2D)
+        .add_plugins(LunexUiPlugin2D::<D>::new())
+        //.add_plugins(LunexUiDebugPlugin2D::<D>::new())
 
         .add_systems(Startup, setup)
 
@@ -20,7 +22,7 @@ fn main() {
 
         .run()
 }
-fn setup(mut commands: Commands, mut window: Query<(&mut Window, Entity)>) {
+fn setup(mut commands: Commands, window: Query<Entity, (With<Window>, With<PrimaryWindow>)>) {
     commands.spawn(
         Camera2dBundle {
             transform: Transform {
@@ -30,14 +32,18 @@ fn setup(mut commands: Commands, mut window: Query<(&mut Window, Entity)>) {
             ..default()
         }
     );
-    let mut ui_tree = UiTree::new("interface");
-    build_interface(&mut commands, &mut ui_tree).unwrap();
-    println!("{}", ui_tree.tree());
-    
-    let ww = window.get_single_mut().unwrap().1;
-    commands.entity(ww).insert(ui_tree.bundle());
-}
 
+    // Create UI system
+    let mut tree = UiTree::<D>::new("interface");
+
+    // Build the UI system
+    build_interface(&mut commands, &mut tree).unwrap();
+    println!("{}", tree.tree());
+    
+    // Append UI system to a window entity
+    let window = window.single();
+    commands.entity(window).insert(tree.bundle());
+}
 
 pub fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree<D>) -> Result<(), LunexError> {
 
@@ -131,6 +137,3 @@ pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transf
         painter.rect(Vec2::new(ww, hh));
     }
 }
-
-#[derive(Component, Default)]
-pub struct D;

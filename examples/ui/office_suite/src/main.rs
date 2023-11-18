@@ -1,23 +1,30 @@
 use std::borrow::Borrow;
-
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_lunex::prelude::*;
 use bevy_vector_shapes::prelude::*;
 
+/// Empty struct in this example.
+/// Normally used as storage for widget data.
+#[derive(Component, Default)]
+pub struct D;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(Shape2dPlugin::default())
-        .add_plugins(LunexUiPlugin2D)
+        .add_plugins(LunexUiPlugin2D::<D>::new())
+        //.add_plugins(LunexUiDebugPlugin2D::<D>::new())
 
         .add_systems(Startup, setup)
-        .add_systems(Update, dropdown_element_update)
-        .add_systems(Update, vector_rectangle_update.after(element_update))
+        .add_systems(Update, dropdown_element_update::<D>)
+
+        .add_systems(Update, (
+            vector_rectangle_update
+        ).after(element_update::<D>))
 
         .run()
 }
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Query<(&mut Window, Entity)>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, window: Query<Entity, (With<Window>, With<PrimaryWindow>)>) {
     commands.spawn((
         Cursor::new(0.0),
         Transform::default(),
@@ -31,15 +38,20 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut window: Que
             ..default()
         }
     );
-    let mut ui_tree = UiTree::new("interface");
-    build_interface(&mut commands, &asset_server, &mut ui_tree).unwrap();
-    println!("{}", ui_tree.tree());
+    
+    // Create UI system
+    let mut tree = UiTree::<D>::new("interface");
 
-    let _window = window.get_single_mut().unwrap();
-    commands.entity(_window.1).insert((ui_tree, Transform::default(), Size::default()));
+    // Build the UI system
+    build_interface(&mut commands, &asset_server, &mut tree).unwrap();
+    println!("{}", tree.tree());
+
+    // Append UI system to a window entity
+    let window = window.single();
+    commands.entity(window).insert(tree.bundle());
 }
 
-pub fn build_interface (commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree) -> Result<(), LunexError> {
+pub fn build_interface<T:Default>(commands: &mut Commands, asset_server: &Res<AssetServer>, ui_tree: &mut UiTree<T>) -> Result<(), LunexError> {
 
     const TOPBAR_SIZE: f32 = 25.0;
     const SIDEBAR_SIZE: f32 = 70.0;
@@ -151,17 +163,17 @@ pub fn vector_rectangle_update (mut painter: ShapePainter, query: Query<(&Transf
 pub struct DropDownElement {
     text_style: TextStyle,
     options: Vec<String>,
-    selected: (String, usize),
+    _selected: (String, usize),
 }
 impl DropDownElement {
     pub fn new(options: Vec<String>, text_style: impl Borrow<TextStyle>) -> DropDownElement {
         DropDownElement {
             text_style: text_style.borrow().to_owned(),
-            selected: (options[0].clone(), 0),
+            _selected: (options[0].clone(), 0),
             options: options,
         }
     }
-    pub fn build_list(&self, commands: &mut Commands, tree: &mut UiTree, widget: &Widget) -> Result<(), LunexError>{
+    pub fn build_list<T:Default>(&self, commands: &mut Commands, tree: &mut UiTree<T>, widget: &Widget) -> Result<(), LunexError>{
         
         let segment = GridSegment::text_cells(&self.options, 50.0, 60.0).add_gaps(1.0);
         let (_, wlist) = segment.build_in_window_absolute(tree, widget.end("Droplist"), WindowLayout::empty().with_rel(Vec2::new(0.0, 100.0)), GridOrientation::Vertical)?;
@@ -182,7 +194,7 @@ impl DropDownElement {
         Ok(())
     }
 }
-pub fn dropdown_element_update (mut commands: Commands, mut trees: Query<&mut UiTree>, cursors: Query<&Cursor>, mut query: Query<(&Widget, &DropDownElement)>) {
+pub fn dropdown_element_update<T:Default+Component>(mut commands: Commands, mut trees: Query<&mut UiTree<T>>, cursors: Query<&Cursor>, mut query: Query<(&Widget, &DropDownElement)>) {
     for mut tree in &mut trees {
         for (widget, dropdown) in &mut query {
             let mut trigger = false;
