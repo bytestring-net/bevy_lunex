@@ -11,7 +11,7 @@
 # 
 
 ## Version 0.0.8 RELEASED!
-v0.0.7 is very close to the release of v0.1.0!
+v0.0.8 is very close to the release of v0.1.0!
 
 #
 
@@ -21,7 +21,7 @@ Blazingly fast ***path*** based ***modular layout engine*** built on top of **Be
 
 ## === Showcase ===
 
-![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/2097927c-806f-475e-8cff-1e1cb534fbcb)
+![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/b12bdfd6-2942-40ce-995a-729bcba57e77)
 
 <details><summary>Gif</summary>
   
@@ -29,10 +29,7 @@ Blazingly fast ***path*** based ***modular layout engine*** built on top of **Be
 
 </details>
 
-*^ A recreation of ***Cyberpunk 2077*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/bevy-lunex-cyberpunk).*
-
-*For latest state-of-the-art example usage of Bevy-Lunex, take a look at the source code of this [repository](https://github.com/IDEDARY/stardawn).*
-
+*^ A recreation of ***Cyberpunk*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/Bevypunk).*
 
 ## === Description ===
 
@@ -45,7 +42,6 @@ By attaching entities to coordinates returned by **Bevy Lunex**, you can abstrac
 * **[`Stardawn`](https://github.com/IDEDARY/stardawn)** - *Used [bevy_vector_shapes](https://github.com/james-j-obrien/bevy_vector_shapes) to render resizable dynamic elements*.
 
 Currently the most up-to-date practices and workflow can be found in the **[`Bevypunk`](https://github.com/IDEDARY/Bevypunk)** project.
-Every other demo is somewhat broken with the latest "Game-Changing" release (0.7).
 
 ## === Workflow ===
 <details><summary>Expand</summary>
