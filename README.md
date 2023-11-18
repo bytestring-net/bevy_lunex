@@ -10,8 +10,8 @@
 
 # 
 
-## Version 0.7 RELEASED!
-v0.7 is very close to the release of v1.0!
+## Version 0.0.8 RELEASED!
+v0.0.7 is very close to the release of v0.1.0!
 
 #
 
