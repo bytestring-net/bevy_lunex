@@ -1,140 +1,89 @@
 use bevy::prelude::*;
-use bevy_lunex_core::UiTree;
 
 // ===========================================================
 // === CURSOR ===
 
-/// # Cursor
-/// Component holding the cursor information. The transform component is overwritten by [`cursor_update`] system.
-/// You have to spawn it with another component that contains [`Transform`] and has some visual output (image).
-/// * `position_world` is the x/y coordinate of the cursor + camera offset.
-/// * `position_screen` mirrors the window.cursor_position.
 #[derive(Component, Default)]
 pub struct Cursor {
-    hide_os_cursor: bool,
-    depth: f32,
-    offset: f32,
-    cursor_world: Vec2,
-    cursor_screen: Vec2,
+    cursor_index: usize,
+    sprite_offset: Vec<Vec2>,
+    location_screen: Vec2,
+    location_world: Vec2,
+    os_cursor: bool,
 }
 impl Cursor {
-    /// Create new cursor. `Offset` is used for offsetting the image of the cursor.
-    pub fn new(offset: f32) -> Cursor {
+    pub fn new() -> Cursor {
         Cursor {
-            offset,
-            ..default()
+            cursor_index: 0,
+            sprite_offset: Vec::new(),
+            location_screen: Vec2::ZERO,
+            location_world: Vec2::ZERO,
+            os_cursor: true,
         }
     }
-    
-    /// Returns the current depth of the cursor. Used when widgets overlay.
-    pub fn get_depth(&self) -> &f32 {
-        &self.depth
-    }
-    
-    /// Returns the current mut depth of the cursor. Used when widgets overlay.
-    pub fn get_depth_mut(&mut self) -> &mut f32 {
-        &mut self.depth
-    }
-    
-    /// Returns the offsetted real world position of the cursor. (Interaction with other entities)
-    pub fn position_world(&self) -> &Vec2 {
-        &self.cursor_world
-    }
-    
-    /// Returns the mirrored cursor position on the window screen.
-    pub fn position_screen(&self) -> &Vec2 {
-        &self.cursor_screen
-    }
-
-    /// Create new cursor. `Offset` is used for offsetting the image of the cursor.
-    pub fn with_hide_os_cursor(mut self, hide: bool) -> Self {
-        self.hide_os_cursor = hide;
+    pub fn with_os_cursor(mut self, enable: bool) -> Self {
+        self.os_cursor = enable;
         self
     }
-}
-
-/// # Cursor update
-/// A system that will update the cursor. Will **`panic!`** if there are multiple windows or multiple cameras.
-pub fn cursor_update_old(
-    mut windows: Query<&mut Window>,
-    cameras: Query<(&Camera, &Transform), Without<Cursor>>,
-    mut query: Query<(&mut Cursor, &mut Transform), Without<Camera>>,
-) {
-    for (mut cursorinfo, mut transform) in &mut query {
-        let mut window = windows.get_single_mut().unwrap();
-        let (_, camera) = cameras.get_single().unwrap();
-
-        match window.cursor_position() {
-            Some(cursor) => {
-                if cursorinfo.hide_os_cursor { window.cursor.visible = false }
-
-                let offset_x = window.resolution.width() / 2.0 + cursorinfo.offset * transform.scale.x;
-                let offset_y = window.resolution.height() / 2.0 - cursorinfo.offset * transform.scale.y;
-
-                cursorinfo.cursor_screen = Vec2 {
-                    x: cursor.x,
-                    y: cursor.y,
-                };
-                cursorinfo.cursor_world = Vec2 {
-                    x: cursor.x - offset_x + camera.translation.x,
-                    y: window.resolution.height() - cursor.y - offset_y + camera.translation.y,
-                };
-                cursorinfo.depth = 0.0;
-
-                transform.translation.x = cursorinfo.cursor_world.x;
-                transform.translation.y = cursorinfo.cursor_world.y;
-            }
-            None => {
-                transform.translation.x = -window.resolution.width()*2.0;
-                transform.translation.y = -window.resolution.height()*2.0;
-
-                cursorinfo.cursor_world = Vec2 {
-                    x: -10000.0,
-                    y: -10000.0,
-                };
-            }
-        }
+    pub fn add_sprite_offset(mut self, offset: Vec2) -> Self {
+        self.sprite_offset.push(offset);
+        self
+    }
+    pub fn location_screen(&self) -> &Vec2 {
+        &self.location_screen
+    }
+    pub fn location_world(&self) -> &Vec2 {
+        &self.location_world
+    }
+    pub fn with_cursor_index(mut self, index: usize) -> Self {
+        self.cursor_index = usize::min(index, self.sprite_offset.len()-1);
+        self
+    }
+    pub fn set_cursor_index(&mut self, index: usize) {
+        self.cursor_index = usize::min(index, self.sprite_offset.len()-1)
     }
 }
 
 pub fn cursor_update(
     mut windows: Query<&mut Window>,
-    cameras: Query<(&Camera, &Transform), Without<Cursor>>,
-    mut query: Query<(&mut Cursor, &mut Transform), Without<Camera>>,
+    cameras: Query<&Transform, (With<Camera>, Without<Cursor>)>,
+    mut query: Query<(&mut Cursor, &mut Transform, &mut Visibility), Without<Camera>>,
 ) {
-    for (mut cursorinfo, mut transform) in &mut query {
-        let mut window = windows.get_single_mut().unwrap();
-        let (_, camera) = cameras.get_single().unwrap();
-
+    for (mut cursor, mut transform, mut visibility) in &mut query {
+        let mut window = windows.single_mut();
+        let camera_transform = cameras.single();
         match window.cursor_position() {
-            Some(cursor) => {
-                if cursorinfo.hide_os_cursor { window.cursor.visible = false }
-
-                let offset_x = window.resolution.width() / 2.0 + cursorinfo.offset * transform.scale.x;
-                let offset_y = window.resolution.height() / 2.0 - cursorinfo.offset * transform.scale.y;
-
-                cursorinfo.cursor_screen = Vec2 {
-                    x: cursor.x,
-                    y: cursor.y,
+            Some(win_cursor) => {
+                window.cursor.visible = cursor.os_cursor;
+                cursor.location_screen = win_cursor;
+                let sprite_offset = if cursor.sprite_offset.len() != 0 {
+                    cursor.sprite_offset[cursor.cursor_index]
+                } else {
+                    Vec2::ZERO
                 };
-                cursorinfo.cursor_world = Vec2 {
-                    x: cursor.x - offset_x + camera.translation.x,
-                    y: window.resolution.height() - cursor.y - offset_y + camera.translation.y,
-                };
-                cursorinfo.depth = 0.0;
-
-                transform.translation.x = cursorinfo.cursor_world.x;
-                transform.translation.y = cursorinfo.cursor_world.y;
+                let offset_x = window.resolution.width() / 2.0;
+                let offset_y = window.resolution.height() / 2.0;
+                let world_x = camera_transform.translation.x + win_cursor.x;
+                let world_y = camera_transform.translation.y + window.resolution.height() - win_cursor.y;
+                cursor.location_world = Vec2::new(
+                    world_x - offset_x + sprite_offset.x * transform.scale.x,
+                    world_y - offset_y - sprite_offset.y * transform.scale.y
+                );
+                transform.translation.x = world_x - offset_x;
+                transform.translation.y = world_y - offset_y;
+                *visibility = Visibility::Visible;
             }
             None => {
-                transform.translation.x = -window.resolution.width()*2.0;
-                transform.translation.y = -window.resolution.height()*2.0;
-
-                cursorinfo.cursor_world = Vec2 {
-                    x: -10000.0,
-                    y: -10000.0,
-                };
+                cursor.location_screen = Vec2::splat(-10000.0);
+                cursor.location_world = Vec2::splat(-10000.0);
+                *visibility = Visibility::Hidden;
             }
         }
+    }
+}
+
+pub fn cursor_update_texture(mut query: Query<(&Cursor, &mut TextureAtlasSprite)>) {
+    for (cursor, mut sprite) in &mut query {
+        sprite.index = cursor.cursor_index;
     }
 }

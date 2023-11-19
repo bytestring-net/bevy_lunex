@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_lunex_core::{UiTree, Widget, UiT, UiD, Size};
 use bevy_lunex_utility::Element;
 
-use crate::{cursor_update, InvertY};
+use crate::{cursor_update, cursor_update_texture, InvertY};
 
 
 // ===========================================================
@@ -142,7 +142,7 @@ impl LunexUiPlugin2DShared {
 }
 impl Plugin for LunexUiPlugin2DShared {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, cursor_update);
+        app.add_systems(Update, (cursor_update, cursor_update_texture));
     }
 }
 

@@ -27,8 +27,9 @@ fn main() {
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>, window: Query<Entity, (With<Window>, With<PrimaryWindow>)>) {
     // Spawn cursor
     commands.spawn((
-        Cursor::new(0.0),
+        Cursor::new(),
         Transform::default(),
+        Visibility::default()
     ));
 
     // Spawn camera
@@ -201,7 +202,7 @@ fn dropdown_element_update<T:Default+Component>(mut commands: Commands, mut tree
         for (widget, dropdown) in &mut query {
             let mut trigger = false;
             for cursor in &cursors {
-                if widget.contains_position(&tree, &cursor.position_world().invert_y()).unwrap() {
+                if widget.contains_position(&tree, &cursor.location_world().invert_y()).unwrap() {
                     trigger = true;
                     break;
                 }
@@ -219,7 +220,7 @@ fn dropdown_element_update<T:Default+Component>(mut commands: Commands, mut tree
                     Err(..) => {},
                     Ok (..) => {
                         for cursor in &cursors {
-                            if widget.contains_position_ext(&tree, "Droplist", &cursor.position_world().invert_y()).unwrap() {
+                            if widget.contains_position_ext(&tree, "Droplist", &cursor.location_world().invert_y()).unwrap() {
                                 trigger = true;
                                 break;
                             }
