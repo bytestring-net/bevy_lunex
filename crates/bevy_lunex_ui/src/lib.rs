@@ -13,7 +13,7 @@ pub use code::conversion::InvertY;
 pub use code::conversion::InvertXY;
 
 pub use code::cursor::Cursor;
-pub use code::cursor::{cursor_update, cursor_update_texture};
+pub use code::cursor::{cursor_update, cursor_update_texture, cursor_preupdate};
 
 pub use code::system::{tree_compute, tree_pull_window, element_update};
 pub use code::system::LunexUiPlugin2D;

@@ -5,7 +5,8 @@ use bevy::prelude::*;
 
 #[derive(Component, Default)]
 pub struct Cursor {
-    cursor_index: usize,
+    default_cursor_index: usize,
+    request_cursor_index: usize,
     sprite_offset: Vec<Vec2>,
     location_screen: Vec2,
     location_world: Vec2,
@@ -14,7 +15,8 @@ pub struct Cursor {
 impl Cursor {
     pub fn new() -> Cursor {
         Cursor {
-            cursor_index: 0,
+            default_cursor_index: 0,
+            request_cursor_index: 0,
             sprite_offset: Vec::new(),
             location_screen: Vec2::ZERO,
             location_world: Vec2::ZERO,
@@ -35,12 +37,12 @@ impl Cursor {
     pub fn location_world(&self) -> &Vec2 {
         &self.location_world
     }
-    pub fn with_cursor_index(mut self, index: usize) -> Self {
-        self.cursor_index = usize::min(index, self.sprite_offset.len()-1);
+    pub fn with_default_cursor_index(mut self, index: usize) -> Self {
+        self.default_cursor_index = usize::min(index, self.sprite_offset.len()-1);
         self
     }
-    pub fn set_cursor_index(&mut self, index: usize) {
-        self.cursor_index = usize::min(index, self.sprite_offset.len()-1)
+    pub fn request_cursor_index(&mut self, index: usize) {
+        self.request_cursor_index = usize::min(index, self.sprite_offset.len()-1)
     }
 }
 
@@ -57,7 +59,7 @@ pub fn cursor_update(
                 window.cursor.visible = cursor.os_cursor;
                 cursor.location_screen = win_cursor;
                 let sprite_offset = if cursor.sprite_offset.len() != 0 {
-                    cursor.sprite_offset[cursor.cursor_index]
+                    cursor.sprite_offset[cursor.request_cursor_index]
                 } else {
                     Vec2::ZERO
                 };
@@ -82,8 +84,16 @@ pub fn cursor_update(
     }
 }
 
+/// Set's the requested cursor index to be default
+pub fn cursor_preupdate(mut query: Query<&mut Cursor>) {
+    for mut cursor in &mut query {
+        cursor.request_cursor_index = cursor.default_cursor_index;
+    }
+}
+
+/// Applies requested cursor index as sprite index
 pub fn cursor_update_texture(mut query: Query<(&Cursor, &mut TextureAtlasSprite)>) {
     for (cursor, mut sprite) in &mut query {
-        sprite.index = cursor.cursor_index;
+        sprite.index = cursor.request_cursor_index;
     }
 }
