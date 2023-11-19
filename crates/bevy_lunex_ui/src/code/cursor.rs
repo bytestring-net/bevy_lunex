@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_lunex_core::UiTree;
 
 // ===========================================================
 // === CURSOR ===
@@ -54,6 +55,48 @@ impl Cursor {
 
 /// # Cursor update
 /// A system that will update the cursor. Will **`panic!`** if there are multiple windows or multiple cameras.
+pub fn cursor_update_old(
+    mut windows: Query<&mut Window>,
+    cameras: Query<(&Camera, &Transform), Without<Cursor>>,
+    mut query: Query<(&mut Cursor, &mut Transform), Without<Camera>>,
+) {
+    for (mut cursorinfo, mut transform) in &mut query {
+        let mut window = windows.get_single_mut().unwrap();
+        let (_, camera) = cameras.get_single().unwrap();
+
+        match window.cursor_position() {
+            Some(cursor) => {
+                if cursorinfo.hide_os_cursor { window.cursor.visible = false }
+
+                let offset_x = window.resolution.width() / 2.0 + cursorinfo.offset * transform.scale.x;
+                let offset_y = window.resolution.height() / 2.0 - cursorinfo.offset * transform.scale.y;
+
+                cursorinfo.cursor_screen = Vec2 {
+                    x: cursor.x,
+                    y: cursor.y,
+                };
+                cursorinfo.cursor_world = Vec2 {
+                    x: cursor.x - offset_x + camera.translation.x,
+                    y: window.resolution.height() - cursor.y - offset_y + camera.translation.y,
+                };
+                cursorinfo.depth = 0.0;
+
+                transform.translation.x = cursorinfo.cursor_world.x;
+                transform.translation.y = cursorinfo.cursor_world.y;
+            }
+            None => {
+                transform.translation.x = -window.resolution.width()*2.0;
+                transform.translation.y = -window.resolution.height()*2.0;
+
+                cursorinfo.cursor_world = Vec2 {
+                    x: -10000.0,
+                    y: -10000.0,
+                };
+            }
+        }
+    }
+}
+
 pub fn cursor_update(
     mut windows: Query<&mut Window>,
     cameras: Query<(&Camera, &Transform), Without<Cursor>>,
@@ -67,10 +110,8 @@ pub fn cursor_update(
             Some(cursor) => {
                 if cursorinfo.hide_os_cursor { window.cursor.visible = false }
 
-                let offset_x =
-                    window.resolution.width() / 2.0 + cursorinfo.offset * transform.scale.x;
-                let offset_y =
-                    window.resolution.height() / 2.0 - cursorinfo.offset * transform.scale.y;
+                let offset_x = window.resolution.width() / 2.0 + cursorinfo.offset * transform.scale.x;
+                let offset_y = window.resolution.height() / 2.0 - cursorinfo.offset * transform.scale.y;
 
                 cursorinfo.cursor_screen = Vec2 {
                     x: cursor.x,
