@@ -27,4 +27,7 @@ pub mod prelude {
 
     pub use crate::textrow;
     pub use crate::textgrid;
+
+    pub use crate::import_use;
+    pub use crate::script_plugin;
 }
