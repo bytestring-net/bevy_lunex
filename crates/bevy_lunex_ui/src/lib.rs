@@ -15,7 +15,7 @@ pub use code::conversion::InvertXY;
 pub use code::cursor::Cursor;
 pub use code::cursor::{cursor_update, cursor_update_texture, cursor_preupdate};
 
-pub use code::system::{tree_compute, tree_pull_window, element_update};
+pub use code::system::LunexUiSystemSet2D;
 pub use code::system::LunexUiPlugin2D;
 pub use code::system::LunexUiPlugin2DShared;
 pub use code::system::LunexUiPlugin2DGeneric;
@@ -38,7 +38,7 @@ pub mod prelude {
 
     pub use super::Cursor;
 
-    pub use super::{tree_compute, tree_pull_window, element_update};
+    pub use super::LunexUiSystemSet2D;
 
     pub use super::LunexUiPlugin2D;
     pub use super::LunexUiDebugPlugin2D;

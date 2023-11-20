@@ -21,6 +21,6 @@ impl Plugin for LunexUiPrefabPlugin {
 
         .add_systems(Update, (
             crate::code::boxes::vector_rectangle_update,
-        ).after(element_update));
+        ).after(LunexUiSystemSet2D));
     }
 }

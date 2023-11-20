@@ -18,7 +18,7 @@ fn main() {
 
         .add_systems(Update, (
             vector_rectangle_update,
-        ).after(element_update::<D>))
+        ).after(LunexUiSystemSet2D))
 
         .run()
 }

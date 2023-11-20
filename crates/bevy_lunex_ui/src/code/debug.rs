@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_lunex_core::UiTree;
 
 use crate::cursor_update;
-use crate::element_update;
+use crate::LunexUiSystemSet2D;
 use crate::InvertY;
 
 // ===========================================================
@@ -106,6 +106,6 @@ impl <T:Component + Default>LunexUiDebugPlugin2DGeneric<T> {
 }
 impl <T: Component + Default> Plugin for LunexUiDebugPlugin2DGeneric<T> {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, lunex_draw_lines_debug_2d::<T>.after(element_update::<T>));
+        app.add_systems(Update, lunex_draw_lines_debug_2d::<T>.after(LunexUiSystemSet2D));
     }
 }

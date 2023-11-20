@@ -34,7 +34,8 @@ pub fn tree_compute<T:Component + Default>(mut query: Query<(&mut UiTree<T>, &Si
 }
 
 /// # Element Update
-/// A system that re-positions and re-scales every [`Element`] to match the calculated layout.
+/// A system that re-positions and re-scales every [`Element`] for widgets in changed [`UiTree`]s to match the calculated
+/// layout.
 /// 
 /// Requires that entity has [`Element`] + [`Widget`] + [`Transform`] + [`Visibility`] components.
 /// * [`Element`] contains the data how to position the entity relative to the widget.
@@ -42,24 +43,13 @@ pub fn tree_compute<T:Component + Default>(mut query: Query<(&mut UiTree<T>, &Si
 /// * [`Transform`] fields will be overwritten by this system.
 /// * [`Visibility`] enum will be changed by this system.
 /// 
-/// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**
-pub fn element_update<T:Component + Default>(
-    mut buffer: Local<Vec<Entity>>,
+/// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**.
+pub fn update_changed_trees<T:Component + Default>(
     mut commands: Commands,
-    trees: Query<(Entity, &UiTree<T>, &Transform)>,
-    changed_trees: Query<(Entity, &UiTree<T>, &Transform), Or<(Changed<UiTree<T>>, Changed<Transform>)>>,
+    changed_trees: Query<(&UiTree<T>, &Transform), Or<(Changed<UiTree<T>>, Changed<Transform>)>>,
     mut elements: Query<(Entity, &Widget, &Element, &mut Transform, &mut Visibility), Without<UiTree<T>>>,
-    mut changed_elements: Query<
-        (Entity, &Widget, &Element, &mut Transform, &mut Visibility),
-        (Without<UiTree<T>>, Or<(Changed<Widget>, Changed<Element>)>)
-    >
-) {
-    buffer.clear();
-
-    // update all elements in changed trees
-    for (entity, tree, tree_transform) in changed_trees.iter() {
-        buffer.push(entity);
-
+) -> bool {
+    for (tree, tree_transform) in changed_trees.iter() {
         for (entity, widget, element, mut transform, mut visibility) in &mut elements {
             element_update_impl(
                 &mut commands,
@@ -74,14 +64,25 @@ pub fn element_update<T:Component + Default>(
         }
     }
 
-    // update changed elements in unchanged trees
-    'l: for (entity, tree, tree_transform) in trees.iter() {
-        for changed_tree in buffer.iter() {
-            if entity == *changed_tree {
-                continue 'l;
-            }
-        }
+    !changed_trees.is_empty()
+}
 
+/// # Element Update
+/// See [`update_changed_trees()`]. Only updates widget elements that have changed.
+pub fn update_changed_elements<T:Component + Default>(
+    In(trees_changed): In<bool>,
+    mut commands: Commands,
+    trees: Query<(&UiTree<T>, &Transform)>,
+    mut changed_elements: Query<
+        (Entity, &Widget, &Element, &mut Transform, &mut Visibility),
+        (Without<UiTree<T>>, Or<(Changed<Widget>, Changed<Element>)>)
+    >
+) {
+    if trees_changed {
+        return;
+    }
+
+    for (tree, tree_transform) in trees.iter() {
         for (entity, widget, element, mut transform, mut visibility) in &mut changed_elements {
             element_update_impl(
                 &mut commands,
@@ -166,6 +167,11 @@ fn element_update_impl<T:Component + Default>(
 // ===========================================================
 // === PLUGIN ===
 
+/// # Lunex Ui System Set 2D
+/// The system set where Lunex internal systems run.
+#[derive(SystemSet, Hash, Debug, Eq, PartialEq, Copy, Clone)]
+pub struct LunexUiSystemSet2D;
+
 /// # Lunex Ui Plugin 2D
 /// A plugin holding all plugins required by Bevy-Lunex to work in 2D plane.
 /// 
@@ -205,9 +211,9 @@ impl LunexUiPlugin2DShared {
 }
 impl Plugin for LunexUiPlugin2DShared {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreUpdate, cursor_preupdate)
-           .add_systems(Update, cursor_update.after(cursor_preupdate))
-           .add_systems(PostUpdate, cursor_update_texture.after(cursor_update));
+        app.add_systems(PreUpdate, cursor_preupdate.in_set(LunexUiSystemSet2D))
+           .add_systems(Update, cursor_update.in_set(LunexUiSystemSet2D))
+           .add_systems(PostUpdate, cursor_update_texture.in_set(LunexUiSystemSet2D));
     }
 }
 
@@ -231,6 +237,13 @@ impl <T:Component + Default>LunexUiPlugin2DGeneric<T> {
 }
 impl <T: Component + Default> Plugin for LunexUiPlugin2DGeneric<T> {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (tree_pull_window::<T>, tree_compute::<T>, element_update::<T>).chain().before(cursor_update));
+        app.add_systems(Update,
+            (
+                tree_pull_window::<T>,
+                tree_compute::<T>,
+                update_changed_trees::<T>.pipe(update_changed_elements::<T>)
+            ).chain()
+                .in_set(LunexUiSystemSet2D)
+                .before(cursor_update));
     }
 }
