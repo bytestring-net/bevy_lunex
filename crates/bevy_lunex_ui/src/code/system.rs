@@ -58,7 +58,7 @@ pub fn element_update<T:Component + Default>(mut commands: Commands, systems: Qu
 
                         let container = branch.get_container();
                         match container.get_render_depth() {
-                            Modifier::Add(v) => transform.translation.z = v + branch.get_depth() * bevy_lunex_core::LEVEL_RENDER_DEPTH_DEFFERENCE + element.depth + tree_transform.translation.z,
+                            Modifier::Add(v) => transform.translation.z = v + branch.get_depth() * bevy_lunex_core::LEVEL_RENDER_DEPTH_DIFFERENCE + element.depth + tree_transform.translation.z,
                             Modifier::Set(v) => transform.translation.z = v + element.depth + tree_transform.translation.z,
                         }
     

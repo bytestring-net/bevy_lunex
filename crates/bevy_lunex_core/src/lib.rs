@@ -1,7 +1,7 @@
 // ===========================================================
 // === MOD ===
 pub const LEVEL_RENDER_DEPTH_START: f32 = 100.0;
-pub const LEVEL_RENDER_DEPTH_DEFFERENCE: f32 = 10.0;
+pub const LEVEL_RENDER_DEPTH_DIFFERENCE: f32 = 10.0;
 
 mod code;
 
