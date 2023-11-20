@@ -99,3 +99,12 @@ pub struct Size {
     pub width: f32,
     pub height: f32,
 }
+
+/// # Modifier
+/// A special enum dictating if *(T)* is supposed to be
+/// **added** to a specific property or **override** it instead
+#[derive(Clone, Copy, Component, Debug, PartialEq)]
+pub enum Modifier<T> {
+    Add (T),
+    Set (T),
+}

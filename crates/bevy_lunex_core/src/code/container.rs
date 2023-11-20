@@ -1,8 +1,6 @@
 use std::borrow::Borrow;
-
 use bevy::prelude::Vec2;
-
-use crate::{Widget, UiTree, LunexError};
+use crate::{Widget, UiTree, LunexError, Modifier};
 
 // ===========================================================
 // === LAYOUT VARIANTS ===
@@ -47,6 +45,11 @@ impl WindowLayout {
     /// Builds position into [`Widget`] using `Widget::create()`.
     pub fn build<T:Default>(self, tree: &mut UiTree<T>) -> Result<Widget, LunexError> {
         Widget::create(tree, "", self)
+    }
+
+    /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build_in<T:Default>(self, tree: &mut UiTree<T>, widget: impl Borrow<Widget>) -> Result<Widget, LunexError> {
+        Widget::create(tree, widget.borrow().end(""), self)
     }
 
     /// Builds position into [`Widget`] using `Widget::create()`.
@@ -185,6 +188,11 @@ impl RelativeLayout {
     }
 
     /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build_in<T:Default>(self, tree: &mut UiTree<T>, widget: impl Borrow<Widget>) -> Result<Widget, LunexError> {
+        Widget::create(tree, widget.borrow().end(""), self)
+    }
+
+    /// Builds position into [`Widget`] using `Widget::create()`.
     pub fn build_as<T:Default>(self, tree: &mut UiTree<T>, path: impl Borrow<str>) -> Result<Widget, LunexError> {
         Widget::create(tree, path, self)
     }
@@ -296,6 +304,11 @@ impl SolidLayout {
     /// Builds position into [`Widget`] using `Widget::create()`.
     pub fn build<T:Default>(self, tree: &mut UiTree<T>) -> Result<Widget, LunexError> {
         Widget::create(tree, "", self)
+    }
+
+    /// Builds position into [`Widget`] using `Widget::create()`.
+    pub fn build_in<T:Default>(self, tree: &mut UiTree<T>, widget: impl Borrow<Widget>) -> Result<Widget, LunexError> {
+        Widget::create(tree, widget.borrow().end(""), self)
     }
 
     /// Builds position into [`Widget`] using `Widget::create()`.
@@ -515,7 +528,7 @@ impl Position {
 /// # Container
 /// This struct is responsible for all the positioning of the widget.
 /// Through this struct and its methods you can interact with widgets position.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Container {
     position_cached: Position,
     position_layout: LayoutPackage,
@@ -525,7 +538,7 @@ pub struct Container {
     
     visibility: bool,
     inherited_visibility: bool,
-    render_depth: f32,
+    render_depth: Modifier<f32>,
 
 }
 impl Container {
@@ -537,7 +550,7 @@ impl Container {
 
             visibility: true,
             inherited_visibility: true,
-            render_depth: 0.0,
+            render_depth: Modifier::Add(crate::LEVEL_RENDER_DEPTH_START),
         }
     }
 
@@ -589,7 +602,7 @@ impl Container {
     }
 
     /// Return container's render depth.
-    pub fn get_render_depth(&self) -> f32 {
+    pub fn get_render_depth(&self) -> Modifier<f32> {
         self.render_depth
     }
 
@@ -604,7 +617,7 @@ impl Container {
     }
 
     /// Set container's render_depth.
-    pub fn set_render_depth(&mut self, render_depth: f32) {
+    pub fn set_render_depth(&mut self, render_depth: Modifier<f32>) {
         self.render_depth = render_depth;
     }
 
@@ -631,5 +644,10 @@ impl Container {
     /// Returns mutable reference to the layout
     pub fn get_layout_mut(&mut self) -> &mut LayoutPackage {
         &mut self.position_layout
+    }
+}
+impl Default for Container {
+    fn default() -> Self {
+        Container::new()
     }
 }

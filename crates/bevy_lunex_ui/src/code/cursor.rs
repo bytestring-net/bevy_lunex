@@ -68,11 +68,11 @@ pub fn cursor_update(
                 let world_x = camera_transform.translation.x + win_cursor.x;
                 let world_y = camera_transform.translation.y + window.resolution.height() - win_cursor.y;
                 cursor.location_world = Vec2::new(
-                    world_x - offset_x + sprite_offset.x * transform.scale.x,
-                    world_y - offset_y - sprite_offset.y * transform.scale.y
+                    world_x - offset_x,
+                    world_y - offset_y
                 );
-                transform.translation.x = world_x - offset_x;
-                transform.translation.y = world_y - offset_y;
+                transform.translation.x = world_x - offset_x - sprite_offset.x * transform.scale.x;
+                transform.translation.y = world_y - offset_y + sprite_offset.y * transform.scale.y;
                 *visibility = Visibility::Visible;
             }
             None => {

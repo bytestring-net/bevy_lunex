@@ -1,5 +1,7 @@
 // ===========================================================
 // === MOD ===
+pub const LEVEL_RENDER_DEPTH_START: f32 = 100.0;
+pub const LEVEL_RENDER_DEPTH_DEFFERENCE: f32 = 10.0;
 
 mod code;
 
@@ -10,7 +12,7 @@ pub use code::container::{WindowLayout, RelativeLayout, SolidLayout};
 pub use code::container::{SolidScale, LayoutPackage};
 pub use code::container::{Position, Container};
 pub use code::tree::{UiTree, UiBranch, UiT, UiD};
-pub use code::types::{LunexError, DataWrap, Size};
+pub use code::types::{LunexError, DataWrap, Size, Modifier};
 pub use code::widget::Widget;
 
 
@@ -21,7 +23,7 @@ pub mod prelude {
     pub use super::{WindowLayout, RelativeLayout, SolidLayout};
     pub use super::{SolidScale, LayoutPackage};
     pub use super::{UiTree, UiT, UiD};
-    pub use super::LunexError;
+    pub use super::{LunexError, Modifier};
     pub use super::Widget;
 }
 

@@ -2,10 +2,7 @@ use std::borrow::Borrow;
 use bevy::prelude::*;
 use pathio::{prelude::*, PathTreeSingle, DirectorySingle};
 use crate::{RelativeLayout, Container, LayoutPackage};
-use crate::LunexError;
-use super::types::DataWrap;
-
-const LEVEL_DEPTH_DIFFERENCE: f32 = 10.0;
+use crate::{LunexError, DataWrap};
 
 // ===========================================================
 // === PATHIO IMPLEMENTATION ===
@@ -61,7 +58,6 @@ impl <T:Default> UiT<T> for UiTree<T> {
         let mut tree: UiTree<T> = pathio::PathTreeInit::new(name);
         let mut container = Container::new();
         container.set_layout(RelativeLayout::new());
-        container.set_render_depth(100.0);
         tree.add_file(DataWrap::new(container));
         tree
     }
@@ -160,7 +156,7 @@ pub trait UiD<T:Default> {
     /// Borrow data from this branch
     fn get_data_mut(&mut self) -> &mut T;
 
-    /// Return branch depth
+    /// Return branch depth level, element depth is located in [`Container`] under `render_depth` property
     fn get_depth(&self) -> f32;
 
     /// Return branch visibility. Does not mean the branch is going to be visible due to inherited visibility
@@ -236,7 +232,7 @@ impl <T:Default> UiD<T> for UiBranch<T> {
     }
 
     fn get_depth(&self) -> f32 {
-        pathio::PathioHierarchy::get_depth(self) * LEVEL_DEPTH_DIFFERENCE
+        pathio::PathioHierarchy::get_depth(self)
     }
 
     fn get_visibility(&self) -> bool {

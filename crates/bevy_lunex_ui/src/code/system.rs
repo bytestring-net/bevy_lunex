@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_lunex_core::{UiTree, Widget, UiT, UiD, Size};
+use bevy_lunex_core::{UiTree, Widget, UiT, UiD, Size, Modifier};
 use bevy_lunex_utility::Element;
 
 use crate::{cursor_update, cursor_update_texture, cursor_preupdate, InvertY};
@@ -55,10 +55,14 @@ pub fn element_update<T:Component + Default>(mut commands: Commands, systems: Qu
                         *visibility = Visibility::Hidden;
                     } else {
                         *visibility = Visibility::Inherited;
+
+                        let container = branch.get_container();
+                        match container.get_render_depth() {
+                            Modifier::Add(v) => transform.translation.z = v + branch.get_depth() * bevy_lunex_core::LEVEL_RENDER_DEPTH_DEFFERENCE + element.depth + tree_transform.translation.z,
+                            Modifier::Set(v) => transform.translation.z = v + element.depth + tree_transform.translation.z,
+                        }
     
-                        transform.translation.z = branch.get_depth() + element.depth + tree_transform.translation.z;
-    
-                        let pos = branch.get_container().get_position().clone();
+                        let pos = container.get_position().clone();
                         let vec = pos.get_pos(element.relative).invert_y();
                         transform.translation.x = vec.x;
                         transform.translation.y = vec.y;
@@ -143,8 +147,8 @@ impl LunexUiPlugin2DShared {
 impl Plugin for LunexUiPlugin2DShared {
     fn build(&self, app: &mut App) {
         app.add_systems(PreUpdate, cursor_preupdate)
-           .add_systems(PostUpdate, cursor_update_texture)
-           .add_systems(Update, cursor_update);
+           .add_systems(Update, cursor_update.after(cursor_preupdate))
+           .add_systems(PostUpdate, cursor_update_texture.after(cursor_update));
     }
 }
 
