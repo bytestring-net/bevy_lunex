@@ -10,8 +10,8 @@
 
 # 
 
-## Version 0.0.8 RELEASED!
-v0.0.8 is very close to the release of v0.1.0!
+## Version 0.0.9 RELEASED!
+v0.0.9 is very close to the release of v0.1.0!
 
 #
 
@@ -158,7 +158,7 @@ By nesting branches of these 3 types, you can precisely define the position and 
 ## === Versions ===
 |  Bevy  |   Bevy Lunex  |
 |--------|---------------|
-| 0.12.0 | 0.0.7 - 0.0.8 |
+| 0.12.0 | 0.0.7 - 0.0.9 |
 | 0.11.2 |    <= 0.0.6   |
 
 ## === Contributing ===
