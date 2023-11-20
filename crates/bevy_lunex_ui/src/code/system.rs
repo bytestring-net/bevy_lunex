@@ -43,60 +43,119 @@ pub fn tree_compute<T:Component + Default>(mut query: Query<(&mut UiTree<T>, &Si
 /// * [`Visibility`] enum will be changed by this system.
 /// 
 /// [`Widget`] needs to have valid path, otherwise the entity will be **`despawned`**
-pub fn element_update<T:Component + Default>(mut commands: Commands, systems: Query<(&UiTree<T>, &Transform)>, mut query: Query<(&Widget, &Element, &mut Transform, &mut Visibility, Entity), Without<UiTree<T>>>) {
-    for (tree, tree_transform) in systems.iter() {
-        for (widget, element, mut transform, mut visibility, entity) in &mut query {
-            match widget.fetch(&tree) {
-                Err(_) => {
-                    commands.entity(entity).despawn();
-                },
-                Ok(branch) => {
-                    if !branch.is_visible() {
-                        *visibility = Visibility::Hidden;
-                    } else {
-                        *visibility = Visibility::Inherited;
+pub fn element_update<T:Component + Default>(
+    mut buffer: Local<Vec<Entity>>,
+    mut commands: Commands,
+    trees: Query<(Entity, &UiTree<T>, &Transform)>,
+    changed_trees: Query<(Entity, &UiTree<T>, &Transform), Or<(Changed<UiTree<T>>, Changed<Transform>)>>,
+    mut elements: Query<(Entity, &Widget, &Element, &mut Transform, &mut Visibility), Without<UiTree<T>>>,
+    mut changed_elements: Query<
+        (Entity, &Widget, &Element, &mut Transform, &mut Visibility),
+        (Without<UiTree<T>>, Or<(Changed<Widget>, Changed<Element>)>)
+    >
+) {
+    buffer.clear();
 
-                        let container = branch.get_container();
-                        match container.get_render_depth() {
-                            Modifier::Add(v) => transform.translation.z = v + branch.get_depth() * bevy_lunex_core::LEVEL_RENDER_DEPTH_DIFFERENCE + element.depth + tree_transform.translation.z,
-                            Modifier::Set(v) => transform.translation.z = v + element.depth + tree_transform.translation.z,
-                        }
-    
-                        let pos = container.get_position().clone();
-                        let vec = pos.get_pos(element.relative).invert_y();
-                        transform.translation.x = vec.x;
-                        transform.translation.y = vec.y;
-    
-                        match element.width {
-                            Some (w) => {
-                                match element.height {
-                                    Some (h) => {
-                                        transform.scale.x = (pos.width/element.boundary.x)*(w/100.0) * element.scale/100.0;
-                                        transform.scale.y = (pos.height/element.boundary.y)*(h/100.0) * element.scale/100.0;
-                                    },
-                                    None => {
-                                        let scale = (pos.width/element.boundary.x)*(w/100.0) * element.scale/100.0;
-                                        transform.scale.x = scale;
-                                        transform.scale.y = scale;
-                                    },
-                                }
+    // update all elements in changed trees
+    for (entity, tree, tree_transform) in changed_trees.iter() {
+        buffer.push(entity);
+
+        for (entity, widget, element, mut transform, mut visibility) in &mut elements {
+            element_update_impl(
+                &mut commands,
+                tree,
+                &tree_transform.translation,
+                entity,
+                widget,
+                element,
+                &mut transform,
+                &mut visibility
+            );
+        }
+    }
+
+    // update changed elements in unchanged trees
+    'l: for (entity, tree, tree_transform) in trees.iter() {
+        for changed_tree in buffer.iter() {
+            if entity == *changed_tree {
+                continue 'l;
+            }
+        }
+
+        for (entity, widget, element, mut transform, mut visibility) in &mut changed_elements {
+            element_update_impl(
+                &mut commands,
+                tree,
+                &tree_transform.translation,
+                entity,
+                widget,
+                element,
+                &mut transform,
+                &mut visibility
+            );
+        }
+    }
+}
+
+fn element_update_impl<T:Component + Default>(
+    commands: &mut Commands,
+    tree: &UiTree<T>,
+    tree_translation: &Vec3,
+    entity: Entity,
+    widget: &Widget,
+    element: &Element,
+    transform: &mut Transform,
+    visibility: &mut Visibility
+) {
+    match widget.fetch(&tree) {
+        Err(_) => {
+            commands.entity(entity).despawn();
+        },
+        Ok(branch) => {
+            if !branch.is_visible() {
+                *visibility = Visibility::Hidden;
+            } else {
+                *visibility = Visibility::Inherited;
+
+                let container = branch.get_container();
+                match container.get_render_depth() {
+                    Modifier::Add(v) => transform.translation.z = v + branch.get_depth() * bevy_lunex_core::LEVEL_RENDER_DEPTH_DIFFERENCE + element.depth + tree_translation.z,
+                    Modifier::Set(v) => transform.translation.z = v + element.depth + tree_translation.z,
+                }
+
+                let pos = container.get_position().clone();
+                let vec = pos.get_pos(element.relative).invert_y();
+                transform.translation.x = vec.x;
+                transform.translation.y = vec.y;
+
+                match element.width {
+                    Some (w) => {
+                        match element.height {
+                            Some (h) => {
+                                transform.scale.x = (pos.width/element.boundary.x)*(w/100.0) * element.scale/100.0;
+                                transform.scale.y = (pos.height/element.boundary.y)*(h/100.0) * element.scale/100.0;
                             },
                             None => {
-                                match element.height {
-                                    Some (h) => {
-                                        let scale = (pos.height/element.boundary.y)*(h/100.0) * element.scale/100.0;
-                                        transform.scale.x = scale;
-                                        transform.scale.y = scale;
-                                    },
-                                    None => {
-                                        let scale = f32::min(pos.width/element.boundary.x, pos.height/element.boundary.y) * element.scale/100.0;
-                                        transform.scale.x = scale;
-                                        transform.scale.y = scale;
-                                    },
-                                }
+                                let scale = (pos.width/element.boundary.x)*(w/100.0) * element.scale/100.0;
+                                transform.scale.x = scale;
+                                transform.scale.y = scale;
                             },
                         }
-                    }
+                    },
+                    None => {
+                        match element.height {
+                            Some (h) => {
+                                let scale = (pos.height/element.boundary.y)*(h/100.0) * element.scale/100.0;
+                                transform.scale.x = scale;
+                                transform.scale.y = scale;
+                            },
+                            None => {
+                                let scale = f32::min(pos.width/element.boundary.x, pos.height/element.boundary.y) * element.scale/100.0;
+                                transform.scale.x = scale;
+                                transform.scale.y = scale;
+                            },
+                        }
+                    },
                 }
             }
         }
