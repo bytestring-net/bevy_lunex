@@ -181,9 +181,13 @@ impl ElementBundle {
 /// * `sprite`
 /// * `texture`
 /// * `transform`
-/// * `visibility`
+/// * `visibility` *
 /// * `global_transform`
 /// * `computed_visibility`
+/// 
+/// _Visibility is set to Hidden by default to avoid 1-frame blink
+/// between the image creation and the time the asset is corrected next frame
+/// by element_update system._
 #[derive(Bundle, Clone, Debug, Default)]
 pub struct ImageElementBundle {
     pub widget: Widget,
@@ -226,6 +230,7 @@ impl ImageElementBundle {
                 flip_y: params.flip_y.clone(),
                 ..default()
             },
+            visibility: Visibility::Hidden,
             ..Default::default()
         }
     }
@@ -464,9 +469,13 @@ impl ImageParams {
 /// * `text_2d_bounds`
 /// * `text_layout_info`
 /// * `transform`
-/// * `visibility`
+/// * `visibility` *
 /// * `global_transform`
 /// * `computed_visibility`
+/// 
+/// _Visibility is set to Hidden by default to avoid 1-frame blink
+/// between the text creation and the time the asset is corrected next frame
+/// by element_update system._
 #[derive(Bundle, Clone, Debug, Default)]
 pub struct TextElementBundle {
     pub widget: Widget,
@@ -505,6 +514,7 @@ impl TextElementBundle {
             text: Text::from_section(text, params.style.clone())
                 .with_alignment(params.alignment),
             text_anchor: params.anchor.clone(),
+            visibility: Visibility::Hidden,
             ..default()
         }
     }
