@@ -45,6 +45,9 @@ pub fn lunex_camera_move_debug_2d(
 // ===========================================================
 // === PLUGIN ===
 
+#[derive(SystemSet, Hash, Debug, Eq, PartialEq, Copy, Clone)]
+pub struct LunexUiDebugSystemSet2D;
+
 /// # Lunex Ui Debug Plugin 2D
 /// A plugin holding all plugins required for debugging Bevy-Lunex in 2D plane.
 /// 
@@ -106,6 +109,6 @@ impl <T:Component + Default>LunexUiDebugPlugin2DGeneric<T> {
 }
 impl <T: Component + Default> Plugin for LunexUiDebugPlugin2DGeneric<T> {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, lunex_draw_lines_debug_2d::<T>.after(LunexUiSystemSet2D));
+        app.add_systems(Update, lunex_draw_lines_debug_2d::<T>.after(LunexUiSystemSet2D).in_set(LunexUiDebugSystemSet2D));
     }
 }

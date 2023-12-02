@@ -20,6 +20,7 @@ pub use code::system::LunexUiPlugin2D;
 pub use code::system::LunexUiPlugin2DShared;
 pub use code::system::LunexUiPlugin2DGeneric;
 
+pub use code::debug::LunexUiDebugSystemSet2D;
 pub use code::debug::LunexUiDebugPlugin2D;
 pub use code::debug::LunexUiDebugPlugin2DShared;
 pub use code::debug::LunexUiDebugPlugin2DGeneric;
@@ -39,6 +40,7 @@ pub mod prelude {
     pub use super::Cursor;
 
     pub use super::LunexUiSystemSet2D;
+    pub use super::LunexUiDebugSystemSet2D;
 
     pub use super::LunexUiPlugin2D;
     pub use super::LunexUiDebugPlugin2D;

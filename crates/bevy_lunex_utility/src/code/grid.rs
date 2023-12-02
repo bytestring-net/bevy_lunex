@@ -231,8 +231,8 @@ impl Grid {
             gap_length_so_far += border[0] * length_normalization
         }
         let widget = match self.orientation {
-            GridOrientation::Horizontal => Widget::create(tree, path, layout.with_width_rel(grid_size).with_height_rel(grid_lenght))?,
-            GridOrientation::Vertical => Widget::create(tree, path, layout.with_width_rel(grid_lenght).with_height_rel(grid_size))?,
+            GridOrientation::Horizontal => Widget::create(tree, path, layout.size_rel((grid_size, grid_lenght)))?,
+            GridOrientation::Vertical => Widget::create(tree, path, layout.size_rel((grid_lenght, grid_size)))?,
         };
 
         let mut widget_return: Vec<Vec<Widget>> = Vec::new();
@@ -468,12 +468,11 @@ impl GridSegment {
                 let ll = self.cell[x].size.x * length_normalization;
 
                 widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
+                    pos_relative: Vec2::new(
                         cell_length_so_far + gap_length_so_far,
                         (segment_size/2.0 - self.cell[x].size.y/2.0) * size_normalization,
                     ),
-                    width_relative: ll,
-                    height_relative: self.cell[x].size.y * size_normalization,
+                    size_relative: (ll, self.cell[x].size.y * size_normalization).into(),
                     ..default()
                 })?);
 
@@ -493,12 +492,11 @@ impl GridSegment {
                 let ll = self.cell[x].size.y * length_normalization;
     
                 widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
+                    pos_relative: Vec2::new(
                         (segment_size/2.0 - self.cell[x].size.x/2.0) * size_normalization,
                         cell_length_so_far + gap_length_so_far,
                     ),
-                    width_relative: self.cell[x].size.x * size_normalization,
-                    height_relative: ll,
+                    size_relative: (self.cell[x].size.x * size_normalization, ll).into(),
                     ..default()
                 })?);
     
@@ -549,12 +547,11 @@ impl GridSegment {
                 let ll = self.cell[x].size.x * length_normalization;
 
                 widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
+                    pos_relative: Vec2::new(
                         cell_length_so_far + gap_length_so_far,
                         (segment_size/2.0 - self.cell[x].size.y/2.0) * size_normalization,
                     ),
-                    width_relative: ll,
-                    height_relative: self.cell[x].size.y * size_normalization,
+                    size_relative: (ll, self.cell[x].size.y * size_normalization).into(),
                     ..default()
                 })?);
 
@@ -574,12 +571,11 @@ impl GridSegment {
                 let ll = self.cell[x].size.y * length_normalization;
     
                 widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
+                    pos_relative: Vec2::new(
                         (segment_size/2.0 - self.cell[x].size.x/2.0) * size_normalization,
                         cell_length_so_far + gap_length_so_far,
                     ),
-                    width_relative: self.cell[x].size.x * size_normalization,
-                    height_relative: ll,
+                    size_relative: (self.cell[x].size.x * size_normalization, ll).into(),
                     ..default()
                 })?);
     
@@ -611,8 +607,8 @@ impl GridSegment {
         }
 
         let widget = match orientation {
-            GridOrientation::Horizontal => Widget::create(tree, path, layout.with_width_rel(segment_lenght).with_height_rel(segment_size))?,
-            GridOrientation::Vertical => Widget::create(tree, path, layout.with_width_rel(segment_size).with_height_rel(segment_lenght))?,
+            GridOrientation::Horizontal => Widget::create(tree, path, layout.size_rel((segment_lenght, segment_size)))?,
+            GridOrientation::Vertical => Widget::create(tree, path, layout.size_rel((segment_size, segment_lenght)))?,
         };
 
         let mut widget_return: Vec<Widget> = Vec::new();
@@ -630,12 +626,11 @@ impl GridSegment {
                 let ll = self.cell[x].size.x * length_normalization;
 
                 widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
+                    pos_relative: Vec2::new(
                         cell_length_so_far + gap_length_so_far,
                         (segment_size/2.0 - self.cell[x].size.y/2.0) * size_normalization,
                     ),
-                    width_relative: ll,
-                    height_relative: self.cell[x].size.y * size_normalization,
+                    size_relative: (ll, self.cell[x].size.x * size_normalization).into(),
                     ..default()
                 })?);
 
@@ -655,12 +650,11 @@ impl GridSegment {
                 let ll = self.cell[x].size.y * length_normalization;
     
                 widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
+                    pos_relative: Vec2::new(
                         (segment_size/2.0 - self.cell[x].size.x/2.0) * size_normalization,
                         cell_length_so_far + gap_length_so_far,
                     ),
-                    width_relative: self.cell[x].size.x * size_normalization,
-                    height_relative: ll,
+                    size_relative: (self.cell[x].size.x * size_normalization, ll).into(),
                     ..default()
                 })?);
     
@@ -692,8 +686,8 @@ impl GridSegment {
         }
 
         let widget = match orientation {
-            GridOrientation::Horizontal => Widget::create(tree, path, layout.with_width_abs(segment_lenght).with_height_abs(segment_size))?,
-            GridOrientation::Vertical => Widget::create(tree, path, layout.with_width_abs(segment_size).with_height_abs(segment_lenght))?,
+            GridOrientation::Horizontal => Widget::create(tree, path, layout.size_abs((segment_lenght, segment_size)))?,
+            GridOrientation::Vertical => Widget::create(tree, path, layout.size_abs((segment_size, segment_lenght)))?,
         };
 
         let mut widget_return: Vec<Widget> = Vec::new();
@@ -711,12 +705,11 @@ impl GridSegment {
                 let ll = self.cell[x].size.x * length_normalization;
 
                 widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
+                    pos_relative: Vec2::new(
                         cell_length_so_far + gap_length_so_far,
                         (segment_size/2.0 - self.cell[x].size.y/2.0) * size_normalization,
                     ),
-                    width_relative: ll,
-                    height_relative: self.cell[x].size.y * size_normalization,
+                    size_relative: (ll, self.cell[x].size.x * size_normalization).into(),
                     ..default()
                 })?);
 
@@ -736,12 +729,11 @@ impl GridSegment {
                 let ll = self.cell[x].size.y * length_normalization;
     
                 widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
+                    pos_relative: Vec2::new(
                         (segment_size/2.0 - self.cell[x].size.x/2.0) * size_normalization,
                         cell_length_so_far + gap_length_so_far,
                     ),
-                    width_relative: self.cell[x].size.x * size_normalization,
-                    height_relative: ll,
+                    size_relative: (self.cell[x].size.x * size_normalization, ll).into(),
                     ..default()
                 })?);
     
@@ -786,12 +778,11 @@ impl GridSegment {
                 let ll = self.cell[x].size.x * length_normalization;
 
                 widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
+                    pos_relative: Vec2::new(
                         cell_length_so_far + gap_length_so_far,
                         length_pos + (segment_size/2.0 - self.cell[x].size.y/2.0) * size_normalization,
                     ),
-                    width_relative: ll,
-                    height_relative: self.cell[x].size.y * size_normalization,
+                    size_relative: (ll, self.cell[x].size.x * size_normalization).into(),
                     ..default()
                 })?);
 
@@ -811,12 +802,11 @@ impl GridSegment {
                 let ll = self.cell[x].size.y * length_normalization;
     
                 widget_return.push(Widget::create(tree, widget.end(name), WindowLayout {
-                    relative: Vec2::new(
+                    pos_relative: Vec2::new(
                         length_pos + (segment_size/2.0 - self.cell[x].size.x/2.0) * size_normalization,
                         cell_length_so_far + gap_length_so_far,
                     ),
-                    width_relative: self.cell[x].size.x * size_normalization,
-                    height_relative: ll,
+                    size_relative: (self.cell[x].size.x * size_normalization, ll).into(),
                     ..default()
                 })?);
     

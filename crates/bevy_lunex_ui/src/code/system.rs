@@ -110,7 +110,7 @@ fn element_update_impl<T:Component + Default>(
 ) {
     match widget.fetch(&tree) {
         Err(_) => {
-            commands.entity(entity).despawn();
+            commands.entity(entity).despawn_recursive();
         },
         Ok(branch) => {
             if !branch.is_visible() {
@@ -163,6 +163,15 @@ fn element_update_impl<T:Component + Default>(
     }
 }
 
+fn widget_garbage_collection<T:Component + Default>(mut commands: Commands, trees: Query<&UiTree<T>>, widgets: Query<(Entity, &Widget)>) {
+    for tree in &trees {
+        for (entity, widget) in &widgets {
+            if let Err(_) = widget.fetch(tree) {
+                commands.entity(entity).despawn_recursive();
+            }
+        }
+    }
+}
 
 // ===========================================================
 // === PLUGIN ===
@@ -244,6 +253,7 @@ impl <T: Component + Default> Plugin for LunexUiPlugin2DGeneric<T> {
                 update_changed_trees::<T>.pipe(update_changed_elements::<T>)
             ).chain()
                 .in_set(LunexUiSystemSet2D)
-                .before(cursor_update));
+                .before(cursor_update))
+           .add_systems(PostUpdate, widget_garbage_collection::<T>);
     }
 }

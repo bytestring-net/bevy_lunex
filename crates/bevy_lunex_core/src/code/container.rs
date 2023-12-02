@@ -29,12 +29,10 @@ use crate::{Widget, UiTree, LunexError, Modifier};
 /// * `height_relative` = height of the widget in % of parent widget.
 #[derive(Clone, Debug, PartialEq)]
 pub struct WindowLayout {
-    pub absolute: Vec2,
-    pub relative: Vec2,
-    pub width_absolute: f32,
-    pub width_relative: f32,
-    pub height_absolute: f32,
-    pub height_relative: f32,
+    pub pos_absolute : Vec2,
+    pub pos_relative : Vec2,
+    pub size_absolute: Vec2,
+    pub size_relative: Vec2,
 }
 impl WindowLayout {
     /// Creates new window layout from default. Covers relatively 100% of the widget by default.
@@ -60,12 +58,10 @@ impl WindowLayout {
     /// Creates new window layout where everything is set to 0.
     pub fn empty() -> WindowLayout {
         WindowLayout {
-            absolute: Vec2::splat(0.0),
-            relative: Vec2::splat(0.0),
-            width_absolute: 0.0,
-            width_relative: 0.0,
-            height_absolute: 0.0,
-            height_relative: 0.0,
+            pos_absolute : Vec2::ZERO,
+            pos_relative : Vec2::ZERO,
+            size_absolute: Vec2::ZERO,
+            size_relative: Vec2::ZERO,
         }
     }
 
@@ -75,73 +71,69 @@ impl WindowLayout {
         let ys = height / 100.0;
         (
             Vec2::new(
-                point.x + self.absolute.x + (self.relative.x * xs),
-                point.y + self.absolute.y + (self.relative.y * ys),
+                point.x + self.pos_absolute.x + (self.pos_relative.x * xs),
+                point.y + self.pos_absolute.y + (self.pos_relative.y * ys),
             ),
-            self.width_absolute + (self.width_relative * xs),
-            self.height_absolute + (self.height_relative * ys),
+            self.size_absolute.x + (self.size_relative.x * xs),
+            self.size_absolute.y + (self.size_relative.y * ys),
         )
     }
 
     /// Window layout set with a custom absolute
-    pub fn with_abs(mut self, abs: Vec2) -> WindowLayout {
-        self.absolute = abs;
+    pub fn abs(mut self, abs: impl Into<Vec2>) -> WindowLayout {
+        self.pos_absolute = abs.into();
         self
     }
 
     /// Window layout set with a custom relative
-    pub fn with_rel(mut self, rel: Vec2) -> WindowLayout {
-        self.relative = rel;
+    pub fn rel(mut self, rel: impl Into<Vec2>) -> WindowLayout {
+        self.pos_relative = rel.into();
         self
     }
 
     /// Window layout set with a custom absolute size
-    pub fn with_size_abs(mut self, width: f32, height: f32) -> WindowLayout {
-        self.width_absolute = width;
-        self.height_absolute = height;
+    pub fn size_abs(mut self, size: impl Into<Vec2>) -> WindowLayout {
+        self.size_absolute = size.into();
         self
     }
 
     /// Window layout set with a custom relative size
-    pub fn with_size_rel(mut self, width: f32, height: f32) -> WindowLayout {
-        self.width_relative = width;
-        self.height_relative = height;
+    pub fn size_rel(mut self, size: impl Into<Vec2>) -> WindowLayout {
+        self.size_relative = size.into();
         self
     }
 
     /// Window layout set with a custom width_absolute
-    pub fn with_width_abs(mut self, abs: f32) -> WindowLayout {
-        self.width_absolute = abs;
+    pub fn width_abs(mut self, width: f32) -> WindowLayout {
+        self.size_absolute.x = width;
         self
     }
 
     /// Window layout set with a custom width_relative
-    pub fn with_width_rel(mut self, rel: f32) -> WindowLayout {
-        self.width_relative = rel;
+    pub fn width_rel(mut self, width: f32) -> WindowLayout {
+        self.size_relative.y = width;
         self
     }
 
     /// Window layout set with a custom height_absolute
-    pub fn with_height_abs(mut self, abs: f32) -> WindowLayout {
-        self.height_absolute = abs;
+    pub fn height_abs(mut self, height: f32) -> WindowLayout {
+        self.size_absolute.x = height;
         self
     }
 
     /// Window layout set with a custom height_relative
-    pub fn with_height_rel(mut self, rel: f32) -> WindowLayout {
-        self.height_relative = rel;
+    pub fn height_rel(mut self, height: f32) -> WindowLayout {
+        self.size_relative.y = height;
         self
     }
 }
 impl Default for WindowLayout {
     fn default() -> Self {
         WindowLayout {
-            absolute: Vec2::default(),
-            relative: Vec2::default(),
-            width_absolute: 0.0,
-            width_relative: 100.0,
-            height_absolute: 0.0,
-            height_relative: 100.0,
+            pos_absolute : Vec2::ZERO,
+            pos_relative : Vec2::ZERO,
+            size_absolute: Vec2::ZERO,
+            size_relative: Vec2::splat(100.0),
         }
     }
 }
