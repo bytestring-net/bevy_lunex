@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 use bevy::prelude::Vec2;
-use mathio::{Tween, tween};
+use mathio::Tween;
 use crate::{Widget, UiTree, LunexError, Modifier};
 
 // ===========================================================
@@ -262,7 +262,7 @@ impl Into<LayoutPackage> for RelativeLayout {
         LayoutPackage::Relative(self)
     }
 }
-impl Tween for WindowLayout {
+impl Tween for RelativeLayout {
     fn tween(&mut self, other: &Self, slider: f32) {
         self.absolute_1.tween(&other.absolute_1, slider);
         self.absolute_2.tween(&other.absolute_2, slider);
