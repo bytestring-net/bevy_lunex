@@ -1,11 +1,10 @@
 use std::borrow::Borrow;
 use bevy::prelude::Vec2;
+use mathio::{Tween, tween};
 use crate::{Widget, UiTree, LunexError, Modifier};
 
 // ===========================================================
 // === LAYOUT VARIANTS ===
-
-
 
 /// # Window Layout
 /// Under the hood it works the exact same way as [`RelativeLayout`], but is defined in a way that makes it easier to animate.
@@ -142,6 +141,14 @@ impl Into<LayoutPackage> for WindowLayout {
         LayoutPackage::Window(self)
     }
 }
+impl Tween for WindowLayout {
+    fn tween(&mut self, other: &Self, slider: f32) {
+        self.pos_absolute.tween(&other.pos_absolute, slider);
+        self.pos_relative.tween(&other.pos_relative, slider);
+        self.size_absolute.tween(&other.size_absolute, slider);
+        self.size_relative.tween(&other.size_relative, slider);
+    }
+}
 
 /// # Relative Layout
 /// Under the hood it works the exact same way as [`WindowLayout`], but is defined in a way that makes it easier to define boundaries.
@@ -253,6 +260,14 @@ impl Default for RelativeLayout {
 impl Into<LayoutPackage> for RelativeLayout {
     fn into(self) -> LayoutPackage {
         LayoutPackage::Relative(self)
+    }
+}
+impl Tween for WindowLayout {
+    fn tween(&mut self, other: &Self, slider: f32) {
+        self.absolute_1.tween(&other.absolute_1, slider);
+        self.absolute_2.tween(&other.absolute_2, slider);
+        self.relative_1.tween(&other.relative_1, slider);
+        self.relative_2.tween(&other.relative_2, slider);
     }
 }
 
@@ -389,6 +404,14 @@ impl Default for SolidLayout {
 impl Into<LayoutPackage> for SolidLayout {
     fn into(self) -> LayoutPackage {
         LayoutPackage::Solid(self)
+    }
+}
+impl Tween for SolidLayout {
+    fn tween(&mut self, other: &Self, slider: f32) {
+        self.width.tween(&other.width, slider);
+        self.height.tween(&other.height, slider);
+        self.horizontal_anchor.tween(&other.horizontal_anchor, slider);
+        self.vertical_anchor.tween(&other.vertical_anchor, slider);
     }
 }
 

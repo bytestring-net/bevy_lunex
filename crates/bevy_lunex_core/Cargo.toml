@@ -15,3 +15,4 @@ bevy    = { workspace = true }
 ahash   = { workspace = true }
 colored = { workspace = true }
 pathio  = { workspace = true }
+mathio  = { workspace = true }
