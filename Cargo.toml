@@ -26,7 +26,7 @@
   bevy                 = { version = "0.12.0", default-features = false, features = ["bevy_sprite", "bevy_render", "bevy_text", "bevy_gizmos"] }
   bevy_vector_shapes   = "0.6.0"
   colored              = "^2.0.4"
-  mathio               = { version = "0.2.4", features = ["bevy"] }
+  mathio               = { version = "0.2.5", features = ["bevy"] }
   pathio               = { version = "0.2.3", features = ["bevy"] }
 
   bevy_lunex_core      = { path = "crates/bevy_lunex_core", version = "0.0.10"}
@@ -57,6 +57,7 @@
   bevy_lunex_core      = { workspace = true }
   bevy_lunex_ui        = { workspace = true }
   bevy_lunex_utility   = { workspace = true }
+  mathio               = { workspace = true }
 
 [dev-dependencies]
   bevy                 = { workspace = true, default-features = true, features = [ "dynamic_linking" ] }

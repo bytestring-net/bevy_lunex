@@ -142,11 +142,11 @@ impl Into<LayoutPackage> for WindowLayout {
     }
 }
 impl Tween for WindowLayout {
-    fn tween(&mut self, other: &Self, slider: f32) {
-        self.pos_absolute.tween(&other.pos_absolute, slider);
-        self.pos_relative.tween(&other.pos_relative, slider);
-        self.size_absolute.tween(&other.size_absolute, slider);
-        self.size_relative.tween(&other.size_relative, slider);
+    fn tween(&mut self, value_1: &Self, value_2: &Self, slider: f32) {
+        self.pos_absolute.tween(&value_1.pos_absolute, &value_2.pos_absolute, slider);
+        self.pos_relative.tween(&value_1.pos_relative, &value_2.pos_relative, slider);
+        self.size_absolute.tween(&value_1.size_absolute, &value_2.size_absolute, slider);
+        self.size_relative.tween(&value_1.size_relative, &value_2.size_relative, slider);
     }
 }
 
@@ -263,11 +263,11 @@ impl Into<LayoutPackage> for RelativeLayout {
     }
 }
 impl Tween for RelativeLayout {
-    fn tween(&mut self, other: &Self, slider: f32) {
-        self.absolute_1.tween(&other.absolute_1, slider);
-        self.absolute_2.tween(&other.absolute_2, slider);
-        self.relative_1.tween(&other.relative_1, slider);
-        self.relative_2.tween(&other.relative_2, slider);
+    fn tween(&mut self, value_1: &Self, value_2: &Self, slider: f32) {
+        self.absolute_1.tween(&value_1.absolute_1, &value_2.absolute_1, slider);
+        self.absolute_2.tween(&value_1.absolute_2, &value_2.absolute_2, slider);
+        self.relative_1.tween(&value_1.relative_1, &value_2.relative_1, slider);
+        self.relative_2.tween(&value_1.relative_2, &value_2.relative_2, slider);
     }
 }
 
@@ -407,11 +407,11 @@ impl Into<LayoutPackage> for SolidLayout {
     }
 }
 impl Tween for SolidLayout {
-    fn tween(&mut self, other: &Self, slider: f32) {
-        self.width.tween(&other.width, slider);
-        self.height.tween(&other.height, slider);
-        self.horizontal_anchor.tween(&other.horizontal_anchor, slider);
-        self.vertical_anchor.tween(&other.vertical_anchor, slider);
+    fn tween(&mut self, value_1: &Self, value_2: &Self, slider: f32) {
+        self.width.tween(&value_1.width, &value_2.width, slider);
+        self.height.tween(&value_1.height, &value_2.height, slider);
+        self.horizontal_anchor.tween(&value_1.horizontal_anchor, &value_2.horizontal_anchor, slider);
+        self.vertical_anchor.tween(&value_1.vertical_anchor, &value_2.vertical_anchor, slider);
     }
 }
 

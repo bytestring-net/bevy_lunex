@@ -4,9 +4,11 @@
 pub use bevy_lunex_core::*;
 pub use bevy_lunex_ui::*;
 pub use bevy_lunex_utility::*; 
+pub use mathio::Tween;
 
 pub mod prelude {
     pub use bevy_lunex_core::prelude::*;
     pub use bevy_lunex_ui::prelude::*;
-    pub use bevy_lunex_utility::prelude::*; 
+    pub use bevy_lunex_utility::prelude::*;
+    pub use mathio::Tween;
 }
