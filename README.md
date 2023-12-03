@@ -21,7 +21,7 @@ Blazingly fast ***path*** based ***modular layout engine*** built on top of **Be
 
 ## === Showcase ===
 
-![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/b12bdfd6-2942-40ce-995a-729bcba57e77)
+![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/c5b6ae89-aad0-4cc1-9fd1-299b6ab0a80a)
 
 <details><summary>Gif</summary>
   
