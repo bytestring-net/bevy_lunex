@@ -12,7 +12,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(Shape2dPlugin::default())
         .add_plugins(LunexUiPlugin2D::<D>::new())
-        //.add_plugins(LunexUiDebugPlugin2D::<D>::new())
+        .add_plugins(LunexUiDebugPlugin2D::<D>::new())
 
         .add_systems(Startup, setup)
 

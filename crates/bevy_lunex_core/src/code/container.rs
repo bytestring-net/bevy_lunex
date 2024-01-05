@@ -110,13 +110,13 @@ impl WindowLayout {
 
     /// Window layout set with a custom width_relative
     pub fn width_rel(mut self, width: f32) -> WindowLayout {
-        self.size_relative.y = width;
+        self.size_relative.x = width;
         self
     }
 
     /// Window layout set with a custom height_absolute
     pub fn height_abs(mut self, height: f32) -> WindowLayout {
-        self.size_absolute.x = height;
+        self.size_absolute.y = height;
         self
     }
 
