@@ -2,7 +2,7 @@
 
 <div align="center">
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
-  <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.12.0-white.svg?label=bevy&color=bb86a5"></a>
+  <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.12.1-white.svg?label=bevy&color=bb86a5"></a>
   <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-Apache/MIT-white.svg?label=license&color=9fcec4"></a>
   <a href="https://deps.rs/crate/bevy_lunex"><img src="https://img.shields.io/badge/check-white.svg?label=deps&color=a0f6b9"></a>
   <a href="https://docs.rs/bevy_lunex"><img src="https://img.shields.io/docsrs/bevy_lunex/latest?color=8df7cb"></a>
@@ -10,8 +10,12 @@
 
 # 
 
-## Version 0.0.9 RELEASED!
-v0.0.9 is very close to the release of v0.1.0!
+## NOTICE!
+I'm currently working on 0.1.0 release which is a ground up rewrite of the engine.
+
+Any version 0.0.X is considered experimental.
+
+Note that I'm a student and this is not my primary project at the moment. Don't worry, development is ongoing, even if its slow.
 
 #
 
@@ -83,8 +87,8 @@ let mut tree: UiTree<MyData> = UiTree::new("UI");
 To create a new **"Widget"** in the root directory you pass in the **"UiTree"**, specify widget properties and the function returns the smart pointer. 
 ```rust
 let widget: Widget = WindowLayout::empty()
-    .with_rel(Vec2::splat(10.0))
-    .with_size_rel(80.0, 80.0)
+    .rel(Vec2::splat(10.0))
+    .size_rel((80.0, 80.0))
     .build_as(&mut tree, "widget")?;
 ```
 
@@ -141,6 +145,7 @@ Don't forget to add the system to the app.
 .add_systems(Update, button_highlight_effect_update::<T>)
 ```
 You need to spawn the **"UiTree"** we created in the first step as an entity so we can query for it.
+Look into examples how to inject the component into existing window to bind it to window size.
 ```rust
 commands.spawn(tree);
 ```
@@ -158,6 +163,7 @@ By nesting branches of these 3 types, you can precisely define the position and 
 ## === Versions ===
 |  Bevy  |   Bevy Lunex  |
 |--------|---------------|
+| 0.12.1 |     0.0.10    |
 | 0.12.0 | 0.0.7 - 0.0.9 |
 | 0.11.2 |    <= 0.0.6   |
 
