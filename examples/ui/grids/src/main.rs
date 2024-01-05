@@ -53,8 +53,8 @@ fn build_interface (commands: &mut Commands, ui_tree: &mut UiTree<D>) -> Result<
     let workspace = RelativeLayout::new().build_as(tmp, "workspace")?;
 
     let window = WindowLayout::empty()
-        .with_rel(Vec2::splat(10.0))
-        .with_size_rel(80.0, 80.0)
+        .rel(Vec2::splat(10.0))
+        .size_rel((80.0, 80.0))
         .build_as(tmp, workspace.end("window"))?;
 
     let segment1 = GridSegment::splat_cells(GridCell::sized(Vec2::new(5.0, 5.0)), 11).add_gaps(2.0);

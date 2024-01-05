@@ -53,39 +53,39 @@ fn build_interface<T:Default>(commands: &mut Commands, asset_server: &Res<AssetS
     let workspace = RelativeLayout::new().build_as(tmp, "workspace")?;
 
     let window1 = WindowLayout::empty()
-        .with_rel(Vec2::new(5., 5.))
-        .with_width_rel(40.0)
-        .with_height_rel(25.0)
+        .rel(Vec2::new(5., 5.))
+        .width_rel(40.0)
+        .height_rel(25.0)
         .build_as(tmp, workspace.end("window1"))?;
 
     let window2 = WindowLayout::empty()
-        .with_rel(Vec2::new(50., 5.))
-        .with_width_rel(40.0)
-        .with_height_rel(25.0)
+        .rel(Vec2::new(50., 5.))
+        .width_rel(40.0)
+        .height_rel(25.0)
         .build_as(tmp, workspace.end("window2"))?;
 
     let window3 = WindowLayout::empty()
-        .with_rel(Vec2::new(5., 35.))
-        .with_width_rel(40.0)
-        .with_height_rel(25.0)
+        .rel(Vec2::new(5., 35.))
+        .width_rel(40.0)
+        .height_rel(25.0)
         .build_as(tmp, workspace.end("window3"))?;
 
     let window4 = WindowLayout::empty()
-        .with_rel(Vec2::new(50., 35.))
-        .with_width_rel(40.0)
-        .with_height_rel(25.0)
+        .rel(Vec2::new(50., 35.))
+        .width_rel(40.0)
+        .height_rel(25.0)
         .build_as(tmp, workspace.end("window4"))?;
 
     let window5 = WindowLayout::empty()
-        .with_rel(Vec2::new(5., 65.))
-        .with_width_rel(40.0)
-        .with_height_rel(25.0)
+        .rel(Vec2::new(5., 65.))
+        .width_rel(40.0)
+        .height_rel(25.0)
         .build_as(tmp, workspace.end("window5"))?;
 
     let window6 = WindowLayout::empty()
-        .with_rel(Vec2::new(50., 65.))
-        .with_width_rel(40.0)
-        .with_height_rel(25.0)
+        .rel(Vec2::new(50., 65.))
+        .width_rel(40.0)
+        .height_rel(25.0)
         .build_as(tmp, workspace.end("window6"))?;
 
     // Merge the temporary tree to main ui tree

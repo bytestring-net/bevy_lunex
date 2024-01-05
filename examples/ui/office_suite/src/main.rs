@@ -13,7 +13,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(Shape2dPlugin::default())
         .add_plugins(LunexUiPlugin2D::<D>::new())
-        .add_plugins(LunexUiDebugPlugin2D::<D>::new())
+        //.add_plugins(LunexUiDebugPlugin2D::<D>::new())
 
         .add_systems(Startup, setup)
         .add_systems(Update, dropdown_element_update::<D>)
@@ -179,7 +179,7 @@ impl DropDownElement {
     fn build_list<T:Default>(&self, commands: &mut Commands, tree: &mut UiTree<T>, widget: &Widget) -> Result<(), LunexError>{
         
         let segment = GridSegment::text_cells(&self.options, 50.0, 60.0).add_gaps(1.0);
-        let (_, wlist) = segment.build_in_window_absolute(tree, widget.end("Droplist"), WindowLayout::empty().with_rel(Vec2::new(0.0, 100.0)), GridOrientation::Vertical)?;
+        let (_, wlist) = segment.build_in_window_absolute(tree, widget.end("Droplist"), WindowLayout::empty().rel(Vec2::new(0.0, 100.0)), GridOrientation::Vertical)?;
 
         for x in 0..wlist.len() {
             commands.spawn((
