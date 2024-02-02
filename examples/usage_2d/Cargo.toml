@@ -9,6 +9,24 @@
   categories.workspace = true
 
 [dependencies]
-  bevy         = { workspace = true }
+  bevy = { git = "https://github.com/bevyengine/bevy", default_features = false, features = [
+    "bevy_asset",
+    "bevy_gilrs",
+    "bevy_winit",
+    "bevy_core_pipeline",
+    "bevy_pbr",
+    "bevy_render",
+    "bevy_sprite",
+    "bevy_text",
+    "multi-threaded",
+    "png",
+    "hdr",
+    "x11",
+    "bevy_gizmos",
+    "tonemapping_luts",
+    "default_font",
+
+    "dynamic_linking",
+  ] }
   bevy_lunex   = { workspace = true }
   bevy_vector_shapes = { workspace = true }

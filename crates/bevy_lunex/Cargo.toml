@@ -9,7 +9,7 @@
   categories.workspace = true
 
 [dependencies]
-  ahash              = { workspace = true }
+  #ahash              = { workspace = true }
   bevy               = { workspace = true }
-  bevy_mod_billboard = { workspace = true }
+  #bevy_mod_billboard = { workspace = true }
   lunex_engine       = { workspace = true, features = ["bevy"] }

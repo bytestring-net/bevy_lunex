@@ -18,36 +18,27 @@
   categories  = ["gui", "mathematics", "game-development"]
 
 [workspace.dependencies]
-  ahash              = { version = "^0.8" }
-  colored            = { version = "^2.1" }
-  indexmap           = { version = "^2.1" }
-  glam               = { version = "^0.25" }
-  thiserror          = { version = "^1.0" }
 
   #bevy = { version = "0.12.1", default_features = false, features = [
   bevy = { git = "https://github.com/bevyengine/bevy", default_features = false, features = [
-    "bevy_asset",
-    "bevy_gilrs",
-    "bevy_winit",
-    "bevy_core_pipeline",
-    "bevy_pbr",
-    "bevy_render",
-    "bevy_sprite",
-    "bevy_text",
-    "multi-threaded",
-    "png",
-    "hdr",
-    "x11",
-    "bevy_gizmos",
-    "tonemapping_luts",
-    "default_font",
-
-    "dynamic_linking",
+    #"bevy_asset",
+    #"bevy_gilrs",
+    #"bevy_winit",
+    #"bevy_core_pipeline",
+    #"bevy_pbr",
+    #"bevy_render",
+    #"bevy_sprite",
+    #"bevy_text",
+    #"multi-threaded",
+    #"png",
+    #"hdr",
+    #"x11",
+    #"bevy_gizmos",
+    #"tonemapping_luts",
+    #"default_font",
   ] }
 
-  bevy_mod_picking   = { version = "0.17.0"}
-  bevy_vector_shapes = { version = "0.6.0" }
   bevy_mod_billboard = { version = "0.5.1" }
 
   bevy_lunex         = { path = "crates/bevy_lunex" }
-  lunex_engine       = { path = "crates/lunex_engine" }
+  lunex_engine       = { git = "https://github.com/bytestring-net/lunex_engine" }
