@@ -1,0 +1,14 @@
+[package]
+  name = "usage_2d"
+  authors.workspace    = true
+  version.workspace    = true
+  edition.workspace    = true
+  license.workspace    = true
+  repository.workspace = true
+  keywords.workspace   = true
+  categories.workspace = true
+
+[dependencies]
+  bevy         = { workspace = true }
+  bevy_lunex   = { workspace = true }
+  bevy_vector_shapes = { workspace = true }

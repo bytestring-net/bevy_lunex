@@ -1,9 +1,0 @@
-[package]
-name = "lunex_background_example"
-version = "0.1.0"
-edition = "2021"
-publish = false
-
-[dependencies]
-bevy_lunex = { path = "../../../bevy-lunex"}
-bevy = { workspace = true, default-features = true, features = ["dynamic_linking"] }
