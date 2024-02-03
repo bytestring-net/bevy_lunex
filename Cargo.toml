@@ -25,20 +25,22 @@
     #"bevy_gilrs",
     #"bevy_winit",
     #"bevy_core_pipeline",
-    #"bevy_pbr",
+    "bevy_pbr",
     #"bevy_render",
-    #"bevy_sprite",
-    #"bevy_text",
+    "bevy_sprite",
+    "bevy_text",
     #"multi-threaded",
     #"png",
     #"hdr",
     #"x11",
-    #"bevy_gizmos",
+    "bevy_gizmos",
     #"tonemapping_luts",
     #"default_font",
   ] }
 
-  bevy_mod_billboard = { version = "0.5.1" }
+  #bevy_mod_billboard = { version = "0.5.1" }
 
-  bevy_lunex         = { path = "crates/bevy_lunex" }
-  lunex_engine       = { git = "https://github.com/bytestring-net/lunex_engine" }
+  bevy_lunex = { path = "crates/bevy_lunex" }
+  #lunex_engine = { git = "https://github.com/bytestring-net/lunex_engine" }
+
+  lunex_engine = { path = "/home/dominik/Projects/Bytestring/lunex_engine/crates/lunex_engine" }
