@@ -286,7 +286,8 @@ pub fn element_fetch_transform_from_node<M:Default + Component, N:Default + Comp
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_sprite_scale_to_dimension<T: Component>(
-    mut query: Query<(&mut Transform, &Dimension, &Handle<Image>), (With<T>, With<Element>, With<Sprite>, Or<(Changed<Dimension>, Changed<Handle<Image>>)>)>,
+    //mut query: Query<(&mut Transform, &Dimension, &Handle<Image>), (With<T>, With<Element>, With<Sprite>, Or<(Changed<Dimension>, Changed<Handle<Image>>)>)>,
+    mut query: Query<(&mut Transform, &Dimension, &Handle<Image>), (With<T>, With<Element>, With<Sprite>)>,
     assets: Res<Assets<Image>>,
 ) {
     for (mut transform, dimension, image) in &mut query {
