@@ -318,7 +318,7 @@ pub fn element_reconstruct_mesh<T: Component>(
         };
 
         // Create new mesh
-        *mesh = msh.add(shape::Quad { size: dimension.size, flip: false });  //Into
+        *mesh = msh.add(Rectangle {half_size: dimension.size / 2.0})
     }
 }
 
