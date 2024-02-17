@@ -374,10 +374,10 @@ impl <M:Default + Component, N:Default + Component, T: Component> Plugin for UiP
             .add_systems(Update, send_stack_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
             .add_systems(Update, send_layout_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
 
-            .add_systems(Update, fetch_transform_from_node::<M, N, T>)
-            .add_systems(Update, (fetch_dimension_from_node::<M, N, T>, element_reconstruct_mesh::<T>).chain())
-            .add_systems(Update, element_fetch_transform_from_node::<M, N, T>)
-            .add_systems(Update, element_sprite_scale_to_dimension::<T>)
+            .add_systems(Update, fetch_transform_from_node::<M, N, T>.after(compute_ui::<M, N, T>))
+            .add_systems(Update, (fetch_dimension_from_node::<M, N, T>, element_reconstruct_mesh::<T>).chain().after(compute_ui::<M, N, T>))
+            .add_systems(Update, element_fetch_transform_from_node::<M, N, T>.after(compute_ui::<M, N, T>))
+            .add_systems(Update, element_sprite_scale_to_dimension::<T>.after(compute_ui::<M, N, T>))
 
             .add_systems(Update, (fetch_dimension_from_camera::<M, N, T>, fetch_transform_from_camera::<T>).before(compute_ui::<M, N, T>))
             .add_systems(Update, compute_ui::<M, N, T>);

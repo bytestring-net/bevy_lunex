@@ -29,4 +29,4 @@
     "dynamic_linking",
   ] }
   bevy_lunex   = { workspace = true }
-  bevy_vector_shapes = { workspace = true }
+  #bevy_vector_shapes = { workspace = true }
