@@ -42,5 +42,5 @@
 
   bevy_lunex = { path = "crates/bevy_lunex" }
   
-  lunex_engine = { git = "https://github.com/bytestring-net/lunex_engine" }
-  #lunex_engine = { path = "/home/dominik/Projects/Bytestring/lunex_engine/crates/lunex_engine" }
+  #lunex_engine = { git = "https://github.com/bytestring-net/lunex_engine" }
+  lunex_engine = { path = "/home/dominik/Projects/Bytestring/lunex_engine/crates/lunex_engine" }

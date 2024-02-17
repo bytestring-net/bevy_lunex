@@ -286,15 +286,10 @@ pub fn element_fetch_transform_from_node<M:Default + Component, N:Default + Comp
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_sprite_scale_to_dimension<T: Component>(
-    //mut query: Query<(&mut Transform, &Dimension, &Handle<Image>), (With<T>, With<Element>, With<Sprite>, Or<(Changed<Dimension>, Changed<Handle<Image>>)>)>,
-    mut query: Query<(&mut Transform, &Dimension, &Handle<Image>), (With<T>, With<Element>, With<Sprite>)>,
-    assets: Res<Assets<Image>>,
+    mut query: Query<(&mut Sprite, &Dimension), (With<T>, With<Element>, With<Sprite>, Changed<Dimension>)>,
 ) {
-    for (mut transform, dimension, image) in &mut query {
-        if let Some(img) = assets.get(image) {
-            transform.scale.x = dimension.size.x / img.texture_descriptor.size.width as f32;
-            transform.scale.y = dimension.size.y / img.texture_descriptor.size.height as f32;
-        }
+    for (mut sprite, dimension) in &mut query {
+        sprite.custom_size = Some(dimension.size)
     }
 }
 
