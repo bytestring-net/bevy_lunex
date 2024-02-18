@@ -32,7 +32,10 @@ pub fn compute_ui<M:Default + Component, N:Default + Component, T: Component>(
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn debug_draw_gizmo<M:Default + Component, N:Default + Component, T: Component>(mut query: Query<(&UiTree<M, N>, &Transform), With<T>>, mut gizmos: Gizmos) {
+pub fn debug_draw_gizmo<M:Default + Component, N:Default + Component, T: Component>(
+    mut query: Query<(&UiTree<M, N>, &GlobalTransform), With<T>>,
+    mut gizmos: Gizmos
+) {
     for (tree, transform) in &mut query {
         let list = tree.crawl();
         for node in list {
@@ -42,7 +45,7 @@ pub fn debug_draw_gizmo<M:Default + Component, N:Default + Component, T: Compone
 
                 if let Layout::Solid(_) = container.layout { color = Color::YELLOW }
 
-                let mut pos = container.rectangle.pos.invert_y() + transform.translation;
+                let mut pos = container.rectangle.pos.invert_y() + transform.translation();
                 pos.x += container.rectangle.size.x / 2.0;
                 pos.y += container.rectangle.size.y / -2.0;
 
@@ -86,7 +89,7 @@ pub fn debug_print_tree<M:Default + Component, N:Default + Component, T: Compone
 ///   is marked with `(T)` component at the same time.
 pub fn fetch_dimension_from_camera<M:Default + Component, N:Default + Component, T: Component>(
     source: Query<&Camera, (With<T>, Changed<Camera>)>,
-    mut destination: Query<&mut Dimension, (With<T>, With<UiTree<M, N>>)>
+    mut destination: Query<&mut Dimension, (With<T>, With<UiTree<M, N>>, With<MovableByCamera>)>
 ) {
     // Undesired behaviour if source.len() > 1
     for cam in &source {
