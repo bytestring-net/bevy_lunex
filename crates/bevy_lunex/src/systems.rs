@@ -285,7 +285,7 @@ pub fn element_fetch_transform_from_node<M:Default + Component, N:Default + Comp
     }
 }
 
-/// This system fetches [`Dimension`] & [`Image`] data and overwrites querried [`Transform`] scale data to fit.
+/// This system fetches [`Dimension`] data and overwrites querried [`Sprite`] data to fit.
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_sprite_scale_to_dimension<T: Component>(
@@ -331,6 +331,30 @@ pub fn element_text_size_to_solid_layout<T: Component>(
         if let Layout::Solid(solid) = layout.as_mut() {
             solid.size = Abs(text_info.logical_size).into();
         }
+    }
+}
+
+/// This system takes [`TextLayoutInfo`] data and overwrites coresponding [`UiContent`] data.
+/// ## 📦 Types
+/// * Generic `(T)` - Marker component grouping entities into one widget type
+pub fn element_text_size_to_content<T: Component>(
+    mut query: Query<(&mut UiContent, &TextLayoutInfo), (With<T>, With<Element>, Changed<TextLayoutInfo>)>,
+) {
+    for (mut content, text_info) in &mut query {
+        content.size = text_info.logical_size;
+    }
+}
+
+/// This system takes [`TextLayoutInfo`] data and overwrites coresponding [`Transform`] scale data for text to fit inside [`Dimension`].
+/// ## 📦 Types
+/// * Generic `(T)` - Marker component grouping entities into one widget type
+pub fn element_text_size_scale_to_dimension<T: Component>(
+    mut query: Query<(&mut Transform, &Dimension, &TextLayoutInfo), (With<T>, With<Element>, Changed<Dimension>)>,
+) {
+    for (mut transform, dimension, text_info) in &mut query {
+        let scale = dimension.size / text_info.logical_size;
+        transform.scale.x = scale.x;
+        transform.scale.y = scale.y;
     }
 }
 
@@ -392,6 +416,8 @@ impl <M:Default + Component, N:Default + Component, T: Component> Plugin for UiP
             .add_systems(Update, (fetch_dimension_from_node::<M, N, T>, element_reconstruct_mesh::<T>).chain().after(compute_ui::<M, N, T>))
             .add_systems(Update, element_fetch_transform_from_node::<M, N, T>.after(compute_ui::<M, N, T>))
             .add_systems(Update, element_sprite_scale_to_dimension::<T>.after(compute_ui::<M, N, T>))
+            .add_systems(Update, element_text_size_scale_to_dimension::<T>.after(compute_ui::<M, N, T>))
+            .add_systems(Update, element_text_size_to_content::<T>.before(send_content_size_to_node::<M, N, T>))
 
             .add_systems(Update, (fetch_dimension_from_camera::<M, N, T>, fetch_transform_from_camera::<T>).before(compute_ui::<M, N, T>))
             .add_systems(Update, compute_ui::<M, N, T>);
