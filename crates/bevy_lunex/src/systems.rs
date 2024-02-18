@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use bevy::{math::Vec3A, prelude::*, render::primitives::Aabb};
+use bevy::{math::Vec3A, prelude::*, render::primitives::Aabb, text::TextLayoutInfo};
 use lunex_engine::*;
 
 use crate::{Dimension, Element, MovableByCamera, UiContent, UiLink, UiStack};
@@ -286,7 +286,7 @@ pub fn element_fetch_transform_from_node<M:Default + Component, N:Default + Comp
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_sprite_scale_to_dimension<T: Component>(
-    mut query: Query<(&mut Sprite, &Dimension), (With<T>, With<Element>, With<Sprite>, Changed<Dimension>)>,
+    mut query: Query<(&mut Sprite, &Dimension), (With<T>, With<Element>, Changed<Dimension>)>,
 ) {
     for (mut sprite, dimension) in &mut query {
         sprite.custom_size = Some(dimension.size)
@@ -315,6 +315,19 @@ pub fn element_reconstruct_mesh<T: Component>(
 
         // Create new mesh
         *mesh = msh.add(Rectangle {half_size: dimension.size / 2.0})
+    }
+}
+
+/// This system takes [`TextLayoutInfo`] data and overwrites coresponding [`Layout`] solid data.
+/// ## 📦 Types
+/// * Generic `(T)` - Marker component grouping entities into one widget type
+pub fn element_text_size_to_solid_layout<T: Component>(
+    mut query: Query<(&mut Layout, &TextLayoutInfo), (With<T>, With<Element>, Changed<TextLayoutInfo>)>,
+) {
+    for (mut layout, text_info) in &mut query {
+        if let Layout::Solid(solid) = layout.as_mut() {
+            solid.size = Abs(text_info.logical_size).into();
+        }
     }
 }
 
@@ -369,6 +382,8 @@ impl <M:Default + Component, N:Default + Component, T: Component> Plugin for UiP
             .add_systems(Update, send_content_size_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
             .add_systems(Update, send_stack_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
             .add_systems(Update, send_layout_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
+
+            .add_systems(Update, element_text_size_to_solid_layout::<T>.before(send_layout_to_node::<M, N, T>))
 
             .add_systems(Update, fetch_transform_from_node::<M, N, T>.after(compute_ui::<M, N, T>))
             .add_systems(Update, (fetch_dimension_from_node::<M, N, T>, element_reconstruct_mesh::<T>).chain().after(compute_ui::<M, N, T>))
