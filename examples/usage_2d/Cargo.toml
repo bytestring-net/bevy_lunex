@@ -9,7 +9,7 @@
   categories.workspace = true
 
 [dependencies]
-  bevy = { git = "https://github.com/bevyengine/bevy", default_features = false, features = [
+  bevy = { version = "0.13.1", default_features = false, features = [
     "bevy_asset",
     "bevy_gilrs",
     "bevy_winit",

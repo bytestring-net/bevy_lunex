@@ -19,8 +19,7 @@
 
 [workspace.dependencies]
 
-  bevy = { version = "0.13.0", default_features = false, features = [
-  #bevy = { git = "https://github.com/floppyhammer/bevy", branch="fix-camera-distance", default_features = false, features = [
+  bevy = { version = "0.13.1", default_features = false, features = [
     #"bevy_asset",
     #"bevy_gilrs",
     #"bevy_winit",
@@ -29,18 +28,17 @@
     #"bevy_render",
     "bevy_sprite",
     "bevy_text",
-    #"multi-threaded",
+    "multi-threaded",
     #"png",
     #"hdr",
     #"x11",
     "bevy_gizmos",
-    #"tonemapping_luts",
     #"default_font",
   ] }
 
-  #bevy_mod_billboard = { version = "0.5.1" }
+  #bevy_mod_picking   = { version = "0.18.2"}
 
   bevy_lunex = { path = "crates/bevy_lunex" }
   
   #lunex_engine = { git = "https://github.com/bytestring-net/lunex_engine" }
-  lunex_engine = { path = "/home/dominik/Projects/Bytestring/lunex_engine/crates/lunex_engine" }
+  lunex_engine = { path = "/home/dominik/Projects/Bytestring/lunex_engine/crates/lunex_engine", features=["bevy"] }
