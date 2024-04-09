@@ -13,7 +13,7 @@
 > [!CAUTION]
 > This branch is not released yet and is still WIP.
 
-Blazingly fast ***path*** based retained ***layout engine*** for Bevy entities. It is built around vanilla **Bevy ECS**. This library is intended to replace the existing `bevy_ui` create, but nothing is stopping you from using them both at the same time.
+Blazingly fast ***path based*** retained ***layout engine*** for Bevy entities, built around vanilla **Bevy ECS**. This library is intended to replace the existing `bevy_ui` crate, but nothing is stopping you from using them both at the same time.
 
 It uses a combination of Bevy's built-in hierarchy and its own custom hierarchy to give you the freedom of control without the bloat or borrow checker limitations usually faced when creating UI.
 
@@ -30,11 +30,11 @@ It gives you the ability to make ***your own custom UI*** using regular ECS like
 ## Description
 
 > [!NOTE]
-> This library is EXPERIMENTAL. I do not guarantee consistent updates. I'm developing it for my own personal use, so if I judge it has outlived it's use case, I will stop developing this project.
+> This library is EXPERIMENTAL. I do not guarantee consistent updates. I'm developing it for my own personal use, so if I judge it has outlived its use case, I will stop developing this project.
 
 Bevy_Lunex is built on a simple concept: to use Bevy's ECS as the foundation for UI layout and interaction, allowing developers to manage UI elements as they would any other entities in their game or application as opposed to bevy_ui.
 
-* **Path-Based Hierarchy:** Inspired by file system paths, this approach allows for intuitive structuring and nesting of UI elements. It's designed to make the relationship between components clear and manageable, using a syntax familiar to most developers, while also avoiding the safety restrictions Rust enforces (They don't help but obstruct instead in UI).
+* **Path-Based Hierarchy:** Inspired by file system paths, this approach allows for intuitive structuring and nesting of UI elements. It's designed to make the relationship between components clear and manageable, using a syntax familiar to most developers, while also avoiding the safety restrictions Rust enforces (as they don't help but instead obstruct for UI).
 
 * **Retained Layout Engine:** Unlike immediate mode GUI systems, Bevy_Lunex uses a retained layout engine. This means the layout is calculated and stored, reducing the need for constant recalculations and offering potential performance benefits, especially for static or infrequently updated UIs.
 
@@ -51,7 +51,7 @@ First, we need to define a component, that we will use to mark all entities that
 pub struct MyUiSystem;
 ```
 
-Then we need to add `UiPlugin` with our marker component. The generic at `NoData` is used if you need to store some data inside the nodes.
+Then we need to add `UiPlugin` with our marker component. The `NoData` generics are used if you need to store some data inside the nodes.
 
 ```rust
 fn main() {
@@ -88,9 +88,9 @@ commands.spawn((
 });
 ```
 
-Now, any entity with `MyUiSystem` + `UiLayout` + `UiLink` spawned as a child of the `UiTree` will be managed as a UI entity. If it has a `Transform` component, it will get aligned based on the `UiLayout` calculations taking place in the parent `UiTree`. If it has a `Dimension` component, its size will also get updated by the `UiTree` output. This allows you to create your own systems reacting to changes in `Dimension` and `Transform` components.
+Now, any entity with `MyUiSystem` + `UiLayout` + `UiLink` spawned as a child of the `UiTree` will be managed as a UI entity. If it has a `Transform` component, it will get aligned based on the `UiLayout` calculations taking place in the parent `UiTree`. If it has a `Dimension` component then its size will also get updated by the `UiTree` output. This allows you to create your own systems reacting to changes in `Dimension` and `Transform` components.
 
-You can add a `UiImage2dBundle` to the entity to apply image to your widgets. Or you can add another `UiTree` as a child, but instead of `Camera` piping the size to it, it will use the computed size output.
+You can add a `UiImage2dBundle` to the entity to add images to your widgets. Or you can add another `UiTree` as a child, which will use the computed size output in `Dimension` component instead of a `Camera` piping the size into it.
 
 ```rust
 ui.spawn((
@@ -116,13 +116,13 @@ As you can see in the terminal (If you have added a `UiDebugPlugin`), the final 
     |    |-> Rectangle == Solid [size: (x: 1920, y: 1080) align_x: 0 align_y: 0]
 ```
 
-Quite simple, isn't it? Best part is, that by relying on components only, you are potentially able to hot-reload UI or even stream UI over the network. The downside is, that by relying on strings to link entities, we are giving up some safety that Rust provides. But I am all for using the right tools for the right task. By putting away some safety, we can skip the bothersome bloat that would otherwise be required for such application.
+Quite simple, isn't it? Best part is that by relying on components only, you are potentially able to hot-reload UI or even stream UI over the network. The downside is that by relying on strings to link entities, we are giving up some safety that Rust provides. But I am all for using the right tools for the right task. By putting away some safety, we can skip the bothersome bloat that would otherwise be required for such an application.
 
 ### Nodes & Units
 
 There are multiple nodes in `UiLayout`.
 * `Window` - Defined by _point_ and _size_, it is not influenced by UI context and is absolutely positioned.
-* `Solid` - Defined by _size_ only, it will scale to to fit the parenting node. It is not influenced by UI context.
+* `Solid` - Defined by _size_ only, it will scale to fit the parenting node. It is not influenced by UI context.
 * `Div` - Defined by _padding_ & _margin_. Dictates the UI context. It uses styleform paradigm, very similar to HTML.
 
 > [!WARNING]
@@ -130,12 +130,12 @@ There are multiple nodes in `UiLayout`.
 
 This library comes with several UI units. They are:
 
-* `Ab` - Stands for absolute, usualy `Ab(1)` = **1px**
+* `Ab` - Stands for absolute, usually `Ab(1)` = **1px**
 * `Rl` - Stands for relative, it means `Rl(1.0)` == **1%**
 * `Rw` - Stands for relative width, it means `Rw(1.0)` == **1%w**, but when used in *height* field, it will use *width* as source
 * `Rh` - Stands for relative height, it means `Rh(1.0)` == **1%h**, but when used in *width* field, it will use *height* as source
 * `Em` - Stands for size of symbol M, it means `Em(1.0)` == **1em**, so size **16px** if font size is **16px**
-* `Sp` - Stands for remaining space, it's used as proportional ratio between margins, to replace alignment and justification. Used by `Div` only
+* `Sp` - Stands for remaining space, it's used as proportional ratio between margins, to replace alignment and justification. Only used by `Div`
 * `Vp` - Stands for viewport, it means `Vp(1.0)` == **1v%** of the `UiTree` original size
 * `Vw` - Stands for viewport width, it means `Vw(1.0)` == **1v%w** of the `UiTree` original size, but when used in *height* field, it will use *width* as source
 * `Vh` - Stands for viewport height, it means `Vh(1.0)` == **1v%h** of the `UiTree` original size, but when used in *width* field, it will use *height* as source
