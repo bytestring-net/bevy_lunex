@@ -1,3 +1,8 @@
+#![doc = include_str!("../README.md")]
+
+// #======================#
+// #=== PRELUDE EXPORT ===#
+
 pub mod common;
 pub use common::*;
 
@@ -10,9 +15,6 @@ pub use layout::*;
 pub mod nodes;
 pub use nodes::*;
 
-
-// #======================#
-// #=== PRELUDE EXPORT ===#
 
 pub mod prelude {
     pub use super::common::prelude::*;

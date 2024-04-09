@@ -5,6 +5,22 @@ use lunex_engine::prelude::*;
 
 pub type UiStack = FlexBox;
 
+
+// #==================#
+// #=== COMPONENTS ===#
+
+/// This struct marks [`UiTree`] entity to receive piped [`Camera`] size and position to its [`Dimension`] and [`Transform`] component.
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
+pub struct MovableByCamera;
+
+/// This struct is used mainly to mark linked UI entities as elements.
+/// They are picked up by different systems, that ensure their piped [`Transform`] is centered,
+/// instead of being aligned in a top-left corner like the normal UI entities.
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
+pub struct Element;
+
+
+
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct UiContent {
     pub size: Vec2,
@@ -16,13 +32,7 @@ impl UiContent {
 }
 
 
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
-pub struct MovableByCamera;
-
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
-pub struct Element;
-
-
+/// This struct is a string reference to a specific node in a parent [`UiTree`].
 #[derive(Component, Debug, Default, Clone, PartialEq)]
 pub struct UiLink {
     pub path: String,
@@ -40,6 +50,8 @@ impl UiLink {
 }
 
 
+/// This struct holds rectangular data. If the component covers some kind of 2D area, it should be stored in this component.
+/// Lunex uses this component to mirror node size in & from parent [`UiTree`].
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct Dimension {
     pub size: Vec2,
@@ -53,8 +65,8 @@ impl Dimension {
 }
 
 
-
-
+// #====================#
+// #=== MAIN BUNDLES ===#
 
 #[derive(Bundle, Debug, Default, Clone, PartialEq)]
 pub struct UiTreeBundle <M: Default + Component, N: Default + Component, T: Component> {
@@ -76,9 +88,8 @@ impl <M: Default + Component, N: Default + Component, T: Component + Default> Fr
 }
 
 
-
-
-
+// #=======================#
+// #=== ELEMENT BUNDLES ===#
 
 #[derive(Bundle, Debug, Default, Clone)]
 pub struct UiMaterial3dBundle {
