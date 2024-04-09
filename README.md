@@ -151,7 +151,7 @@ This library comes with several ui units. They are:
 | 0.12.0 | 0.0.7 - 0.0.9   |
 | 0.11.2 | 0.0.1 - 0.0.6   |
 
-> [!IMPORTANT]
+> [!WARNING]
 > Any version below 0.0.X is experimental and is not intended for practical use.
 
 ## Contributing
