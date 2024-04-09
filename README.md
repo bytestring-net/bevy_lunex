@@ -10,21 +10,14 @@
 
 #
 
+> [!CAUTION]
+> This branch is not released yet and is still WIP.
+
 Blazingly fast ***path*** based retained ***layout engine*** for Bevy entities. It is built around vanilla **Bevy ECS**. This library is intended to replace the existing `bevy_ui` feature, but nothing is stopping you from using them both at the same time.
 
 It uses combination of Bevy's built-in hierarchy and it's own custom hierarchy to give you the freedom of control without much bloat or extreme borrow checker limitations UIs usually have to face.
 
 It gives you the ability to make ***your own custom UI*** using regular ECS like every other part of your app.
-
-Features:
-* Declarative and parametric positioning of widgets
-* Set of basic units (Ab, Rl, Rw, Rh, Em, Sp, Vp, Vw, Vh)
-* Both visual and console debug information
-* 2D & 3D custom cursor
-
-What it doesn't do:
-* Adds visual styling to containers
-* Introduces any rendering code
 
 ***TLDR:*** It positions your entities as HTML objects for you, so you can slap custom rendering or images on them.
 
@@ -32,17 +25,22 @@ What it doesn't do:
 
 ![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/c5b6ae89-aad0-4cc1-9fd1-299b6ab0a80a)
 
-<details><summary>Gif</summary>
-  
-<img src="promo/readme_cyberpunk.gif" alt="Cyberpunk gif"/>
-
-</details>
-
 *^ A recreation of ***Cyberpunk*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/Bevypunk).*
 
 ## Description
 
-*Note: This library is EXPERIMENTAL. I do not guarantee consistent updates. I'm developing it for my own personal use, so if I judge it has outlived it's use case, I will stop developing this project.*
+> [!NOTE]
+> *This library is EXPERIMENTAL. I do not guarantee consistent updates. I'm developing it for my own personal use, so if I judge it has outlived it's use case, I will stop developing this project.*
+
+Bevy_Lunex is built on a simple concept: to use Bevy's ECS as the foundation for UI layout and interaction, allowing developers to manage UI elements as they would any other entities in their game or application as opposed to bevy_ui.
+
+* **Path-Based Hierarchy:** Inspired by file system paths, this approach allows for intuitive structuring and nesting of UI elements. It's designed to make the relationship between components clear and manageable, using a syntax familiar to most developers, while also avoiding the safety restrictions Rust enforces (They don't help but obstruct instead in UI).
+
+* **Retained Layout Engine:** Unlike immediate mode GUI systems, Bevy_Lunex uses a retained layout engine. This means the layout is calculated and stored, reducing the need for constant recalculations and offering potential performance benefits, especially for static or infrequently updated UIs.
+
+* **Built on top of ECS:** Since it's built with ECS, you can extend or customize the behavior of your UI by simply adding or modifying components. The scripting is also done by regular systems you are familiar with.
+
+* **2D & 3D UI:** One of the features of Bevy_Lunex is its support for both 2D and 3D UI elements, leveraging Bevy's `Transform` component. This support opens up a wide range of possibilities for developers looking to integrate UI elements seamlessly into both flat and spatial environments.
 
 ## Workflow
 
@@ -95,18 +93,45 @@ You can add `UiImage2dBundle` to the entity to apply image to your widgets. Or y
 ui.spawn((
     MyUiSystem,
     UiLink::path("Root"),
-    UiLayout::Window::FULL.pos(Abs(20.0)).size(Prc(100.0) - Abs(40.0)).pack(),
+    UiLayout::Window::FULL.pos(Ab(20.0)).size(Rl(100.0) - Ab(40.0)).pack(),
 ));
 
 ui.spawn((
     MyUiSystem,
     UiLink::path("Root/Rectangle"),
-    UiLayout::Solid::new().size(Abs((1920.0, 1080.0))).pack(),
+    UiLayout::Solid::new().size(Ab((1920.0, 1080.0))).pack(),
     UiImage2dBundle::from(assets.load("background.png")),
 ));
 ```
 
 `UiLink` is what is used to define the custom hierarchy. It uses `/` as the separator. If any of the names don't internally exist inside the parent `UiTree`, it will create them.
+
+Quite simple, isn't it? Best part is, that by relying on components only, you are potentially able to hot-reload UI or even stream UI over the network. The downside is, that by relying on strings to link entities, we are giving up some safety that Rust provides. But I am all for using the right tools for the right task. By putting away some safety, we can remove some of the bothersome bloat that would otherwise be required for such application.
+
+### Nodes & Units
+
+There are multiple nodes in `UiLayout`.
+* `Window` - Defined by _point_ and _size_, it is not influenced by ui context and is absolutely positioned.
+* `Solid` - Defined by _size_ only, it will scale to to fit the parenting node. It is not influenced by ui context.
+* `Div` - Defined by _padding_ & _margin_. Dictates the ui context. It uses styleform paradigm, very similar to HTML.
+
+> [!WARNING]
+> `Div` is not finished, it's WIP, please refrain from using it.
+
+This library comes with several ui units. They are:
+
+* `Ab` - Stands for absolute, usualy `Ab(1)` = **1px**
+* `Rl` - Stands for relative, it means `Rl(1.0)` == **1%**
+* `Rw` - Stands for relative width, it means `Rw(1.0)` == **1%w**, but when used in *height* field, it will use *width* as source
+* `Rh` - Stands for relative height, it means `Rh(1.0)` == **1%h**, but when used in *width* field, it will use *height* as source
+* `Em` - Stands for size of symbol M, it means `Em(1.0)` == **1em**, so size **16px** if font size is **16px**
+* `Sp` - Stands for remaining space, it's used as proportional ratio between margins, to replace alignment and justification. Used by `Div` only
+* `Vp` - Stands for viewport, it means `Vp(1.0)` == **1v%** of the `UiTree` original size
+* `Vw` - Stands for viewport width, it means `Vw(1.0)` == **1v%w** of the `UiTree` original size, but when used in *height* field, it will use *width* as source
+* `Vh` - Stands for viewport height, it means `Vh(1.0)` == **1v%h** of the `UiTree` original size, but when used in *width* field, it will use *height* as source
+
+> [!WARNING]
+> `Sp` is not finished, it's WIP, please refrain from using it.
 
 ## Versions
 |  Bevy  |    Bevy Lunex   |
@@ -116,10 +141,13 @@ ui.spawn((
 | 0.12.0 | 0.0.7 - 0.0.9   |
 | 0.11.2 | 0.0.1 - 0.0.6   |
 
+> [!IMPORTANT]
+> Any version below 0.0.X is experimental and is not intended for practical use.
+
 ## Contributing
 
-Any contribution submitted by you will be dual licensed as mentioned below, without any additional terms or conditions.
+Any contribution submitted by you will be dual licensed as mentioned below, without any additional terms or conditions. If you have the need to discuss this, please contact me.
 
 ## Licensing
 
-Released under both [APACHE](./LICENSE-APACHE) and [MIT](./LICENSE-MIT) licenses, for the sake of compatibility with other projects. Pick one that suits you the most!
+Released under both [APACHE](./LICENSE-APACHE) and [MIT](./LICENSE-MIT) licenses. Pick one that suits you the most!
