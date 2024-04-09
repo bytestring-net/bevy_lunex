@@ -14,7 +14,7 @@
 		{
 			"type": "cargo",
 			"command": "run",
-			"args": ["--bin", "bevycom"],
+			"args": ["--bin", "usage_2d"],
 			"problemMatcher": [
 				"$rustc"
 			],
@@ -24,7 +24,7 @@
 		{
 			"type": "cargo",
 			"command": "run",
-			"args": ["--bin", "bevypunk"],
+			"args": ["--bin", "usage_2d"],
 			"problemMatcher": [
 				"$rustc"
 			],

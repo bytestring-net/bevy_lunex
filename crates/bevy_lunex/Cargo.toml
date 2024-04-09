@@ -9,5 +9,5 @@
   categories.workspace = true
 
 [dependencies]
-  bevy               = { workspace = true }
-  lunex_engine       = { workspace = true, features = ["bevy"] }
+  bevy         = { workspace = true }
+  lunex_engine = { workspace = true, features = ["bevy"] }
