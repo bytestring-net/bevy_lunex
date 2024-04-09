@@ -74,7 +74,7 @@ commands.spawn((
 ));
 ```
 
-Now we should create our entity with the UI system. The base componets are `UiTree` + `Dimension` + `Transform`. The `UiTreeBundle` already contains these components. The newly introduced `Dimension` component is used as the source size for the UI system. We also need to add the `MovableByCamera` component so our entity will receive updates from camera. The last step is adding our `MyUiSystem` type as generic.
+Now we should create our entity with the UI system. The base componets are `UiTree` + `Dimension` + `Transform`. The `UiTreeBundle` already contains these components. The newly introduced `Dimension` component is used as the source size for the UI system. We also need to add the `MovableByCamera` component so our entity will receive updates from camera. The last step is adding our `MyUiSystem` type as a generic.
 
 ```rust
 commands.spawn((
@@ -90,7 +90,7 @@ commands.spawn((
 
 Now, any entity with `MyUiSystem` + `UiLayout` + `UiLink` spawned as a child of the `UiTree` will be managed as a UI entity. If it has a `Transform` component, it will get aligned based on the `UiLayout` calculations taking place in the parent `UiTree`. If it has a `Dimension` component then its size will also get updated by the `UiTree` output. This allows you to create your own systems reacting to changes in `Dimension` and `Transform` components.
 
-You can add a `UiImage2dBundle` to the entity to add images to your widgets. Or you can add another `UiTree` as a child, which will use the computed size output in `Dimension` component instead of a `Camera` piping the size into it.
+You can add a `UiImage2dBundle` to the entity to add images to your widgets. Or you can add another `UiTree` as a child, which will use the computed size output in `Dimension` component instead of a `Camera` piping the size to it.
 
 ```rust
 ui.spawn((
@@ -116,7 +116,7 @@ As you can see in the terminal (If you have added a `UiDebugPlugin`), the final 
     |    |-> Rectangle == Solid [size: (x: 1920, y: 1080) align_x: 0 align_y: 0]
 ```
 
-Quite simple, isn't it? Best part is that by relying on components only, you are potentially able to hot-reload UI or even stream UI over the network. The downside is that by relying on strings to link entities, we are giving up some safety that Rust provides. But I am all for using the right tools for the right task. By putting away some safety, we can skip the bothersome bloat that would otherwise be required for such an application.
+Quite simple, isn't it? Best part is that by relying on components only, you are potentially able to hot-reload UI or even stream UI over the network. The downside is that by relying on strings to link entities, we are giving up some safety that Rust provides. But I am all for using the right tools for the right task. By putting away some safety, we can skip the bothersome bloat that would otherwise be required for such application.
 
 ### Nodes & Units
 
