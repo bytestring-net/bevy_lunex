@@ -13,9 +13,9 @@
 > [!CAUTION]
 > This branch is not released yet and is still WIP.
 
-Blazingly fast ***path*** based retained ***layout engine*** for Bevy entities. It is built around vanilla **Bevy ECS**. This library is intended to replace the existing `bevy_ui` feature, but nothing is stopping you from using them both at the same time.
+Blazingly fast ***path*** based retained ***layout engine*** for Bevy entities. It is built around vanilla **Bevy ECS**. This library is intended to replace the existing `bevy_ui` create, but nothing is stopping you from using them both at the same time.
 
-It uses combination of Bevy's built-in hierarchy and it's own custom hierarchy to give you the freedom of control without much bloat or extreme borrow checker limitations UIs usually have to face.
+It uses a combination of Bevy's built-in hierarchy and its own custom hierarchy to give you the freedom of control without the bloat or borrow checker limitations usually faced when creating UI.
 
 It gives you the ability to make ***your own custom UI*** using regular ECS like every other part of your app.
 
@@ -51,7 +51,7 @@ First, we need to define a component, that we will use to mark all entities that
 pub struct MyUiSystem;
 ```
 
-Then we need to add `UiPlugin` with our marker component. Generic at `NoData` is used if you need to store some data inside the nodes.
+Then we need to add `UiPlugin` with our marker component. The generic at `NoData` is used if you need to store some data inside the nodes.
 
 ```rust
 fn main() {
@@ -62,7 +62,7 @@ fn main() {
 }
 ```
 
-By marking any camera with `MyUiSystem`, it will pipe it's size into our `UiTree` + `MyUiSystem` + `Dimension` + `MovableByCamera` entity.
+By marking any camera with `MyUiSystem`, it will pipe its size into our future UI system entity.
 
 ```rust
 commands.spawn((
@@ -74,7 +74,7 @@ commands.spawn((
 ));
 ```
 
-`UiTreeBundle` contains `Dimension` component, that is used as the source size for the ui system. We also need to add `MovableByCamera` component and `MyUiSystem` as generic.
+Now we should create our entity with the UI system. The base componets are `UiTree` + `Dimension` + `Transform`. The `UiTreeBundle` already contains these components. The newly introduced `Dimension` component is used as the source size for the UI system. We also need to add the `MovableByCamera` component so our entity will receive updates from camera. The last step is adding our `MyUiSystem` type as generic.
 
 ```rust
 commands.spawn((
@@ -88,9 +88,9 @@ commands.spawn((
 });
 ```
 
-Now, any entity with `MyUiSystem` + `UiLayout` + `UiLink` spawned as a child of the `UiTree` will be managed as a ui entity. If it has `Transform`, it will get aligned based on the `UiLayout` calculations taking place in parent `UiTree`. If it has `Dimension` component, it's size will also get updated by the `UiTree` output. This allows you to create your own systems reacting to changes in `Dimension` and `Transform`.
+Now, any entity with `MyUiSystem` + `UiLayout` + `UiLink` spawned as a child of the `UiTree` will be managed as a UI entity. If it has a `Transform` component, it will get aligned based on the `UiLayout` calculations taking place in the parent `UiTree`. If it has a `Dimension` component, its size will also get updated by the `UiTree` output. This allows you to create your own systems reacting to changes in `Dimension` and `Transform` components.
 
-You can add `UiImage2dBundle` to the entity to apply image to your widgets. Or you can add another `UiTree` as a child, but instead of `Camera` piping the size to it, it will use the computed size output.
+You can add a `UiImage2dBundle` to the entity to apply image to your widgets. Or you can add another `UiTree` as a child, but instead of `Camera` piping the size to it, it will use the computed size output.
 
 ```rust
 ui.spawn((
@@ -107,28 +107,28 @@ ui.spawn((
 ));
 ```
 
-`UiLink` is what is used to define the custom hierarchy. It uses `/` as the separator. If any of the names don't internally exist inside the parent `UiTree`, it will create them.
+`UiLink` is what is used to define the the custom hierarchy. It uses `/` as the separator. If any of the names don't internally exist inside the parent `UiTree`, it will create them.
 
-As you can see in the terminal (If you have added `UiDebugPlugin`), the final structure looks like this:
+As you can see in the terminal (If you have added a `UiDebugPlugin`), the final structure looks like this:
 ```rust
 > MyUiSystem == Window [pos: (x: 0, y: 0) size: (x: 100%, y: 100%)]
     |-> Root == Window [pos: (x: 20, y: 20) size: (x: -40 + 100%, y: -40 + 100%)]
     |    |-> Rectangle == Solid [size: (x: 1920, y: 1080) align_x: 0 align_y: 0]
 ```
 
-Quite simple, isn't it? Best part is, that by relying on components only, you are potentially able to hot-reload UI or even stream UI over the network. The downside is, that by relying on strings to link entities, we are giving up some safety that Rust provides. But I am all for using the right tools for the right task. By putting away some safety, we can remove some of the bothersome bloat that would otherwise be required for such application.
+Quite simple, isn't it? Best part is, that by relying on components only, you are potentially able to hot-reload UI or even stream UI over the network. The downside is, that by relying on strings to link entities, we are giving up some safety that Rust provides. But I am all for using the right tools for the right task. By putting away some safety, we can skip the bothersome bloat that would otherwise be required for such application.
 
 ### Nodes & Units
 
 There are multiple nodes in `UiLayout`.
-* `Window` - Defined by _point_ and _size_, it is not influenced by ui context and is absolutely positioned.
-* `Solid` - Defined by _size_ only, it will scale to to fit the parenting node. It is not influenced by ui context.
-* `Div` - Defined by _padding_ & _margin_. Dictates the ui context. It uses styleform paradigm, very similar to HTML.
+* `Window` - Defined by _point_ and _size_, it is not influenced by UI context and is absolutely positioned.
+* `Solid` - Defined by _size_ only, it will scale to to fit the parenting node. It is not influenced by UI context.
+* `Div` - Defined by _padding_ & _margin_. Dictates the UI context. It uses styleform paradigm, very similar to HTML.
 
 > [!WARNING]
 > `Div` is not finished, it's WIP, please refrain from using it.
 
-This library comes with several ui units. They are:
+This library comes with several UI units. They are:
 
 * `Ab` - Stands for absolute, usualy `Ab(1)` = **1px**
 * `Rl` - Stands for relative, it means `Rl(1.0)` == **1%**
