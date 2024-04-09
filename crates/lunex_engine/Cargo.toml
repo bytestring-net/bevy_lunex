@@ -1,0 +1,18 @@
+[package]
+  name = "lunex_engine"
+  authors.workspace    = true
+  version.workspace    = true
+  edition.workspace    = true
+  license.workspace    = true
+  repository.workspace = true
+  keywords.workspace   = true
+  categories.workspace = true
+
+[dependencies]
+  bevy.workspace = true
+  colored.workspace = true
+  indexmap.workspace = true
+  thiserror.workspace = true
+
+[features]
+  bevy  = []
