@@ -30,7 +30,7 @@ It gives you the ability to make ***your own custom UI*** using regular ECS like
 ## Description
 
 > [!NOTE]
-> *This library is EXPERIMENTAL. I do not guarantee consistent updates. I'm developing it for my own personal use, so if I judge it has outlived it's use case, I will stop developing this project.*
+> This library is EXPERIMENTAL. I do not guarantee consistent updates. I'm developing it for my own personal use, so if I judge it has outlived it's use case, I will stop developing this project.
 
 Bevy_Lunex is built on a simple concept: to use Bevy's ECS as the foundation for UI layout and interaction, allowing developers to manage UI elements as they would any other entities in their game or application as opposed to bevy_ui.
 
@@ -47,7 +47,7 @@ Bevy_Lunex is built on a simple concept: to use Bevy's ECS as the foundation for
 First, we need to define a component, that we will use to mark all entities that will belong to our ui system.
 
 ```rust
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct MyUiSystem;
 ```
 
@@ -78,7 +78,10 @@ commands.spawn((
 
 ```rust
 commands.spawn((
-    UiTreeBundle::<NoData, NoData, MyUiSystem> { tree: UiTree::new("MyUiSystem"), ..default() },
+    UiTreeBundle::<NoData, NoData, MyUiSystem> {
+        tree: UiTree::new("MyUiSystem"),
+        ..default()
+    },
     MovableByCamera,
 )).with_children(|ui| {
     // Here we will spawn our UI in the next code block ...
@@ -105,6 +108,13 @@ ui.spawn((
 ```
 
 `UiLink` is what is used to define the custom hierarchy. It uses `/` as the separator. If any of the names don't internally exist inside the parent `UiTree`, it will create them.
+
+As you can see in the terminal (If you have added `UiDebugPlugin`), the final structure looks like this:
+```rust
+> MyUiSystem == Window [pos: (x: 0, y: 0) size: (x: 100%, y: 100%)]
+    |-> Root == Window [pos: (x: 20, y: 20) size: (x: -40 + 100%, y: -40 + 100%)]
+    |    |-> Rectangle == Solid [size: (x: 1920, y: 1080) align_x: 0 align_y: 0]
+```
 
 Quite simple, isn't it? Best part is, that by relying on components only, you are potentially able to hot-reload UI or even stream UI over the network. The downside is, that by relying on strings to link entities, we are giving up some safety that Rust provides. But I am all for using the right tools for the right task. By putting away some safety, we can remove some of the bothersome bloat that would otherwise be required for such application.
 

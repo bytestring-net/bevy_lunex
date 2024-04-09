@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct MyUiSystem;
 
 fn main() {
