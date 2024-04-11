@@ -71,7 +71,7 @@ pub trait NodeGeneralTrait<T> {
 }
 
 /// Trait with all node creation implementations.
-/// Lunex abstacts over this trait with another trait.
+/// ## DIRECT ACCESS - Can break things
 pub trait NodeCreationTrait<T> {
     /// Makes new subnode in this node and returns the new subnodes' name.
     /// ## 📌 Note
@@ -103,7 +103,7 @@ pub trait NodeCreationTrait<T> {
 }
 
 /// Trait with all node data management implementations.
-/// Lunex abstacts over this trait with another trait.
+/// ## DIRECT ACCESS - Can break things
 pub trait NodeDataTrait<T> {
     /// Adds new data to this node and returns the previous data.
     /// ## 📌 Note
@@ -144,7 +144,7 @@ pub trait NodeDataTrait<T> {
 }
 
 /// Trait with all nodetree top-data management implementations.
-/// Lunex SHOULD!!!! abstacts over this trait with another trait. (WIP)
+/// ## DIRECT ACCESS - Can break things
 pub trait NodeTopDataTrait<D> {
     /// Adds new top-level data and returns previous top-level data.
     fn add_topdata(&mut self, data: D) -> Option<D>;
@@ -157,14 +157,14 @@ pub trait NodeTopDataTrait<D> {
 }
 
 /// Trait with all init methods for empty nodes.
-/// Lunex abstacts over this trait with another trait.
+/// ## DIRECT ACCESS - Can break things
 pub trait NodeInitTrait {
     /// Creates new [`Node`].
     fn new() -> Self;
 }
 
 /// Trait with init methods for [`NodeTree`].
-/// Lunex abstacts over this trait with another trait.
+/// ## DIRECT ACCESS - Can break things
 pub trait NodeTreeInitTrait {
     /// Creates new [`NodeTree`].
     fn new(name: impl Borrow<str>) -> Self;
