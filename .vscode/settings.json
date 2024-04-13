@@ -1,4 +1,4 @@
 {
     "rust-analyzer.linkedProjects": [],
-    "rust-analyzer.showUnlinkedFileNotification": true
+    "rust-analyzer.showUnlinkedFileNotification": false,
 }

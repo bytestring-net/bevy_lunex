@@ -2,175 +2,162 @@
 
 <div align="center">
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
-  <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.12.1-white.svg?label=bevy&color=bb86a5"></a>
+  <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.13.2-white.svg?label=bevy&color=bb86a5"></a>
   <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-Apache/MIT-white.svg?label=license&color=9fcec4"></a>
   <a href="https://deps.rs/crate/bevy_lunex"><img src="https://img.shields.io/badge/check-white.svg?label=deps&color=a0f6b9"></a>
   <a href="https://docs.rs/bevy_lunex"><img src="https://img.shields.io/docsrs/bevy_lunex/latest?color=8df7cb"></a>
 </div>
 
-# 
-
-## NOTICE!
-I'm currently working on 0.1.0 release which is a ground up rewrite of the engine.
-
-Any version 0.0.X is considered experimental.
-
-Note that I'm a student and this is not my primary project at the moment. Don't worry, development is ongoing, even if its slow.
-
 #
 
-Blazingly fast ***path*** based ***modular layout engine*** built on top of **Bevy ECS**. It calculates layout from user-defined ***rectangle positions*** and percentages. Works for ***all aspect ratios***. Uses retained style UI. (It may develop into full-fledged UI lib in the future)
+> [!CAUTION]
+> This branch is not released yet and is still WIP.
 
-*Note: I'm currently super busy with school, so the development during the school year is rather slow*
+Blazingly fast ***path based*** retained ***layout engine*** for Bevy entities, built around vanilla **Bevy ECS**. This library is intended to replace the existing `bevy_ui` crate, but nothing is stopping you from using them both at the same time.
 
-## === Showcase ===
+It uses a combination of Bevy's built-in hierarchy and its own custom hierarchy to give you the freedom of control without the bloat or borrow checker limitations usually faced when creating UI.
+
+It gives you the ability to make ***your own custom UI*** using regular ECS like every other part of your app.
+
+***TLDR:*** It positions your entities as HTML objects for you, so you can slap custom rendering or images on them.
+
+## Showcase
 
 ![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/c5b6ae89-aad0-4cc1-9fd1-299b6ab0a80a)
 
-<details><summary>Gif</summary>
-  
-<img src="promo/readme_cyberpunk.gif" alt="Cyberpunk gif"/>
-
-</details>
-
 *^ A recreation of ***Cyberpunk*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/Bevypunk).*
 
-## === Description ===
+## Description
 
-**Bevy-Lunex** is a layout engine based on defining and managing rectangles. It strives to be **clean**, **simple** and **intuitive** to the user. The most prominent use case is to use it as a *"building brick"* for your own **user interface**.
+> [!NOTE]
+> This library is EXPERIMENTAL. I do not guarantee consistent updates. I'm developing it for my own personal use, so if I judge it has outlived its use case, I will stop developing this project.
 
-The core of this library is **pure math** layout engine, meaning **no styling** or **rendering** is currently included. That's where you come in. You can use the library to hook your own components and custom rendering to make it look exactly the way you want (May change in the future into full-fledged UI lib :D ).
+Bevy_Lunex is built on a simple concept: to use Bevy's ECS as the foundation for UI layout and interaction, allowing developers to manage UI elements as they would any other entities in their game or application as opposed to bevy_ui.
 
-By attaching entities to coordinates returned by **Bevy Lunex**, you can abstract complex positioning logic away from you. Take a look at these examples:
-* **[`Bevypunk`](https://github.com/IDEDARY/Bevypunk)** - *Made by attaching images to Bevy Lunex rectangles and animating them*.
-* **[`Stardawn`](https://github.com/IDEDARY/stardawn)** - *Used [bevy_vector_shapes](https://github.com/james-j-obrien/bevy_vector_shapes) to render resizable dynamic elements*.
+* **Path-Based Hierarchy:** Inspired by file system paths, this approach allows for intuitive structuring and nesting of UI elements. It's designed to make the relationship between components clear and manageable, using a syntax familiar to most developers, while also avoiding the safety restrictions Rust enforces (as they don't help but instead obstruct for UI).
 
-Currently the most up-to-date practices and workflow can be found in the **[`Bevypunk`](https://github.com/IDEDARY/Bevypunk)** project.
+* **Retained Layout Engine:** Unlike immediate mode GUI systems, Bevy_Lunex uses a retained layout engine. This means the layout is calculated and stored, reducing the need for constant recalculations and offering potential performance benefits, especially for static or infrequently updated UIs.
 
-## === Workflow ===
-<details><summary>Expand</summary>
+* **Built on top of ECS:** Since it's built with ECS, you can extend or customize the behavior of your UI by simply adding or modifying components. The scripting is also done by regular systems you are familiar with.
 
-### --- Usage ---
+* **2D & 3D UI:** One of the features of Bevy_Lunex is its support for both 2D and 3D UI elements, leveraging Bevy's `Transform` component. This support opens up a wide range of possibilities for developers looking to integrate UI elements seamlessly into both flat and spatial environments.
 
-Due to the nature of Rust, we had to come up with a **unique** way how to manage data. We decided to implement **hierarchy tree structure**, which is used in **UNIX file system**.
+## Workflow
 
-All data is stored in a master struct, called "**UiTree**", which manages all layout data. The **"UiTree"** is composed of "**UiBranches**", where each branch represents a rectangle and they can be nested inside each other. **"Widgets"** are custom smart pointers containing a *"path"* to the corresponding nested **"UiBranch"**. **"Widgets"** are **components** and are spawned as entity.
+First, we need to define a component, that we will use to mark all entities that will belong to our ui system.
 
-When needed, the **"Widget"** can *fetch* **"UiBranch"** inside the **"UiTree"** and return a mutable borrow. From the borrow you can modify the layout data, thus **changing the behaviour** and the result of the rectangle calculations taking place.
-This is the way to get around the *Rust's borrow checker*.
-```
-> UI
-  |-> Main_menu
-  |    |-> Background
-  |    |-> Board
-  |    |    |-> Logo
-  |    |    |-> Buttons
-  |    |    |    |-> Continue
-  |    |    |    |-> New_Game
-  |    |    |    |-> Load_Game
-  |    |    |    |-> Settings
-  |    |    |    |-> Credits
-  |    |    |    |-> Additional_Content
-  |    |    |    |-> Quit_Game
- ```
-^ This is a **"UiTree"** structure printed out in a terminal. Each item displayed here is **"UiBranch"**. Look for example at the *"Board"* branch, in which are nested *"Logo"* and *"Buttons"* branches.
-
-### --- Tree creation ---
-
-First, create a **"UiTree"** struct that will hold all the layout data managed recursively.
-We also need to specify the generic, which is optional field each widget can have and store data in.
 ```rust
-let mut tree: UiTree<MyData> = UiTree::new("UI");
+#[derive(Component, Default)]
+pub struct MyUiSystem;
 ```
 
-### --- Layout definition ---
-To create a new **"Widget"** in the root directory you pass in the **"UiTree"**, specify widget properties and the function returns the smart pointer. 
+Then we need to add `UiPlugin` with our marker component. The `NoData` generics are used if you need to store some data inside the nodes.
+
 ```rust
-let widget: Widget = WindowLayout::empty()
-    .rel(Vec2::splat(10.0))
-    .size_rel((80.0, 80.0))
-    .build_as(&mut tree, "widget")?;
-```
-
-### --- Logic binding ---
-Once you have the **"Widget"** created, you can pass it to an entity as a component together with other components like **"Image"**. Here we use **"ImageElementBundle"**, which is the same as **"SpriteBundle"**, but has extra fields for **"Widget"** and **"Element"**. Element component is used when you need to attach a visual entity to a widget, like text or image.
-```rust
-commands.spawn((
-    ImageElementBundle::new(
-        widget,
-        &ImageParams::default(),
-        asset_server.load("button.png"),
-        Vec2::new(1280.0, 250.0)),
-    ButtonHighlightEffect::new(Color::GOLD),
-));
-```
-In this example, we also passed another component called **"ButtonHighlightEffect"**, which we will define in the next section.
-
-### --- Logic definition ---
-To add logic to your **"Widgets"**, you use Bevy systems. In this example, we will create a system that will tint the sprite to a certain colour if a cursor hovers over the **"Widget"** First we define the component with color data. Then we define the system that will query **"UiTree"**, **"Cursor"** and our components. Add the logic and we are done.
-```rust
-#[derive(Component)]
-pub struct ButtonHighlightEffect (pub Color);
-
-fn button_highlight_effect_update<T:Component + Default>(
-    trees: Query<&UiTree<T>>,
-    cursors: Query<&Cursor>, 
-    mut query: Query<(&Widget, &mut Sprite, &ButtonHighlightEffect)>
-) {
-    for tree in trees {
-        for (widget, mut sprite, color) in &mut query {
-
-            if !widget.fetch(&tree).unwrap().is_visible() {return;}
-
-            let mut trigger = false;
-            for cursor in &cursors {
-                if widget.contains_position(&tree, &cursor.position_world().invert_y()).unwrap() {
-                    trigger = true;
-                    break;
-                }
-            }
-
-            if trigger{
-                sprite.color = color.0;
-            } else {
-                sprite.color = Color::WHITE;
-            }
-        }
-    }
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_plugins(UiPlugin::<NoData, NoData, MyUiSystem>::new())
+        .run();
 }
 ```
-### --- Last ---
-Don't forget to add the system to the app.
+
+By marking any camera with `MyUiSystem`, it will pipe its size into our future UI system entity.
+
 ```rust
-.add_systems(Update, button_highlight_effect_update::<T>)
+commands.spawn((
+    MyUiSystem,
+    Camera2dBundle {
+        transform: Transform::from_xyz(0.0, 0.0, 1000.0),
+        ..default()
+    }
+));
 ```
-You need to spawn the **"UiTree"** we created in the first step as an entity so we can query for it.
-Look into examples how to inject the component into existing window to bind it to window size.
+
+Now we should create our entity with the UI system. The base componets are `UiTree` + `Dimension` + `Transform`. The `UiTreeBundle` already contains these components. The newly introduced `Dimension` component is used as the source size for the UI system. We also need to add the `MovableByCamera` component so our entity will receive updates from camera. The last step is adding our `MyUiSystem` type as a generic.
+
 ```rust
-commands.spawn(tree);
+commands.spawn((
+    UiTreeBundle::<NoData, NoData, MyUiSystem> {
+        tree: UiTree::new("MyUiSystem"),
+        ..default()
+    },
+    MovableByCamera,
+)).with_children(|ui| {
+    // Here we will spawn our UI in the next code block ...
+});
 ```
 
-### --- Layout options ---
-There are 3 main layout options to pick from. With their combination, you can define any setup. They are:
-* **RELATIVE** || Defined from 2 points, as % of the parent container.
-* **SOLID** || Defined as a ratio of width and height. Will scale to fit or fill parent.
-* **WINDOW** || Defined as a point + width and height. Same as RELATIVE.
+Now, any entity with `MyUiSystem` + `UiLayout` + `UiLink` spawned as a child of the `UiTree` will be managed as a UI entity. If it has a `Transform` component, it will get aligned based on the `UiLayout` calculations taking place in the parent `UiTree`. If it has a `Dimension` component then its size will also get updated by the `UiTree` output. This allows you to create your own systems reacting to changes in `Dimension` and `Transform` components.
 
-By nesting branches of these 3 types, you can precisely define the position and layout behaviour.
+You can add a `UiImage2dBundle` to the entity to add images to your widgets. Or you can add another `UiTree` as a child, which will use the computed size output in `Dimension` component instead of a `Camera` piping the size to it.
 
-</details>
+```rust
+ui.spawn((
+    MyUiSystem,
+    UiLink::path("Root"),
+    UiLayout::Window::FULL.pos(Ab(20.0)).size(Rl(100.0) - Ab(40.0)).pack(),
+));
 
-## === Versions ===
+ui.spawn((
+    MyUiSystem,
+    UiLink::path("Root/Rectangle"),
+    UiLayout::Solid::new().size(Ab((1920.0, 1080.0))).pack(),
+    UiImage2dBundle::from(assets.load("background.png")),
+));
+```
+
+`UiLink` is what is used to define the the custom hierarchy. It uses `/` as the separator. If any of the names don't internally exist inside the parent `UiTree`, it will create them.
+
+As you can see in the terminal (If you have added a `UiDebugPlugin`), the final structure looks like this:
+```rust
+> MyUiSystem == Window [pos: (x: 0, y: 0) size: (x: 100%, y: 100%)]
+    |-> Root == Window [pos: (x: 20, y: 20) size: (x: -40 + 100%, y: -40 + 100%)]
+    |    |-> Rectangle == Solid [size: (x: 1920, y: 1080) align_x: 0 align_y: 0]
+```
+
+Quite simple, isn't it? Best part is that by relying on components only, you are potentially able to hot-reload UI or even stream UI over the network. The downside is that by relying on strings to link entities, we are giving up some safety that Rust provides. But I am all for using the right tools for the right task. By putting away some safety, we can skip the bothersome bloat that would otherwise be required for such application.
+
+### Nodes & Units
+
+There are multiple nodes in `UiLayout`.
+* `Window` - Defined by _point_ and _size_, it is not influenced by UI context and is absolutely positioned.
+* `Solid` - Defined by _size_ only, it will scale to fit the parenting node. It is not influenced by UI context.
+* `Div` - Defined by _padding_ & _margin_. Dictates the UI context. It uses styleform paradigm, very similar to HTML.
+
+> [!WARNING]
+> `Div` is not finished, it's WIP, please refrain from using it.
+
+This library comes with several UI units. They are:
+
+* `Ab` - Stands for absolute, usually `Ab(1)` = **1px**
+* `Rl` - Stands for relative, it means `Rl(1.0)` == **1%**
+* `Rw` - Stands for relative width, it means `Rw(1.0)` == **1%w**, but when used in *height* field, it will use *width* as source
+* `Rh` - Stands for relative height, it means `Rh(1.0)` == **1%h**, but when used in *width* field, it will use *height* as source
+* `Em` - Stands for size of symbol M, it means `Em(1.0)` == **1em**, so size **16px** if font size is **16px**
+* `Sp` - Stands for remaining space, it's used as proportional ratio between margins, to replace alignment and justification. Only used by `Div`
+* `Vp` - Stands for viewport, it means `Vp(1.0)` == **1v%** of the `UiTree` original size
+* `Vw` - Stands for viewport width, it means `Vw(1.0)` == **1v%w** of the `UiTree` original size, but when used in *height* field, it will use *width* as source
+* `Vh` - Stands for viewport height, it means `Vh(1.0)` == **1v%h** of the `UiTree` original size, but when used in *width* field, it will use *height* as source
+
+> [!WARNING]
+> `Sp` is not finished, it's WIP, please refrain from using it.
+
+## Versions
 |  Bevy  |    Bevy Lunex   |
 |--------|-----------------|
+| 0.13.2 | 0.1.0 - latest  |
 | 0.12.1 | 0.0.10 - 0.0.11 |
-| 0.12.0 |  0.0.7 - 0.0.9  |
-| 0.11.2 |    <= 0.0.6     |
+| 0.12.0 | 0.0.7 - 0.0.9   |
+| 0.11.2 | 0.0.1 - 0.0.6   |
 
-## === Contributing ===
+> [!WARNING]
+> Any version below 0.0.X is experimental and is not intended for practical use.
 
-Any contribution submitted by you will be dual licensed as mentioned below, without any additional terms or conditions.
+## Contributing
 
-## === Licensing ===
+Any contribution submitted by you will be dual licensed as mentioned below, without any additional terms or conditions. If you have the need to discuss this, please contact me.
 
-Released under both [APACHE](./LICENSE-APACHE) and [MIT](./LICENSE-MIT) licenses, for the sake of compatibility with other projects. Pick one that suits you the most!
+## Licensing
+
+Released under both [APACHE](./LICENSE-APACHE) and [MIT](./LICENSE-MIT) licenses. Pick one that suits you the most!
