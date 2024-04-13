@@ -19,7 +19,14 @@
 
 [workspace.dependencies]
 
-  bevy = { version = "0.13.1", default_features = false, features = [
+  bevy_lunex   = { path = "crates/bevy_lunex" }
+  lunex_engine = { path = "crates/lunex_engine" }
+
+  colored            = { version = "^2.1" }
+  indexmap           = { version = "^2.1" }
+  thiserror          = { version = "^1.0" }
+
+  bevy = { version = "0.13.2", default_features = false, features = [
     #"bevy_asset",
     #"bevy_gilrs",
     #"bevy_winit",
@@ -37,8 +44,3 @@
   ] }
 
   #bevy_mod_picking   = { version = "0.18.2"}
-
-  bevy_lunex = { path = "crates/bevy_lunex" }
-  
-  #lunex_engine = { git = "https://github.com/bytestring-net/lunex_engine" }
-  lunex_engine = { path = "/home/dominik/Projects/Bytestring/lunex_engine/crates/lunex_engine", features=["bevy"] }

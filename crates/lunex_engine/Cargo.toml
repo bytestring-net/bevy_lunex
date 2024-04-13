@@ -1,5 +1,5 @@
 [package]
-  name = "bevy_lunex"
+  name = "lunex_engine"
   authors.workspace    = true
   version.workspace    = true
   edition.workspace    = true
@@ -9,5 +9,10 @@
   categories.workspace = true
 
 [dependencies]
-  bevy         = { workspace = true }
-  lunex_engine = { workspace = true, features = ["bevy"] }
+  bevy.workspace = true
+  colored.workspace = true
+  indexmap.workspace = true
+  thiserror.workspace = true
+
+[features]
+  bevy  = []
