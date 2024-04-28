@@ -88,6 +88,22 @@ impl <M: Default + Component, N: Default + Component, T: Component + Default> Fr
 }
 
 
+#[derive(Bundle, Debug, Clone, PartialEq)]
+pub struct UiNodeBundle<T: Component> {
+    pub marker: T,
+    pub link: UiLink,
+    pub layout: Layout,
+}
+impl <T: Component + Default> Default for UiNodeBundle<T> {
+    fn default() -> Self {
+        UiNodeBundle {
+            marker: T::default(),
+            link: UiLink::default(),
+            layout: Layout::default(),
+        }
+    }
+}
+
 // #=======================#
 // #=== ELEMENT BUNDLES ===#
 
