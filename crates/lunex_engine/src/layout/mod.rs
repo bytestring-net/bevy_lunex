@@ -8,7 +8,6 @@ mod parametric;
 pub use parametric::*;
 
 pub mod prelude {
-    pub use super::Div;
     pub use super::Layout;
     pub use super::{Align, Cover};
     pub use super::{FlexBox, FlexDirection, FlexJustify};
