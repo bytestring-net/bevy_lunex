@@ -14,6 +14,7 @@ use super::NiceDisplay;
 // #==========================#
 // #=== DECLARATIVE MACROS ===#
 
+/// Declare UiValue struct and add fields to it
 macro_rules! uivalue_declare {
     ($($ufield:ident), *) => {
         /// **Ui value** - Represents collection of different units.
@@ -111,6 +112,8 @@ macro_rules! uivalue_declare {
         }    
     }
 }
+
+/// Implement adding to UiValue struct
 macro_rules! uivalue_implement {
     ($( ($unit:ident, $ufield:ident) ),* ) => {
 
@@ -408,6 +411,8 @@ macro_rules! uivalue_implement {
         }
     }
 }
+
+/// Implement basic math and conversions for a type
 macro_rules! unit_implement {
     ($($unit:ident), *) => {
         $(
@@ -495,6 +500,8 @@ macro_rules! unit_implement {
         )*
     };
 }
+
+/// Implement adding two types together
 macro_rules! unit_cross_operations {
     (($unit1:ident, $ufield1:ident), ($unit2:ident, $ufield2:ident)) => {
         impl<T: Add<Output = T>> Add<$unit2<T>> for $unit1<T> {
@@ -525,7 +532,7 @@ macro_rules! unit_cross_operations {
 /// **Absolute** - Represents non-changing unit. Scale can be modified but by default `1Ab = 1Px`.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Ab;
+/// # use lunex_engine::Ab;
 /// let a: Ab<f32> = Ab(4.0) + Ab(6.0); // -> 10px
 /// let b: Ab<f32> = Ab(4.0) * 2.0;     // -> 8px
 /// ```
@@ -535,7 +542,7 @@ pub struct Ab<T>(pub T);
 /// **Relative** - Represents scalable unit `0% to 100%`. `120%` is allowed.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Rl;
+/// # use lunex_engine::Rl;
 /// let a: Rl<f32> = Rl(25.0) + Rl(40.0); // -> 65%
 /// let b: Rl<f32> = Rl(25.0) * 3.0;      // -> 75%
 /// ```
@@ -543,10 +550,10 @@ pub struct Ab<T>(pub T);
 pub struct Rl<T>(pub T);
 
 /// **Relative width** - Represents scalable unit `0% to 100%`. `120%` is allowed.
-/// Proportional to width measure even when used in height field.
+/// Proportional to a width measure even when used in a height field.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Rw;
+/// # use lunex_engine::Rw;
 /// let a: Rw<f32> = Rw(25.0) + Rw(40.0); // -> 65%
 /// let b: Rw<f32> = Rw(25.0) * 3.0;      // -> 75%
 /// ```
@@ -554,10 +561,10 @@ pub struct Rl<T>(pub T);
 pub struct Rw<T>(pub T);
 
 /// **Relative height** - Represents scalable unit `0% to 100%`. `120%` is allowed.
-/// Proportional to height measure even when used in width field.
+/// Proportional to a height measure even when used in a width field.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Rh;
+/// # use lunex_engine::Rh;
 /// let a: Rh<f32> = Rh(25.0) + Rh(40.0); // -> 65%
 /// let b: Rh<f32> = Rh(25.0) * 3.0;      // -> 75%
 /// ```
@@ -567,7 +574,7 @@ pub struct Rh<T>(pub T);
 /// **Size of M** - Represents unit that is the size of the symbol `M`. Which is `16px` with `font size 16px` and so on.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Em;
+/// # use lunex_engine::Em;
 /// let a: Em<f32> = Em(1.0) + Em(2.0); // -> 3em == 48px with font size 16px
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -578,7 +585,7 @@ pub struct Em<T>(pub T);
 /// Used for context aware alignment. 
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Prc;
+/// # use lunex_engine::Sp;
 /// let a: Sp<f32> = Sp(1.0) + Sp(2.0); // -> 3 space
 /// let b: Sp<f32> = Sp(2.0) * 3.0;     // -> 6 space
 /// ```
@@ -589,7 +596,7 @@ pub struct Sp<T>(pub T);
 /// **Viewport** - Represents scalable unit `0% to 100%` of the root container. `120%` is allowed.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Vp;
+/// # use lunex_engine::Vp;
 /// let a: Vp<f32> = Vp(25.0) + Vp(40.0); // -> 65%
 /// let b: Vp<f32> = Vp(25.0) * 3.0;      // -> 75%
 /// ```
@@ -597,10 +604,10 @@ pub struct Sp<T>(pub T);
 pub struct Vp<T>(pub T);
 
 /// **Viewport width** - Represents scalable unit `0% to 100%` of the root container. `120%` is allowed.
-/// Proportional to width measure even when used in height field.
+/// Proportional to a width measure even when used in a height field.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Vw;
+/// # use lunex_engine::Vw;
 /// let a: Vw<f32> = Vw(25.0) + Vw(40.0); // -> 65%
 /// let b: Vw<f32> = Vw(25.0) * 3.0;      // -> 75%
 /// ```
@@ -608,10 +615,10 @@ pub struct Vp<T>(pub T);
 pub struct Vw<T>(pub T);
 
 /// **Viewport Height** - Represents scalable unit `0% to 100%` of the root container. `120%` is allowed.
-/// Proportional to height measure even when used in width field.
+/// Proportional to a height measure even when used in a width field.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Vh;
+/// # use lunex_engine::Vh;
 /// let a: Vh<f32> = Vh(25.0) + Vh(40.0); // -> 65%
 /// let b: Vh<f32> = Vh(25.0) * 3.0;      // -> 75%
 /// ```
