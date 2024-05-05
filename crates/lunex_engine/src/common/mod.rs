@@ -12,7 +12,7 @@ pub mod prelude {
 
     pub use super::{Abs, Prc, Rem};
     pub use super::NodeSizeEvaluate;
-    pub use super::NodeSize;
+    pub use super::UiValue;
 
     pub use super::UiError;
 

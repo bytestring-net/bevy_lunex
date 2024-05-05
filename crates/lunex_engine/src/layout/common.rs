@@ -2,7 +2,7 @@
 use bevy::prelude::Component;
 
 use crate::{import::*, Div};
-use crate::{NiceDisplay, NodeSize};
+use crate::{NiceDisplay, UiValue};
 
 use super::{Window, Solid};
 
@@ -144,7 +144,7 @@ pub struct FlexBox {
     /// Dictates how should the nodes be positioned within one line.
     pub placement: FlexJustify,
     /// Minimal gap between subnodes and lines.
-    pub gap: NodeSize<Vec2>,
+    pub gap: UiValue<Vec2>,
     /// Default alignment of nodes within lines.
     pub node_alignment: Align,
 }
@@ -186,17 +186,17 @@ impl FlexBox {
         self
     }
     /// Replaces the gap with the new value.
-    pub fn gap(mut self, gap: impl Into<NodeSize<Vec2>>) -> Self {
+    pub fn gap(mut self, gap: impl Into<UiValue<Vec2>>) -> Self {
         self.gap = gap.into();
         self
     }
     /// Replaces the horizontal gap with the new value.
-    pub fn gap_x(mut self, gap: impl Into<NodeSize<f32>>) -> Self {
+    pub fn gap_x(mut self, gap: impl Into<UiValue<f32>>) -> Self {
         self.gap.set_x(gap);
         self
     }
     /// Replaces the vertical gap with the new value.
-    pub fn gap_y(mut self, gap: impl Into<NodeSize<f32>>) -> Self {
+    pub fn gap_y(mut self, gap: impl Into<UiValue<f32>>) -> Self {
         self.gap.set_y(gap);
         self
     }

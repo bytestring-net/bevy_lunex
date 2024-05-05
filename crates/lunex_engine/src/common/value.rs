@@ -189,6 +189,24 @@ macro_rules! uivalue_implement {
             }
         )*
 
+        impl <T: Mul<f32, Output = T>> Mul<f32> for UiValue<T> {
+            type Output = Self;
+            fn mul(mut self, other: f32) -> Self::Output {
+                let mut output = UiValue::new();
+                $(
+                    if let Some(v1) = self.$ufield {
+                        output.$ufield = Some(v1 * other);
+                    }
+                )*
+                output
+            }
+        }
+        impl <T: Mul<f32, Output = T> + Copy> MulAssign<f32> for UiValue<T> {
+            fn mul_assign(&mut self, rhs: f32) {
+                *self = *self * rhs
+            }
+        }
+
         impl UiValue<Vec2> {
             /// Gets the X value of all units.
             pub fn get_x(&self) -> UiValue<f32> {
@@ -625,6 +643,7 @@ pub struct Vw<T>(pub T);
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Vh<T>(pub T);
 
+
 // #===================#
 // #=== MACRO CALLS ===#
 
@@ -713,9 +732,9 @@ unit_cross_operations!((Vh, vh), (Sp, sp));
 unit_cross_operations!((Vh, vh), (Vp, vp));
 unit_cross_operations!((Vh, vh), (Vw, vw));
 
+
 // #==============================#
 // #=== CUSTOM IMPLEMENTATIONS ===#
-
 
 // # Impl ((x, x)) => UiValue(Vec2)
 impl Into<UiValue<Vec2>> for (UiValue<f32>, UiValue<f32>) {
@@ -924,6 +943,70 @@ impl Ab<Vec4> {
 
 // #=====================#
 // #=== FUNCTIONALITY ===#
+
+/// ## UiValue Evaluate
+/// Trait for implementing evaluation logic for `(TT)`.
+/// `(T)` should be 1 vector unit version of `(TT)`.
+/// ## 📦 Types
+pub trait UiValueEvaluate<T> {
+    /// Evaluates the NodeSize for `(T)`
+    fn evaluate(&self, absolute_scale: T, parent_size: T, viewport_size: T, font_size: T) -> T;
+}
+
+// # Impl evaluate
+impl UiValueEvaluate<f32> for UiValue<f32> {
+    fn evaluate(&self, absolute_scale: f32, parent_size: f32, viewport_size: f32, font_size: f32) -> f32 {
+        let mut out = 0.0;
+        if let Some(v) = self.ab { out += v * absolute_scale }
+        if let Some(v) = self.rl { out += (v/100.0) * parent_size }
+        if let Some(v) = self.rw { out += (v/100.0) * parent_size }
+        if let Some(v) = self.rh { out += (v/100.0) * parent_size }
+        if let Some(v) = self.em { out += v * font_size }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size }
+        if let Some(v) = self.vh { out += (v/100.0) * viewport_size }
+        out
+    }
+}
+impl UiValueEvaluate<Vec2> for UiValue<Vec2> {
+    fn evaluate(&self, absolute_scale: Vec2, parent_size: Vec2, viewport_size: Vec2, font_size: Vec2) -> Vec2 {
+        let mut out = Vec2::ZERO;
+        if let Some(v) = self.ab { out += v * absolute_scale }
+        if let Some(v) = self.rl { out += (v/100.0) * parent_size }
+        if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
+        if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
+        if let Some(v) = self.em { out += v * font_size }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
+        out
+    }
+}
+impl UiValueEvaluate<Vec3> for UiValue<Vec3> {
+    fn evaluate(&self, absolute_scale: Vec3, parent_size: Vec3, viewport_size: Vec3, font_size: Vec3) -> Vec3 {
+        let mut out = Vec3::ZERO;
+        if let Some(v) = self.ab { out += v * absolute_scale }
+        if let Some(v) = self.rl { out += (v/100.0) * parent_size }
+        if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
+        if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
+        if let Some(v) = self.em { out += v * font_size }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
+        out
+    }
+}
+impl UiValueEvaluate<Vec4> for UiValue<Vec4> {
+    fn evaluate(&self, absolute_scale: Vec4, parent_size: Vec4, viewport_size: Vec4, font_size: Vec4) -> Vec4 {
+        let mut out = Vec4::ZERO;
+        if let Some(v) = self.ab { out += v * absolute_scale }
+        if let Some(v) = self.rl { out += (v/100.0) * parent_size }
+        if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
+        if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
+        if let Some(v) = self.em { out += v * font_size }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
+        out
+    }
+}
+
 
 impl NiceDisplay for UiValue<f32> {
     fn to_nicestr(&self) -> String {
