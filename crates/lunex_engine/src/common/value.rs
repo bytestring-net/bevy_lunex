@@ -716,6 +716,24 @@ unit_cross_operations!((Vh, vh), (Vw, vw));
 // #==============================#
 // #=== CUSTOM IMPLEMENTATIONS ===#
 
+
+// # Impl ((x, x)) => UiValue(Vec2)
+impl Into<UiValue<Vec2>> for (UiValue<f32>, UiValue<f32>) {
+    fn into(self) -> UiValue<Vec2> {
+        let val: UiValue<Vec2> = UiValue::new();
+        val.with_x(self.0).with_y(self.1)
+    }
+}
+
+// # Impl ((x, x)) => UiValue(Vec2)
+impl Into<UiValue<Vec2>> for (Ab<f32>, Rl<f32>) {
+    fn into(self) -> UiValue<Vec2> {
+        let val: UiValue<Vec2> = UiValue::new();
+        val.with_x(self.0).with_y(self.1)
+    }
+}
+
+
 // # Impl (x) => UiValue(f32)
 impl Into<UiValue<f32>> for f32 {
     fn into(self) -> UiValue<f32> {
