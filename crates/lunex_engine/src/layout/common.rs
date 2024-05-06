@@ -1,72 +1,15 @@
 #[cfg(feature = "bevy")]
 use bevy::prelude::Component;
 
-use crate::{import::*, Div};
+use crate::{import::*, Boundary, Div, Rl};
 use crate::{NiceDisplay, UiValue};
 
 use super::{Window, Solid};
 
 
-/// Type used for aligning subnodes inside nodes.
-/// 
-/// _Range_ : `-1.0 for START to 1.0 for END`
-/// * [`Align::START`]
-/// * [`Align::CENTER`]
-/// * [`Align::END`]
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct Align (pub f32);
-impl Align {
-    pub const START: Align = Align(-1.0);
-    pub const LEFT: Align = Align(-1.0);
-    pub const CENTER: Align = Align(0.0);
-    pub const MIDDLE: Align = Align(0.0);
-    pub const END: Align = Align(1.0);
-    pub const RIGHT: Align = Align(1.0);
-}
-impl NiceDisplay for Align {
-    fn to_nicestr(&self) -> String {
-        format!("{}", self.0.to_string().bold())
-    }
-}
-impl Into<Align> for f32 {
-    fn into(self) -> Align {
-        Align(self)
-    }
-}
 
-/// Defines how a container is scaled relative to it's parent container
-/// * [`Cover::Horizontal`]
-/// * [`Cover::Vertical`]
-/// * [`Cover::Fit`]
-/// * [`Cover::Fill`]
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub enum Cover {
-    /// ## Horizontal cover
-    /// Stretches the container so that it always fully covers the horizontal axis of the parent.
-    Horizontal,
-    /// ## Vertical cover
-    /// Stretches the container so that it always fully covers the vertical axis of the parent.
-    Vertical,
-    /// ## Fit
-    /// Stretches the container so that it is fully contained within the parent.
-    #[default] Fit,
-    // ## Fill
-    /// Stretches the container so that it fully covers the parent.
-    Fill,
-}
-impl NiceDisplay for Cover {
-    fn to_nicestr(&self) -> String {
-        match self {
-            Cover::Horizontal => format!("{}", "Horizontal".bold()),
-            Cover::Vertical => format!("{}", "Vertical".bold()),
-            Cover::Fit => format!("{}", "Fit".bold()),
-            Cover::Fill => format!("{}", "Fill".bold()),
-        }
-    }
-}
-
-/// Defines how div should behave
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+// Defines how div should behave
+/* #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub enum Sizing {
     /// Minimal with forced wrapping.
     Minimal,
@@ -75,42 +18,41 @@ pub enum Sizing {
     Normal,
     /// Stretches until it can't.
     Maximal,
-}
+} */
 
 
 
 
 
-/// Enum holding the node layout
+/* /// Enum holding the node layout
 #[cfg_attr(feature = "bevy", derive(Component))]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Layout {
+    Boundary(Boundary),
     Window(Window),
     Solid(Solid),
     Div(Div),
-    //Window3D
-    //Div
-    //Br
 }
 impl Default for Layout {
     fn default() -> Self {
-        Window::FULL.into()
+        Window::new().size(Rl(100.0)).into()
     }
 }
 impl NiceDisplay for Layout {
     fn to_nicestr(&self) -> String {
         match self {
+            Layout::Boundary(layout) => format!("{} {}", "Boundary".bold().bright_cyan(), layout.to_nicestr()),
             Layout::Solid(layout) => format!("{} {}", "Solid".bold().bright_cyan(), layout.to_nicestr()),
             Layout::Window(layout) => format!("{} {}", "Window".bold().bright_cyan(), layout.to_nicestr()),
             Layout::Div(layout) => format!("{} {}", "Div".bold().bright_cyan(), layout.to_nicestr()),
         }
     }
-}
+} */
 
 
 
 
-
+/* 
 /// Defines the main flexbox axis
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub enum FlexDirection {
@@ -200,4 +142,4 @@ impl FlexBox {
         self.gap.set_y(gap);
         self
     }
-}
+} */

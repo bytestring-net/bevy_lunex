@@ -293,7 +293,7 @@ impl BuildAsNode for layout::Solid {
         Ok(String::new())
     }
 }
-impl BuildAsNode for layout::Div {
+/* impl BuildAsNode for layout::Div {
     fn build<M: Default + Component, N: Default + Component>(self, ui: &mut UiTree<M, N>, path: impl Borrow<str>) -> Result<String, NodeError> where Self: Sized {
         ui.create_node(path.borrow())?;
         let mut container: NodeData<N> = NodeData::new();
@@ -301,7 +301,7 @@ impl BuildAsNode for layout::Div {
         ui.insert_data(path, container)?;
         Ok(String::new())
     }
-}
+} */
 
 
 // #============================#
@@ -568,15 +568,4 @@ struct ComputedDiv {
 struct ComputedLine {
     divs: Vec<ComputedDiv>,
     line_length: f32,
-}
-
-
-// #========================#
-// #=== EXTRACTOR TRAITS ===#
-
-// WORK IN PROGRESS!!!
-/// # WIP
-pub trait Extract <T> {
-    fn get_extract (&self) -> T;
-    fn set_extract (&mut self, val: T) -> T;
 }

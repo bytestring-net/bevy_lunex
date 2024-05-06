@@ -17,10 +17,10 @@ use super::NiceDisplay;
 /// Declare UiValue struct and add fields to it
 macro_rules! uivalue_declare {
     ($($ufield:ident), *) => {
-        /// **Ui value** - Represents collection of different units.
-        /// They are computed at runtime when layout computation is happening.
-        /// The supported units are:
-        /// * [`Ab`] [`Rl`] [`Rw`] [`Rh`] [`Em`] [`Sp`]
+        /// **Ui value** - A collection of different units used for UI.
+        /// They are computed at runtime when layout is being calculated (context-aware).
+        /// The supported units that implement `Into<UiValue>` are:
+        /// * [`Ab`] [`Rl`] [`Rw`] [`Rh`] [`Em`] [`Sp`] [`Vw`] [`Vh`]
         /// ## 📦 Types
         /// First class implementations for `(T)` are:
         /// * [`f32`] [`Vec2`] [`Vec3`] [`Vec4`]
@@ -30,6 +30,7 @@ macro_rules! uivalue_declare {
         /// let a: UiValue<f32> = Ab(4.0) + Em(1.0);  // -> 4px + 1em
         /// let b: UiValue<f32> = Ab(40.0) - Rl(5.0); // -> 40px - 5%
         /// let c: UiValue<f32> = Sp(5.0).into();     // -> 5 space
+        /// let d: UiValue<Vec2> = (Ab(20.0), Em(2.0)).into() // -> [20px, 2em]
         /// ```
         #[derive(Debug, Default, Clone, Copy, PartialEq)]
         pub struct UiValue<T> {

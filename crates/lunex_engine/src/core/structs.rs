@@ -1,4 +1,4 @@
-use crate::{import::*, NiceDisplay, Rectangle3D, FlexBox};
+use crate::{import::*, NiceDisplay, Rectangle3D};
 use bevy::ecs::component::Component;
 use colored::Colorize;
 
@@ -91,7 +91,7 @@ pub struct NodeData<N: Default + Component> {
     /// Layout of this node.
     pub layout: Layout,
     /// Layout of subnodes and how to stack them.
-    pub stack: FlexBox,
+    //pub stack: FlexBox,
     /// Optional font size to overwrite the inherited master font size.
     pub font_size: Option<f32>,
     /// Size of the content to wrap around. Affects this node's size only if the layout is parametric (Div).

@@ -1,6 +1,6 @@
 use bevy::math::Vec2Swizzles;
 
-use crate::{import::*, Align, NodeSizeEvaluate, Sizing};
+use crate::{import::*, Align, UiValueEvaluate, Sizing};
 
 use crate::{NiceDisplay, Layout, UiValue};
 
@@ -198,15 +198,15 @@ impl Div {
 
     /// Computes the layout based on given parameters.
     pub(crate) fn compute_padding(&self, parent_size: Vec2, abs_scale: f32, font_size: f32) -> Vec4 {
-        self.padding.evaluate(abs_scale, parent_size.xyxy(), font_size)
+        self.padding.evaluate(Vec4::splat(abs_scale), parent_size.xyxy(), Vec4::ZERO, Vec4::splat(font_size))
     }
     /// Computes the layout based on given parameters.
     pub(crate) fn compute_margin(&self, parent_size: Vec2, abs_scale: f32, font_size: f32) -> Vec4 {
-        self.margin.evaluate(abs_scale, parent_size.xyxy(), font_size)
+        self.padding.evaluate(Vec4::splat(abs_scale), parent_size.xyxy(), Vec4::ZERO, Vec4::splat(font_size))
     }
     /// Computes the layout based on given parameters.
     pub(crate) fn compute_border(&self, parent_size: Vec2, abs_scale: f32, font_size: f32) -> Vec4 {
-        self.border.evaluate(abs_scale, parent_size.xyxy(), font_size)
+        self.padding.evaluate(Vec4::splat(abs_scale), parent_size.xyxy(), Vec4::ZERO, Vec4::splat(font_size))
     }
     /// Computes the layout based on given parameters.
     pub(crate) fn compute_size(&self, content_size: Vec2, padding: Vec4, border: Vec4) -> Vec2 {
