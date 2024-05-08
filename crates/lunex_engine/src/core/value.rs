@@ -14,12 +14,13 @@ use super::NiceDisplay;
 // #==========================#
 // #=== DECLARATIVE MACROS ===#
 
+/// Declare UiValue struct and add fields to it
 macro_rules! uivalue_declare {
     ($($ufield:ident), *) => {
-        /// **Ui value** - Represents collection of different units.
-        /// They are computed at runtime when layout computation is happening.
-        /// The supported units are:
-        /// * [`Ab`] [`Rl`] [`Rw`] [`Rh`] [`Em`] [`Sp`]
+        /// **Ui value** - A collection of different units used for UI.
+        /// They are computed at runtime when layout is being calculated (context-aware).
+        /// The supported units that implement `Into<UiValue>` are:
+        /// * [`Ab`] [`Rl`] [`Rw`] [`Rh`] [`Em`] [`Sp`] [`Vw`] [`Vh`]
         /// ## 📦 Types
         /// First class implementations for `(T)` are:
         /// * [`f32`] [`Vec2`] [`Vec3`] [`Vec4`]
@@ -29,6 +30,7 @@ macro_rules! uivalue_declare {
         /// let a: UiValue<f32> = Ab(4.0) + Em(1.0);  // -> 4px + 1em
         /// let b: UiValue<f32> = Ab(40.0) - Rl(5.0); // -> 40px - 5%
         /// let c: UiValue<f32> = Sp(5.0).into();     // -> 5 space
+        /// let d: UiValue<Vec2> = (Ab(20.0), Em(2.0)).into() // -> [20px, 2em]
         /// ```
         #[derive(Debug, Default, Clone, Copy, PartialEq)]
         pub struct UiValue<T> {
@@ -111,6 +113,8 @@ macro_rules! uivalue_declare {
         }    
     }
 }
+
+/// Implement adding to UiValue struct
 macro_rules! uivalue_implement {
     ($( ($unit:ident, $ufield:ident) ),* ) => {
 
@@ -185,6 +189,24 @@ macro_rules! uivalue_implement {
                 }
             }
         )*
+
+        impl <T: Mul<f32, Output = T>> Mul<f32> for UiValue<T> {
+            type Output = Self;
+            fn mul(self, other: f32) -> Self::Output {
+                let mut output = UiValue::new();
+                $(
+                    if let Some(v1) = self.$ufield {
+                        output.$ufield = Some(v1 * other);
+                    }
+                )*
+                output
+            }
+        }
+        impl <T: Mul<f32, Output = T> + Copy> MulAssign<f32> for UiValue<T> {
+            fn mul_assign(&mut self, rhs: f32) {
+                *self = *self * rhs
+            }
+        }
 
         impl UiValue<Vec2> {
             /// Gets the X value of all units.
@@ -408,6 +430,8 @@ macro_rules! uivalue_implement {
         }
     }
 }
+
+/// Implement basic math and conversions for a type
 macro_rules! unit_implement {
     ($($unit:ident), *) => {
         $(
@@ -495,6 +519,8 @@ macro_rules! unit_implement {
         )*
     };
 }
+
+/// Implement adding two types together
 macro_rules! unit_cross_operations {
     (($unit1:ident, $ufield1:ident), ($unit2:ident, $ufield2:ident)) => {
         impl<T: Add<Output = T>> Add<$unit2<T>> for $unit1<T> {
@@ -525,7 +551,7 @@ macro_rules! unit_cross_operations {
 /// **Absolute** - Represents non-changing unit. Scale can be modified but by default `1Ab = 1Px`.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Ab;
+/// # use lunex_engine::Ab;
 /// let a: Ab<f32> = Ab(4.0) + Ab(6.0); // -> 10px
 /// let b: Ab<f32> = Ab(4.0) * 2.0;     // -> 8px
 /// ```
@@ -535,7 +561,7 @@ pub struct Ab<T>(pub T);
 /// **Relative** - Represents scalable unit `0% to 100%`. `120%` is allowed.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Rl;
+/// # use lunex_engine::Rl;
 /// let a: Rl<f32> = Rl(25.0) + Rl(40.0); // -> 65%
 /// let b: Rl<f32> = Rl(25.0) * 3.0;      // -> 75%
 /// ```
@@ -543,10 +569,10 @@ pub struct Ab<T>(pub T);
 pub struct Rl<T>(pub T);
 
 /// **Relative width** - Represents scalable unit `0% to 100%`. `120%` is allowed.
-/// Proportional to width measure even when used in height field.
+/// Proportional to a width measure even when used in a height field.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Rw;
+/// # use lunex_engine::Rw;
 /// let a: Rw<f32> = Rw(25.0) + Rw(40.0); // -> 65%
 /// let b: Rw<f32> = Rw(25.0) * 3.0;      // -> 75%
 /// ```
@@ -554,10 +580,10 @@ pub struct Rl<T>(pub T);
 pub struct Rw<T>(pub T);
 
 /// **Relative height** - Represents scalable unit `0% to 100%`. `120%` is allowed.
-/// Proportional to height measure even when used in width field.
+/// Proportional to a height measure even when used in a width field.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Rh;
+/// # use lunex_engine::Rh;
 /// let a: Rh<f32> = Rh(25.0) + Rh(40.0); // -> 65%
 /// let b: Rh<f32> = Rh(25.0) * 3.0;      // -> 75%
 /// ```
@@ -567,7 +593,7 @@ pub struct Rh<T>(pub T);
 /// **Size of M** - Represents unit that is the size of the symbol `M`. Which is `16px` with `font size 16px` and so on.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Em;
+/// # use lunex_engine::Em;
 /// let a: Em<f32> = Em(1.0) + Em(2.0); // -> 3em == 48px with font size 16px
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -578,7 +604,7 @@ pub struct Em<T>(pub T);
 /// Used for context aware alignment. 
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Prc;
+/// # use lunex_engine::Sp;
 /// let a: Sp<f32> = Sp(1.0) + Sp(2.0); // -> 3 space
 /// let b: Sp<f32> = Sp(2.0) * 3.0;     // -> 6 space
 /// ```
@@ -589,7 +615,7 @@ pub struct Sp<T>(pub T);
 /// **Viewport** - Represents scalable unit `0% to 100%` of the root container. `120%` is allowed.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Vp;
+/// # use lunex_engine::Vp;
 /// let a: Vp<f32> = Vp(25.0) + Vp(40.0); // -> 65%
 /// let b: Vp<f32> = Vp(25.0) * 3.0;      // -> 75%
 /// ```
@@ -597,10 +623,10 @@ pub struct Sp<T>(pub T);
 pub struct Vp<T>(pub T);
 
 /// **Viewport width** - Represents scalable unit `0% to 100%` of the root container. `120%` is allowed.
-/// Proportional to width measure even when used in height field.
+/// Proportional to a width measure even when used in a height field.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Vw;
+/// # use lunex_engine::Vw;
 /// let a: Vw<f32> = Vw(25.0) + Vw(40.0); // -> 65%
 /// let b: Vw<f32> = Vw(25.0) * 3.0;      // -> 75%
 /// ```
@@ -608,15 +634,16 @@ pub struct Vp<T>(pub T);
 pub struct Vw<T>(pub T);
 
 /// **Viewport Height** - Represents scalable unit `0% to 100%` of the root container. `120%` is allowed.
-/// Proportional to height measure even when used in width field.
+/// Proportional to a height measure even when used in a width field.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_core::Vh;
+/// # use lunex_engine::Vh;
 /// let a: Vh<f32> = Vh(25.0) + Vh(40.0); // -> 65%
 /// let b: Vh<f32> = Vh(25.0) * 3.0;      // -> 75%
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Vh<T>(pub T);
+
 
 // #===================#
 // #=== MACRO CALLS ===#
@@ -706,16 +733,69 @@ unit_cross_operations!((Vh, vh), (Sp, sp));
 unit_cross_operations!((Vh, vh), (Vp, vp));
 unit_cross_operations!((Vh, vh), (Vw, vw));
 
+
 // #==============================#
 // #=== CUSTOM IMPLEMENTATIONS ===#
 
-// # Impl (x) => UiValue(f32)
+// # Impl (A, B) => UiValue(Vec2)
+impl <A, B> Into<UiValue<Vec2>> for (A, B) where 
+    A: Into<UiValue<f32>>, 
+    B: Into<UiValue<f32>>
+{
+    fn into(self) -> UiValue<Vec2> {
+        UiValue::<Vec2>::new().with_x(self.0).with_y(self.1)
+    }
+}
+
+// # Impl (A, B, C) => UiValue(Vec3)
+impl <A, B, C> Into<UiValue<Vec3>> for (A, B, C) where 
+    A: Into<UiValue<f32>>, 
+    B: Into<UiValue<f32>>,
+    C: Into<UiValue<f32>>
+{
+    fn into(self) -> UiValue<Vec3> {
+        UiValue::<Vec3>::new().with_x(self.0).with_y(self.1).with_z(self.2)
+    }
+}
+
+// # Impl (A, B, C) => UiValue(Vec4)
+impl <A, B, C, D> Into<UiValue<Vec4>> for (A, B, C, D) where 
+    A: Into<UiValue<f32>>, 
+    B: Into<UiValue<f32>>,
+    C: Into<UiValue<f32>>,
+    D: Into<UiValue<f32>>
+{
+    fn into(self) -> UiValue<Vec4> {
+        UiValue::<Vec4>::new().with_x(self.0).with_y(self.1).with_z(self.2).with_w(self.3)
+    }
+}
+
+// # Impl f32 => UiValue(f32)
 impl Into<UiValue<f32>> for f32 {
     fn into(self) -> UiValue<f32> {
         Ab(self).into()
     }
 }
+// # Impl f32 => UiValue(Vec2)
+impl Into<UiValue<Vec2>> for f32 {
+    fn into(self) -> UiValue<Vec2> {
+        Ab(Vec2::new(self, self)).into()
+    }
+}
+// # Impl f32 => UiValue(Vec3)
+impl Into<UiValue<Vec3>> for f32 {
+    fn into(self) -> UiValue<Vec3> {
+        Ab(Vec3::new(self, self, self)).into()
+    }
+}
+// # Impl f32 => UiValue(Vec4)
+impl Into<UiValue<Vec4>> for f32 {
+    fn into(self) -> UiValue<Vec4> {
+        Ab(Vec4::new(self, self, self, self)).into()
+    }
+}
 
+// # Impl UiValue(f32) => UiValue(Vec2)
 impl Into<UiValue<Vec2>> for UiValue<f32> {
     fn into(self) -> UiValue<Vec2> {
         let mut out = UiValue::<Vec2>::new();
@@ -724,19 +804,7 @@ impl Into<UiValue<Vec2>> for UiValue<f32> {
         out
     }
 }
-// # Impl (x) => UiValue(Vec2)
-impl Into<UiValue<Vec2>> for f32 {
-    fn into(self) -> UiValue<Vec2> {
-        Ab(Vec2::new(self, self)).into()
-    }
-}
-// # Impl ((x, x)) => UiValue(Vec2)
-impl Into<UiValue<Vec2>> for (f32, f32) {
-    fn into(self) -> UiValue<Vec2> {
-        Ab(Vec2::new(self.0, self.1)).into()
-    }
-}
-
+// # Impl UiValue(f32) => UiValue(Vec3)
 impl Into<UiValue<Vec3>> for UiValue<f32> {
     fn into(self) -> UiValue<Vec3> {
         let mut out = UiValue::<Vec3>::new();
@@ -746,19 +814,7 @@ impl Into<UiValue<Vec3>> for UiValue<f32> {
         out
     }
 }
-// # Impl (x) => UiValue(Vec3)
-impl Into<UiValue<Vec3>> for f32 {
-    fn into(self) -> UiValue<Vec3> {
-        Ab(Vec3::new(self, self, self)).into()
-    }
-}
-// # Impl ((x, x, x)) => UiValue(Vec3)
-impl Into<UiValue<Vec3>> for (f32, f32, f32) {
-    fn into(self) -> UiValue<Vec3> {
-        Ab(Vec3::new(self.0, self.1, self.2)).into()
-    }
-}
-
+// # Impl UiValue(f32) => UiValue(Vec4)
 impl Into<UiValue<Vec4>> for UiValue<f32> {
     fn into(self) -> UiValue<Vec4> {
         let mut out = UiValue::<Vec4>::new();
@@ -769,18 +825,7 @@ impl Into<UiValue<Vec4>> for UiValue<f32> {
         out
     }
 }
-// # Impl (x) => UiValue(Vec4)
-impl Into<UiValue<Vec4>> for f32 {
-    fn into(self) -> UiValue<Vec4> {
-        Ab(Vec4::new(self, self, self, self)).into()
-    }
-}
-// # Impl ((x, x, x, x)) => UiValue(Vec4)
-impl Into<UiValue<Vec4>> for (f32, f32, f32, f32) {
-    fn into(self) -> UiValue<Vec4> {
-        Ab(Vec4::new(self.0, self.1, self.2, self.3)).into()
-    }
-}
+
 
 
 impl Ab<f32> {
@@ -899,6 +944,70 @@ impl Ab<Vec4> {
 
 // #=====================#
 // #=== FUNCTIONALITY ===#
+
+/// ## UiValue Evaluate
+/// Trait for implementing evaluation logic for `(TT)`.
+/// `(T)` should be 1 vector unit version of `(TT)`.
+/// ## 📦 Types
+pub trait UiValueEvaluate<T> {
+    /// Evaluates the NodeSize for `(T)`
+    fn evaluate(&self, absolute_scale: T, parent_size: T, viewport_size: T, font_size: T) -> T;
+}
+
+// # Impl evaluate
+impl UiValueEvaluate<f32> for UiValue<f32> {
+    fn evaluate(&self, absolute_scale: f32, parent_size: f32, viewport_size: f32, font_size: f32) -> f32 {
+        let mut out = 0.0;
+        if let Some(v) = self.ab { out += v * absolute_scale }
+        if let Some(v) = self.rl { out += (v/100.0) * parent_size }
+        if let Some(v) = self.rw { out += (v/100.0) * parent_size }
+        if let Some(v) = self.rh { out += (v/100.0) * parent_size }
+        if let Some(v) = self.em { out += v * font_size }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size }
+        if let Some(v) = self.vh { out += (v/100.0) * viewport_size }
+        out
+    }
+}
+impl UiValueEvaluate<Vec2> for UiValue<Vec2> {
+    fn evaluate(&self, absolute_scale: Vec2, parent_size: Vec2, viewport_size: Vec2, font_size: Vec2) -> Vec2 {
+        let mut out = Vec2::ZERO;
+        if let Some(v) = self.ab { out += v * absolute_scale }
+        if let Some(v) = self.rl { out += (v/100.0) * parent_size }
+        if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
+        if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
+        if let Some(v) = self.em { out += v * font_size }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
+        out
+    }
+}
+impl UiValueEvaluate<Vec3> for UiValue<Vec3> {
+    fn evaluate(&self, absolute_scale: Vec3, parent_size: Vec3, viewport_size: Vec3, font_size: Vec3) -> Vec3 {
+        let mut out = Vec3::ZERO;
+        if let Some(v) = self.ab { out += v * absolute_scale }
+        if let Some(v) = self.rl { out += (v/100.0) * parent_size }
+        if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
+        if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
+        if let Some(v) = self.em { out += v * font_size }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
+        out
+    }
+}
+impl UiValueEvaluate<Vec4> for UiValue<Vec4> {
+    fn evaluate(&self, absolute_scale: Vec4, parent_size: Vec4, viewport_size: Vec4, font_size: Vec4) -> Vec4 {
+        let mut out = Vec4::ZERO;
+        if let Some(v) = self.ab { out += v * absolute_scale }
+        if let Some(v) = self.rl { out += (v/100.0) * parent_size }
+        if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
+        if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
+        if let Some(v) = self.em { out += v * font_size }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
+        out
+    }
+}
+
 
 impl NiceDisplay for UiValue<f32> {
     fn to_nicestr(&self) -> String {
