@@ -7,12 +7,60 @@ use crate::nodes::prelude::*;
 use crate::layout;
 use crate::Layout;
 use crate::MasterData;
-use crate::NodeSizeEvaluate;
+use crate::UiValueEvaluate;
 use crate::Rectangle3D;
 use crate::import::*;
-use crate::FlexDirection;
 
 use super::{UiNode, UiTree, NodeData};
+
+
+
+
+
+
+/// Trait for types to implement so they can be nicely printed in terminal.
+/// Used by [`crate::NodeDisplayTrait::tree`] for displaying custom node data.
+pub trait NiceDisplay {
+    /// Used when you want to convert type into nicely formatted string
+    /// for displaying in the terminal. Only important data for the user should be shown.
+    /// Use `colorise` crate for nice colors.
+    fn to_nicestr(&self) -> String;
+}
+
+
+/// ## Y invert
+/// Trait for implementing Y value invert for Glam types due to inverted coordinate system between Ui and Bevy.
+pub trait YInvert {
+    /// Multiplies the Y value by -1
+    fn invert_y(self) -> Self;
+}
+impl YInvert for Vec2 {
+    fn invert_y(mut self) -> Self {
+        self.y *= -1.0;
+        self
+    }
+}
+impl YInvert for Vec3 {
+    fn invert_y(mut self) -> Self {
+        self.y *= -1.0;
+        self
+    }
+}
+impl YInvert for Vec4 {
+    fn invert_y(mut self) -> Self {
+        self.y *= -1.0;
+        self
+    }
+}
+
+
+
+
+
+
+
+
+
 
 
 // #==========================#
@@ -273,35 +321,44 @@ impl <M: Default + Component, N: Default + Component> UiNodeTreeComputeTrait for
 /// Trait that [Layout] types implement so they can be build as new node.
 pub trait BuildAsNode {
     /// Build the widget inside the [`UiTree`] at the given path.
-    fn build<M: Default + Component, N: Default + Component>(self, ui: &mut UiTree<M, N>, path: impl Borrow<str>) -> Result<String, NodeError> where Self: Sized;
+    fn build<M: Default + Component, N: Default + Component>(self, ui: &mut UiTree<M, N>, path: impl Borrow<str>) -> Result<(), NodeError> where Self: Sized;
 }
-impl BuildAsNode for layout::Window {
-    fn build<M: Default + Component, N: Default + Component>(self, ui: &mut UiTree<M, N>, path: impl Borrow<str>) -> Result<String, NodeError> where Self: Sized {
+impl BuildAsNode for layout::Boundary {
+    fn build<M: Default + Component, N: Default + Component>(self, ui: &mut UiTree<M, N>, path: impl Borrow<str>) -> Result<(), NodeError> where Self: Sized {
         ui.create_node(path.borrow())?;
         let mut container: NodeData<N> = NodeData::new();
         container.layout = self.into();
         ui.insert_data(path, container)?;
-        Ok(String::new())
+        Ok(())
+    }
+} 
+impl BuildAsNode for layout::Window {
+    fn build<M: Default + Component, N: Default + Component>(self, ui: &mut UiTree<M, N>, path: impl Borrow<str>) -> Result<(), NodeError> where Self: Sized {
+        ui.create_node(path.borrow())?;
+        let mut container: NodeData<N> = NodeData::new();
+        container.layout = self.into();
+        ui.insert_data(path, container)?;
+        Ok(())
     }
 }
 impl BuildAsNode for layout::Solid {
-    fn build<M: Default + Component, N: Default + Component>(self, ui: &mut UiTree<M, N>, path: impl Borrow<str>) -> Result<String, NodeError> where Self: Sized {
+    fn build<M: Default + Component, N: Default + Component>(self, ui: &mut UiTree<M, N>, path: impl Borrow<str>) -> Result<(), NodeError> where Self: Sized {
         ui.create_node(path.borrow())?;
         let mut container: NodeData<N> = NodeData::new();
         container.layout = self.into();
         ui.insert_data(path, container)?;
-        Ok(String::new())
+        Ok(())
     }
 }
-/* impl BuildAsNode for layout::Div {
-    fn build<M: Default + Component, N: Default + Component>(self, ui: &mut UiTree<M, N>, path: impl Borrow<str>) -> Result<String, NodeError> where Self: Sized {
+impl BuildAsNode for layout::Div {
+    fn build<M: Default + Component, N: Default + Component>(self, ui: &mut UiTree<M, N>, path: impl Borrow<str>) -> Result<(), NodeError> where Self: Sized {
         ui.create_node(path.borrow())?;
         let mut container: NodeData<N> = NodeData::new();
         container.layout = self.into();
         ui.insert_data(path, container)?;
-        Ok(String::new())
+        Ok(())
     }
-} */
+} 
 
 
 // #============================#

@@ -3,9 +3,6 @@
 // #======================#
 // #=== PRELUDE EXPORT ===#
 
-pub mod common;
-pub use common::*;
-
 pub mod core;
 pub use core::*;
 
@@ -17,7 +14,6 @@ pub use nodes::*;
 
 
 pub mod prelude {
-    pub use super::common::prelude::*;
     pub use super::core::prelude::*;
     pub use super::layout::prelude::*;
 }
