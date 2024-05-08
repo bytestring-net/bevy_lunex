@@ -328,8 +328,12 @@ pub fn element_text_size_to_solid_layout<T: Component>(
     mut query: Query<(&mut Layout, &TextLayoutInfo), (With<T>, With<Element>, Changed<TextLayoutInfo>)>,
 ) {
     for (mut layout, text_info) in &mut query {
-        if let Layout::Solid(solid) = layout.as_mut() {
-            solid.size = Ab(text_info.logical_size).into();
+        match layout.as_mut() {
+            Layout::Window(window) => {
+                window.size = Rh(text_info.logical_size).into()
+            },
+            Layout::Solid(solid) => {solid.size = Ab(text_info.logical_size).into()},
+            _ => {},
         }
     }
 }
@@ -406,6 +410,7 @@ impl <M:Default + Component, N:Default + Component, T: Component> UiPlugin<M, N,
 impl <M:Default + Component, N:Default + Component, T: Component> Plugin for UiPlugin<M, N, T> {
     fn build(&self, app: &mut App) {
         app
+            .add_plugins(crate::CursorPlugin)
             .add_systems(Update, send_content_size_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
             .add_systems(Update, send_stack_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
             .add_systems(Update, send_layout_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
