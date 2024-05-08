@@ -241,6 +241,13 @@ impl Window {
             size: UiValue::new(),
         }
     }
+    /// Creates new full Window node layout.
+    pub fn full() -> Self {
+        Window {
+            pos : UiValue::new(),
+            size: Rl(100.0).into(),
+        }
+    }
     /// Creates new empty Window node layout centered at provided position.
     pub fn new_centered_at(pos: impl Into<UiValue<Vec2>>, size: impl Into<UiValue<Vec2>> ) -> Self {
         let s = size.into();

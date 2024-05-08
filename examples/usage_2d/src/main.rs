@@ -36,7 +36,7 @@ fn setup(mut cmd: Commands, mut _mat: ResMut<Assets<StandardMaterial>>, assets: 
         ui.spawn((
             MyUiSystem,
             UiLink::path("Root"),
-            UiLayout::Window::new().pos(Ab(20.0)).size(Rl(100.0) - Ab(40.0)).pack(),
+            UiLayout::Boundary::new().pos1(Ab(20.0)).pos2(Rl(100.0) - Ab(20.0)).pack(),
         ));
 
         ui.spawn((

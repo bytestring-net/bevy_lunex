@@ -1,13 +1,10 @@
 use bevy::ecs::component::Component;
-use bevy::math::Vec3Swizzles;
 
 use crate::import::*;
 use crate::NodeGeneralTrait;
 use crate::NodeTopDataTrait;
-use crate::StackDirection;
 use crate::UiNode;
 use crate::UiTree;
-use crate::UiValueEvaluate;
 use crate::Rectangle3D;
 use crate::Layout;
 
@@ -289,7 +286,7 @@ impl <N:Default + Component> UiNodeComputeTrait for UiNode<N> {
 
     } */
 }
-
+/* 
 struct ComputedDiv {
     size: Vec2,
     margin: Vec4,
@@ -298,3 +295,4 @@ struct ComputedLine {
     divs: Vec<ComputedDiv>,
     line_length: f32,
 }
+ */

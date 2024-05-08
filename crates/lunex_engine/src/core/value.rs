@@ -192,7 +192,7 @@ macro_rules! uivalue_implement {
 
         impl <T: Mul<f32, Output = T>> Mul<f32> for UiValue<T> {
             type Output = Self;
-            fn mul(mut self, other: f32) -> Self::Output {
+            fn mul(self, other: f32) -> Self::Output {
                 let mut output = UiValue::new();
                 $(
                     if let Some(v1) = self.$ufield {
@@ -737,19 +737,29 @@ unit_cross_operations!((Vh, vh), (Vw, vw));
 // #==============================#
 // #=== CUSTOM IMPLEMENTATIONS ===#
 
-// # Impl ((x, x)) => UiValue(Vec2)
+// # Impl ((UiValue(f32), UiValue(f32))) => UiValue(Vec2)
 impl Into<UiValue<Vec2>> for (UiValue<f32>, UiValue<f32>) {
     fn into(self) -> UiValue<Vec2> {
-        let val: UiValue<Vec2> = UiValue::new();
-        val.with_x(self.0).with_y(self.1)
+        UiValue::<Vec2>::new().with_x(self.0).with_y(self.1)
+    }
+}
+// # Impl ((UiValue(f32), UiValue(f32), UiValue(f32))) => UiValue(Vec3)
+impl Into<UiValue<Vec3>> for (UiValue<f32>, UiValue<f32>, UiValue<f32>) {
+    fn into(self) -> UiValue<Vec3> {
+        UiValue::<Vec3>::new().with_x(self.0).with_y(self.1).with_z(self.2)
+    }
+}
+// # Impl ((UiValue(f32), UiValue(f32), UiValue(f32), UiValue(f32))) => UiValue(Vec4)
+impl Into<UiValue<Vec4>> for (UiValue<f32>, UiValue<f32>, UiValue<f32>, UiValue<f32>) {
+    fn into(self) -> UiValue<Vec4> {
+        UiValue::<Vec4>::new().with_x(self.0).with_y(self.1).with_z(self.2).with_w(self.3)
     }
 }
 
 // # Impl ((x, x)) => UiValue(Vec2)
 impl Into<UiValue<Vec2>> for (Ab<f32>, Rl<f32>) {
     fn into(self) -> UiValue<Vec2> {
-        let val: UiValue<Vec2> = UiValue::new();
-        val.with_x(self.0).with_y(self.1)
+        UiValue::<Vec2>::new().with_x(self.0).with_y(self.1)
     }
 }
 
