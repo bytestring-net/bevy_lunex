@@ -7,26 +7,36 @@ pub use traits::*;
 mod value;
 pub use value::*;
 
+
+// #======================#
+// #=== PRELUDE EXPORT ===#
+
 pub mod prelude {
 
-    // Export Ui units
+    // #============================#
+    // #=== ALL DEFAULT UI UNITS ===#
+
     pub use super::UiValue;
     pub use super::{Ab, Rl, Rw, Rh, Em, Sp, Vw, Vh};
+
+
+    // #===================#
+    // #=== ABSTRACTION ===#
+
+    pub use super::{UiNode, UiTree};
+    pub use super::{MasterData, NodeData, NoData};
+
 
     // Necessity ?
     pub use super::UiError;
     pub use super::{Rectangle2D, Rectangle3D};
 
-
-    pub use super::{UiNode, UiTree};
-    pub use super::{MasterData, NodeData, NoData};
-
-    pub use super::UiNodeTreeComputeTrait;
-
     pub use super::BuildAsNode;
 
-    // TRAITS THAT ABSTRACT OVER TRAITS THAT ARE NOT SAFE TO USE
+
+    // #===================================#
+    // #=== SAFE CODE-BASED NODE ACCESS ===#
+
     pub use super::{UiNodeCreationTrait, UiNodeDataTrait, UiNodeTreeInitTrait};
-    // EXPOSED TRAITS FOR THE USER THAT ARE SAFE TO USE
     pub use crate::nodes::prelude::{NodeGeneralTrait, NodeDisplayTrait};
 }

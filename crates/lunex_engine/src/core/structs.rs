@@ -106,11 +106,8 @@ impl NiceDisplay for Rectangle3D {
 }
 
 
-
-
-
-
-
+// #============================================#
+// #=== TYPE ABSTRACTION OVER NODE PRIMITIVE ===#
 
 
 /// A struct, `"Document"` / `"DOM"` in web-terms, that contains all layout data. If you want any entity to have it's own ui layout,
@@ -150,15 +147,17 @@ impl NiceDisplay for Rectangle3D {
 /// Please refrain from manually using `".||#:0"`, `".||#:1"`, `".||#:2"`, _and so on.._ as names or [`NodeGeneralTrait::add_node`] will return errors.
 pub type UiTree<M = NoData, N = NoData> = NodeTree<MasterData<M>, NodeData<N>>;
 
+
 /// A struct representing organized data in [`UiTree`].
 pub type UiNode<N = NoData> = Node<NodeData<N>>;
 
 
+// #====================================#
+// #=== DIFFERENT DATA TYPE GENERICS ===#
 
 /// Empty type to tell the compiler that there is no data stored in the node.
 #[derive(Component, Debug, Default, Clone, PartialEq)]
 pub struct NoData;
-
 
 
 /// A struct holding all data appended to [`UiTree`]. Responsible for storing settings, scaling, theme, etc.
