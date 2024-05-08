@@ -23,7 +23,7 @@ pub enum Layout {
     Boundary(Boundary),
     Window(Window),
     Solid(Solid),
-    //Div(Div),
+    Div(Div),
 }
 impl Default for Layout {
     fn default() -> Self {
@@ -36,7 +36,7 @@ impl NiceDisplay for Layout {
             Layout::Boundary(layout) => format!("{} {}", "Boundary".bold().bright_cyan(), layout.to_nicestr()),
             Layout::Solid(layout) => format!("{} {}", "Solid".bold().bright_cyan(), layout.to_nicestr()),
             Layout::Window(layout) => format!("{} {}", "Window".bold().bright_cyan(), layout.to_nicestr()),
-            //Layout::Div(layout) => format!("{} {}", "Div".bold().bright_cyan(), layout.to_nicestr()),
+            Layout::Div(layout) => format!("{} {}", "Div".bold().bright_cyan(), layout.to_nicestr()),
         }
     }
 }
@@ -103,6 +103,34 @@ impl NiceDisplay for Scaling {
             Scaling::VerFill => format!("{}", "VerFill".bold()),
             Scaling::Fit => format!("{}", "Fit".bold()),
             Scaling::Fill => format!("{}", "Fill".bold()),
+        }
+    }
+}
+
+
+/// **Sizing** - A type used to define how should a Div node layout size itself.
+/// ## 🛠️ Example
+/// ```
+/// # use lunex_engine::Sizing;
+/// let scaling: Sizing = Sizing::Min;   // -> Tries to reach minimum size limit
+/// let scaling: Sizing = Sizing::Basic; // -> Default value, as big as its content
+/// let scaling: Sizing = Sizing::Max;   // -> Tries to reach maximum size limit
+/// ```
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub enum Sizing {
+    /// Div node layout should be as small as possible.
+    Min,
+    /// Div node layout should 
+    #[default] Basic,
+    /// Div node layout should be as big as possible.
+    Max,
+}
+impl NiceDisplay for Sizing {
+    fn to_nicestr(&self) -> String {
+        match self {
+            Sizing::Min => format!("{}", "Min".bold()),
+            Sizing::Basic => format!("{}", "Basic".bold()),
+            Sizing::Max => format!("{}", "Max".bold()),
         }
     }
 }
@@ -373,6 +401,242 @@ impl Into<Layout> for Solid {
 impl NiceDisplay for Solid {
     fn to_nicestr(&self) -> String {
         let t = format!("[size: ({}) align_x: {} align_y: {}]", self.size.to_nicestr(), self.align_x.to_nicestr(), self.align_y.to_nicestr());
+        format!("{}", t.black())
+    }
+}
+
+
+/// **Div** - Parametric layout type that is defined by margin, border and padding. Its location and size
+/// is based on the surrounding nodes, like HTML. It is also the only node layout that uses the [`Sp`] unit.
+/// You can use this unit for alignment and justification.
+/// ## 🛠️ Example
+/// ```
+/// # use lunex_engine::{Div, Sp};
+/// let layout: Layout = Div::new().pad_x(2.0).margin_y(Sp(1.0)).br().pack();
+/// ```
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct Div {
+    /// Describes how width should size itself.
+    pub width: Sizing,
+    /// Describes how height should size itself.
+    pub height: Sizing,
+    /// Optional minamal size the node layout can be.
+    pub min_size: Option<UiValue<Vec2>>,
+    /// Optional maximal size the node layout can be.
+    pub max_size: Option<UiValue<Vec2>>,
+    /// The space between the node border and the node content. `x-left`, `y-top`, `z-right`, `w-bottom`
+    pub padding: UiValue<Vec4>,
+    /// The line width of each border. `x-left`, `y-top`, `z-right`, `w-bottom`
+    pub border: UiValue<Vec4>,
+    /// The space between this node and surrounding nodes. `x-left`, `y-top`, `z-right`, `w-bottom`
+    pub margin: UiValue<Vec4>,
+    /// Force a line break in the ui flow after this node.
+    pub br: bool,
+}
+impl Div {
+    /// Creates new empty Div node layout.
+    pub const fn new() -> Self {
+        Default::default()
+    }
+    /// Replaces the width with a new value.
+    pub fn width(mut self, sizing: Sizing) -> Self {
+        self.width = sizing;
+        self
+    }
+    /// Replaces the height with a new value.
+    pub fn height(mut self, sizing: Sizing) -> Self {
+        self.height = sizing;
+        self
+    }
+    /// Replaces the minimal size with a new value.
+    pub fn min(mut self, size: impl Into<UiValue<Vec2>>) -> Self {
+        self.min_size = Some(size.into());
+        self
+    }
+    /// Replaces the minimal width with a new value.
+    pub fn min_width(mut self, size: impl Into<UiValue<f32>>) -> Self {
+        if let Some(mut minsize) = self.min_size {
+            minsize.set_x(size.into())
+        } else {
+            self.min_size = Some(UiValue::<Vec2>::new().with_x(size.into()));
+        }
+        self
+    }
+    /// Replaces the minimal height with a new value.
+    pub fn min_height(mut self, size: impl Into<UiValue<f32>>) -> Self {
+        if let Some(mut minsize) = self.min_size {
+            minsize.set_y(size.into())
+        } else {
+            self.min_size = Some(UiValue::<Vec2>::new().with_y(size.into()));
+        }
+        self
+    }
+    /// Replaces the maximum size with a new value.
+    pub fn max(mut self, size: impl Into<UiValue<Vec2>>) -> Self {
+        self.max_size = Some(size.into());
+        self
+    }
+    /// Replaces the maximal width with a new value.
+    pub fn max_width(mut self, size: impl Into<UiValue<f32>>) -> Self {
+        if let Some(mut maxsize) = self.max_size {
+            maxsize.set_x(size.into())
+        } else {
+            self.max_size = Some(UiValue::<Vec2>::new().with_x(size.into()));
+        }
+        self
+    }
+    /// Replaces the maximal height with a new value.
+    pub fn max_height(mut self, size: impl Into<UiValue<f32>>) -> Self {
+        if let Some(mut maxsize) = self.max_size {
+            maxsize.set_y(size.into())
+        } else {
+            self.max_size = Some(UiValue::<Vec2>::new().with_y(size.into()));
+        }
+        self
+    }
+    /// Replaces the padding with a new value.
+    pub fn pad(mut self, pad: impl Into<UiValue<Vec4>>) -> Self {
+        self.padding = pad.into();
+        self
+    }
+    /// Replaces the horizontal padding with a new value.
+    pub fn pad_x(mut self, pad: impl Into<UiValue<Vec2>>) -> Self {
+        let pad: UiValue<Vec2> = pad.into();
+        let val = pad.get_x();
+        self.padding.set_x(val);
+        self.padding.set_z(val);
+        self
+    }
+    /// Replaces the vertical padding with a new value.
+    pub fn pad_y(mut self, pad: impl Into<UiValue<Vec2>>) -> Self {
+        let pad: UiValue<Vec2> = pad.into();
+        let val = pad.get_y();
+        self.padding.set_y(val);
+        self.padding.set_w(val);
+        self
+    }
+    /// Replaces the left padding with a new value.
+    pub fn pad_l(mut self, pad: impl Into<UiValue<f32>>) -> Self {
+        self.padding.set_x(pad);
+        self
+    }
+    /// Replaces the top padding with a new value.
+    pub fn pad_t(mut self, pad: impl Into<UiValue<f32>>) -> Self {
+        self.padding.set_y(pad);
+        self
+    }
+    /// Replaces the right padding with a new value.
+    pub fn pad_r(mut self, pad: impl Into<UiValue<f32>>) -> Self {
+        self.padding.set_z(pad);
+        self
+    }
+    /// Replaces the bottom padding with a new value.
+    pub fn pad_b(mut self, pad: impl Into<UiValue<f32>>) -> Self {
+        self.padding.set_w(pad);
+        self
+    }
+    /// Replaces the border with a new value.
+    pub fn border(mut self, border: impl Into<UiValue<Vec4>>) -> Self {
+        self.border = border.into();
+        self
+    }
+    /// Replaces the horizontal border with a new value.
+    pub fn border_x(mut self, border: impl Into<UiValue<Vec2>>) -> Self {
+        let border: UiValue<Vec2> = border.into();
+        let val = border.get_x();
+        self.border.set_x(val);
+        self.border.set_z(val);
+        self
+    }
+    /// Replaces the vertical border with a new value.
+    pub fn border_y(mut self, border: impl Into<UiValue<Vec2>>) -> Self {
+        let border: UiValue<Vec2> = border.into();
+        let val = border.get_y();
+        self.border.set_y(val);
+        self.border.set_w(val);
+        self
+    }
+    /// Replaces the left border with a new value.
+    pub fn border_l(mut self, border: impl Into<UiValue<f32>>) -> Self {
+        self.border.set_x(border);
+        self
+    }
+    /// Replaces the top border with a new value.
+    pub fn border_t(mut self, border: impl Into<UiValue<f32>>) -> Self {
+        self.border.set_y(border);
+        self
+    }
+    /// Replaces the right border with a new value.
+    pub fn border_r(mut self, border: impl Into<UiValue<f32>>) -> Self {
+        self.border.set_z(border);
+        self
+    }
+    /// Replaces the bottom border with a new value.
+    pub fn border_b(mut self, border: impl Into<UiValue<f32>>) -> Self {
+        self.border.set_w(border);
+        self
+    }
+    /// Replaces the margin with a new value.
+    pub fn margin(mut self, margin: impl Into<UiValue<Vec4>>) -> Self {
+        self.margin = margin.into();
+        self
+    }
+    /// Replaces the horizontal margin with a new value.
+    pub fn margin_x(mut self, margin: impl Into<UiValue<Vec2>>) -> Self {
+        let margin: UiValue<Vec2> = margin.into();
+        let val = margin.get_x();
+        self.margin.set_x(val);
+        self.margin.set_z(val);
+        self
+    }
+    /// Replaces the vertical margin with a new value.
+    pub fn margin_y(mut self, margin: impl Into<UiValue<Vec2>>) -> Self {
+        let margin: UiValue<Vec2> = margin.into();
+        let val = margin.get_y();
+        self.margin.set_y(val);
+        self.margin.set_w(val);
+        self
+    }
+    /// Replaces the left margin with a new value.
+    pub fn margin_l(mut self, margin: impl Into<UiValue<f32>>) -> Self {
+        self.margin.set_x(margin);
+        self
+    }
+    /// Replaces the top margin with a new value.
+    pub fn margin_t(mut self, margin: impl Into<UiValue<f32>>) -> Self {
+        self.margin.set_y(margin);
+        self
+    }
+    /// Replaces the right margin with a new value.
+    pub fn margin_r(mut self, margin: impl Into<UiValue<f32>>) -> Self {
+        self.margin.set_z(margin);
+        self
+    }
+    /// Replaces the bottom margin with a new value.
+    pub fn margin_b(mut self, margin: impl Into<UiValue<f32>>) -> Self {
+        self.margin.set_w(margin);
+        self
+    }
+    /// Makes any container after this start at new line
+    pub fn br(mut self) -> Self {
+        self.br = true;
+        self
+    }
+
+
+    /// Packs the struct into Layout
+    pub fn pack(self) -> Layout {
+        self.into()
+    }
+}
+impl Into<Layout> for Div {
+    fn into(self) -> Layout {
+        Layout::Div(self)
+    }
+}
+impl NiceDisplay for Div {
+    fn to_nicestr(&self) -> String {
+        let t = format!("[pad: ({}) mar: ({})]", self.padding.to_nicestr(), self.margin.to_nicestr());
         format!("{}", t.black())
     }
 }
