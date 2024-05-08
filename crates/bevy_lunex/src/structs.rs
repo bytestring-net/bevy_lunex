@@ -3,7 +3,6 @@ use std::borrow::Borrow;
 use bevy::{prelude::*, render::primitives::Aabb, sprite::Anchor, text::{Text2dBounds, TextLayoutInfo}};
 use lunex_engine::prelude::*;
 
-pub type UiStack = FlexBox;
 
 
 // #==================#

@@ -1,3 +1,6 @@
+mod compute;
+pub use compute::*;
+
 mod structs;
 pub use structs::*;
 

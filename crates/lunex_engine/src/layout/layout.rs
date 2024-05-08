@@ -436,7 +436,16 @@ pub struct Div {
 impl Div {
     /// Creates new empty Div node layout.
     pub const fn new() -> Self {
-        Default::default()
+        Div {
+            width: Sizing::Basic,
+            height: Sizing::Basic,
+            min_size: None,
+            max_size: None,
+            padding: UiValue::new(),
+            border: UiValue::new(),
+            margin: UiValue::new(),
+            br: false,
+        }
     }
     /// Replaces the width with a new value.
     pub fn width(mut self, sizing: Sizing) -> Self {

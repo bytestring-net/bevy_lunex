@@ -36,13 +36,13 @@ fn setup(mut cmd: Commands, mut _mat: ResMut<Assets<StandardMaterial>>, assets: 
         ui.spawn((
             MyUiSystem,
             UiLink::path("Root"),
-            UiLayout::Window::FULL.pos(Abs(20.0)).size(Prc(100.0) - Abs(40.0)).pack(),
+            UiLayout::Window::new().pos(Ab(20.0)).size(Rl(100.0) - Ab(40.0)).pack(),
         ));
 
         ui.spawn((
             MyUiSystem,
             UiLink::path("Root/Rectangle"),
-            UiLayout::Solid::new().size(Abs((1920.0, 1080.0))).pack(),
+            UiLayout::Solid::new().size(Ab((1920.0, 1080.0))).pack(),
             UiImage2dBundle::from(assets.load("background.png")),
         ));
 

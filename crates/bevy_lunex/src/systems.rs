@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 use bevy::{math::Vec3A, prelude::*, render::primitives::Aabb, text::TextLayoutInfo};
 use lunex_engine::*;
 
-use crate::{Dimension, Element, MovableByCamera, UiContent, UiLink, UiStack};
+use crate::{Dimension, Element, MovableByCamera, UiContent, UiLink};
 
 
 // #===================#
@@ -329,7 +329,7 @@ pub fn element_text_size_to_solid_layout<T: Component>(
 ) {
     for (mut layout, text_info) in &mut query {
         if let Layout::Solid(solid) = layout.as_mut() {
-            solid.size = Abs(text_info.logical_size).into();
+            solid.size = Ab(text_info.logical_size).into();
         }
     }
 }
