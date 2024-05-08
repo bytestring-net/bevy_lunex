@@ -23,7 +23,7 @@ pub mod prelude {
 }
 
 // #=========================#
-// #=== CRATE ONLY EXPORT ===#
+// #=== CRATE ONLY IMPORT ===#
 
 pub(crate) mod import {
     pub(crate) use std::borrow::Borrow;
