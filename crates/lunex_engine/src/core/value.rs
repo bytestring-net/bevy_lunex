@@ -737,40 +737,65 @@ unit_cross_operations!((Vh, vh), (Vw, vw));
 // #==============================#
 // #=== CUSTOM IMPLEMENTATIONS ===#
 
-// # Impl ((UiValue(f32), UiValue(f32))) => UiValue(Vec2)
-impl Into<UiValue<Vec2>> for (UiValue<f32>, UiValue<f32>) {
+// # Impl (A, B) => UiValue(Vec2)
+impl <A, B> Into<UiValue<Vec2>> for (A, B) where 
+    A: Into<UiValue<f32>>, 
+    B: Into<UiValue<f32>>
+{
     fn into(self) -> UiValue<Vec2> {
         UiValue::<Vec2>::new().with_x(self.0).with_y(self.1)
     }
 }
-// # Impl ((UiValue(f32), UiValue(f32), UiValue(f32))) => UiValue(Vec3)
-impl Into<UiValue<Vec3>> for (UiValue<f32>, UiValue<f32>, UiValue<f32>) {
+
+// # Impl (A, B, C) => UiValue(Vec3)
+impl <A, B, C> Into<UiValue<Vec3>> for (A, B, C) where 
+    A: Into<UiValue<f32>>, 
+    B: Into<UiValue<f32>>,
+    C: Into<UiValue<f32>>
+{
     fn into(self) -> UiValue<Vec3> {
         UiValue::<Vec3>::new().with_x(self.0).with_y(self.1).with_z(self.2)
     }
 }
-// # Impl ((UiValue(f32), UiValue(f32), UiValue(f32), UiValue(f32))) => UiValue(Vec4)
-impl Into<UiValue<Vec4>> for (UiValue<f32>, UiValue<f32>, UiValue<f32>, UiValue<f32>) {
+
+// # Impl (A, B, C) => UiValue(Vec4)
+impl <A, B, C, D> Into<UiValue<Vec4>> for (A, B, C, D) where 
+    A: Into<UiValue<f32>>, 
+    B: Into<UiValue<f32>>,
+    C: Into<UiValue<f32>>,
+    D: Into<UiValue<f32>>
+{
     fn into(self) -> UiValue<Vec4> {
         UiValue::<Vec4>::new().with_x(self.0).with_y(self.1).with_z(self.2).with_w(self.3)
     }
 }
 
-// # Impl ((x, x)) => UiValue(Vec2)
-impl Into<UiValue<Vec2>> for (Ab<f32>, Rl<f32>) {
-    fn into(self) -> UiValue<Vec2> {
-        UiValue::<Vec2>::new().with_x(self.0).with_y(self.1)
-    }
-}
-
-
-// # Impl (x) => UiValue(f32)
+// # Impl f32 => UiValue(f32)
 impl Into<UiValue<f32>> for f32 {
     fn into(self) -> UiValue<f32> {
         Ab(self).into()
     }
 }
+// # Impl f32 => UiValue(Vec2)
+impl Into<UiValue<Vec2>> for f32 {
+    fn into(self) -> UiValue<Vec2> {
+        Ab(Vec2::new(self, self)).into()
+    }
+}
+// # Impl f32 => UiValue(Vec3)
+impl Into<UiValue<Vec3>> for f32 {
+    fn into(self) -> UiValue<Vec3> {
+        Ab(Vec3::new(self, self, self)).into()
+    }
+}
+// # Impl f32 => UiValue(Vec4)
+impl Into<UiValue<Vec4>> for f32 {
+    fn into(self) -> UiValue<Vec4> {
+        Ab(Vec4::new(self, self, self, self)).into()
+    }
+}
 
+// # Impl UiValue(f32) => UiValue(Vec2)
 impl Into<UiValue<Vec2>> for UiValue<f32> {
     fn into(self) -> UiValue<Vec2> {
         let mut out = UiValue::<Vec2>::new();
@@ -779,19 +804,7 @@ impl Into<UiValue<Vec2>> for UiValue<f32> {
         out
     }
 }
-// # Impl (x) => UiValue(Vec2)
-impl Into<UiValue<Vec2>> for f32 {
-    fn into(self) -> UiValue<Vec2> {
-        Ab(Vec2::new(self, self)).into()
-    }
-}
-// # Impl ((x, x)) => UiValue(Vec2)
-impl Into<UiValue<Vec2>> for (f32, f32) {
-    fn into(self) -> UiValue<Vec2> {
-        Ab(Vec2::new(self.0, self.1)).into()
-    }
-}
-
+// # Impl UiValue(f32) => UiValue(Vec3)
 impl Into<UiValue<Vec3>> for UiValue<f32> {
     fn into(self) -> UiValue<Vec3> {
         let mut out = UiValue::<Vec3>::new();
@@ -801,19 +814,7 @@ impl Into<UiValue<Vec3>> for UiValue<f32> {
         out
     }
 }
-// # Impl (x) => UiValue(Vec3)
-impl Into<UiValue<Vec3>> for f32 {
-    fn into(self) -> UiValue<Vec3> {
-        Ab(Vec3::new(self, self, self)).into()
-    }
-}
-// # Impl ((x, x, x)) => UiValue(Vec3)
-impl Into<UiValue<Vec3>> for (f32, f32, f32) {
-    fn into(self) -> UiValue<Vec3> {
-        Ab(Vec3::new(self.0, self.1, self.2)).into()
-    }
-}
-
+// # Impl UiValue(f32) => UiValue(Vec4)
 impl Into<UiValue<Vec4>> for UiValue<f32> {
     fn into(self) -> UiValue<Vec4> {
         let mut out = UiValue::<Vec4>::new();
@@ -824,18 +825,7 @@ impl Into<UiValue<Vec4>> for UiValue<f32> {
         out
     }
 }
-// # Impl (x) => UiValue(Vec4)
-impl Into<UiValue<Vec4>> for f32 {
-    fn into(self) -> UiValue<Vec4> {
-        Ab(Vec4::new(self, self, self, self)).into()
-    }
-}
-// # Impl ((x, x, x, x)) => UiValue(Vec4)
-impl Into<UiValue<Vec4>> for (f32, f32, f32, f32) {
-    fn into(self) -> UiValue<Vec4> {
-        Ab(Vec4::new(self.0, self.1, self.2, self.3)).into()
-    }
-}
+
 
 
 impl Ab<f32> {
