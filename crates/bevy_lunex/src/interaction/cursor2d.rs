@@ -1,4 +1,4 @@
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{prelude::*, utils::HashMap, window::PrimaryWindow};
 
 // #===================#
 // #=== CURSOR TYPE ===#
@@ -45,49 +45,33 @@ impl Cursor2d {
         }
     }
     /// Adds a new index and offset to the cursor.
-    pub fn register_cursor(mut self, icon: CursorIcon, index: usize, offset: Vec2) -> Self {
-        self.cursor_atlas_map.insert(icon, (index, offset));
+    pub fn register_cursor(mut self, icon: CursorIcon, index: usize, offset: impl Into<Vec2>) -> Self {
+        self.cursor_atlas_map.insert(icon, (index, offset.into()));
         self
     }
 }
 
-/* pub fn cursor_update(
-    mut windows: Query<&mut Window>,
-    cameras: Query<&Transform, (With<Camera>, Without<Cursor>)>,
-    mut query: Query<(&mut Cursor, &mut Transform, &mut Visibility), Without<Camera>>,
-) {
-    for (mut cursor, mut transform, mut visibility) in &mut query {
-        let mut window = windows.single_mut();
-        let camera_transform = cameras.single();
+pub fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut query: Query<(&Cursor2d, &mut Transform, &mut Visibility)>) {
+    let mut window = windows.single_mut();
+    for (cursor, mut transform, mut visibility) in &mut query {
+
+        window.cursor.visible = cursor.native_cursor;
+
         match window.cursor_position() {
-            Some(win_cursor) => {
-                window.cursor.visible = cursor.os_cursor;
-                cursor.location_screen = win_cursor;
-                let sprite_offset = if cursor.sprite_offset.len() != 0 {
-                    cursor.sprite_offset[cursor.request_cursor_index]
-                } else {
-                    Vec2::ZERO
-                };
-                let offset_x = window.resolution.width() / 2.0;
-                let offset_y = window.resolution.height() / 2.0;
-                let world_x = camera_transform.translation.x + win_cursor.x;
-                let world_y = camera_transform.translation.y + window.resolution.height() - win_cursor.y;
-                cursor.location_world = Vec2::new(
-                    world_x - offset_x,
-                    world_y - offset_y
-                );
-                transform.translation.x = world_x - offset_x - sprite_offset.x * transform.scale.x;
-                transform.translation.y = world_y - offset_y + sprite_offset.y * transform.scale.y;
+            Some(position) => {
+
+                let sprite_offset = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).1;
+
+                transform.translation.x = position.x - window.width()*0.5 - sprite_offset.x * transform.scale.x;
+                transform.translation.y = -(position.y - window.height()*0.5 - sprite_offset.y * transform.scale.y);
                 *visibility = Visibility::Visible;
             }
             None => {
-                cursor.location_screen = Vec2::splat(-10000.0);
-                cursor.location_world = Vec2::splat(-10000.0);
                 *visibility = Visibility::Hidden;
             }
         }
     }
-} */
+}
 
 /// Set's the requested cursor index to be default
 pub fn cursor_preupdate(mut query: Query<&mut Cursor2d>) {
@@ -109,6 +93,7 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(PreUpdate, cursor_preupdate)
+            .add_systems(Update, cursor_update)
             .add_systems(PostUpdate, cursor_update_texture);
     }
 }

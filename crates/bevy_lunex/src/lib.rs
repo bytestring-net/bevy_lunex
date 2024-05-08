@@ -17,6 +17,8 @@ pub use systems::*;
 
 pub mod prelude {
 
+    pub use super::Cursor2d;
+
     // BEVY-LUNEX SPECIFIC
     pub use super::systems::*;
     pub use super::structs::*;
