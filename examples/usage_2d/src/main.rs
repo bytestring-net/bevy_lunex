@@ -42,7 +42,7 @@ fn setup(mut cmd: Commands, mut _mat: ResMut<Assets<StandardMaterial>>, assets: 
         ui.spawn((
             MyUiSystem,
             UiLink::path("Root/Rectangle"),
-            UiLayout::Solid::new().size((Ab(20.0), 20.0)).pack(),
+            UiLayout::Solid::new().size((Ab(200.0), Rl(100.0))).pack(),
             UiImage2dBundle::from(assets.load("background.png")),
         ));
 

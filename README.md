@@ -30,7 +30,7 @@ It gives you the ability to make ***your own custom UI*** using regular ECS like
 ## Description
 
 > [!NOTE]
-> This library is EXPERIMENTAL. I do not guarantee consistent updates. I'm developing it for my own personal use, so if I judge it has outlived its use case, I will stop developing this project.
+> This library is EXPERIMENTAL. Judge yourself if it is a good fit for your project.
 
 Bevy_Lunex is built on a simple concept: to use Bevy's ECS as the foundation for UI layout and interaction, allowing developers to manage UI elements as they would any other entities in their game or application as opposed to bevy_ui.
 
@@ -121,9 +121,10 @@ Quite simple, isn't it? Best part is that by relying on components only, you are
 ### Nodes & Units
 
 There are multiple nodes in `UiLayout`.
-* `Window` - Defined by _point_ and _size_, it is not influenced by UI context and is absolutely positioned.
-* `Solid` - Defined by _size_ only, it will scale to fit the parenting node. It is not influenced by UI context.
-* `Div` - Defined by _padding_ & _margin_. Dictates the UI context. It uses styleform paradigm, very similar to HTML.
+* `Boundary` - Defined by _point1_ and _point2_, it is not influenced by UI flow and is absolutely positioned.
+* `Window` - Defined by _point_ and _size_, it is not influenced by UI flow and is absolutely positioned.
+* `Solid` - Defined by _size_ only, it will scale to fit the parenting node. It is not influenced by UI flow.
+* `Div` - Defined by _padding_ & _margin_. Dictates the UI flow. It uses styleform paradigm, very similar to HTML.
 
 > [!WARNING]
 > `Div` is not finished, it's WIP, please refrain from using it.
