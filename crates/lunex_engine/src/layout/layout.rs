@@ -1,7 +1,7 @@
 #[cfg(feature = "bevy")]
 use bevy::prelude::Component;
 
-use crate::import::*;
+use crate::{import::*, YInvert};
 use crate::{NiceDisplay, Rectangle2D, UiValue, UiValueEvaluate, Ab, Rl};
 
 
@@ -44,6 +44,73 @@ impl NiceDisplay for Layout {
 
 // #=========================#
 // #=== LAYOUT PROPERTIES ===#
+
+/// **Anchor** - A type used to define where should Window node layout be anchored at.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub enum Anchor {
+    Center,
+    BottomLeft,
+    BottomCenter,
+    BottomRight,
+    CenterLeft,
+    CenterRight,
+    #[default] TopLeft,
+    TopCenter,
+    TopRight,
+    /// Custom anchor point. Top left is `(-0.5, 0.5)`, center is `(0.0, 0.0)`. The value will
+    /// be scaled with the sprite size.
+    Custom(Vec2),
+}
+impl NiceDisplay for Anchor {
+    fn to_nicestr(&self) -> String {
+        match self {
+            Anchor::Center => format!("{}", "Center".bold()),
+            Anchor::BottomLeft => format!("{}", "BottomLeft".bold()),
+            Anchor::BottomCenter => format!("{}", "BottomCenter".bold()),
+            Anchor::BottomRight => format!("{}", "BottomRight".bold()),
+            Anchor::CenterLeft => format!("{}", "CenterLeft".bold()),
+            Anchor::CenterRight => format!("{}", "CenterRight".bold()),
+            Anchor::TopLeft => format!("{}", "TopLeft".bold()),
+            Anchor::TopCenter => format!("{}", "TopCenter".bold()),
+            Anchor::TopRight => format!("{}", "TopRight".bold()),
+            Anchor::Custom(point) => format!("({} {})", point.x.to_string().bold(), point.y.to_string().bold()),
+        }
+    }
+}
+impl Anchor {
+    pub fn as_vec(&self) -> Vec2 {
+        match self {
+            Anchor::BottomLeft => Vec2::new(0.0, 1.0),
+            Anchor::BottomCenter => Vec2::new(0.5, 1.0),
+            Anchor::BottomRight => Vec2::new(1.0, 1.0),
+            Anchor::CenterLeft => Vec2::new(0.0, 0.5),
+            Anchor::Center => Vec2::new(0.5, 0.5),
+            Anchor::CenterRight => Vec2::new(1.0, 0.5),
+            Anchor::TopLeft => Vec2::new(0.0, 0.0),
+            Anchor::TopCenter => Vec2::new(0.5, 0.0),
+            Anchor::TopRight => Vec2::new(1.0, 0.0),
+            Anchor::Custom(point) => *point,
+        }
+    }
+}
+#[cfg(feature = "bevy")]
+impl Into<Anchor> for bevy::sprite::Anchor {
+    fn into(self) -> Anchor {
+        match self {
+            bevy::sprite::Anchor::Center => Anchor::Center,
+            bevy::sprite::Anchor::BottomLeft => Anchor::BottomLeft,
+            bevy::sprite::Anchor::BottomCenter => Anchor::BottomCenter,
+            bevy::sprite::Anchor::BottomRight => Anchor::BottomRight,
+            bevy::sprite::Anchor::CenterLeft => Anchor::CenterLeft,
+            bevy::sprite::Anchor::CenterRight => Anchor::CenterRight,
+            bevy::sprite::Anchor::TopLeft => Anchor::TopLeft,
+            bevy::sprite::Anchor::TopCenter => Anchor::TopCenter,
+            bevy::sprite::Anchor::TopRight => Anchor::TopRight,
+            bevy::sprite::Anchor::Custom(point) => Anchor::Custom(point.invert_y() + 0.5),
+        }
+    }
+}
+
 
 /// **Align** - A type used to define alignment in a node layout.
 /// ## 🛠️ Example
@@ -230,6 +297,8 @@ impl NiceDisplay for Boundary {
 pub struct Window {
     /// Position of the top-left corner.
     pub pos : UiValue<Vec2>,
+    /// Decides where position should be applied at.
+    pub anchor: Anchor,
     /// Size of the node layout.
     pub size: UiValue<Vec2>,
 }
@@ -238,6 +307,7 @@ impl Window {
     pub const fn new() -> Self {
         Window {
             pos : UiValue::new(),
+            anchor: Anchor::TopLeft,
             size: UiValue::new(),
         }
     }
@@ -245,6 +315,7 @@ impl Window {
     pub fn full() -> Self {
         Window {
             pos : UiValue::new(),
+            anchor: Anchor::TopLeft,
             size: Rl(100.0).into(),
         }
     }
@@ -283,12 +354,19 @@ impl Window {
         self.size.set_y(height);
         self
     }
-    
+    /// Replaces the anchor with a new value.
+    pub fn anchor(mut self, anchor: impl Into<Anchor>) -> Self {
+        self.anchor = anchor.into();
+        self
+    }
+
     /// Computes the layout based on given parameters.
     pub(crate) fn compute(&self, parent: Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
+        let pos = self.pos.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size));
+        let size = self.size.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size));
         Rectangle2D {
-            pos: parent.pos + self.pos.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size)),
-            size: self.size.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size)),
+            pos: parent.pos + pos - size * self.anchor.as_vec(),
+            size,
         }
     }
     /// Packs the struct into Layout.
@@ -303,7 +381,7 @@ impl Into<Layout> for Window {
 }
 impl NiceDisplay for Window {
     fn to_nicestr(&self) -> String {
-        let t = format!("[pos: ({}) size: ({})]", self.pos.to_nicestr(), self.size.to_nicestr());
+        let t = format!("[pos: ({}) size: ({}) anchor: {}]", self.pos.to_nicestr(), self.size.to_nicestr(), self.anchor.to_nicestr());
         format!("{}", t.black())
     }
 }

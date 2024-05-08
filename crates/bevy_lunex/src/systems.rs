@@ -328,8 +328,12 @@ pub fn element_text_size_to_solid_layout<T: Component>(
     mut query: Query<(&mut Layout, &TextLayoutInfo), (With<T>, With<Element>, Changed<TextLayoutInfo>)>,
 ) {
     for (mut layout, text_info) in &mut query {
-        if let Layout::Solid(solid) = layout.as_mut() {
-            solid.size = Ab(text_info.logical_size).into();
+        match layout.as_mut() {
+            Layout::Window(window) => {
+                window.size = Rh(text_info.logical_size).into()
+            },
+            Layout::Solid(solid) => {solid.size = Ab(text_info.logical_size).into()},
+            _ => {},
         }
     }
 }
