@@ -410,6 +410,7 @@ impl <M:Default + Component, N:Default + Component, T: Component> UiPlugin<M, N,
 impl <M:Default + Component, N:Default + Component, T: Component> Plugin for UiPlugin<M, N, T> {
     fn build(&self, app: &mut App) {
         app
+            .add_plugins(crate::CursorPlugin)
             .add_systems(Update, send_content_size_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
             .add_systems(Update, send_stack_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
             .add_systems(Update, send_layout_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
