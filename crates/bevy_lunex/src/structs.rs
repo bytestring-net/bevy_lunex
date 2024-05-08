@@ -3,7 +3,6 @@ use std::borrow::Borrow;
 use bevy::{prelude::*, render::primitives::Aabb, sprite::Anchor, text::{Text2dBounds, TextLayoutInfo}};
 use lunex_engine::prelude::*;
 
-pub type UiStack = FlexBox;
 
 
 // #==================#
@@ -13,14 +12,14 @@ pub type UiStack = FlexBox;
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct MovableByCamera;
 
-/// This struct is used mainly to mark linked UI entities as elements.
+/// This struct is used to mark linked UI entities as elements for easier rendering.
 /// They are picked up by different systems, that ensure their piped [`Transform`] is centered,
 /// instead of being aligned in a top-left corner like the normal UI entities.
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct Element;
 
 
-
+/// # WIP - used for Div layout
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct UiContent {
     pub size: Vec2,
@@ -33,6 +32,7 @@ impl UiContent {
 
 
 /// This struct is a string reference to a specific node in a parent [`UiTree`].
+/// Lunex uses this component to locate what data this entity should be working with.
 #[derive(Component, Debug, Default, Clone, PartialEq)]
 pub struct UiLink {
     pub path: String,
@@ -51,7 +51,7 @@ impl UiLink {
 
 
 /// This struct holds rectangular data. If the component covers some kind of 2D area, it should be stored in this component.
-/// Lunex uses this component to mirror node size in & from parent [`UiTree`].
+/// Lunex uses this component to mirror node size in & out from parent [`UiTree`].
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct Dimension {
     pub size: Vec2,
@@ -68,15 +68,25 @@ impl Dimension {
 // #====================#
 // #=== MAIN BUNDLES ===#
 
+/// Main bundle for spawning `UiTree` entity
 #[derive(Bundle, Debug, Default, Clone, PartialEq)]
 pub struct UiTreeBundle <M: Default + Component, N: Default + Component, T: Component> {
+    /// The ui layout data of the entity and it's children.
     pub tree: UiTree<M, N>,
+    /// The marker component for the ui system.
     pub marker: T,
+    /// The transform of the entity.
     pub transform: Transform,
+    /// Contains the ui node size.
     pub dimension: Dimension,
-
+    /// The global transform of the entity.
     pub global_transform: GlobalTransform,
+    /// The visibility properties of the entity.
+    pub visibility: Visibility,
+    /// Inherited visibility of an entity.
     pub inherited_visibility: InheritedVisibility,
+    /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering.
+    pub view_visibility: ViewVisibility,
 }
 impl <M: Default + Component, N: Default + Component, T: Component + Default> From<UiTree<M, N>> for UiTreeBundle<M, N, T> {
     fn from(value: UiTree<M, N>) -> Self {
@@ -87,10 +97,49 @@ impl <M: Default + Component, N: Default + Component, T: Component + Default> Fr
     }
 }
 
+/// Main bundle for spawning `UiNode` entity as a child of `UiTree` entity
+#[derive(Bundle, Debug, Clone, PartialEq)]
+pub struct UiNodeBundle<T: Component> {
+    /// The marker component for the ui system.
+    pub marker: T,
+    /// The corresponding path that leads to the node data in parent UiTree entity.
+    pub link: UiLink,
+    /// The layout to use when computing this node.
+    pub layout: Layout,
+}
+impl <T: Component + Default> Default for UiNodeBundle<T> {
+    fn default() -> Self {
+        UiNodeBundle {
+            marker: T::default(),
+            link: UiLink::default(),
+            layout: Layout::default(),
+        }
+    }
+}
+
+/// Additional bundle for `UiNode` entity that provides required components to be renderable.
+#[derive(Bundle, Debug, Clone, PartialEq, Default)]
+pub struct UiElementBundle {
+    /// Marks this as node element.
+    pub element: Element,
+    /// The transform of the entity.
+    pub transform: Transform,
+    /// Contains the ui node size.
+    pub dimension: Dimension,
+    /// The global transform of the entity.
+    pub global_transform: GlobalTransform,
+    /// The visibility properties of the entity.
+    pub visibility: Visibility,
+    /// Inherited visibility of an entity.
+    pub inherited_visibility: InheritedVisibility,
+    /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering.
+    pub view_visibility: ViewVisibility,
+}
 
 // #=======================#
-// #=== ELEMENT BUNDLES ===#
+// #=== SPECIAL BUNDLES ===#
 
+/// Additional bundle for `UiNode` entity that provides 3D material.
 #[derive(Bundle, Debug, Default, Clone)]
 pub struct UiMaterial3dBundle {
     /// Marks this as node element.
@@ -137,7 +186,7 @@ impl UiMaterial3dBundle {
     }
 }
 
-
+/// Additional bundle for `UiNode` entity that provides 2D texture.
 #[derive(Bundle, Clone, Debug, Default)]
 pub struct UiImage2dBundle {
     /// Marks this as node element.
@@ -170,7 +219,7 @@ impl From<Handle<Image>> for UiImage2dBundle {
     }
 }
 
-
+/// Additional bundle for `UiNode` entity that provides 2D text.
 #[derive(Bundle, Clone, Debug, Default)]
 pub struct UiText2dBundle {
     /// Marks this as node element.

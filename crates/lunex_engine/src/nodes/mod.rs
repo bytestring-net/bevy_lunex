@@ -4,8 +4,10 @@ pub use structs::*;
 mod traits;
 pub use traits::*;
 
+
+// #======================#
+// #=== PRELUDE EXPORT ===#
+
 pub mod prelude {
-    pub use super::{NodeGeneralTrait, NodeCreationTrait, NodeDataTrait, NodeTopDataTrait, NodeInitTrait, NodeTreeInitTrait, NodeDisplayTrait};
-    pub use super::{Node, NodeTree};
-    pub use super::NodeError;
+    pub use super::*;
 }
