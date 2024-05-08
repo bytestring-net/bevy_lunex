@@ -3,6 +3,9 @@
 // #======================#
 // #=== PRELUDE EXPORT ===#
 
+pub mod interaction;
+pub use interaction::*;
+
 pub mod macros;
 
 pub mod structs;
@@ -13,6 +16,8 @@ pub use systems::*;
 
 
 pub mod prelude {
+
+    pub use super::Cursor2d;
 
     // BEVY-LUNEX SPECIFIC
     pub use super::systems::*;
