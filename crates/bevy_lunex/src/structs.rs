@@ -136,6 +136,23 @@ pub struct UiElementBundle {
     pub view_visibility: ViewVisibility,
 }
 
+/// Additional bundle for `UiNode` entity that provides required components to exist in a 3D world, but not as an element.
+#[derive(Bundle, Debug, Clone, PartialEq, Default)]
+pub struct UiSpacialBundle {
+    /// The transform of the entity.
+    pub transform: Transform,
+    /// Contains the ui node size.
+    pub dimension: Dimension,
+    /// The global transform of the entity.
+    pub global_transform: GlobalTransform,
+    /// The visibility properties of the entity.
+    pub visibility: Visibility,
+    /// Inherited visibility of an entity.
+    pub inherited_visibility: InheritedVisibility,
+    /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering.
+    pub view_visibility: ViewVisibility,
+}
+
 // #=======================#
 // #=== SPECIAL BUNDLES ===#
 
