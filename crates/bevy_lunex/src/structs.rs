@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+use std::{borrow::Borrow, marker::PhantomData};
 
 use bevy::{prelude::*, render::primitives::Aabb, sprite::Anchor, text::{Text2dBounds, TextLayoutInfo}};
 use lunex_engine::prelude::*;
@@ -34,18 +34,28 @@ impl UiContent {
 /// This struct is a string reference to a specific node in a parent [`UiTree`].
 /// Lunex uses this component to locate what data this entity should be working with.
 #[derive(Component, Debug, Default, Clone, PartialEq)]
-pub struct UiLink {
+pub struct UiLink<T> {
     pub path: String,
+    marker: PhantomData<T>,
 }
-impl UiLink {
+impl <T> UiLink<T> {
     pub fn path( path: impl Borrow<str>) -> Self {
-        UiLink { path: path.borrow().to_string() }
+        UiLink {
+            path: path.borrow().to_string(),
+            marker: PhantomData,
+        }
     }
     pub fn add( &self, path: impl Borrow<str>) -> Self {
-        UiLink { path: format!("{}/{}", self.path, path.borrow()) }
+        UiLink {
+            path: format!("{}/{}", self.path, path.borrow()),
+            marker: PhantomData,
+        }
     }
-    pub fn new( &self) -> Self {
-        UiLink { path: format!("{}/", self.path) }
+    pub fn new() -> Self {
+        UiLink {
+            path: format!("/"),
+            marker: PhantomData,
+        }
     }
 }
 
@@ -103,7 +113,7 @@ pub struct UiNodeBundle<T: Component> {
     /// The marker component for the ui system.
     pub marker: T,
     /// The corresponding path that leads to the node data in parent UiTree entity.
-    pub link: UiLink,
+    pub link: UiLink<T>,
     /// The layout to use when computing this node.
     pub layout: Layout,
 }

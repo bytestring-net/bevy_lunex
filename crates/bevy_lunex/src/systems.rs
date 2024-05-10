@@ -14,11 +14,9 @@ use crate::{Dimension, Element, MovableByCamera, UiContent, UiLink};
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn compute_ui<M:Default + Component, N:Default + Component, T: Component>(
-    mut query: Query<(&Dimension, &mut UiTree<M, N>), (With<T>, Or<(Changed<Dimension>, Changed<UiTree<M, N>>)>)>
+    mut query: Query<(&Dimension, &mut UiTree<M, N>), (With<T>, With<UiLink<T>>, Or<(Changed<Dimension>, Changed<UiTree<M, N>>)>)>
 ) {
     for (dimension, mut ui) in &mut query {
-        // Compute the Ui
-        //println!("Ui DIM: {}", dimension.size);
         ui.compute(Rectangle2D::new().with_size(dimension.size).into());
     }
 }
@@ -66,7 +64,7 @@ pub fn debug_draw_gizmo<M:Default + Component, N:Default + Component, T: Compone
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn debug_print_tree<M:Default + Component, N:Default + Component, T: Component>(
-    uis: Query<&UiTree<M, N>, (With<T>, Changed<UiTree<M, N>>)>
+    uis: Query<&UiTree<M, N>, (With<T>, With<UiLink<T>>, Changed<UiTree<M, N>>)>
 ) {
     for ui in &uis {
         info!("{}\n{}\n", "UiTree has been changed...", ui.tree("show-hidden"));
@@ -138,7 +136,7 @@ pub fn fetch_transform_from_camera<T: Component>(
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn send_layout_to_node<M:Default + Component, N:Default + Component, T: Component>(
     mut uis: Query<(&mut UiTree<M, N>, &Children), With<T>>,
-    query: Query<(&UiLink, &Layout), (With<T>, Changed<Layout>)>,
+    query: Query<(&UiLink<T>, &Layout), (With<T>, Changed<Layout>)>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -163,7 +161,7 @@ pub fn send_layout_to_node<M:Default + Component, N:Default + Component, T: Comp
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn send_stack_to_node<M:Default + Component, N:Default + Component, T: Component>(
     mut uis: Query<(&mut UiTree<M, N>, &Children), With<T>>,
-    query: Query<(&UiLink, &UiStack), (With<T>, Changed<Layout>)>,
+    query: Query<(&UiLink<T>, &UiStack), (With<T>, Changed<Layout>)>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -188,7 +186,7 @@ pub fn send_stack_to_node<M:Default + Component, N:Default + Component, T: Compo
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn send_content_size_to_node<M:Default + Component, N:Default + Component, T: Component>(
     mut uis: Query<(&mut UiTree<M, N>, &Children), With<T>>,
-    query: Query<(&UiLink, &UiContent), (With<T>, Changed<Layout>)>,
+    query: Query<(&UiLink<T>, &UiContent), (With<T>, Changed<Layout>)>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -213,7 +211,7 @@ pub fn send_content_size_to_node<M:Default + Component, N:Default + Component, T
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn fetch_transform_from_node<M:Default + Component, N:Default + Component, T: Component>(
     uis: Query<(&UiTree<M, N>, &Children), (With<T>, Changed<UiTree<M, N>>)>,
-    mut query: Query<(&UiLink, &mut Transform), (With<T>, Without<Element>)>,
+    mut query: Query<(&UiLink<T>, &mut Transform), (With<T>, Without<Element>)>,
 ) {
     for (ui, children) in &uis {
         for child in children {
@@ -238,7 +236,7 @@ pub fn fetch_transform_from_node<M:Default + Component, N:Default + Component, T
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn fetch_dimension_from_node<M:Default + Component, N:Default + Component, T: Component>(
     uis: Query<(&UiTree<M, N>, &Children), (With<T>, Changed<UiTree<M, N>>)>,
-    mut query: Query<(&UiLink, &mut Dimension), With<T>>,
+    mut query: Query<(&UiLink<T>, &mut Dimension), With<T>>,
 ) {
     for (ui, children) in &uis {
         for child in children {
@@ -265,7 +263,7 @@ pub fn fetch_dimension_from_node<M:Default + Component, N:Default + Component, T
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_fetch_transform_from_node<M:Default + Component, N:Default + Component, T: Component>(
     uis: Query<(&UiTree<M, N>, &Children), (With<T>, Changed<UiTree<M, N>>)>,
-    mut query: Query<(&UiLink, &mut Transform), (With<T>, With<Element>)>,
+    mut query: Query<(&UiLink<T>, &mut Transform), (With<T>, With<Element>)>,
 ) {
     for (ui, children) in &uis {
         for child in children {

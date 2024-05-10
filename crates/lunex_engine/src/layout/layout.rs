@@ -25,6 +25,56 @@ pub enum Layout {
     Solid(Solid),
     Div(Div),
 }
+impl Layout {
+    pub fn expect_boundary(&self) -> &Boundary {
+        match self {
+            Layout::Boundary(b) => b,
+            _ => panic!("A different layout type than expected! Got {}, expected Boundary", self.to_nicestr())
+        }
+    }
+    pub fn expect_boundary_mut(&mut self) -> &mut Boundary {
+        match self {
+            Layout::Boundary(b) => b,
+            _ => panic!("A different layout type than expected! Got {}, expected Boundary", self.to_nicestr())
+        }
+    }
+    pub fn expect_window(&self) -> &Window {
+        match self {
+            Layout::Window(w) => w,
+            _ => panic!("A different layout type than expected! Got {}, expected Window", self.to_nicestr())
+        }
+    }
+    pub fn expect_window_mut(&mut self) -> &mut Window {
+        match self {
+            Layout::Window(w) => w,
+            _ => panic!("A different layout type than expected! Got {}, expected Window", self.to_nicestr())
+        }
+    }
+    pub fn expect_solid(&self) -> &Solid {
+        match self {
+            Layout::Solid(s) => s,
+            _ => panic!("A different layout type than expected! Got {}, expected Solid", self.to_nicestr())
+        }
+    }
+    pub fn expect_solid_mut(&mut self) -> &mut Solid {
+        match self {
+            Layout::Solid(s) => s,
+            _ => panic!("A different layout type than expected! Got {}, expected Solid", self.to_nicestr())
+        }
+    }
+    pub fn expect_div(&self) -> &Div {
+        match self {
+            Layout::Div(d) => d,
+            _ => panic!("A different layout type than expected! Got {}, expected Div", self.to_nicestr())
+        }
+    }
+    pub fn expect_div_mut(&mut self) -> &mut Div {
+        match self {
+            Layout::Div(d) => d,
+            _ => panic!("A different layout type than expected! Got {}, expected Div", self.to_nicestr())
+        }
+    }
+}
 impl Default for Layout {
     fn default() -> Self {
         Window::new().size(Rl(100.0)).into()
@@ -358,6 +408,34 @@ impl Window {
     pub fn anchor(mut self, anchor: impl Into<Anchor>) -> Self {
         self.anchor = anchor.into();
         self
+    }
+    /// Sets the position to a new value.
+    pub fn set_pos(&mut self, pos: impl Into<UiValue<Vec2>>){
+        self.pos = pos.into();
+    }
+    /// Sets the x position to a new value.
+    pub fn set_x(&mut self, x: impl Into<UiValue<f32>>){
+        self.pos.set_x(x);
+    }
+    /// Sets the y position to a new value.
+    pub fn set_y(&mut self, y: impl Into<UiValue<f32>>){
+        self.pos.set_y(y);
+    }
+    /// Sets the size to a new value.
+    pub fn set_size(&mut self, size: impl Into<UiValue<Vec2>>){
+        self.size = size.into();
+    }
+    /// Sets the width to a new value.
+    pub fn set_width(&mut self, width: impl Into<UiValue<f32>>){
+        self.size.set_x(width);
+    }
+    /// Sets the height to a new value.
+    pub fn set_height(&mut self, height: impl Into<UiValue<f32>>){
+        self.size.set_y(height);
+    }
+    /// Sets the anchor to a new value.
+    pub fn set_anchor(&mut self, anchor: impl Into<Anchor>){
+        self.anchor = anchor.into();
     }
 
     /// Computes the layout based on given parameters.

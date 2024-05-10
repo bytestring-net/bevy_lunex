@@ -93,7 +93,7 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(PreUpdate, cursor_preupdate)
-            .add_systems(Update, cursor_update)
+            .add_systems(PostUpdate, cursor_update)
             .add_systems(PostUpdate, cursor_update_texture);
     }
 }
