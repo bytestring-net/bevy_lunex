@@ -1,4 +1,4 @@
-![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/41d0cf62-26fe-40d3-8ed6-23644108f28f)
+![image](promo/bevy_lunex.png)
 
 <div align="center">
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
@@ -10,9 +10,6 @@
 
 #
 
-> [!CAUTION]
-> This branch is not released yet and is still WIP.
-
 Blazingly fast ***path based*** retained ***layout engine*** for Bevy entities, built around vanilla **Bevy ECS**. This library is intended to replace the existing `bevy_ui` crate, but nothing is stopping you from using them both at the same time.
 
 It uses a combination of Bevy's built-in hierarchy and its own custom hierarchy to give you the freedom of control without the bloat or borrow checker limitations usually faced when creating UI.
@@ -21,16 +18,16 @@ It gives you the ability to make ***your own custom UI*** using regular ECS like
 
 ***TLDR:*** It positions your entities as HTML objects for you, so you can slap custom rendering or images on them.
 
-## Showcase
+##
 
-![image](https://github.com/bytestring-net/bevy-lunex/assets/49441831/c5b6ae89-aad0-4cc1-9fd1-299b6ab0a80a)
+![image](promo/image.png)
 
 *^ A recreation of ***Cyberpunk*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/Bevypunk).*
 
 ## Description
 
 > [!NOTE]
-> This library is EXPERIMENTAL. Judge yourself if it is a good fit for your project.
+> This library is EXPERIMENTAL.
 
 Bevy_Lunex is built on a simple concept: to use Bevy's ECS as the foundation for UI layout and interaction, allowing developers to manage UI elements as they would any other entities in their game or application as opposed to bevy_ui.
 
@@ -38,9 +35,11 @@ Bevy_Lunex is built on a simple concept: to use Bevy's ECS as the foundation for
 
 * **Retained Layout Engine:** Unlike immediate mode GUI systems, Bevy_Lunex uses a retained layout engine. This means the layout is calculated and stored, reducing the need for constant recalculations and offering potential performance benefits, especially for static or infrequently updated UIs.
 
-* **Built on top of ECS:** Since it's built with ECS, you can extend or customize the behavior of your UI by simply adding or modifying components. The scripting is also done by regular systems you are familiar with.
+* **ECS friendly:** Since it's built with ECS, you can extend or customize the behavior of your UI by simply adding or modifying components. The scripting is done by regular systems and callbacks are done using events.
 
-* **2D & 3D UI:** One of the features of Bevy_Lunex is its support for both 2D and 3D UI elements, leveraging Bevy's `Transform` component. This support opens up a wide range of possibilities for developers looking to integrate UI elements seamlessly into both flat and spatial environments.
+* **2D & 3D UI:** One of the features of Bevy_Lunex is its support for both 2D and 3D UI elements, leveraging Bevy's `Transform` component. This opens up a wide range of possibilities for developers looking to integrate UI elements seamlessly into both flat and spatial environments.
+
+* **Mod picking:** For interactions, we intagrate with [bevy_mod_picking](https://github.com/aevyrie/bevy_mod_picking), which is getting upstreamed into Bevy. Lunex also provides custom picking backend, you just need add `"picking"` feature.
 
 ## Workflow
 
