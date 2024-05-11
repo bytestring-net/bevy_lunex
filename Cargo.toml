@@ -2,7 +2,7 @@
   resolver = "2"
   members = [
     "crates/*",
-    "examples/*",
+    #"examples/*",
   ]
   include = [
     "README.md"
