@@ -4,8 +4,12 @@
     "crates/*",
     "examples/*",
   ]
+  include = [
+    "README.md"
+  ]
   exclude = [
     "promo/*",
+    "examples/*",
     ".gitignore",
     ".vscode",
   ]

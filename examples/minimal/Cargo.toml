@@ -1,15 +1,12 @@
 [package]
-  name = "usage_2d"
+  name = "minimal"
   authors.workspace    = true
   version.workspace    = true
   edition.workspace    = true
-  license.workspace    = true
-  repository.workspace = true
-  keywords.workspace   = true
-  categories.workspace = true
+  publish = false
 
 [dependencies]
-  bevy = { version = "0.13.1", default_features = false, features = [
+  bevy = { version = "0.13.2", default_features = false, features = [
     "bevy_asset",
     "bevy_gilrs",
     "bevy_winit",
