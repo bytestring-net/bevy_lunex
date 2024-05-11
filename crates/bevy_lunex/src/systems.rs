@@ -522,11 +522,3 @@ impl <T:Component, N:Default + Component> Plugin for UiDebugPlugin<T, N> {
             .add_systems(Update, debug_print_tree::<T, N>.after(UiSystems::Compute));
     }
 }
-
-/// Plugin implementing general logic.
-pub struct UiGeneralPlugin;
-impl Plugin for UiGeneralPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins(crate::CursorPlugin);
-    }
-}

@@ -89,6 +89,10 @@ pub fn cursor_update_texture(mut query: Query<(&Cursor2d, &mut TextureAtlas)>) {
     }
 }
 
+
+// #==============#
+// #=== PLUGIN ===#
+
 pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
