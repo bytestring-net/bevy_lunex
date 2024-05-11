@@ -167,7 +167,7 @@ pub struct UiElementBundle {
 
 /// Additional bundle for `UiNode` entity that provides required components to exist in a 3D world, but not as an element.
 #[derive(Bundle, Debug, Clone, PartialEq, Default)]
-pub struct UiSpacialBundle {
+pub struct UiSpatialBundle {
     /// The transform of the entity.
     pub transform: Transform,
     /// Contains the ui node size.

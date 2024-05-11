@@ -12,6 +12,8 @@
   bevy         = { workspace = true }
   colored      = { workspace = true }
   lunex_engine = { workspace = true, features = ["bevy"] }
+  bevy_mod_picking = { workspace = true, optional = true }
 
 [features]
   debug = []
+  picking = ["bevy_mod_picking"]

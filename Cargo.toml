@@ -43,4 +43,10 @@
     #"default_font",
   ] }
 
-  #bevy_mod_picking   = { version = "0.18.2"}
+  bevy_mod_picking = { version = "0.18.2", default_features = false, features = [
+    #"backend_raycast",
+    #"backend_sprite",
+    #"debug",
+    #"selection",
+    #"highlight",
+  ] }
