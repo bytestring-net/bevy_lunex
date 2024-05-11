@@ -144,7 +144,7 @@ pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn send_layout_to_node<T:Component, N:Default + Component>(
     mut uis: Query<(&mut UiTree<T, N>, &Children)>,
-    query: Query<(&UiLink<T>, &UiLayout), Changed<UiLayout>>,
+    query: Query<(&UiLink<T>, &UiLayout), (Changed<UiLayout>, Without<UiTree<T, N>>)>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -310,6 +310,8 @@ pub fn element_sprite_size_from_dimension<T: Component>(
     mut query: Query<(&mut Sprite, &Dimension), (With<UiLink<T>>, With<Element>, Changed<Dimension>)>,
 ) {
     for (mut sprite, dimension) in &mut query {
+        #[cfg(feature = "debug")]
+        info!("{} - Dimension piped into sprite size", "Element".red());
         sprite.custom_size = Some(dimension.size)
     }
 }
@@ -324,6 +326,9 @@ pub fn element_reconstruct_mesh<T: Component>(
     mut query: Query<(&Dimension, &mut Handle<Mesh>, &mut Aabb), (With<UiLink<T>>, With<Element>, Changed<Dimension>)>,
 ) {
     for (dimension, mut mesh, mut aabb) in &mut query {
+
+        #[cfg(feature = "debug")]
+        info!("{} - Reconstructed mesh size", "Element".red());
 
         // Unload old mesh
         let _ = msh.remove(mesh.id());
@@ -346,6 +351,8 @@ pub fn element_text_size_to_layout<T: Component>(
     mut query: Query<(&mut UiLayout, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<TextLayoutInfo>)>,
 ) {
     for (mut layout, text_info) in &mut query {
+        #[cfg(feature = "debug")]
+        info!("{} - Text size piped to Layout", "Element".red());
         match layout.as_mut() {
             UiLayout::Window(window) => {window.size = Rh(text_info.logical_size).into()},
             UiLayout::Solid(solid) => {solid.size = Ab(text_info.logical_size).into()},
@@ -361,6 +368,8 @@ pub fn element_text_size_to_content<T: Component>(
     mut query: Query<(&mut UiContent, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<TextLayoutInfo>)>,
 ) {
     for (mut content, text_info) in &mut query {
+        #[cfg(feature = "debug")]
+        info!("{} - Text size piped to Content", "Element".red());
         content.size = text_info.logical_size;
     }
 }
@@ -372,6 +381,8 @@ pub fn element_text_size_scale_fit_to_dimension<T: Component>(
     mut query: Query<(&mut Transform, &Dimension, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<Dimension>)>,
 ) {
     for (mut transform, dimension, text_info) in &mut query {
+        #[cfg(feature = "debug")]
+        info!("{} - Scaled Transform for text size to fit into Dimension", "Element".red());
         let scale = dimension.size / text_info.logical_size;
         transform.scale.x = scale.x;
         transform.scale.y = scale.y;
