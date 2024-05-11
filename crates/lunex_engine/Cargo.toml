@@ -1,5 +1,6 @@
 [package]
   name = "lunex_engine"
+  description = "This crate is not inteded to be used standalone. It is a dependency of Bevy_Lunex"
   authors.workspace    = true
   version.workspace    = true
   edition.workspace    = true

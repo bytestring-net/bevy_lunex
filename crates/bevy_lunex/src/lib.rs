@@ -10,6 +10,10 @@ use bevy::prelude::*;
 pub struct UiGeneralPlugin;
 impl Plugin for UiGeneralPlugin {
     fn build(&self, app: &mut App) {
+
+        #[cfg(feature = "picking")]
+        app.add_plugins(crate::LunexBackend);
+
         app
             .add_plugins(crate::CursorPlugin)
             .add_plugins(crate::UiEventPlugin);
@@ -27,6 +31,11 @@ pub mod interaction;
 pub use interaction::*;
 
 pub mod macros;
+
+#[cfg(feature = "picking")]
+pub mod picking;
+#[cfg(feature = "picking")]
+pub use picking::*;
 
 pub mod structs;
 pub use structs::*;

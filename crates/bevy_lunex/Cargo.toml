@@ -7,11 +7,14 @@
   repository.workspace = true
   keywords.workspace   = true
   categories.workspace = true
+  description = "Blazingly fast path based retained layout engine for Bevy entities, built around vanilla Bevy ECS"
 
 [dependencies]
   bevy         = { workspace = true }
   colored      = { workspace = true }
   lunex_engine = { workspace = true, features = ["bevy"] }
+  bevy_mod_picking = { workspace = true, optional = true }
 
 [features]
   debug = []
+  picking = ["bevy_mod_picking"]
