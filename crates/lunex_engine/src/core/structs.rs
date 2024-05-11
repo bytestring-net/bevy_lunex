@@ -148,11 +148,6 @@ impl NiceDisplay for Rectangle3D {
 /// ## ⚠️ Warning
 /// Please refrain from manually using `".||#:0"`, `".||#:1"`, `".||#:2"`, _and so on.._ as names or [`NodeGeneralTrait::add_node`] will return errors.
 pub type UiTree<T, N = NoData> = NodeTree<MasterData<T>, NodeData<N>>;
-/* impl <T, N:Default + Component> Default for UiTree<T, N> {
-    fn default() -> Self {
-        UiTree::<T, N>::new("Default UI")
-    }
-} */
 
 /// A struct representing organized data in [`UiTree`].
 pub type UiNode<N = NoData> = Node<NodeData<N>>;

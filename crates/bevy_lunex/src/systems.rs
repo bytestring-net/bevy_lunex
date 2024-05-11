@@ -322,7 +322,7 @@ pub fn element_reconstruct_mesh<T: Component>(
 /// This system takes [`TextLayoutInfo`] data and overwrites coresponding [`Layout`] solid data.
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn element_text_size_to_solid_layout<T: Component>(
+pub fn element_text_size_to_layout<T: Component>(
     mut query: Query<(&mut UiLayout, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<TextLayoutInfo>)>,
 ) {
     for (mut layout, text_info) in &mut query {
@@ -348,7 +348,7 @@ pub fn element_text_size_to_content<T: Component>(
 /// This system takes [`TextLayoutInfo`] data and overwrites coresponding [`Transform`] scale data for text to fit inside [`Dimension`].
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn element_text_size_scale_to_dimension<T: Component>(
+pub fn element_text_size_scale_fit_to_dimension<T: Component>(
     mut query: Query<(&mut Transform, &Dimension, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<Dimension>)>,
 ) {
     for (mut transform, dimension, text_info) in &mut query {
@@ -406,21 +406,22 @@ impl <T:Component, N:Default + Component> UiPlugin<T, N> {
 impl <T:Component, N:Default + Component> Plugin for UiPlugin<T, N> {
     fn build(&self, app: &mut App) {
         app
+            .add_systems(Update, element_text_size_to_layout::<T>.before(send_layout_to_node::<T, N>))
+
             .add_systems(Update, send_content_size_to_node::<T, N>.before(compute_ui::<T, N>))
             .add_systems(Update, send_stack_to_node::<T, N>.before(compute_ui::<T, N>))
             .add_systems(Update, send_layout_to_node::<T, N>.before(compute_ui::<T, N>))
 
-            .add_systems(Update, element_text_size_to_solid_layout::<T>.before(send_layout_to_node::<T, N>))
+            .add_systems(Update, (fetch_dimension_from_camera::<T, N>, fetch_transform_from_camera::<T, N>).before(compute_ui::<T, N>))
+            .add_systems(Update, compute_ui::<T, N>)
 
             .add_systems(Update, fetch_transform_from_node::<T, N>.after(compute_ui::<T, N>))
             .add_systems(Update, (fetch_dimension_from_node::<T, N>, element_reconstruct_mesh::<T>).chain().after(compute_ui::<T, N>))
             .add_systems(Update, element_fetch_transform_from_node::<T, N>.after(compute_ui::<T, N>))
             .add_systems(Update, element_sprite_size_from_dimension::<T>.after(compute_ui::<T, N>))
-            .add_systems(Update, element_text_size_scale_to_dimension::<T>.after(compute_ui::<T, N>))
-            .add_systems(Update, element_text_size_to_content::<T>.before(send_content_size_to_node::<T, N>))
-
-            .add_systems(Update, (fetch_dimension_from_camera::<T, N>, fetch_transform_from_camera::<T, N>).before(compute_ui::<T, N>))
-            .add_systems(Update, compute_ui::<T, N>);
+            .add_systems(Update, element_text_size_scale_fit_to_dimension::<T>.after(compute_ui::<T, N>))
+            //.add_systems(Update, element_text_size_to_content::<T>.before(send_content_size_to_node::<T, N>))
+            ;
     }
 }
 
