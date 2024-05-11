@@ -122,4 +122,32 @@ impl UiStack {
         self.margin = margin;
         self
     }
+    /// Sets the direction to a new value.
+    pub fn set_direction(&mut self, direction: StackDirection) {
+        self.direction = direction;
+    }
+    /// Sets the flipped value to a new value.
+    pub fn set_flipped(&mut self, value: bool) {
+        self.flipped = value;
+    }
+    /// Sets the inversion value with a new value.
+    pub fn set_inverted(&mut self, value: bool) {
+        self.inverted = value;
+    }
+    /// Sets the gap to a new value.
+    pub fn set_gap(&mut self, gap: impl Into<UiValue<Vec2>>) {
+        self.gap = gap.into();
+    }
+    /// Sets the horizontal gap to a new value.
+    pub fn set_gap_x(&mut self, gap: impl Into<UiValue<f32>>) {
+        self.gap.set_x(gap);
+    }
+    /// Sets the vertical gap to a new value.
+    pub fn set_gap_y(&mut self, gap: impl Into<UiValue<f32>>) {
+        self.gap.set_y(gap);
+    }
+    /// Sets the margin to a new value.
+    pub fn set_margin(&mut self, margin: StackMargin) {
+        self.margin = margin;
+    }
 }
