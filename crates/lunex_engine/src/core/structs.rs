@@ -3,7 +3,7 @@ use bevy::ecs::component::Component;
 use colored::Colorize;
 
 use crate::nodes::prelude::*;
-use crate::layout::Layout;
+use crate::layout::UiLayout;
 
 
 // #==================#
@@ -196,7 +196,7 @@ pub struct NodeData<N: Default + Component> {
     /// Calculated rectangle from layout.
     pub rectangle: Rectangle3D,
     /// Layout of this node.
-    pub layout: Layout,
+    pub layout: UiLayout,
     /// Layout of subnodes and how to stack them.
     pub stack: UiStack,
     /// Optional font size to overwrite the inherited master font size.

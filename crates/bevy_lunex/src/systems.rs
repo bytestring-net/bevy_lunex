@@ -41,7 +41,7 @@ pub fn debug_draw_gizmo<M:Default + Component, N:Default + Component, T: Compone
 
                 let mut color = Color::LIME_GREEN;
 
-                if let Layout::Solid(_) = container.layout { color = Color::YELLOW }
+                if let UiLayout::Solid(_) = container.layout { color = Color::YELLOW }
 
                 let mut pos = container.rectangle.pos.invert_y() + transform.translation();
                 pos.x += container.rectangle.size.x / 2.0;
@@ -136,7 +136,7 @@ pub fn fetch_transform_from_camera<T: Component>(
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn send_layout_to_node<M:Default + Component, N:Default + Component, T: Component>(
     mut uis: Query<(&mut UiTree<M, N>, &Children), With<T>>,
-    query: Query<(&UiLink<T>, &Layout), (With<T>, Changed<Layout>)>,
+    query: Query<(&UiLink<T>, &UiLayout), (With<T>, Changed<UiLayout>)>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -161,7 +161,7 @@ pub fn send_layout_to_node<M:Default + Component, N:Default + Component, T: Comp
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn send_stack_to_node<M:Default + Component, N:Default + Component, T: Component>(
     mut uis: Query<(&mut UiTree<M, N>, &Children), With<T>>,
-    query: Query<(&UiLink<T>, &UiStack), (With<T>, Changed<Layout>)>,
+    query: Query<(&UiLink<T>, &UiStack), (With<T>, Changed<UiLayout>)>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -186,7 +186,7 @@ pub fn send_stack_to_node<M:Default + Component, N:Default + Component, T: Compo
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn send_content_size_to_node<M:Default + Component, N:Default + Component, T: Component>(
     mut uis: Query<(&mut UiTree<M, N>, &Children), With<T>>,
-    query: Query<(&UiLink<T>, &UiContent), (With<T>, Changed<Layout>)>,
+    query: Query<(&UiLink<T>, &UiContent), (With<T>, Changed<UiLayout>)>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -323,14 +323,14 @@ pub fn element_reconstruct_mesh<T: Component>(
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_text_size_to_solid_layout<T: Component>(
-    mut query: Query<(&mut Layout, &TextLayoutInfo), (With<T>, With<Element>, Changed<TextLayoutInfo>)>,
+    mut query: Query<(&mut UiLayout, &TextLayoutInfo), (With<T>, With<Element>, Changed<TextLayoutInfo>)>,
 ) {
     for (mut layout, text_info) in &mut query {
         match layout.as_mut() {
-            Layout::Window(window) => {
+            UiLayout::Window(window) => {
                 window.size = Rh(text_info.logical_size).into()
             },
-            Layout::Solid(solid) => {solid.size = Ab(text_info.logical_size).into()},
+            UiLayout::Solid(solid) => {solid.size = Ab(text_info.logical_size).into()},
             _ => {},
         }
     }

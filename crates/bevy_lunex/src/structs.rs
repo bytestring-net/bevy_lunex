@@ -115,14 +115,14 @@ pub struct UiNodeBundle<T: Component> {
     /// The corresponding path that leads to the node data in parent UiTree entity.
     pub link: UiLink<T>,
     /// The layout to use when computing this node.
-    pub layout: Layout,
+    pub layout: UiLayout,
 }
 impl <T: Component + Default> Default for UiNodeBundle<T> {
     fn default() -> Self {
         UiNodeBundle {
             marker: T::default(),
             link: UiLink::default(),
-            layout: Layout::default(),
+            layout: UiLayout::default(),
         }
     }
 }
