@@ -10,4 +10,8 @@
 
 [dependencies]
   bevy         = { workspace = true }
+  colored      = { workspace = true }
   lunex_engine = { workspace = true, features = ["bevy"] }
+
+[features]
+  debug = []

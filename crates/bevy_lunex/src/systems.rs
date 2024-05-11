@@ -1,5 +1,7 @@
 use std::marker::PhantomData;
 use bevy::{math::Vec3A, prelude::*, render::primitives::Aabb, text::TextLayoutInfo};
+#[cfg(feature = "debug")]
+use colored::Colorize;
 use lunex_engine::*;
 
 use crate::{Dimension, Element, MovableByCamera, UiContent, UiLink};
@@ -17,6 +19,8 @@ pub fn compute_ui<T:Component, N:Default + Component>(
     mut query: Query<(&Dimension, &mut UiTree<T, N>), (With<UiLink<T>>, Or<(Changed<UiTree<T, N>>, Changed<Dimension>)>)>
 ) {
     for (dimension, mut ui) in &mut query {
+        #[cfg(feature = "debug")]
+        info!("{} - {}", "UiTree".purple().bold(), "Recomputed".underline().bold());
         ui.compute(Rectangle2D::new().with_size(dimension.size).into());
     }
 }
@@ -67,7 +71,7 @@ pub fn debug_print_tree<T:Component, N:Default + Component>(
     uis: Query<&UiTree<T, N>, Changed<UiTree<T, N>>>
 ) {
     for ui in &uis {
-        info!("{}\n{}\n", "UiTree has been changed...", ui.tree("show-hidden"));
+        info!("{}\n{}\n", "Change detected...", ui.tree("show-hidden"));
     }
 }
 
@@ -94,6 +98,8 @@ pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
         for mut dimension in &mut destination {
             // Extract camera size
             if let Some(size) = cam.physical_viewport_size() {
+                #[cfg(feature = "debug")]
+                info!("{} - Received Dimension data from Camera", "UiTree".purple().bold());
                 dimension.size = Vec2::from((size.x as f32, size.y as f32));
             }
         }
@@ -119,6 +125,8 @@ pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
         for mut transform in &mut destination {
             // Extract camera size
             if let Some(size) = cam.physical_viewport_size() {
+                #[cfg(feature = "debug")]
+                info!("{} - Received Transform data from Camera", "UiTree".purple().bold());
                 transform.translation = Vec3::from((size.x as f32 /-2.0, size.y as f32 /2.0, 0.0));
             }
         }
@@ -129,7 +137,7 @@ pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
 // #========================#
 // #=== PIPING FOR NODES ===#
 
-/// This system takes [`Layout`] data and overwrites coresponding [`UiTree`] data. If node is not found, it creates new ones along the path.
+/// This system takes [`UiLayout`] data and overwrites coresponding [`UiTree`] data. If node is not found, it creates new ones along the path.
 /// ## 📦 Types
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
@@ -146,6 +154,8 @@ pub fn send_layout_to_node<T:Component, N:Default + Component>(
                 if let Ok(node) = ui.borrow_or_create_ui_node_mut(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
+                        #[cfg(feature = "debug")]
+                        info!("{} - Received Layout data", link.path.yellow().bold());
                         container.layout = *layout;
                     }
                 }
@@ -171,6 +181,8 @@ pub fn send_stack_to_node<T:Component, N:Default + Component>(
                 if let Ok(node) = ui.borrow_node_mut(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
+                        #[cfg(feature = "debug")]
+                        info!("{} - Received Stack data", link.path.yellow().bold());
                         container.stack = *stack;
                     }
                 }
@@ -196,6 +208,8 @@ pub fn send_content_size_to_node<T:Component, N:Default + Component>(
                 if let Ok(node) = ui.borrow_node_mut(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
+                        #[cfg(feature = "debug")]
+                        info!("{} - Received Content size data", link.path.yellow().bold());
                         container.content_size = content.size;
                     }
                 }
@@ -221,6 +235,8 @@ pub fn fetch_transform_from_node<T:Component, N:Default + Component>(
                 if let Ok(node) = ui.borrow_node(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data() {
+                        #[cfg(feature = "debug")]
+                        info!("{} - Linked {} fetched Transform data", link.path.yellow().bold(), "entity".blue());
                         transform.translation = container.rectangle.pos.invert_y();
                     }
                 }
@@ -247,6 +263,8 @@ pub fn fetch_dimension_from_node<T:Component, N:Default + Component>(
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data() {
                         if dimension.as_ref().size != container.rectangle.size {
+                            #[cfg(feature = "debug")]
+                            info!("{} - Linked {} fetched Dimension data", link.path.yellow().bold(), "entity".blue());
                             dimension.size = container.rectangle.size;
                         }
                     }
@@ -273,6 +291,8 @@ pub fn element_fetch_transform_from_node<T:Component, N:Default + Component>(
                 if let Ok(node) = ui.borrow_node(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data() {
+                        #[cfg(feature = "debug")]
+                        info!("{} - Linked {} fetched Transform data", link.path.yellow().bold(), "element".red());
                         transform.translation = container.rectangle.pos.invert_y();
                         transform.translation.x += container.rectangle.size.x /  2.0;
                         transform.translation.y += container.rectangle.size.y / -2.0;
@@ -470,7 +490,7 @@ impl <T:Component, N:Default + Component> Plugin for UiDebugPlugin<T, N> {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Update, debug_draw_gizmo::<T, N>)
-            .add_systems(Update, debug_print_tree::<T, N>);
+            .add_systems(Update, debug_print_tree::<T, N>.after(compute_ui::<T, N>));
     }
 }
 

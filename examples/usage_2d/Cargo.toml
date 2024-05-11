@@ -28,4 +28,4 @@
 
     "dynamic_linking",
   ] }
-  bevy_lunex   = { workspace = true }
+  bevy_lunex   = { workspace = true, features=["debug"] }
