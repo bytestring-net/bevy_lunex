@@ -33,7 +33,7 @@ impl UiContent {
 
 /// This struct is a string reference to a specific node in a parent [`UiTree`].
 /// Lunex uses this component to locate what data this entity should be working with.
-#[derive(Component, Debug, Default, Clone, PartialEq)]
+#[derive(Component, Debug, Clone, PartialEq)]
 pub struct UiLink<T> {
     pub path: String,
     marker: PhantomData<T>,
@@ -54,6 +54,14 @@ impl <T> UiLink<T> {
     pub fn new() -> Self {
         UiLink {
             path: format!("/"),
+            marker: PhantomData,
+        }
+    }
+}
+impl <T> Default for UiLink<T> {
+    fn default() -> Self {
+        UiLink {
+            path: String::new(),
             marker: PhantomData,
         }
     }
@@ -79,12 +87,12 @@ impl Dimension {
 // #=== MAIN BUNDLES ===#
 
 /// Main bundle for spawning `UiTree` entity
-#[derive(Bundle, Debug, Default, Clone, PartialEq)]
-pub struct UiTreeBundle <M: Default + Component, N: Default + Component, T: Component> {
+#[derive(Bundle, Debug, Clone, PartialEq)]
+pub struct UiTreeBundle <T:Component, N:Default + Component = NoData> {
+    /// Required to be picked up by compute system.
+    pub link: UiLink<T>,
     /// The ui layout data of the entity and it's children.
-    pub tree: UiTree<M, N>,
-    /// The marker component for the ui system.
-    pub marker: T,
+    pub tree: UiTree<T, N>,
     /// The transform of the entity.
     pub transform: Transform,
     /// Contains the ui node size.
@@ -98,11 +106,25 @@ pub struct UiTreeBundle <M: Default + Component, N: Default + Component, T: Comp
     /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering.
     pub view_visibility: ViewVisibility,
 }
-impl <M: Default + Component, N: Default + Component, T: Component + Default> From<UiTree<M, N>> for UiTreeBundle<M, N, T> {
-    fn from(value: UiTree<M, N>) -> Self {
-        UiTreeBundle::<M, N, T> {
+impl <T:Component, N:Default + Component> From<UiTree<T, N>> for UiTreeBundle<T, N> {
+    fn from(value: UiTree<T, N>) -> Self {
+        UiTreeBundle::<T, N> {
             tree: value,
             ..default()
+        }
+    }
+}
+impl <T:Component, N:Default + Component> Default for UiTreeBundle<T, N> {
+    fn default() -> Self {
+        UiTreeBundle {
+            link: Default::default(),
+            tree: Default::default(),
+            transform: Default::default(),
+            dimension: Default::default(),
+            global_transform: Default::default(),
+            visibility: Default::default(),
+            inherited_visibility: Default::default(),
+            view_visibility: Default::default(),
         }
     }
 }
@@ -110,17 +132,14 @@ impl <M: Default + Component, N: Default + Component, T: Component + Default> Fr
 /// Main bundle for spawning `UiNode` entity as a child of `UiTree` entity
 #[derive(Bundle, Debug, Clone, PartialEq)]
 pub struct UiNodeBundle<T: Component> {
-    /// The marker component for the ui system.
-    pub marker: T,
     /// The corresponding path that leads to the node data in parent UiTree entity.
     pub link: UiLink<T>,
     /// The layout to use when computing this node.
     pub layout: UiLayout,
 }
-impl <T: Component + Default> Default for UiNodeBundle<T> {
+impl <T: Component> Default for UiNodeBundle<T> {
     fn default() -> Self {
         UiNodeBundle {
-            marker: T::default(),
             link: UiLink::default(),
             layout: UiLayout::default(),
         }

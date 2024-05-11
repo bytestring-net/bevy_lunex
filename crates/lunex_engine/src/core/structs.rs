@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use crate::{import::*, NiceDisplay, UiStack};
 use bevy::ecs::component::Component;
 use colored::Colorize;
@@ -141,12 +143,16 @@ impl NiceDisplay for Rectangle3D {
 /// You can also not specify the name when creating a node. That means the name will be generated.
 /// The format is as follows `".||#:N"` with `N` being the `.len()` of the `nodes` hashmap.
 /// ## 📦 Types
-/// * Generic `(M)` - Master data schema struct defining what surface data can be stored in [`NodeTree`] for all nodes to share.
+/// * Generic `(T)` - Marker for this UiTree
 /// * Generic `(N)` - Node data schema struct defining what node-specific data can be stored in [`Node`]
 /// ## ⚠️ Warning
 /// Please refrain from manually using `".||#:0"`, `".||#:1"`, `".||#:2"`, _and so on.._ as names or [`NodeGeneralTrait::add_node`] will return errors.
-pub type UiTree<M = NoData, N = NoData> = NodeTree<MasterData<M>, NodeData<N>>;
-
+pub type UiTree<T, N = NoData> = NodeTree<MasterData<T>, NodeData<N>>;
+/* impl <T, N:Default + Component> Default for UiTree<T, N> {
+    fn default() -> Self {
+        UiTree::<T, N>::new("Default UI")
+    }
+} */
 
 /// A struct representing organized data in [`UiTree`].
 pub type UiNode<N = NoData> = Node<NodeData<N>>;
@@ -163,24 +169,24 @@ pub struct NoData;
 /// A struct holding all data appended to [`UiTree`]. Responsible for storing settings, scaling, theme, etc.
 /// Every [`UiTree`] needs to have this to work properly.
 #[derive(Component, Debug, Clone, PartialEq)]
-pub struct MasterData<M: Default + Component> {
-    /// Mandatory data the user can uppend which all nodes have shared access to.
-    pub data: M,
+pub struct MasterData<T> {
+    /// Marker for query filtering
+    pub marker: PhantomData<T>,
     /// Scale of the [`crate::Abs`] unit.
     pub abs_scale: f32,
     /// Default font size for all subnodes to use (Rem unit scaling).
     pub font_size: f32,
 }
-impl <M: Default + Component> Default for MasterData<M> {
+impl <T> Default for MasterData<T> {
     fn default() -> Self {
         MasterData {
-            data: Default::default(),
+            marker: PhantomData,
             abs_scale: 1.0,
             font_size: 16.0,
         }
     }
 }
-impl <M: Default + Component> NiceDisplay for MasterData<M> {
+impl <T> NiceDisplay for MasterData<T> {
     fn to_nicestr(&self) -> String {
         format!("{}", self.abs_scale)
     }
@@ -190,7 +196,7 @@ impl <M: Default + Component> NiceDisplay for MasterData<M> {
 /// A struct holding all data appended to [`UiNode`]. Responsible for storing layout, custom data, cache, etc.
 /// Every [`UiNode`] needs to have this to work properly.
 #[derive(Component, Debug, Default, Clone, PartialEq)]
-pub struct NodeData<N: Default + Component> {
+pub struct NodeData<N:Default + Component> {
     /// Optional data the user can append.
     pub data: Option<N>,
     /// Calculated rectangle from layout.
@@ -209,7 +215,7 @@ impl <N:Default + Component> NodeData<N> {
         NodeData::default()
     }
 }
-impl <N: Default + Component> NiceDisplay for NodeData<N> {
+impl <N:Default + Component> NiceDisplay for NodeData<N> {
     fn to_nicestr(&self) -> String {
         format!("{} {} {}", self.layout.to_nicestr(), "|||".black(), self.rectangle.to_nicestr())
     }

@@ -13,7 +13,7 @@ pub trait UiNodeTreeComputeTrait {
     /// Compute the layout of the [`UiTree`].
     fn compute(&mut self, parent: Rectangle3D);
 }
-impl <M: Default + Component, N: Default + Component> UiNodeTreeComputeTrait for UiTree<M, N> {
+impl <T, N: Default + Component> UiNodeTreeComputeTrait for UiTree<T, N> {
     fn compute(&mut self, parent: Rectangle3D) {
 
         let mut abs_scale = 1.0;
