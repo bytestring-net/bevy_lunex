@@ -171,7 +171,7 @@ pub fn send_layout_to_node<T:Component, N:Default + Component>(
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn send_stack_to_node<T:Component, N:Default + Component>(
     mut uis: Query<(&mut UiTree<T, N>, &Children)>,
-    query: Query<(&UiLink<T>, &UiStack), Changed<UiLayout>>,
+    query: Query<(&UiLink<T>, &UiStack), Changed<UiStack>>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -198,7 +198,7 @@ pub fn send_stack_to_node<T:Component, N:Default + Component>(
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn send_content_size_to_node<T:Component, N:Default + Component>(
     mut uis: Query<(&mut UiTree<T, N>, &Children)>,
-    query: Query<(&UiLink<T>, &UiContent), Changed<UiLayout>>,
+    query: Query<(&UiLink<T>, &UiContent), Changed<UiContent>>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
