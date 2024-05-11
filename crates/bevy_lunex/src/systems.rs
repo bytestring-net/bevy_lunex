@@ -393,18 +393,29 @@ pub fn element_text_size_scale_fit_to_dimension<T: Component>(
 // #===============#
 // #=== PLUGINS ===#
 
+/// System set for [`UiPlugin`]
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum UiSystems {
+    /// Systems where we modify data pre-computation
+    Modify,
+    /// Systems that send component data to UiTree
+    Send,
+    /// The computation
+    Compute,
+    /// Systems that fetch component data from UiTree
+    Fetch,
+    /// Systems that process new data from UiTree
+    Process,
+}
+
 /// Plugin implementing all ui logic for the specified generic types.
 /// ## 📦 Types
-/// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// 
 /// ## 🛠️ Example
 /// *1. Define the types used*
 /// ```
-///  #[derive(Component, Default)]
-///  struct MyMasterData { theme: String } // What data will each tree hold
-/// 
 ///  #[derive(Component, Default)]
 ///  struct MyNodeData { value: i32 } // What data will each node contain
 /// 
@@ -415,15 +426,14 @@ pub fn element_text_size_scale_fit_to_dimension<T: Component>(
 /// ```
 ///  App::new()
 ///      .add_plugins(DefaultPlugins)
-///      .add_plugins(UiPlugin::<MyMasterData, MyNodeData, MyUiWidget>::new())
+///      .add_plugins(UiPlugin::<MyUiWidget, MyNodeData>::new())
 ///      .run();
 /// ```
 /// *3. Use the [`UiTree`] freely*
 /// ```
 ///#  fn setup(mut commands: Commands) {
 ///   commands.spawn((
-///      MyUiWidget,
-///      UiTree::<MyMasterData, MyNodeData>::new("MyWidget")
+///      UiTree::<MyUiWidget, MyNodeData>::new("MyWidget")
 ///   ));
 ///#  }
 /// ```
@@ -437,37 +447,46 @@ impl <T:Component, N:Default + Component> UiPlugin<T, N> {
 impl <T:Component, N:Default + Component> Plugin for UiPlugin<T, N> {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Update, element_text_size_to_layout::<T>.before(send_layout_to_node::<T, N>))
+            .add_systems(Update, (
+                element_text_size_to_layout::<T>,
+                element_text_size_to_content::<T>,
+                fetch_dimension_from_camera::<T, N>,
+                fetch_transform_from_camera::<T, N>,
+            ).in_set(UiSystems::Modify).before(UiSystems::Send))
 
-            .add_systems(Update, send_content_size_to_node::<T, N>.before(compute_ui::<T, N>))
-            .add_systems(Update, send_stack_to_node::<T, N>.before(compute_ui::<T, N>))
-            .add_systems(Update, send_layout_to_node::<T, N>.before(compute_ui::<T, N>))
+            .add_systems(Update, (
+                send_content_size_to_node::<T, N>,
+                send_stack_to_node::<T, N>,
+                send_layout_to_node::<T, N>,
+            ).in_set(UiSystems::Send).before(UiSystems::Compute))
 
-            .add_systems(Update, (fetch_dimension_from_camera::<T, N>, fetch_transform_from_camera::<T, N>).before(compute_ui::<T, N>))
-            .add_systems(Update, compute_ui::<T, N>)
+            .add_systems(Update, (
+                compute_ui::<T, N>.in_set(UiSystems::Compute)
+            ).in_set(UiSystems::Compute))
 
-            .add_systems(Update, fetch_transform_from_node::<T, N>.after(compute_ui::<T, N>))
-            .add_systems(Update, (fetch_dimension_from_node::<T, N>, element_reconstruct_mesh::<T>).chain().after(compute_ui::<T, N>))
-            .add_systems(Update, element_fetch_transform_from_node::<T, N>.after(compute_ui::<T, N>))
-            .add_systems(Update, element_sprite_size_from_dimension::<T>.after(compute_ui::<T, N>))
-            .add_systems(Update, element_text_size_scale_fit_to_dimension::<T>.after(compute_ui::<T, N>))
-            //.add_systems(Update, element_text_size_to_content::<T>.before(send_content_size_to_node::<T, N>))
+            .add_systems(Update, (
+                fetch_transform_from_node::<T, N>,
+                fetch_dimension_from_node::<T, N>,
+                element_fetch_transform_from_node::<T, N>,
+            ).in_set(UiSystems::Fetch).after(UiSystems::Compute))
+
+            .add_systems(Update, (
+                element_sprite_size_from_dimension::<T>,
+                element_text_size_scale_fit_to_dimension::<T>,
+                element_reconstruct_mesh::<T>,
+            ).in_set(UiSystems::Process).after(UiSystems::Fetch))
             ;
     }
 }
 
 /// Plugin implementing all debug ui logic for the specified generic types.
 /// ## 📦 Types
-/// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// 
 /// ## 🛠️ Example
 /// *1. Define the types used*
 /// ```
-///  #[derive(Component, Default)]
-///  struct MyMasterData { theme: String } // What data will each tree hold
-/// 
 ///  #[derive(Component, Default)]
 ///  struct MyNodeData { value: i32 } // What data will each node contain
 /// 
@@ -478,15 +497,14 @@ impl <T:Component, N:Default + Component> Plugin for UiPlugin<T, N> {
 /// ```
 ///  App::new()
 ///      .add_plugins(DefaultPlugins)
-///      .add_plugins(UiPlugin::<MyMasterData, MyNodeData, MyUiWidget>::new())
+///      .add_plugins(UiPlugin::<MyUiWidget, MyNodeData>::new())
 ///      .run();
 /// ```
 /// *3. Use the [`UiTree`] freely*
 /// ```
 ///#  fn setup(mut commands: Commands) {
 ///   commands.spawn((
-///      MyUiWidget,
-///      UiTree::<MyMasterData, MyNodeData>::new("MyWidget")
+///      UiTree::<MyUiWidget, MyNodeData>::new("MyWidget")
 ///   ));
 ///#  }
 /// ```
@@ -501,10 +519,11 @@ impl <T:Component, N:Default + Component> Plugin for UiDebugPlugin<T, N> {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Update, debug_draw_gizmo::<T, N>)
-            .add_systems(Update, debug_print_tree::<T, N>.after(compute_ui::<T, N>));
+            .add_systems(Update, debug_print_tree::<T, N>.after(UiSystems::Compute));
     }
 }
 
+/// Plugin implementing general logic.
 pub struct UiGeneralPlugin;
 impl Plugin for UiGeneralPlugin {
     fn build(&self, app: &mut App) {
