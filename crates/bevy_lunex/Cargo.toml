@@ -7,6 +7,7 @@
   repository.workspace = true
   keywords.workspace   = true
   categories.workspace = true
+  description = "Blazingly fast path based retained layout engine for Bevy entities, built around vanilla Bevy ECS"
 
 [dependencies]
   bevy         = { workspace = true }

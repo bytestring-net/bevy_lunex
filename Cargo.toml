@@ -4,6 +4,11 @@
     "crates/*",
     "examples/*",
   ]
+  exclude = [
+    "promo/*",
+    ".gitignore",
+    ".vscode",
+  ]
 
 [profile.dev]
   opt-level = 1
