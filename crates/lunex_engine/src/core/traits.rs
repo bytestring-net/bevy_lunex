@@ -80,7 +80,7 @@ pub trait UiNodeCreationTrait<N:Default + Component> {
     /// * Use [`UiNodeCreationTrait::obtain_or_create_ui_node_mut`] for direct retrieval on this node `(no recursion)`
     fn borrow_or_create_ui_node_mut(&mut self, path: impl Borrow<str>) -> Result<&mut UiNode<N>, NodeError>;  
 }
-impl <M: Default + Component, N: Default + Component> UiNodeCreationTrait<N> for UiTree<M, N> {
+impl <T, N: Default + Component> UiNodeCreationTrait<N> for UiTree<T, N> {
     fn make_ui_node(&mut self, name: impl Borrow<str>) -> Result<String, NodeError>{
         self.node.make_ui_node(name)
     }
@@ -201,7 +201,7 @@ pub trait UiNodeDataTrait<N> {
     /// Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
     fn borrow_ui_data_mut(&mut self, path: impl Borrow<str>) -> Result<Option<&mut N>, NodeError>;
 }
-impl <M: Default + Component, N: Default + Component> UiNodeDataTrait<N> for UiTree<M, N> {
+impl <T, N: Default + Component> UiNodeDataTrait<N> for UiTree<T, N> {
     fn add_ui_data(&mut self, data: N) -> Option<N> {
         self.node.add_ui_data(data)
     }
@@ -268,9 +268,9 @@ pub trait UiNodeTreeInitTrait {
     /// Creates new [`UiTree`].
     fn new(name: impl Borrow<str>) -> Self;
 }
-impl <M: Default + Component, N: Default + Component> UiNodeTreeInitTrait for UiTree<M, N> {
+impl <T, N: Default + Component> UiNodeTreeInitTrait for UiTree<T, N> {
     fn new(name: impl Borrow<str>) -> Self {
-        let mut tree: UiTree<M, N> = NodeTreeInitTrait::new(name);
+        let mut tree: UiTree<T, N> = NodeTreeInitTrait::new(name);
         tree.add_topdata(MasterData::default());
         tree.add_data(NodeData::default());
         tree

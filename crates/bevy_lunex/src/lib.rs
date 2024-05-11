@@ -1,7 +1,27 @@
 #![doc = include_str!("../../../README.md")]
 
+use bevy::prelude::*;
+
+
+// #======================#
+// #=== GENERAL PLUGIN ===#
+
+/// Plugin implementing general logic.
+pub struct UiGeneralPlugin;
+impl Plugin for UiGeneralPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .add_plugins(crate::CursorPlugin)
+            .add_plugins(crate::UiEventPlugin);
+    }
+}
+
+
 // #======================#
 // #=== PRELUDE EXPORT ===#
+
+pub mod events;
+pub use events::*;
 
 pub mod interaction;
 pub use interaction::*;
@@ -18,8 +38,10 @@ pub use systems::*;
 pub mod prelude {
 
     pub use super::Cursor2d;
+    pub use super::events::{SetColor, SetUiLayout};
 
     // BEVY-LUNEX SPECIFIC
+    pub use super::UiGeneralPlugin;
     pub use super::systems::*;
     pub use super::structs::*;
 

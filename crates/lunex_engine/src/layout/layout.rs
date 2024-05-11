@@ -8,35 +8,151 @@ use crate::{NiceDisplay, Rectangle2D, UiValue, UiValueEvaluate, Ab, Rl};
 // #===================#
 // #=== LAYOUT ENUM ===#
 
-/// **Layout** - Component that defines where should a node be located.
+/// **UiLayout** - Component that defines where should a node be located.
 /// ## 🛠️ Example
 /// ```
 /// # use lunex_engine::{UiLayout, Rl};
-/// let layout: Layout = UiLayout::Window::new().size(Rl(50.0)).pack();
-/// let layout: Layout = UiLayout::Window::new().size(Rl(50.0)).pack();
-/// let layout: Layout = UiLayout::Window::new().size(Rl(50.0)).pack();
+/// let layout: UiLayout = UiLayout::boundary().size(Rl(50.0)).pack();
+/// let layout: UiLayout = UiLayout::window().size(Rl(50.0)).pack();
+/// let layout: UiLayout = UiLayout::solid().size(Rl(50.0)).pack();
 /// ```
 /// The expected range is `-1.0` to `1.0`, but you can extrapolate.
 #[cfg_attr(feature = "bevy", derive(Component))]
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Layout {
+pub enum UiLayout {
     Boundary(Boundary),
     Window(Window),
     Solid(Solid),
     Div(Div),
 }
-impl Default for Layout {
+impl UiLayout {
+
+    /// **Boundary** - Declarative layout type that is defined by its top-left corner and bottom-right corner.
+    /// Nodes with this layout are not included in the ui flow.
+    /// ## 🛠️ Example
+    /// ```
+    /// # use lunex_engine::{UiLayout, Rl};
+    /// let layout: UiLayout = UiLayout::boundary().pos1(Rl(20.0)).pos2(Rl(80.0)).pack();
+    /// ```
+    pub fn boundary() -> Boundary {
+        Boundary::new()
+    }
+    
+    /// **Window** - Declarative layout type that is defined by its size and position.
+    /// Nodes with this layout are not included in the ui flow.
+    /// ## 🛠️ Example
+    /// ```
+    /// # use lunex_engine::{UiLayout, Ab, Rl};
+    /// let layout: UiLayout = UiLayout::window().pos(Ab(100.0)).size(Rl(50.0)).pack();
+    /// ```
+    pub fn window() -> Window {
+        Window::new()
+    }
+    
+    /// **Window** (full) - Declarative layout type that is defined by its size and position.
+    /// Nodes with this layout are not included in the ui flow.
+    /// ## 🛠️ Example
+    /// ```
+    /// # use lunex_engine::{UiLayout, Rl};
+    /// let layout: UiLayout = UiLayout::window().size(Rl(100.0)).pack(); // Same as UiLayout::window_full()
+    /// ```
+    pub fn window_full() -> Window {
+        Window::full()
+    }
+    
+    /// **Solid** - Declarative layout type that is defined by its width and height ratio.
+    /// Scales in a way to fit itself inside parent container. It never deforms.
+    /// Nodes with this layout are not included in the ui flow.
+    /// ## 🛠️ Example
+    /// ```
+    /// # use lunex_engine::UiLayout;
+    /// let layout: UiLayout = UiLayout::solid().size((4.0, 3.0)).align_x(-0.8).pack();
+    /// ```
+    pub fn solid() -> Solid {
+        Solid::new()
+    }
+    
+    /// **Div** - Parametric layout type that is defined by margin, border and padding. Its location and size
+    /// is based on the surrounding nodes, like HTML. It is also the only node layout that uses the [`Sp`] unit.
+    /// You can use this unit for alignment and justification.
+    /// ## 🛠️ Example
+    /// ```
+    /// # use lunex_engine::{UiLayout, Sp};
+    /// let layout: UiLayout = UiLayout::new().pad_x(2.0).margin_y(Sp(1.0)).br().pack();
+    /// ```
+    pub fn div() -> Div {
+        Div::new()
+    }
+
+    /// Unwrap the type, panic if not Boundary variant
+    pub fn expect_boundary(&self) -> &Boundary {
+        match self {
+            UiLayout::Boundary(b) => b,
+            _ => panic!("A different layout type than expected! Got {}, expected Boundary", self.to_nicestr())
+        }
+    }
+    /// Unwrap the type, panic if not Boundary variant
+    pub fn expect_boundary_mut(&mut self) -> &mut Boundary {
+        match self {
+            UiLayout::Boundary(b) => b,
+            _ => panic!("A different layout type than expected! Got {}, expected Boundary", self.to_nicestr())
+        }
+    }
+    /// Unwrap the type, panic if not Window variant
+    pub fn expect_window(&self) -> &Window {
+        match self {
+            UiLayout::Window(w) => w,
+            _ => panic!("A different layout type than expected! Got {}, expected Window", self.to_nicestr())
+        }
+    }
+    /// Unwrap the type, panic if not Window variant
+    pub fn expect_window_mut(&mut self) -> &mut Window {
+        match self {
+            UiLayout::Window(w) => w,
+            _ => panic!("A different layout type than expected! Got {}, expected Window", self.to_nicestr())
+        }
+    }
+    /// Unwrap the type, panic if not Solid variant
+    pub fn expect_solid(&self) -> &Solid {
+        match self {
+            UiLayout::Solid(s) => s,
+            _ => panic!("A different layout type than expected! Got {}, expected Solid", self.to_nicestr())
+        }
+    }
+    /// Unwrap the type, panic if not Solid variant
+    pub fn expect_solid_mut(&mut self) -> &mut Solid {
+        match self {
+            UiLayout::Solid(s) => s,
+            _ => panic!("A different layout type than expected! Got {}, expected Solid", self.to_nicestr())
+        }
+    }
+    /// Unwrap the type, panic if not Div variant
+    pub fn expect_div(&self) -> &Div {
+        match self {
+            UiLayout::Div(d) => d,
+            _ => panic!("A different layout type than expected! Got {}, expected Div", self.to_nicestr())
+        }
+    }
+    /// Unwrap the type, panic if not Div variant
+    pub fn expect_div_mut(&mut self) -> &mut Div {
+        match self {
+            UiLayout::Div(d) => d,
+            _ => panic!("A different layout type than expected! Got {}, expected Div", self.to_nicestr())
+        }
+    }
+}
+impl Default for UiLayout {
     fn default() -> Self {
         Window::new().size(Rl(100.0)).into()
     }
 }
-impl NiceDisplay for Layout {
+impl NiceDisplay for UiLayout {
     fn to_nicestr(&self) -> String {
         match self {
-            Layout::Boundary(layout) => format!("{} {}", "Boundary".bold().bright_cyan(), layout.to_nicestr()),
-            Layout::Solid(layout) => format!("{} {}", "Solid".bold().bright_cyan(), layout.to_nicestr()),
-            Layout::Window(layout) => format!("{} {}", "Window".bold().bright_cyan(), layout.to_nicestr()),
-            Layout::Div(layout) => format!("{} {}", "Div".bold().bright_cyan(), layout.to_nicestr()),
+            UiLayout::Boundary(layout) => format!("{} {}", "Boundary".bold().bright_cyan(), layout.to_nicestr()),
+            UiLayout::Solid(layout) => format!("{} {}", "Solid".bold().bright_cyan(), layout.to_nicestr()),
+            UiLayout::Window(layout) => format!("{} {}", "Window".bold().bright_cyan(), layout.to_nicestr()),
+            UiLayout::Div(layout) => format!("{} {}", "Div".bold().bright_cyan(), layout.to_nicestr()),
         }
     }
 }
@@ -211,7 +327,7 @@ impl NiceDisplay for Sizing {
 /// ## 🛠️ Example
 /// ```
 /// # use lunex_engine::{Boundary, Rl};
-/// let layout: Layout = Boundary::new().pos1(Rl(20.0)).pos2(Rl(80.0)).pack();
+/// let layout: UiLayout = Boundary::new().pos1(Rl(20.0)).pos2(Rl(80.0)).pack();
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Boundary {
@@ -258,6 +374,30 @@ impl Boundary {
         self.pos2.set_y(y);
         self
     }
+    /// Sets the position of the top-left corner to a new value.
+    pub fn set_pos1(&mut self, pos: impl Into<UiValue<Vec2>>) {
+        self.pos1 = pos.into();
+    }
+    /// Sets the position of the bottom-right corner to a new value.
+    pub fn set_pos2(&mut self, pos: impl Into<UiValue<Vec2>>) {
+        self.pos2 = pos.into();
+    }
+    /// Sets the x position of the top-left corner to a new value.
+    pub fn set_x1(&mut self, x: impl Into<UiValue<f32>>) {
+        self.pos1.set_x(x);
+    }
+    /// Sets the y position of the top-left corner to a new value.
+    pub fn set_y1(&mut self, y: impl Into<UiValue<f32>>) {
+        self.pos1.set_y(y);
+    }
+    /// Sets the x position of the bottom-right corner to a new value.
+    pub fn set_x2(&mut self, x: impl Into<UiValue<f32>>) {
+        self.pos2.set_x(x);
+    }
+    /// Sets the y position of the bottom-right corner to a new value.
+    pub fn set_y2(&mut self, y: impl Into<UiValue<f32>>) {
+        self.pos2.set_y(y);
+    }
 
     /// Computes the layout based on given parameters.
     pub(crate) fn compute(&self, parent: Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
@@ -268,14 +408,14 @@ impl Boundary {
             size: pos2 - pos1,
         }
     }
-    /// Packs the struct into Layout.
-    pub fn pack(self) -> Layout {
+    /// Packs the struct into UiLayout.
+    pub fn pack(self) -> UiLayout {
         self.into()
     }
 }
-impl Into<Layout> for Boundary {
-    fn into(self) -> Layout {
-        Layout::Boundary(self)
+impl Into<UiLayout> for Boundary {
+    fn into(self) -> UiLayout {
+        UiLayout::Boundary(self)
     }
 }
 impl NiceDisplay for Boundary {
@@ -291,7 +431,7 @@ impl NiceDisplay for Boundary {
 /// ## 🛠️ Example
 /// ```
 /// # use lunex_engine::{Window, Ab, Rl};
-/// let layout: Layout = Window::new().pos(Ab(100.0)).size(Rl(50.0)).pack();
+/// let layout: UiLayout = Window::new().pos(Ab(100.0)).size(Rl(50.0)).pack();
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Window {
@@ -359,6 +499,34 @@ impl Window {
         self.anchor = anchor.into();
         self
     }
+    /// Sets the position to a new value.
+    pub fn set_pos(&mut self, pos: impl Into<UiValue<Vec2>>){
+        self.pos = pos.into();
+    }
+    /// Sets the x position to a new value.
+    pub fn set_x(&mut self, x: impl Into<UiValue<f32>>){
+        self.pos.set_x(x);
+    }
+    /// Sets the y position to a new value.
+    pub fn set_y(&mut self, y: impl Into<UiValue<f32>>){
+        self.pos.set_y(y);
+    }
+    /// Sets the size to a new value.
+    pub fn set_size(&mut self, size: impl Into<UiValue<Vec2>>){
+        self.size = size.into();
+    }
+    /// Sets the width to a new value.
+    pub fn set_width(&mut self, width: impl Into<UiValue<f32>>){
+        self.size.set_x(width);
+    }
+    /// Sets the height to a new value.
+    pub fn set_height(&mut self, height: impl Into<UiValue<f32>>){
+        self.size.set_y(height);
+    }
+    /// Sets the anchor to a new value.
+    pub fn set_anchor(&mut self, anchor: impl Into<Anchor>){
+        self.anchor = anchor.into();
+    }
 
     /// Computes the layout based on given parameters.
     pub(crate) fn compute(&self, parent: Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
@@ -369,14 +537,14 @@ impl Window {
             size,
         }
     }
-    /// Packs the struct into Layout.
-    pub fn pack(self) -> Layout {
+    /// Packs the struct into UiLayout.
+    pub fn pack(self) -> UiLayout {
         self.into()
     }
 }
-impl Into<Layout> for Window {
-    fn into(self) -> Layout {
-        Layout::Window(self)
+impl Into<UiLayout> for Window {
+    fn into(self) -> UiLayout {
+        UiLayout::Window(self)
     }
 }
 impl NiceDisplay for Window {
@@ -393,7 +561,7 @@ impl NiceDisplay for Window {
 /// ## 🛠️ Example
 /// ```
 /// # use lunex_engine::Solid;
-/// let layout: Layout = Solid::new().size((4.0, 3.0)).align_x(-0.8).pack();
+/// let layout: UiLayout = Solid::new().size((4.0, 3.0)).align_x(-0.8).pack();
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Solid {
@@ -442,9 +610,33 @@ impl Solid {
         self
     }
     /// Replaces the scaling mode with a new value.
-    pub fn scaling(mut self, cover: Scaling) -> Self {
-        self.scaling = cover;
+    pub fn scaling(mut self, scaling: Scaling) -> Self {
+        self.scaling = scaling;
         self
+    }
+    /// Sets the size to a new value.
+    pub fn set_size(&mut self, size: impl Into<UiValue<Vec2>>) {
+        self.size = size.into();
+    }
+    /// Sets the width to a new value.
+    pub fn set_width(&mut self, width: impl Into<UiValue<f32>>) {
+        self.size.set_x(width);
+    }
+    /// Sets the height to a new value.
+    pub fn set_height(&mut self, height: impl Into<UiValue<f32>>) {
+        self.size.set_y(height);
+    }
+    /// Sets the x alignment to a new value.
+    pub fn set_align_x(&mut self, align: impl Into<Align>) {
+        self.align_x = align.into();
+    }
+    /// Sets the y alignment to a new value.
+    pub fn set_align_y(&mut self, align: impl Into<Align>) {
+        self.align_y = align.into();
+    }
+    /// Sets the scaling mode to a new value.
+    pub fn set_scaling(&mut self, scaling: Scaling) {
+        self.scaling = scaling;
     }
 
     /// Computes the layout based on given parameters.
@@ -473,14 +665,14 @@ impl Solid {
             size: (computed_width, computed_height).into(),
         }
     }
-    /// Packs the struct into Layout.
-    pub fn pack(self) -> Layout {
+    /// Packs the struct into UiLayout.
+    pub fn pack(self) -> UiLayout {
         self.into()
     }
 }
-impl Into<Layout> for Solid {
-    fn into(self) -> Layout {
-        Layout::Solid(self)
+impl Into<UiLayout> for Solid {
+    fn into(self) -> UiLayout {
+        UiLayout::Solid(self)
     }
 }
 impl NiceDisplay for Solid {
@@ -497,7 +689,7 @@ impl NiceDisplay for Solid {
 /// ## 🛠️ Example
 /// ```
 /// # use lunex_engine::{Div, Sp};
-/// let layout: Layout = Div::new().pad_x(2.0).margin_y(Sp(1.0)).br().pack();
+/// let layout: UiLayout = Div::new().pad_x(2.0).margin_y(Sp(1.0)).br().pack();
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Div {
@@ -716,16 +908,165 @@ impl Div {
         self.br = true;
         self
     }
+    /// Sets the width to a new value.
+    pub fn set_width(&mut self, sizing: Sizing) {
+        self.width = sizing;
+    }
+    /// Sets the height to a new value.
+    pub fn set_height(&mut self, sizing: Sizing) {
+        self.height = sizing;
+    }
+    /// Sets the minimal size to a new value.
+    pub fn set_min(&mut self, size: impl Into<UiValue<Vec2>>) {
+        self.min_size = Some(size.into());
+    }
+    /// Sets the minimal width to a new value.
+    pub fn set_min_width(&mut self, size: impl Into<UiValue<f32>>) {
+        if let Some(mut minsize) = self.min_size {
+            minsize.set_x(size.into())
+        } else {
+            self.min_size = Some(UiValue::<Vec2>::new().with_x(size.into()));
+        }
+    }
+    /// Sets the minimal height to a new value.
+    pub fn set_min_height(&mut self, size: impl Into<UiValue<f32>>) {
+        if let Some(mut minsize) = self.min_size {
+            minsize.set_y(size.into())
+        } else {
+            self.min_size = Some(UiValue::<Vec2>::new().with_y(size.into()));
+        }
+    }
+    /// Sets the maximum size to a new value.
+    pub fn set_max(&mut self, size: impl Into<UiValue<Vec2>>) {
+        self.max_size = Some(size.into());
+    }
+    /// Sets the maximal width to a new value.
+    pub fn set_max_width(&mut self, size: impl Into<UiValue<f32>>) {
+        if let Some(mut maxsize) = self.max_size {
+            maxsize.set_x(size.into())
+        } else {
+            self.max_size = Some(UiValue::<Vec2>::new().with_x(size.into()));
+        }
+    }
+    /// Sets the maximal height to a new value.
+    pub fn set_max_height(&mut self, size: impl Into<UiValue<f32>>) {
+        if let Some(mut maxsize) = self.max_size {
+            maxsize.set_y(size.into())
+        } else {
+            self.max_size = Some(UiValue::<Vec2>::new().with_y(size.into()));
+        }
+    }
+    /// Sets the padding to a new value.
+    pub fn set_pad(&mut self, pad: impl Into<UiValue<Vec4>>) {
+        self.padding = pad.into();
+    }
+    /// Sets the horizontal padding to a new value.
+    pub fn set_pad_x(&mut self, pad: impl Into<UiValue<Vec2>>) {
+        let pad: UiValue<Vec2> = pad.into();
+        let val = pad.get_x();
+        self.padding.set_x(val);
+        self.padding.set_z(val);
+    }
+    /// Sets the vertical padding to a new value.
+    pub fn set_pad_y(&mut self, pad: impl Into<UiValue<Vec2>>) {
+        let pad: UiValue<Vec2> = pad.into();
+        let val = pad.get_y();
+        self.padding.set_y(val);
+        self.padding.set_w(val);
+    }
+    /// Sets the left padding to a new value.
+    pub fn set_pad_l(&mut self, pad: impl Into<UiValue<f32>>) {
+        self.padding.set_x(pad);
+    }
+    /// Sets the top padding to a new value.
+    pub fn set_pad_t(&mut self, pad: impl Into<UiValue<f32>>) {
+        self.padding.set_y(pad);
+    }
+    /// Sets the right padding to a new value.
+    pub fn set_pad_r(&mut self, pad: impl Into<UiValue<f32>>) {
+        self.padding.set_z(pad);
+    }
+    /// Sets the bottom padding to a new value.
+    pub fn set_pad_b(&mut self, pad: impl Into<UiValue<f32>>) {
+        self.padding.set_w(pad);
+    }
+    /// Sets the border to a new value.
+    pub fn set_border(&mut self, border: impl Into<UiValue<Vec4>>) {
+        self.border = border.into();
+    }
+    /// Sets the horizontal border to a new value.
+    pub fn set_border_x(&mut self, border: impl Into<UiValue<Vec2>>) {
+        let border: UiValue<Vec2> = border.into();
+        let val = border.get_x();
+        self.border.set_x(val);
+        self.border.set_z(val);
+    }
+    /// Sets the vertical border to a new value.
+    pub fn set_border_y(&mut self, border: impl Into<UiValue<Vec2>>) {
+        let border: UiValue<Vec2> = border.into();
+        let val = border.get_y();
+        self.border.set_y(val);
+        self.border.set_w(val);
+    }
+    /// Sets the left border to a new value.
+    pub fn set_border_l(&mut self, border: impl Into<UiValue<f32>>) {
+        self.border.set_x(border);
+    }
+    /// Sets the top border to a new value.
+    pub fn set_border_t(&mut self, border: impl Into<UiValue<f32>>) {
+        self.border.set_y(border);
+    }
+    /// Sets the right border to a new value.
+    pub fn set_border_r(&mut self, border: impl Into<UiValue<f32>>) {
+        self.border.set_z(border);
+    }
+    /// Sets the bottom border to a new value.
+    pub fn set_border_b(&mut self, border: impl Into<UiValue<f32>>) {
+        self.border.set_w(border);
+    }
+    /// Sets the margin to a new value.
+    pub fn set_margin(&mut self, margin: impl Into<UiValue<Vec4>>) {
+        self.margin = margin.into();
+    }
+    /// Sets the horizontal margin to a new value.
+    pub fn set_margin_x(&mut self, margin: impl Into<UiValue<Vec2>>) {
+        let margin: UiValue<Vec2> = margin.into();
+        let val = margin.get_x();
+        self.margin.set_x(val);
+        self.margin.set_z(val);
+    }
+    /// Sets the vertical margin to a new value.
+    pub fn set_margin_y(&mut self, margin: impl Into<UiValue<Vec2>>) {
+        let margin: UiValue<Vec2> = margin.into();
+        let val = margin.get_y();
+        self.margin.set_y(val);
+        self.margin.set_w(val);
+    }
+    /// Sets the left margin to a new value.
+    pub fn set_margin_l(&mut self, margin: impl Into<UiValue<f32>>) {
+        self.margin.set_x(margin);
+    }
+    /// Sets the top margin to a new value.
+    pub fn set_margin_t(&mut self, margin: impl Into<UiValue<f32>>) {
+        self.margin.set_y(margin);
+    }
+    /// Sets the right margin to a new value.
+    pub fn set_margin_r(&mut self, margin: impl Into<UiValue<f32>>) {
+        self.margin.set_z(margin);
+    }
+    /// Sets the bottom margin to a new value.
+    pub fn set_margin_b(&mut self, margin: impl Into<UiValue<f32>>) {
+        self.margin.set_w(margin);
+    }
 
-
-    /// Packs the struct into Layout
-    pub fn pack(self) -> Layout {
+    /// Packs the struct into UiLayout
+    pub fn pack(self) -> UiLayout {
         self.into()
     }
 }
-impl Into<Layout> for Div {
-    fn into(self) -> Layout {
-        Layout::Div(self)
+impl Into<UiLayout> for Div {
+    fn into(self) -> UiLayout {
+        UiLayout::Div(self)
     }
 }
 impl NiceDisplay for Div {

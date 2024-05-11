@@ -47,7 +47,7 @@ Bevy_Lunex is built on a simple concept: to use Bevy's ECS as the foundation for
 First, we need to define a component, that we will use to mark all entities that will belong to our ui system.
 
 ```rust
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct MyUiSystem;
 ```
 
@@ -57,7 +57,7 @@ Then we need to add `UiPlugin` with our marker component. The `NoData` generics 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(UiPlugin::<NoData, NoData, MyUiSystem>::new())
+        .add_plugins(UiPlugin::<MyUiSystem>::new())
         .run();
 }
 ```
@@ -78,7 +78,7 @@ Now we should create our entity with the UI system. The base componets are `UiTr
 
 ```rust
 commands.spawn((
-    UiTreeBundle::<NoData, NoData, MyUiSystem> {
+    UiTreeBundle::<MyUiSystem> {
         tree: UiTree::new("MyUiSystem"),
         ..default()
     },
@@ -88,20 +88,18 @@ commands.spawn((
 });
 ```
 
-Now, any entity with `MyUiSystem` + `UiLayout` + `UiLink` spawned as a child of the `UiTree` will be managed as a UI entity. If it has a `Transform` component, it will get aligned based on the `UiLayout` calculations taking place in the parent `UiTree`. If it has a `Dimension` component then its size will also get updated by the `UiTree` output. This allows you to create your own systems reacting to changes in `Dimension` and `Transform` components.
+Now, any entity with `UiLayout` + `UiLink` spawned as a child of the `UiTree` will be managed as a UI entity. If it has a `Transform` component, it will get aligned based on the `UiLayout` calculations taking place in the parent `UiTree`. If it has a `Dimension` component then its size will also get updated by the `UiTree` output. This allows you to create your own systems reacting to changes in `Dimension` and `Transform` components.
 
 You can add a `UiImage2dBundle` to the entity to add images to your widgets. Or you can add another `UiTree` as a child, which will use the computed size output in `Dimension` component instead of a `Camera` piping the size to it.
 
 ```rust
 ui.spawn((
-    MyUiSystem,
-    UiLink::path("Root"),
+    UiLink::<MyUiSystem>::path("Root"),
     UiLayout::Window::FULL.pos(Ab(20.0)).size(Rl(100.0) - Ab(40.0)).pack(),
 ));
 
 ui.spawn((
-    MyUiSystem,
-    UiLink::path("Root/Rectangle"),
+    UiLink::<MyUiSystem>::path("Root/Rectangle"),
     UiLayout::Solid::new().size(Ab((1920.0, 1080.0))).pack(),
     UiImage2dBundle::from(assets.load("background.png")),
 ));

@@ -52,22 +52,23 @@ impl Cursor2d {
 }
 
 pub fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut query: Query<(&Cursor2d, &mut Transform, &mut Visibility)>) {
-    let mut window = windows.single_mut();
-    for (cursor, mut transform, mut visibility) in &mut query {
+    if let Ok(mut window) = windows.get_single_mut() {
+        for (cursor, mut transform, mut visibility) in &mut query {
 
-        window.cursor.visible = cursor.native_cursor;
+            window.cursor.visible = cursor.native_cursor;
 
-        match window.cursor_position() {
-            Some(position) => {
+            match window.cursor_position() {
+                Some(position) => {
 
-                let sprite_offset = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).1;
+                    let sprite_offset = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).1;
 
-                transform.translation.x = position.x - window.width()*0.5 - sprite_offset.x * transform.scale.x;
-                transform.translation.y = -(position.y - window.height()*0.5 - sprite_offset.y * transform.scale.y);
-                *visibility = Visibility::Visible;
-            }
-            None => {
-                *visibility = Visibility::Hidden;
+                    transform.translation.x = position.x - window.width()*0.5 - sprite_offset.x * transform.scale.x;
+                    transform.translation.y = -(position.y - window.height()*0.5 - sprite_offset.y * transform.scale.y);
+                    *visibility = Visibility::Visible;
+                }
+                None => {
+                    *visibility = Visibility::Hidden;
+                }
             }
         }
     }
@@ -88,12 +89,16 @@ pub fn cursor_update_texture(mut query: Query<(&Cursor2d, &mut TextureAtlas)>) {
     }
 }
 
+
+// #==============#
+// #=== PLUGIN ===#
+
 pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(PreUpdate, cursor_preupdate)
-            .add_systems(Update, cursor_update)
+            .add_systems(PostUpdate, cursor_update)
             .add_systems(PostUpdate, cursor_update_texture);
     }
 }

@@ -1,5 +1,7 @@
 use std::marker::PhantomData;
 use bevy::{math::Vec3A, prelude::*, render::primitives::Aabb, text::TextLayoutInfo};
+#[cfg(feature = "debug")]
+use colored::Colorize;
 use lunex_engine::*;
 
 use crate::{Dimension, Element, MovableByCamera, UiContent, UiLink};
@@ -13,12 +15,12 @@ use crate::{Dimension, Element, MovableByCamera, UiContent, UiLink};
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn compute_ui<M:Default + Component, N:Default + Component, T: Component>(
-    mut query: Query<(&Dimension, &mut UiTree<M, N>), (With<T>, Or<(Changed<Dimension>, Changed<UiTree<M, N>>)>)>
+pub fn compute_ui<T:Component, N:Default + Component>(
+    mut query: Query<(&Dimension, &mut UiTree<T, N>), (With<UiLink<T>>, Or<(Changed<UiTree<T, N>>, Changed<Dimension>)>)>
 ) {
     for (dimension, mut ui) in &mut query {
-        // Compute the Ui
-        //println!("Ui DIM: {}", dimension.size);
+        #[cfg(feature = "debug")]
+        info!("{} - {}", "UiTree".purple().bold(), "Recomputed".underline().bold());
         ui.compute(Rectangle2D::new().with_size(dimension.size).into());
     }
 }
@@ -32,8 +34,8 @@ pub fn compute_ui<M:Default + Component, N:Default + Component, T: Component>(
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn debug_draw_gizmo<M:Default + Component, N:Default + Component, T: Component>(
-    mut query: Query<(&UiTree<M, N>, &GlobalTransform), With<T>>,
+pub fn debug_draw_gizmo<T:Component, N:Default + Component>(
+    mut query: Query<(&UiTree<T, N>, &GlobalTransform)>,
     mut gizmos: Gizmos
 ) {
     for (tree, transform) in &mut query {
@@ -43,7 +45,7 @@ pub fn debug_draw_gizmo<M:Default + Component, N:Default + Component, T: Compone
 
                 let mut color = Color::LIME_GREEN;
 
-                if let Layout::Solid(_) = container.layout { color = Color::YELLOW }
+                if let UiLayout::Solid(_) = container.layout { color = Color::YELLOW }
 
                 let mut pos = container.rectangle.pos.invert_y() + transform.translation();
                 pos.x += container.rectangle.size.x / 2.0;
@@ -65,11 +67,11 @@ pub fn debug_draw_gizmo<M:Default + Component, N:Default + Component, T: Compone
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn debug_print_tree<M:Default + Component, N:Default + Component, T: Component>(
-    uis: Query<&UiTree<M, N>, (With<T>, Changed<UiTree<M, N>>)>
+pub fn debug_print_tree<T:Component, N:Default + Component>(
+    uis: Query<&UiTree<T, N>, Changed<UiTree<T, N>>>
 ) {
     for ui in &uis {
-        info!("{}\n{}\n", "UiTree has been changed...", ui.tree("show-hidden"));
+        info!("{}\n{}\n", "Change detected...", ui.tree("show-hidden"));
     }
 }
 
@@ -87,15 +89,17 @@ pub fn debug_print_tree<M:Default + Component, N:Default + Component, T: Compone
 /// * Developer should ensure that source query returns only one camera.
 ///   Otherwise, it will lead to value overwriting. Just make sure only one camera
 ///   is marked with `(T)` component at the same time.
-pub fn fetch_dimension_from_camera<M:Default + Component, N:Default + Component, T: Component>(
+pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
     source: Query<&Camera, (With<T>, Changed<Camera>)>,
-    mut destination: Query<&mut Dimension, (With<T>, With<UiTree<M, N>>, With<MovableByCamera>)>
+    mut destination: Query<&mut Dimension, (With<UiTree<T, N>>, With<MovableByCamera>)>
 ) {
     // Undesired behaviour if source.len() > 1
     for cam in &source {
         for mut dimension in &mut destination {
             // Extract camera size
             if let Some(size) = cam.physical_viewport_size() {
+                #[cfg(feature = "debug")]
+                info!("{} - Received Dimension data from Camera", "UiTree".purple().bold());
                 dimension.size = Vec2::from((size.x as f32, size.y as f32));
             }
         }
@@ -112,15 +116,17 @@ pub fn fetch_dimension_from_camera<M:Default + Component, N:Default + Component,
 /// * Developer should ensure that source query returns only one camera.
 ///   Otherwise, it will lead to value overwriting. Just make sure only one camera
 ///   is marked with `(T)` component at the same time.
-pub fn fetch_transform_from_camera<T: Component>(
+pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
     source: Query<&Camera, (With<T>, Changed<Camera>)>,
-    mut destination: Query<&mut Transform, (With<T>, With<MovableByCamera>)>
+    mut destination: Query<&mut Transform, (With<UiTree<T, N>>, With<MovableByCamera>)>
 ) {
     // Undesired behaviour if source.len() > 1
     for cam in &source {
         for mut transform in &mut destination {
             // Extract camera size
             if let Some(size) = cam.physical_viewport_size() {
+                #[cfg(feature = "debug")]
+                info!("{} - Received Transform data from Camera", "UiTree".purple().bold());
                 transform.translation = Vec3::from((size.x as f32 /-2.0, size.y as f32 /2.0, 0.0));
             }
         }
@@ -131,14 +137,14 @@ pub fn fetch_transform_from_camera<T: Component>(
 // #========================#
 // #=== PIPING FOR NODES ===#
 
-/// This system takes [`Layout`] data and overwrites coresponding [`UiTree`] data. If node is not found, it creates new ones along the path.
+/// This system takes [`UiLayout`] data and overwrites coresponding [`UiTree`] data. If node is not found, it creates new ones along the path.
 /// ## 📦 Types
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn send_layout_to_node<M:Default + Component, N:Default + Component, T: Component>(
-    mut uis: Query<(&mut UiTree<M, N>, &Children), With<T>>,
-    query: Query<(&UiLink, &Layout), (With<T>, Changed<Layout>)>,
+pub fn send_layout_to_node<T:Component, N:Default + Component>(
+    mut uis: Query<(&mut UiTree<T, N>, &Children)>,
+    query: Query<(&UiLink<T>, &UiLayout), (Changed<UiLayout>, Without<UiTree<T, N>>)>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -148,6 +154,8 @@ pub fn send_layout_to_node<M:Default + Component, N:Default + Component, T: Comp
                 if let Ok(node) = ui.borrow_or_create_ui_node_mut(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
+                        #[cfg(feature = "debug")]
+                        info!("{} - Received Layout data", link.path.yellow().bold());
                         container.layout = *layout;
                     }
                 }
@@ -161,9 +169,9 @@ pub fn send_layout_to_node<M:Default + Component, N:Default + Component, T: Comp
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn send_stack_to_node<M:Default + Component, N:Default + Component, T: Component>(
-    mut uis: Query<(&mut UiTree<M, N>, &Children), With<T>>,
-    query: Query<(&UiLink, &UiStack), (With<T>, Changed<Layout>)>,
+pub fn send_stack_to_node<T:Component, N:Default + Component>(
+    mut uis: Query<(&mut UiTree<T, N>, &Children)>,
+    query: Query<(&UiLink<T>, &UiStack), Changed<UiStack>>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -173,6 +181,8 @@ pub fn send_stack_to_node<M:Default + Component, N:Default + Component, T: Compo
                 if let Ok(node) = ui.borrow_node_mut(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
+                        #[cfg(feature = "debug")]
+                        info!("{} - Received Stack data", link.path.yellow().bold());
                         container.stack = *stack;
                     }
                 }
@@ -186,9 +196,9 @@ pub fn send_stack_to_node<M:Default + Component, N:Default + Component, T: Compo
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn send_content_size_to_node<M:Default + Component, N:Default + Component, T: Component>(
-    mut uis: Query<(&mut UiTree<M, N>, &Children), With<T>>,
-    query: Query<(&UiLink, &UiContent), (With<T>, Changed<Layout>)>,
+pub fn send_content_size_to_node<T:Component, N:Default + Component>(
+    mut uis: Query<(&mut UiTree<T, N>, &Children)>,
+    query: Query<(&UiLink<T>, &UiContent), Changed<UiContent>>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -198,6 +208,8 @@ pub fn send_content_size_to_node<M:Default + Component, N:Default + Component, T
                 if let Ok(node) = ui.borrow_node_mut(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
+                        #[cfg(feature = "debug")]
+                        info!("{} - Received Content size data", link.path.yellow().bold());
                         container.content_size = content.size;
                     }
                 }
@@ -211,9 +223,9 @@ pub fn send_content_size_to_node<M:Default + Component, N:Default + Component, T
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn fetch_transform_from_node<M:Default + Component, N:Default + Component, T: Component>(
-    uis: Query<(&UiTree<M, N>, &Children), (With<T>, Changed<UiTree<M, N>>)>,
-    mut query: Query<(&UiLink, &mut Transform), (With<T>, Without<Element>)>,
+pub fn fetch_transform_from_node<T:Component, N:Default + Component>(
+    uis: Query<(&UiTree<T, N>, &Children), Changed<UiTree<T, N>>>,
+    mut query: Query<(&UiLink<T>, &mut Transform), Without<Element>>,
 ) {
     for (ui, children) in &uis {
         for child in children {
@@ -223,6 +235,8 @@ pub fn fetch_transform_from_node<M:Default + Component, N:Default + Component, T
                 if let Ok(node) = ui.borrow_node(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data() {
+                        #[cfg(feature = "debug")]
+                        info!("{} - Linked {} fetched Transform data", link.path.yellow().bold(), "entity".blue());
                         transform.translation = container.rectangle.pos.invert_y();
                     }
                 }
@@ -236,9 +250,9 @@ pub fn fetch_transform_from_node<M:Default + Component, N:Default + Component, T
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn fetch_dimension_from_node<M:Default + Component, N:Default + Component, T: Component>(
-    uis: Query<(&UiTree<M, N>, &Children), (With<T>, Changed<UiTree<M, N>>)>,
-    mut query: Query<(&UiLink, &mut Dimension), With<T>>,
+pub fn fetch_dimension_from_node<T:Component, N:Default + Component>(
+    uis: Query<(&UiTree<T, N>, &Children), Changed<UiTree<T, N>>>,
+    mut query: Query<(&UiLink<T>, &mut Dimension)>,
 ) {
     for (ui, children) in &uis {
         for child in children {
@@ -249,6 +263,8 @@ pub fn fetch_dimension_from_node<M:Default + Component, N:Default + Component, T
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data() {
                         if dimension.as_ref().size != container.rectangle.size {
+                            #[cfg(feature = "debug")]
+                            info!("{} - Linked {} fetched Dimension data", link.path.yellow().bold(), "entity".blue());
                             dimension.size = container.rectangle.size;
                         }
                     }
@@ -263,9 +279,9 @@ pub fn fetch_dimension_from_node<M:Default + Component, N:Default + Component, T
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn element_fetch_transform_from_node<M:Default + Component, N:Default + Component, T: Component>(
-    uis: Query<(&UiTree<M, N>, &Children), (With<T>, Changed<UiTree<M, N>>)>,
-    mut query: Query<(&UiLink, &mut Transform), (With<T>, With<Element>)>,
+pub fn element_fetch_transform_from_node<T:Component, N:Default + Component>(
+    uis: Query<(&UiTree<T, N>, &Children), Changed<UiTree<T, N>>>,
+    mut query: Query<(&UiLink<T>, &mut Transform), With<Element>>,
 ) {
     for (ui, children) in &uis {
         for child in children {
@@ -275,6 +291,8 @@ pub fn element_fetch_transform_from_node<M:Default + Component, N:Default + Comp
                 if let Ok(node) = ui.borrow_node(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data() {
+                        #[cfg(feature = "debug")]
+                        info!("{} - Linked {} fetched Transform data", link.path.yellow().bold(), "element".red());
                         transform.translation = container.rectangle.pos.invert_y();
                         transform.translation.x += container.rectangle.size.x /  2.0;
                         transform.translation.y += container.rectangle.size.y / -2.0;
@@ -288,10 +306,12 @@ pub fn element_fetch_transform_from_node<M:Default + Component, N:Default + Comp
 /// This system fetches [`Dimension`] data and overwrites querried [`Sprite`] data to fit.
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn element_sprite_scale_to_dimension<T: Component>(
-    mut query: Query<(&mut Sprite, &Dimension), (With<T>, With<Element>, Changed<Dimension>)>,
+pub fn element_sprite_size_from_dimension<T: Component>(
+    mut query: Query<(&mut Sprite, &Dimension), (With<UiLink<T>>, With<Element>, Changed<Dimension>)>,
 ) {
     for (mut sprite, dimension) in &mut query {
+        #[cfg(feature = "debug")]
+        info!("{} - Dimension piped into sprite size", "Element".red());
         sprite.custom_size = Some(dimension.size)
     }
 }
@@ -303,9 +323,12 @@ pub fn element_sprite_scale_to_dimension<T: Component>(
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_reconstruct_mesh<T: Component>(
     mut msh: ResMut<Assets<Mesh>>,
-    mut query: Query<(&Dimension, &mut Handle<Mesh>, &mut Aabb), (With<T>, With<Element>, Changed<Dimension>)>,
+    mut query: Query<(&Dimension, &mut Handle<Mesh>, &mut Aabb), (With<UiLink<T>>, With<Element>, Changed<Dimension>)>,
 ) {
     for (dimension, mut mesh, mut aabb) in &mut query {
+
+        #[cfg(feature = "debug")]
+        info!("{} - Reconstructed mesh size", "Element".red());
 
         // Unload old mesh
         let _ = msh.remove(mesh.id());
@@ -324,15 +347,15 @@ pub fn element_reconstruct_mesh<T: Component>(
 /// This system takes [`TextLayoutInfo`] data and overwrites coresponding [`Layout`] solid data.
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn element_text_size_to_solid_layout<T: Component>(
-    mut query: Query<(&mut Layout, &TextLayoutInfo), (With<T>, With<Element>, Changed<TextLayoutInfo>)>,
+pub fn element_text_size_to_layout<T: Component>(
+    mut query: Query<(&mut UiLayout, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<TextLayoutInfo>)>,
 ) {
     for (mut layout, text_info) in &mut query {
+        #[cfg(feature = "debug")]
+        info!("{} - Text size piped to Layout", "Element".red());
         match layout.as_mut() {
-            Layout::Window(window) => {
-                window.size = Rh(text_info.logical_size).into()
-            },
-            Layout::Solid(solid) => {solid.size = Ab(text_info.logical_size).into()},
+            UiLayout::Window(window) => {window.size = Rh(text_info.logical_size).into()},
+            UiLayout::Solid(solid) => {solid.size = Ab(text_info.logical_size).into()},
             _ => {},
         }
     }
@@ -342,9 +365,11 @@ pub fn element_text_size_to_solid_layout<T: Component>(
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_text_size_to_content<T: Component>(
-    mut query: Query<(&mut UiContent, &TextLayoutInfo), (With<T>, With<Element>, Changed<TextLayoutInfo>)>,
+    mut query: Query<(&mut UiContent, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<TextLayoutInfo>)>,
 ) {
     for (mut content, text_info) in &mut query {
+        #[cfg(feature = "debug")]
+        info!("{} - Text size piped to Content", "Element".red());
         content.size = text_info.logical_size;
     }
 }
@@ -352,10 +377,12 @@ pub fn element_text_size_to_content<T: Component>(
 /// This system takes [`TextLayoutInfo`] data and overwrites coresponding [`Transform`] scale data for text to fit inside [`Dimension`].
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn element_text_size_scale_to_dimension<T: Component>(
-    mut query: Query<(&mut Transform, &Dimension, &TextLayoutInfo), (With<T>, With<Element>, Changed<Dimension>)>,
+pub fn element_text_size_scale_fit_to_dimension<T: Component>(
+    mut query: Query<(&mut Transform, &Dimension, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<Dimension>)>,
 ) {
     for (mut transform, dimension, text_info) in &mut query {
+        #[cfg(feature = "debug")]
+        info!("{} - Scaled Transform for text size to fit into Dimension", "Element".red());
         let scale = dimension.size / text_info.logical_size;
         transform.scale.x = scale.x;
         transform.scale.y = scale.y;
@@ -366,18 +393,29 @@ pub fn element_text_size_scale_to_dimension<T: Component>(
 // #===============#
 // #=== PLUGINS ===#
 
+/// System set for [`UiPlugin`]
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum UiSystems {
+    /// Systems where we modify data pre-computation
+    Modify,
+    /// Systems that send component data to UiTree
+    Send,
+    /// The computation
+    Compute,
+    /// Systems that fetch component data from UiTree
+    Fetch,
+    /// Systems that process new data from UiTree
+    Process,
+}
+
 /// Plugin implementing all ui logic for the specified generic types.
 /// ## 📦 Types
-/// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// 
 /// ## 🛠️ Example
 /// *1. Define the types used*
 /// ```
-///  #[derive(Component, Default)]
-///  struct MyMasterData { theme: String } // What data will each tree hold
-/// 
 ///  #[derive(Component, Default)]
 ///  struct MyNodeData { value: i32 } // What data will each node contain
 /// 
@@ -388,59 +426,67 @@ pub fn element_text_size_scale_to_dimension<T: Component>(
 /// ```
 ///  App::new()
 ///      .add_plugins(DefaultPlugins)
-///      .add_plugins(UiPlugin::<MyMasterData, MyNodeData, MyUiWidget>::new())
+///      .add_plugins(UiPlugin::<MyUiWidget, MyNodeData>::new())
 ///      .run();
 /// ```
 /// *3. Use the [`UiTree`] freely*
 /// ```
 ///#  fn setup(mut commands: Commands) {
 ///   commands.spawn((
-///      MyUiWidget,
-///      UiTree::<MyMasterData, MyNodeData>::new("MyWidget")
+///      UiTree::<MyUiWidget, MyNodeData>::new("MyWidget")
 ///   ));
 ///#  }
 /// ```
 #[derive(Debug, Default, Clone)]
-pub struct UiPlugin <M:Default + Component, N:Default + Component, T: Component>(PhantomData<M>, PhantomData<N>, PhantomData<T>);
-impl <M:Default + Component, N:Default + Component, T: Component> UiPlugin<M, N, T> {
+pub struct UiPlugin <T:Component, N:Default + Component = NoData>(PhantomData<T>, PhantomData<N>);
+impl <T:Component, N:Default + Component> UiPlugin<T, N> {
     pub fn new() -> Self {
-        UiPlugin::<M, N, T>(PhantomData, PhantomData, PhantomData)
+        UiPlugin::<T, N>(PhantomData, PhantomData)
     }
 }
-impl <M:Default + Component, N:Default + Component, T: Component> Plugin for UiPlugin<M, N, T> {
+impl <T:Component, N:Default + Component> Plugin for UiPlugin<T, N> {
     fn build(&self, app: &mut App) {
         app
-            .add_plugins(crate::CursorPlugin)
-            .add_systems(Update, send_content_size_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
-            .add_systems(Update, send_stack_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
-            .add_systems(Update, send_layout_to_node::<M, N, T>.before(compute_ui::<M, N, T>))
+            .add_systems(Update, (
+                element_text_size_to_layout::<T>,
+                element_text_size_to_content::<T>,
+                fetch_dimension_from_camera::<T, N>,
+                fetch_transform_from_camera::<T, N>,
+            ).in_set(UiSystems::Modify).before(UiSystems::Send))
 
-            .add_systems(Update, element_text_size_to_solid_layout::<T>.before(send_layout_to_node::<M, N, T>))
+            .add_systems(Update, (
+                send_content_size_to_node::<T, N>,
+                send_stack_to_node::<T, N>,
+                send_layout_to_node::<T, N>,
+            ).in_set(UiSystems::Send).before(UiSystems::Compute))
 
-            .add_systems(Update, fetch_transform_from_node::<M, N, T>.after(compute_ui::<M, N, T>))
-            .add_systems(Update, (fetch_dimension_from_node::<M, N, T>, element_reconstruct_mesh::<T>).chain().after(compute_ui::<M, N, T>))
-            .add_systems(Update, element_fetch_transform_from_node::<M, N, T>.after(compute_ui::<M, N, T>))
-            .add_systems(Update, element_sprite_scale_to_dimension::<T>.after(compute_ui::<M, N, T>))
-            .add_systems(Update, element_text_size_scale_to_dimension::<T>.after(compute_ui::<M, N, T>))
-            .add_systems(Update, element_text_size_to_content::<T>.before(send_content_size_to_node::<M, N, T>))
+            .add_systems(Update, (
+                compute_ui::<T, N>.in_set(UiSystems::Compute)
+            ).in_set(UiSystems::Compute))
 
-            .add_systems(Update, (fetch_dimension_from_camera::<M, N, T>, fetch_transform_from_camera::<T>).before(compute_ui::<M, N, T>))
-            .add_systems(Update, compute_ui::<M, N, T>);
+            .add_systems(Update, (
+                fetch_transform_from_node::<T, N>,
+                fetch_dimension_from_node::<T, N>,
+                element_fetch_transform_from_node::<T, N>,
+            ).in_set(UiSystems::Fetch).after(UiSystems::Compute))
+
+            .add_systems(Update, (
+                element_sprite_size_from_dimension::<T>,
+                element_text_size_scale_fit_to_dimension::<T>,
+                element_reconstruct_mesh::<T>,
+            ).in_set(UiSystems::Process).after(UiSystems::Fetch))
+            ;
     }
 }
 
 /// Plugin implementing all debug ui logic for the specified generic types.
 /// ## 📦 Types
-/// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// 
 /// ## 🛠️ Example
 /// *1. Define the types used*
 /// ```
-///  #[derive(Component, Default)]
-///  struct MyMasterData { theme: String } // What data will each tree hold
-/// 
 ///  #[derive(Component, Default)]
 ///  struct MyNodeData { value: i32 } // What data will each node contain
 /// 
@@ -451,29 +497,28 @@ impl <M:Default + Component, N:Default + Component, T: Component> Plugin for UiP
 /// ```
 ///  App::new()
 ///      .add_plugins(DefaultPlugins)
-///      .add_plugins(UiPlugin::<MyMasterData, MyNodeData, MyUiWidget>::new())
+///      .add_plugins(UiPlugin::<MyUiWidget, MyNodeData>::new())
 ///      .run();
 /// ```
 /// *3. Use the [`UiTree`] freely*
 /// ```
 ///#  fn setup(mut commands: Commands) {
 ///   commands.spawn((
-///      MyUiWidget,
-///      UiTree::<MyMasterData, MyNodeData>::new("MyWidget")
+///      UiTree::<MyUiWidget, MyNodeData>::new("MyWidget")
 ///   ));
 ///#  }
 /// ```
 #[derive(Debug, Default, Clone)]
-pub struct UiDebugPlugin <M:Default + Component, N:Default + Component, T: Component>(PhantomData<M>, PhantomData<N>, PhantomData<T>);
-impl <M:Default + Component, N:Default + Component, T: Component> UiDebugPlugin<M, N, T> {
+pub struct UiDebugPlugin <T:Component, N:Default + Component = NoData>(PhantomData<T>, PhantomData<N>);
+impl <T:Component, N:Default + Component> UiDebugPlugin<T, N> {
     pub fn new() -> Self {
-        UiDebugPlugin::<M, N, T>(PhantomData, PhantomData, PhantomData)
+        UiDebugPlugin::<T, N>(PhantomData, PhantomData)
     }
 }
-impl <M:Default + Component, N:Default + Component, T: Component> Plugin for UiDebugPlugin<M, N, T> {
+impl <T:Component, N:Default + Component> Plugin for UiDebugPlugin<T, N> {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Update, debug_draw_gizmo::<M, N, T>)
-            .add_systems(Update, debug_print_tree::<M, N, T>);
+            .add_systems(Update, debug_draw_gizmo::<T, N>)
+            .add_systems(Update, debug_print_tree::<T, N>.after(UiSystems::Compute));
     }
 }

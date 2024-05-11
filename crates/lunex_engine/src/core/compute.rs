@@ -6,14 +6,14 @@ use crate::NodeTopDataTrait;
 use crate::UiNode;
 use crate::UiTree;
 use crate::Rectangle3D;
-use crate::Layout;
+use crate::UiLayout;
 
 /// Trait with [`UiTree`] layout computation methods.
 pub trait UiNodeTreeComputeTrait {
     /// Compute the layout of the [`UiTree`].
     fn compute(&mut self, parent: Rectangle3D);
 }
-impl <M: Default + Component, N: Default + Component> UiNodeTreeComputeTrait for UiTree<M, N> {
+impl <T, N: Default + Component> UiNodeTreeComputeTrait for UiTree<T, N> {
     fn compute(&mut self, parent: Rectangle3D) {
 
         let mut abs_scale = 1.0;
@@ -56,18 +56,18 @@ impl <N:Default + Component> UiNodeComputeTrait for UiNode<N> {
 
             // Compute node layout
             match &node_data.layout {
-                Layout::Div(_) => {
+                UiLayout::Div(_) => {
                     is_parametric = true;
                 },
-                Layout::Boundary(l) => {
+                UiLayout::Boundary(l) => {
                     node_data.rectangle = l.compute(parent.into(), absolute_scale, viewport_size, font_size).into();
                     skip = false;
                 },
-                Layout::Window(l) => {
+                UiLayout::Window(l) => {
                     node_data.rectangle = l.compute(parent.into(), absolute_scale, viewport_size, font_size).into();
                     skip = false;
                 },
-                Layout::Solid(l)  => {
+                UiLayout::Solid(l)  => {
                     node_data.rectangle = l.compute(parent.into(), absolute_scale, viewport_size, font_size).into();
                     skip = false;
                 },

@@ -8,8 +8,8 @@ pub struct MyUiSystem;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(UiPlugin::<NoData, NoData, MyUiSystem>::new())
-        .add_plugins(UiDebugPlugin::<NoData, NoData, MyUiSystem>::new())
+        .add_plugins(UiPlugin::<MyUiSystem>::new())
+        .add_plugins(UiDebugPlugin::<MyUiSystem>::new())
         .add_systems(Startup, setup)
         .run();
 }
@@ -26,7 +26,7 @@ fn setup(mut cmd: Commands, mut _mat: ResMut<Assets<StandardMaterial>>, assets: 
     ));
 
     cmd.spawn((
-        UiTreeBundle::<NoData, NoData, MyUiSystem> {
+        UiTreeBundle::<MyUiSystem> {
             tree: UiTree::new("MyUiSystem"),
             ..default()
         },
@@ -34,15 +34,13 @@ fn setup(mut cmd: Commands, mut _mat: ResMut<Assets<StandardMaterial>>, assets: 
     )).with_children(|ui| {
 
         ui.spawn((
-            MyUiSystem,
-            UiLink::path("Root"),
-            UiLayout::Boundary::new().pos1(Ab(20.0)).pos2(Rl(100.0) - Ab(20.0)).pack(),
+            UiLink::<MyUiSystem>::path("Root"),
+            UiLayout::boundary().pos1(Ab(20.0)).pos2(Rl(100.0) - Ab(20.0)).pack(),
         ));
 
         ui.spawn((
-            MyUiSystem,
-            UiLink::path("Root/Rectangle"),
-            UiLayout::Solid::new().size((Ab(200.0), Rl(100.0))).pack(),
+            UiLink::<MyUiSystem>::path("Root/Rectangle"),
+            UiLayout::solid().size((Ab(200.0), Rl(100.0))).pack(),
             UiImage2dBundle::from(assets.load("background.png")),
         ));
 
