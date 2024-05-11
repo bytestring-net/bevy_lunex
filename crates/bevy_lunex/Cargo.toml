@@ -12,7 +12,7 @@
 [dependencies]
   bevy         = { workspace = true }
   colored      = { workspace = true }
-  lunex_engine = { workspace = true, features = ["bevy"] }
+  lunex_engine = { workspace = true, features = ["bevy"], version = "0.1.0-alpha" }
   bevy_mod_picking = { workspace = true, optional = true }
 
 [features]
