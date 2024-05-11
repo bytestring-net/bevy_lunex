@@ -1,4 +1,4 @@
-![image](crates/bevy_lunex/promo/bevy_lunex.png)
+![image](promo/bevy_lunex.png)
 
 <div align="center">
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
@@ -20,7 +20,7 @@ It gives you the ability to make ***your own custom UI*** using regular ECS like
 
 ##
 
-![image](crates/bevy_lunex/promo/image.png)
+![image](promo/image.png)
 
 *^ A recreation of ***Cyberpunk*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/Bevypunk).*
 
