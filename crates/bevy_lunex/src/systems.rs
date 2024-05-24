@@ -145,6 +145,8 @@ pub fn touch_camera_if_uitree_added<T:Component, N:Default + Component>(
     mut camera: Query<&mut Camera, With<T>>,
 ){
     if !query.is_empty() {
+        #[cfg(feature = "debug")]
+        info!("{} - Touched all cameras", "Camera".purple().bold());
         for mut camera in &mut camera {
             camera.as_mut();
         }
