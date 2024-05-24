@@ -16,14 +16,14 @@ use crate::{Dimension, Element, MovableByCamera, UiContent, UiLink};
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn compute_ui<T:Component, N:Default + Component>(
-    mut query: Query<(&Dimension, &mut UiTree<T, N>, Option<&Element>), (With<UiLink<T>>, Or<(Changed<UiTree<T, N>>, Changed<Dimension>)>)>,
+    mut query: Query<(&Dimension, &mut UiTree<T, N>, Option<&MovableByCamera>), (With<UiLink<T>>, Or<(Changed<UiTree<T, N>>, Changed<Dimension>)>)>,
     window: Query<&bevy::window::Window, With<PrimaryWindow>>,
 ) {
     let scale = if let Ok(window) = window.get_single() { window.resolution.scale_factor() } else { 1.0 };
-    for (dimension, mut ui, is_element) in &mut query {
+    for (dimension, mut ui, is_camera_sourced) in &mut query {
         #[cfg(feature = "debug")]
         info!("{} - {}", "UiTree".purple().bold(), "Recomputed".underline().bold());
-        let scale = if is_element.is_some() { 0.5 } else { scale };
+        let scale = if is_camera_sourced.is_none() { 1.0 } else { scale };
         ui.compute(Rectangle2D::new().with_size(dimension.size / scale).into());
     }
 }
