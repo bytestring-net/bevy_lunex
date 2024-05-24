@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use bevy::{math::Vec3A, prelude::*, render::primitives::Aabb, text::TextLayoutInfo};
+use bevy::{math::Vec3A, prelude::*, render::primitives::Aabb, text::TextLayoutInfo, window::PrimaryWindow};
 #[cfg(feature = "debug")]
 use colored::Colorize;
 use lunex_engine::*;
@@ -16,12 +16,15 @@ use crate::{Dimension, Element, MovableByCamera, UiContent, UiLink};
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn compute_ui<T:Component, N:Default + Component>(
-    mut query: Query<(&Dimension, &mut UiTree<T, N>), (With<UiLink<T>>, Or<(Changed<UiTree<T, N>>, Changed<Dimension>)>)>
+    mut query: Query<(&Dimension, &mut UiTree<T, N>, Option<&Element>), (With<UiLink<T>>, Or<(Changed<UiTree<T, N>>, Changed<Dimension>)>)>,
+    window: Query<&bevy::window::Window, With<PrimaryWindow>>,
 ) {
-    for (dimension, mut ui) in &mut query {
+    let scale = if let Ok(window) = window.get_single() { window.resolution.scale_factor() } else { 1.0 };
+    for (dimension, mut ui, is_element) in &mut query {
         #[cfg(feature = "debug")]
         info!("{} - {}", "UiTree".purple().bold(), "Recomputed".underline().bold());
-        ui.compute(Rectangle2D::new().with_size(dimension.size).into());
+        let scale = if is_element.is_some() { 0.5 } else { scale };
+        ui.compute(Rectangle2D::new().with_size(dimension.size / scale).into());
     }
 }
 
@@ -116,16 +119,18 @@ pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
 ///   is marked with `(T)` component at the same time.
 pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
     source: Query<&Camera, (With<T>, Changed<Camera>)>,
-    mut destination: Query<&mut Transform, (With<UiTree<T, N>>, With<MovableByCamera>)>
+    mut destination: Query<&mut Transform, (With<UiTree<T, N>>, With<MovableByCamera>)>,
+    window: Query<&bevy::window::Window, With<PrimaryWindow>>,
 ) {
     // Undesired behaviour if source.len() > 1
     for cam in &source {
+        let scale = if let Ok(window) = window.get_single() { window.resolution.scale_factor() } else { 1.0 };
         for mut transform in &mut destination {
             // Extract camera size
             if let Some(size) = cam.physical_viewport_size() {
                 #[cfg(feature = "debug")]
                 info!("{} - Received Transform data from Camera", "UiTree".purple().bold());
-                transform.translation = Vec3::from((size.x as f32 /-2.0, size.y as f32 /2.0, 0.0));
+                transform.translation = Vec3::from((size.x as f32 /-2.0 / scale, size.y as f32 / 2.0 / scale, 0.0));
             }
         }
     }
