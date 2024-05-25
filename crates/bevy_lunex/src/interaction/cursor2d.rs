@@ -35,7 +35,7 @@ impl Cursor2d {
             hidden: false,
         }
     }
-    /// A toggle if this cursor should replace the native cursor
+    /// A toggle if this cursor should native
     pub fn native_cursor(mut self, enable: bool) -> Self {
         self.native_cursor = enable;
         self
@@ -58,7 +58,7 @@ pub fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut 
     if let Ok(mut window) = windows.get_single_mut() {
         for (cursor, mut transform, mut visibility) in &mut query {
 
-            window.cursor.visible = !cursor.hidden || !cursor.native_cursor;
+            window.cursor.visible = if cursor.native_cursor { !cursor.hidden } else { false };
             window.cursor.icon = cursor.cursor_request;
 
             match window.cursor_position() {
