@@ -4,7 +4,7 @@ use bevy::{math::Vec3A, prelude::*, render::primitives::Aabb, text::TextLayoutIn
 use colored::Colorize;
 use lunex_engine::*;
 
-use crate::{Dimension, Element, MovableByCamera, UiContent, UiLink};
+use crate::{Dimension, Element, MovableByCamera, UiContent, UiDepthBias, UiLink};
 
 
 // #===================#
@@ -22,7 +22,7 @@ pub fn compute_ui<T:Component, N:Default + Component>(
     let scale = if let Ok(window) = window.get_single() { window.resolution.scale_factor() } else { 1.0 };
     for (dimension, mut ui, is_camera_sourced) in &mut query {
         #[cfg(feature = "debug")]
-        info!("{} - {}", "UiTree".purple().bold(), "Recomputed".underline().bold());
+        info!("{} {} - {}", "<>".red(), "UiTree".purple().bold(), "Recomputed".underline().bold());
         let scale = if is_camera_sourced.is_none() { 1.0 } else { scale };
         ui.compute(Rectangle2D::new().with_size(dimension.size / scale).into());
     }
@@ -101,7 +101,7 @@ pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
             // Extract camera size
             if let Some(size) = cam.physical_viewport_size() {
                 #[cfg(feature = "debug")]
-                info!("{} - Received Dimension data from Camera", "UiTree".purple().bold());
+                info!("{} {} - Fetched Dimension data from Camera", "->".blue(), "UiTree".purple().bold());
                 dimension.size = Vec2::from((size.x as f32, size.y as f32));
             }
         }
@@ -129,7 +129,7 @@ pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
             // Extract camera size
             if let Some(size) = cam.physical_viewport_size() {
                 #[cfg(feature = "debug")]
-                info!("{} - Received Transform data from Camera", "UiTree".purple().bold());
+                info!("{} {} - Fetched Transform data from Camera", "->".blue(), "UiTree".purple().bold());
                 transform.translation = Vec3::from((size.x as f32 /-2.0 / scale, size.y as f32 / 2.0 / scale, 0.0));
             }
         }
@@ -151,7 +151,7 @@ pub fn touch_camera_if_uitree_added<T:Component, N:Default + Component>(
 ){
     if !query.is_empty() {
         #[cfg(feature = "debug")]
-        info!("{} - Touched all cameras", "Camera".purple().bold());
+        info!("{} {} - Touched all cameras", "<>".red(), "Camera".purple().bold());
         for mut camera in &mut camera {
             camera.as_mut();
         }
@@ -178,7 +178,7 @@ pub fn send_layout_to_node<T:Component, N:Default + Component>(
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
                         #[cfg(feature = "debug")]
-                        info!("{} - Received Layout data", link.path.yellow().bold());
+                        info!("{} {} - Received Layout data", "->".blue(), link.path.yellow().bold());
                         container.layout = *layout;
                     }
                 }
@@ -204,8 +204,34 @@ pub fn send_stack_to_node<T:Component, N:Default + Component>(
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
                         #[cfg(feature = "debug")]
-                        info!("{} - Received Stack data", link.path.yellow().bold());
+                        info!("{} {} - Received Stack data", "->".blue(), link.path.yellow().bold());
                         container.stack = *stack;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// This system takes [`UiDepthBias`] data and overwrites coresponding [`UiTree`] data.
+/// ## 📦 Types
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
+/// * Generic `(T)` - Marker component grouping entities into one widget type
+pub fn send_depth_bias_to_node<T:Component, N:Default + Component>(
+    mut uis: Query<(&mut UiTree<T, N>, &Children)>,
+    query: Query<(&UiLink<T>, &UiDepthBias), Changed<UiDepthBias>>,
+) {
+    for (mut ui, children) in &mut uis {
+        for child in children {
+            // If child matches
+            if let Ok((link, bias)) = query.get(*child) {
+                // If node exists
+                if let Ok(node) = ui.borrow_node_mut(link.path.clone()) {
+                    //Should always be Some but just in case
+                    if let Some(container) = node.obtain_data_mut() {
+                        #[cfg(feature = "debug")]
+                        info!("{} {} - Received Depth bias data", "->".blue(), link.path.yellow().bold());
+                        container.depth_bias = bias.0;
                     }
                 }
             }
@@ -230,7 +256,7 @@ pub fn send_content_size_to_node<T:Component, N:Default + Component>(
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
                         #[cfg(feature = "debug")]
-                        info!("{} - Received Content size data", link.path.yellow().bold());
+                        info!("{} {} - Received Content size data", "->".blue(), link.path.yellow().bold());
                         container.content_size = content.size;
                     }
                 }
@@ -256,7 +282,7 @@ pub fn fetch_transform_from_node<T:Component, N:Default + Component>(
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data() {
                         #[cfg(feature = "debug")]
-                        info!("{} - Linked {} fetched Transform data", link.path.yellow().bold(), "entity".blue());
+                        info!("{} {} - Linked {} fetched Transform data from node", "<-".bright_green(), link.path.yellow().bold(), "ENTITY".blue());
                         transform.translation = container.rectangle.pos.invert_y();
                     }
                 }
@@ -283,7 +309,7 @@ pub fn fetch_dimension_from_node<T:Component, N:Default + Component>(
                     if let Some(container) = node.obtain_data() {
                         if dimension.as_ref().size != container.rectangle.size {
                             #[cfg(feature = "debug")]
-                            info!("{} - Linked {} fetched Dimension data", link.path.yellow().bold(), "entity".blue());
+                            info!("{} {} - Linked {} fetched Dimension data from node", "<-".bright_green(), link.path.yellow().bold(), "ENTITY".blue());
                             dimension.size = container.rectangle.size;
                         }
                     }
@@ -310,7 +336,7 @@ pub fn element_fetch_transform_from_node<T:Component, N:Default + Component>(
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data() {
                         #[cfg(feature = "debug")]
-                        info!("{} - Linked {} fetched Transform data", link.path.yellow().bold(), "element".red());
+                        info!("{} {} - Linked {} fetched Transform data", "<-".bright_green(), link.path.yellow().bold(), "ELEMENT".red());
                         transform.translation = container.rectangle.pos.invert_y();
                         transform.translation.x += container.rectangle.size.x /  2.0;
                         transform.translation.y += container.rectangle.size.y / -2.0;
@@ -329,7 +355,7 @@ pub fn element_sprite_size_from_dimension<T: Component>(
 ) {
     for (mut sprite, dimension) in &mut query {
         #[cfg(feature = "debug")]
-        info!("{} - Dimension piped into sprite size", "Element".red());
+        info!("{} {} - Piped Dimension into sprite size", "--".yellow(), "ELEMENT".red());
         sprite.custom_size = Some(dimension.size)
     }
 }
@@ -346,7 +372,7 @@ pub fn element_reconstruct_mesh<T: Component>(
     for (dimension, mut mesh, mut aabb) in &mut query {
 
         #[cfg(feature = "debug")]
-        info!("{} - Reconstructed mesh size", "Element".red());
+        info!("{} {} - Reconstructed mesh size", "--".yellow(), "ELEMENT".red());
 
         // Unload old mesh
         let _ = msh.remove(mesh.id());
@@ -370,7 +396,7 @@ pub fn element_text_size_to_layout<T: Component>(
 ) {
     for (mut layout, text_info) in &mut query {
         #[cfg(feature = "debug")]
-        info!("{} - Text size piped to Layout", "Element".red());
+        info!("{} {} - Converted text size into Layout", "--".yellow(), "ELEMENT".red());
         match layout.as_mut() {
             UiLayout::Window(window) => {window.size = Rh(text_info.logical_size).into()},
             UiLayout::Solid(solid) => {solid.size = Ab(text_info.logical_size).into()},
@@ -387,7 +413,7 @@ pub fn element_text_size_to_content<T: Component>(
 ) {
     for (mut content, text_info) in &mut query {
         #[cfg(feature = "debug")]
-        info!("{} - Text size piped to Content", "Element".red());
+        info!("{} {} - Piped text size into content", "--".yellow(), "ELEMENT".red());
         content.size = text_info.logical_size;
     }
 }
@@ -400,7 +426,7 @@ pub fn element_text_size_scale_fit_to_dimension<T: Component>(
 ) {
     for (mut transform, dimension, text_info) in &mut query {
         #[cfg(feature = "debug")]
-        info!("{} - Scaled Transform for text size to fit into Dimension", "Element".red());
+        info!("{} {} - Scaled Transform for text size to fit into Dimension", "--".yellow(), "ELEMENT".red());
         let scale = dimension.size / text_info.logical_size;
         transform.scale.x = scale.x;
         transform.scale.y = scale.y;
@@ -477,6 +503,7 @@ impl <T:Component, N:Default + Component> Plugin for UiPlugin<T, N> {
                 send_content_size_to_node::<T, N>,
                 send_stack_to_node::<T, N>,
                 send_layout_to_node::<T, N>,
+                send_depth_bias_to_node::<T, N>,
             ).in_set(UiSystems::Send).before(UiSystems::Compute))
 
             .add_systems(Update, (

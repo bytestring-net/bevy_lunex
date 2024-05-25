@@ -54,6 +54,8 @@ impl <N:Default + Component> UiNodeComputeTrait for UiNode<N> {
             // Overwrite passed style with font size
             if let Some(fnt) = node_data.font_size { font_size = fnt }
 
+            println!("{}", node_data.depth_bias);
+
             // Compute node layout
             match &node_data.layout {
                 UiLayout::Div(_) => {
@@ -74,7 +76,7 @@ impl <N:Default + Component> UiNodeComputeTrait for UiNode<N> {
             }
 
             // Adding depth
-            node_data.rectangle.pos.z = depth;
+            node_data.rectangle.pos.z = depth + node_data.depth_bias;
             node_data.rectangle
 
         } else { return; };

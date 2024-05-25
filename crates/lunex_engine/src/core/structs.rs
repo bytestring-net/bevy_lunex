@@ -202,6 +202,8 @@ pub struct NodeData<N:Default + Component> {
     pub stack: UiStack,
     /// Optional font size to overwrite the inherited master font size.
     pub font_size: Option<f32>,
+    /// Value that will be relatively applied to Z after layout compute.
+    pub depth_bias: f32,
     /// Size of the content to wrap around. Affects this node's size only if the layout is parametric (Div).
     pub content_size: Vec2,
 }
