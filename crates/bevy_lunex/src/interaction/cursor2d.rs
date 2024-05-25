@@ -58,7 +58,8 @@ pub fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut 
     if let Ok(mut window) = windows.get_single_mut() {
         for (cursor, mut transform, mut visibility) in &mut query {
 
-            window.cursor.visible = cursor.native_cursor;
+            window.cursor.visible = !cursor.hidden || !cursor.native_cursor;
+            window.cursor.icon = cursor.cursor_request;
 
             match window.cursor_position() {
                 Some(position) => {
@@ -67,7 +68,7 @@ pub fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut 
 
                     transform.translation.x = position.x - window.width()*0.5 - sprite_offset.x * transform.scale.x;
                     transform.translation.y = -(position.y - window.height()*0.5 - sprite_offset.y * transform.scale.y);
-                    *visibility = if cursor.hidden { Visibility::Hidden } else { Visibility::Visible };
+                    *visibility = if cursor.hidden || cursor.native_cursor { Visibility::Hidden } else { Visibility::Visible };
                 }
                 None => {
                     *visibility = Visibility::Hidden;
