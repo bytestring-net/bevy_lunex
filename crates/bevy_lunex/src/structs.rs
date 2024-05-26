@@ -2,6 +2,8 @@ use std::{borrow::Borrow, marker::PhantomData};
 
 use bevy::{prelude::*, render::primitives::Aabb, sprite::Anchor, text::{Text2dBounds, TextLayoutInfo}};
 use lunex_engine::prelude::*;
+#[cfg(feature = "picking")]
+use bevy_mod_picking::prelude::*;
 
 
 
@@ -186,6 +188,16 @@ pub struct UiSpatialBundle {
     /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering.
     pub view_visibility: ViewVisibility,
 }
+
+
+#[cfg(feature = "picking")]
+/// Additional bundle for `UiNode` entity that makes the node interactible.
+#[derive(Bundle, Default)]
+pub struct UiInteractibleBundle {
+    pub spacial: UiSpatialBundle,
+    pub pickable: PickableBundle,
+}
+
 
 // #=======================#
 // #=== SPECIAL BUNDLES ===#
