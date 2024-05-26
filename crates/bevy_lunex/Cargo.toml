@@ -16,5 +16,9 @@
   bevy_mod_picking = { workspace = true, optional = true }
 
 [features]
+  # Default features
+  default = ["picking"]
+
+  # Features
   debug = []
   picking = ["bevy_mod_picking"]
