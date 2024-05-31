@@ -74,7 +74,7 @@ impl <N:Default + Component> UiNodeComputeTrait for UiNode<N> {
             }
 
             // Adding depth
-            node_data.rectangle.pos.z = depth;
+            node_data.rectangle.pos.z = depth + node_data.depth_bias;
             node_data.rectangle
 
         } else { return; };

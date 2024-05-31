@@ -459,11 +459,6 @@ impl Window {
             size: Rl(100.0).into(),
         }
     }
-    /// Creates new empty Window node layout centered at provided position.
-    pub fn new_centered_at(pos: impl Into<UiValue<Vec2>>, size: impl Into<UiValue<Vec2>> ) -> Self {
-        let s = size.into();
-        Window::new().pos(pos.into() - (s.clone() * 0.5)).size(s)
-    }
     /// Replaces the position with a new value.
     pub fn pos(mut self, pos: impl Into<UiValue<Vec2>>) -> Self {
         self.pos = pos.into();

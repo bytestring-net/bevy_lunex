@@ -21,6 +21,8 @@ pub struct Cursor2d {
     cursor_atlas_map: HashMap<CursorIcon, (usize, Vec2)>,
     /// A toggle if this cursor should replace the native cursor
     native_cursor: bool,
+    /// A toggle if the cursor should be hidden
+    pub hidden: bool,
 }
 impl Cursor2d {
     /// Creates new default Cursor2d.
@@ -30,9 +32,10 @@ impl Cursor2d {
             cursor_request_priority: 0.0,
             cursor_atlas_map: HashMap::new(),
             native_cursor: true,
+            hidden: false,
         }
     }
-    /// A toggle if this cursor should replace the native cursor
+    /// A toggle if this cursor should native
     pub fn native_cursor(mut self, enable: bool) -> Self {
         self.native_cursor = enable;
         self
@@ -55,7 +58,8 @@ pub fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut 
     if let Ok(mut window) = windows.get_single_mut() {
         for (cursor, mut transform, mut visibility) in &mut query {
 
-            window.cursor.visible = cursor.native_cursor;
+            window.cursor.visible = if cursor.native_cursor { !cursor.hidden } else { false };
+            window.cursor.icon = cursor.cursor_request;
 
             match window.cursor_position() {
                 Some(position) => {
@@ -64,7 +68,7 @@ pub fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut 
 
                     transform.translation.x = position.x - window.width()*0.5 - sprite_offset.x * transform.scale.x;
                     transform.translation.y = -(position.y - window.height()*0.5 - sprite_offset.y * transform.scale.y);
-                    *visibility = Visibility::Visible;
+                    *visibility = if cursor.hidden || cursor.native_cursor { Visibility::Hidden } else { Visibility::Visible };
                 }
                 None => {
                     *visibility = Visibility::Hidden;
