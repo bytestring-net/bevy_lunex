@@ -1,4 +1,4 @@
-![image](promo/bevy_lunex.png)
+![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/bevy_lunex.png?raw=true)
 
 <div align="center">
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
@@ -22,7 +22,7 @@ Currently, it is most suited for game-like user interfaces. Use for regular appl
 
 ##
 
-![image](promo/image.png)
+![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/image.png?raw=true)
 
 *^ A recreation of ***Cyberpunk*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/Bevypunk).*
 

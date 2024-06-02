@@ -1,4 +1,4 @@
-![image](promo/bevy_lunex.png)
+![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/bevy_lunex.png?raw=true)
 
 <div align="center">
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
@@ -16,11 +16,13 @@ It uses a combination of Bevy's built-in hierarchy and its own custom hierarchy 
 
 It gives you the ability to make ***your own custom UI*** using regular ECS like every other part of your app.
 
+Currently, it is most suited for game-like user interfaces. Use for regular applications requires additional tinkering. 
+
 ***TLDR:*** It positions your entities as HTML objects for you, so you can slap custom rendering or images on them.
 
 ##
 
-![image](promo/image.png)
+![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/image.png?raw=true)
 
 *^ A recreation of ***Cyberpunk*** UI in ***Bevy***. [(Source code here)](https://github.com/IDEDARY/Bevypunk).*
 
@@ -33,11 +35,13 @@ Bevy_Lunex is built on a simple concept: to use Bevy's ECS as the foundation for
 
 * **Path-Based Hierarchy:** Inspired by file system paths, this approach allows for intuitive structuring and nesting of UI elements. It's designed to make the relationship between components clear and manageable, using a syntax familiar to most developers, while also avoiding the safety restrictions Rust enforces (as they don't help but instead obstruct for UI).
 
+* **Resizable:** Lunex is designed to support ALL window sizes out of the box without deforming. The built in layout types react nicely and intuitively to aspect ratio changes.
+
 * **Retained Layout Engine:** Unlike immediate mode GUI systems, Bevy_Lunex uses a retained layout engine. This means the layout is calculated and stored, reducing the need for constant recalculations and offering potential performance benefits, especially for static or infrequently updated UIs.
 
-* **ECS friendly:** Since it's built with ECS, you can extend or customize the behavior of your UI by simply adding or modifying components. The scripting is done by regular systems and callbacks are done using events.
+* **ECS friendly:** Since it's built with ECS, you can extend or customize the behavior of your UI by simply adding or modifying components. The interactivity is done by regular systems and events.
 
-* **2D & 3D UI:** One of the features of Bevy_Lunex is its support for both 2D and 3D UI elements, leveraging Bevy's `Transform` component. This opens up a wide range of possibilities for developers looking to integrate UI elements seamlessly into both flat and spatial environments.
+* **2D & 3D UI:** One of the features of Bevy_Lunex is its support for both 2D and 3D UI elements, leveraging Bevy's `Transform` component. This opens up a wide range of possibilities for developers looking to integrate UI elements seamlessly into both flat and spatial environments. Diegetic UI is no problem.
 
 * **Mod picking:** For interactions, we intagrate with [bevy_mod_picking](https://github.com/aevyrie/bevy_mod_picking), which is getting upstreamed into Bevy. Lunex also provides custom picking backend, you just need add `"picking"` feature.
 
@@ -50,7 +54,7 @@ First, we need to define a component, that we will use to mark all entities that
 pub struct MyUiSystem;
 ```
 
-Then we need to add `UiPlugin` with our marker component. The `NoData` generics are used if you need to store some data inside the nodes.
+Then we need to add `UiPlugin` with our marker component as generic.
 
 ```rust
 fn main() {
@@ -94,19 +98,19 @@ You can add a `UiImage2dBundle` to the entity to add images to your widgets. Or 
 ```rust
 ui.spawn((
     UiLink::<MyUiSystem>::path("Root"),
-    UiLayout::Window::FULL.pos(Ab(20.0)).size(Rl(100.0) - Ab(40.0)).pack(),
+    UiLayout::window_full().pos(Ab(20.0)).size(Rl(100.0) - Ab(40.0)).pack(),
 ));
 
 ui.spawn((
     UiLink::<MyUiSystem>::path("Root/Rectangle"),
-    UiLayout::Solid::new().size(Ab((1920.0, 1080.0))).pack(),
+    UiLayout::solid()::new().size(Ab((1920.0, 1080.0))).pack(),
     UiImage2dBundle::from(assets.load("background.png")),
 ));
 ```
 
 `UiLink` is what is used to define the the custom hierarchy. It uses `/` as the separator. If any of the names don't internally exist inside the parent `UiTree`, it will create them.
 
-As you can see in the terminal (If you have added a `UiDebugPlugin`), the final structure looks like this:
+As you can see in the terminal (If you have added a `UiDebugPlugin`), the debug structure looks like this:
 ```rust
 > MyUiSystem == Window [pos: (x: 0, y: 0) size: (x: 100%, y: 100%)]
     |-> Root == Window [pos: (x: 20, y: 20) size: (x: -40 + 100%, y: -40 + 100%)]
@@ -117,7 +121,7 @@ Quite simple, isn't it? Best part is that by relying on components only, you are
 
 ### Nodes & Units
 
-There are multiple nodes in `UiLayout`.
+There are multiple layout.
 * `Boundary` - Defined by _point1_ and _point2_, it is not influenced by UI flow and is absolutely positioned.
 * `Window` - Defined by _point_ and _size_, it is not influenced by UI flow and is absolutely positioned.
 * `Solid` - Defined by _size_ only, it will scale to fit the parenting node. It is not influenced by UI flow.
