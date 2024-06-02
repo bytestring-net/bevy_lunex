@@ -82,13 +82,23 @@ You can add a `UiImage2dBundle` to the entity to add images to your widgets. Or 
 
 ```rust
 ui.spawn((
+
+    // Link the entity
     UiLink::<MainUi>::path("Root"),
+
+    // Specify UI layout
     UiLayout::window_full().pos(Ab(20.0)).size(Rl(100.0) - Ab(40.0)).pack(),
 ));
 
 ui.spawn((
+
+    // Link the entity
     UiLink::<MainUi>::path("Root/Rectangle"),
+
+    // Specify UI layout
     UiLayout::solid()::new().size(Ab((1920.0, 1080.0))).pack(),
+
+    // Add image to the entity
     UiImage2dBundle::from(assets.load("background.png")),
 ));
 ```
@@ -101,5 +111,3 @@ As you can see in the terminal (If you have added a `UiDebugPlugin`), the debug 
     |-> Root == Window [pos: (x: 20, y: 20) size: (x: -40 + 100%, y: -40 + 100%)]
     |    |-> Rectangle == Solid [size: (x: 1920, y: 1080) align_x: 0 align_y: 0]
 ```
-
-Quite simple, isn't it? Best part is that by relying on components only, you are potentially able to hot-reload UI or even stream UI over the network. The downside is that by relying on strings to link entities, we are giving up some safety that Rust provides. But I am all for using the right tools for the right task. By putting away some safety, we can skip the bothersome bloat that would otherwise be required for such application.
