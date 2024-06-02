@@ -435,7 +435,7 @@ impl NiceDisplay for Boundary {
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Window {
-    /// Position of the top-left corner.
+    /// Position of the node.
     pub pos : UiValue<Vec2>,
     /// Decides where position should be applied at.
     pub anchor: Anchor,
