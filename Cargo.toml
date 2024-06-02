@@ -10,6 +10,7 @@
   exclude = [
     "promo/*",
     "examples/*",
+    "docs/*",
     ".gitignore",
     ".vscode",
   ]
@@ -18,8 +19,8 @@
   opt-level = 1
 
 [workspace.package]
-  authors     = ["Dominik Kaspar"]
-  version     = "0.1.0-alpha"
+  authors     = ["IDEDARY"]
+  version     = "0.1.0-alpha.2"
   edition     = "2021"
   license     = "MIT OR Apache-2.0"
   repository  = "https://github.com/bytestring-net/bevy-lunex"
@@ -28,16 +29,14 @@
 
 [workspace.dependencies]
 
-  bevy_lunex   = { path = "crates/bevy_lunex", version = "0.1.0-alpha" }
-  lunex_engine = { path = "crates/lunex_engine", version = "0.1.0-alpha" }
+  bevy_lunex   = { path = "crates/bevy_lunex", version = "0.1.0-alpha.2" }
+  lunex_engine = { path = "crates/lunex_engine", version = "0.1.0-alpha.2" }
 
   colored            = { version = "^2.1" }
   indexmap           = { version = "^2.1" }
   thiserror          = { version = "^1.0" }
 
   bevy = { version = "0.13.2", default_features = false, features = [
-    #"bevy_asset",
-    #"bevy_gilrs",
     "bevy_pbr",
     "bevy_sprite",
     "bevy_text",
