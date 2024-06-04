@@ -16,6 +16,7 @@
 - [Layouts](advanced/layouts.md)
 - [Units](advanced/units.md)
 - [Cursor](advanced/cursor.md)
+- [Text](advanced/text.md)
 - [Routes](advanced/routes.md)
 - [Components](advanced/components.md)
 - [Interactivity](advanced/interactivity.md)
