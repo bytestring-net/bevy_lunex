@@ -1,3 +1,0 @@
-# Routes
-
-*Coming soon...*
