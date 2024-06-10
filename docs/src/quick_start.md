@@ -96,7 +96,7 @@ ui.spawn((
     UiLink::<MainUi>::path("Root/Rectangle"),
 
     // Specify UI layout
-    UiLayout::solid()::new().size(Ab((1920.0, 1080.0))).pack(),
+    UiLayout::solid().size(Ab((1920.0, 1080.0))).pack(),
 
     // Add image to the entity
     UiImage2dBundle::from(assets.load("background.png")),
