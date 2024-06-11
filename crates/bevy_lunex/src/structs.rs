@@ -9,8 +9,8 @@ use bevy::{render::primitives::Aabb, sprite::Anchor, text::{Text2dBounds, TextLa
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Base;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Hover;
+//#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+//pub struct Hover;
 
 
 // #=========================#
