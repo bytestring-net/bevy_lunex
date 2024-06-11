@@ -5,8 +5,10 @@
 
 pub (crate) use std::{borrow::Borrow, marker::PhantomData};
 pub (crate) use bevy::prelude::*;
-pub (crate) use colored::Colorize;
 pub (crate) use lunex_engine::prelude::*;
+
+#[cfg(feature = "debug")]
+pub (crate) use colored::Colorize;
 
 #[cfg(feature = "picking")]
 pub (crate) use bevy_mod_picking::prelude::*;

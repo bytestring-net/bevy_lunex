@@ -80,8 +80,9 @@ impl Dimension {
 }
 
 
-/// This struct holds depth bias that will be relatively added to [`Transform`] `Z` after layout calculation.
+/// This struct holds depth bias that will be relatively added to `depth` in the layout calculation.
 /// Nodes will higher depth bias will be placed on top nodes with lower depth bias.
+/// It is recursive.
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct UiDepthBias (pub f32);
 
