@@ -14,7 +14,7 @@ UiLink::<MainButtonUi>::path("Text"),
 
 // Here we can define where we want to position our text within the parent node,
 // don't worry about size, that is picked up and overwritten automaticaly by Lunex to match text size.
-UiLayout::window().pos(Rl((5., 50.))).anchor(Anchor::CenterLeft).pack(),
+UiLayout::window().pos(Rl((5., 50.))).anchor(Anchor::CenterLeft).pack::<Base>(),
 
 // Add text
 UiText2dBundle {

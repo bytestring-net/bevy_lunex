@@ -49,7 +49,7 @@ fn build_route(mut commands: Commands, assets: Res<AssetServer>, query: Query<En
                 UiLink::<CustomButtonUi>::path("Image"),
 
                 // Add layout
-                UiLayout::window_full().pack(),
+                UiLayout::window_full().pack::<Base>(),
 
                 // Give it a background image
                 UiImage2dBundle {
@@ -95,7 +95,7 @@ To spawn the component, you have to spawn it as UI node of another UI system, ei
 // Spawning the component
 ui.spawn((
     UiLink::<MainUi>::path("Button"),
-    UiLayout::window().size(Rl(50.0)).pack(),
+    UiLayout::window().size(Rl(50.0)).pack::<Base>(),
 
     CustomButton {
         text: "PRESS ME!".to_string(),

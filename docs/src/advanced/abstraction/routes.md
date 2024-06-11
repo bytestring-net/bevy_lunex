@@ -30,7 +30,7 @@ fn build_route(mut commands: Commands, assets: Res<AssetServer>, query: Query<En
             // Spawn some UI nodes
             ui.spawn((
                 UiLink::<MainUi>::path("Background"),
-                UiLayout::solid().size((1920.0, 1080.0)).scaling(Scaling::Fill).pack(),
+                UiLayout::solid().size((1920.0, 1080.0)).scaling(Scaling::Fill).pack::<Base>(),
                 UiImage2dBundle::from(assets.load("images/background.png")),
             ));
         });

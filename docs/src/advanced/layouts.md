@@ -13,7 +13,7 @@ This will make a node start at `20%` and end at `80%` on both axis from the pare
 UiLayout::boundary()
     .pos1(Rl(20.0))
     .pos2(Rl(80.0))
-    .pack()
+    .pack::<Base>()
 ```
 
 ### Window
@@ -29,7 +29,7 @@ UiLayout::window()
     .pos(Rl((53.0, 15.0)))
     .anchor(Anchor::Center)
     .size(Rl((60.0, 65.0)))
-    .pack()
+    .pack::<Base>()
 ```
 
 ### Solid
@@ -47,7 +47,7 @@ Then we can align it horizontally.
 UiLayout::solid()
     .size((881.0, 1600.0))
     .align_x(-0.74)
-    .pack(),
+    .pack::<Base>(),
 ```
 
 ### Div
