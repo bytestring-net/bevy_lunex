@@ -39,14 +39,14 @@ fn build_route(mut commands: Commands, assets: Res<AssetServer>, query: Query<En
         commands.entity(entity).insert((
             // Insert this bundle into the entity that just got the MyRoute component
             // Note that CustomButtonUi is used here instead of MainUi
-            UiTreeBundle::<CustomButtonUi>::from(UiTree::new("MyRoute")),
+            UiTreeBundle::<CustomButtonUi>::from(UiTree::new("CustomButton")),
         // Now spawn the UI as children
         )).with_children(|ui| {
             // Spawn some UI nodes
             ui.spawn((
                 // Link this widget
                 // Note that CustomButtonUi is used here instead of MainUi
-                UiLink::<CustomButtonUi>::path("Control/Image"),
+                UiLink::<CustomButtonUi>::path("Image"),
 
                 // Add layout
                 UiLayout::window_full().pack(),

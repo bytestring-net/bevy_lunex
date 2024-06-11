@@ -1,6 +1,15 @@
 #![doc = include_str!("../README.md")]
 
-use bevy::prelude::*;
+// #==============================#
+// #=== IMPORTS FOR THIS CRATE ===#
+
+pub (crate) use std::{borrow::Borrow, marker::PhantomData};
+pub (crate) use bevy::prelude::*;
+pub (crate) use colored::Colorize;
+pub (crate) use lunex_engine::prelude::*;
+
+#[cfg(feature = "picking")]
+pub (crate) use bevy_mod_picking::prelude::*;
 
 
 // #======================#
@@ -30,7 +39,10 @@ pub use events::*;
 pub mod interaction;
 pub use interaction::*;
 
-pub mod macros;
+pub mod logic;
+pub use logic::*;
+
+//pub mod macros;
 
 #[cfg(feature = "picking")]
 pub mod picking;
