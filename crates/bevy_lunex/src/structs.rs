@@ -2,8 +2,19 @@ use crate::*;
 use bevy::{render::primitives::Aabb, sprite::Anchor, text::{Text2dBounds, TextLayoutInfo}};
 
 
-// #==================#
-// #=== COMPONENTS ===#
+// #========================#
+// #=== STATE COMPONENTS ===#
+
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Base;
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Hover;
+
+
+// #=========================#
+// #=== MARKER COMPONENTS ===#
 
 /// This struct marks [`UiTree`] entity to receive piped [`Camera`] size and position to its [`Dimension`] and [`Transform`] component.
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
@@ -16,6 +27,23 @@ pub struct MovableByCamera;
 pub struct Element;
 
 
+// #======================#
+// #=== STD COMPONENTS ===#
+
+/// This struct holds rectangular data. If the component covers some kind of 2D area, it should be stored in this component.
+/// Lunex uses this component to mirror node size in & out from parent [`UiTree`].
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
+pub struct Dimension {
+    pub size: Vec2,
+}
+impl Dimension {
+    pub fn new(size: impl Into<Vec2>) -> Self {
+        Dimension {
+            size: size.into()
+        }
+    }
+}
+
 /// # WIP - used for Div layout
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct UiContent {
@@ -24,6 +52,133 @@ pub struct UiContent {
 impl UiContent {
     pub fn new(size: impl Into<Vec2>) -> Self {
         UiContent { size: size.into() }
+    }
+}
+
+
+// #=======================#
+// #=== MAIN COMPONENTS ===#
+
+#[derive(Component, Debug, Copy, Clone, PartialEq)]
+pub struct UiLayout<S = Base> {
+    pub layout: Layout,
+    state: PhantomData<S>,
+}
+impl UiLayout {
+    /// **Boundary** - Declarative layout type that is defined by its top-left corner and bottom-right corner.
+    /// Nodes with this layout are not included in the ui flow.
+    /// ## 🛠️ Example
+    /// ```
+    /// # use lunex_engine::{UiLayout, Rl};
+    /// let layout: UiLayout = UiLayout::boundary().pos1(Rl(20.0)).pos2(Rl(80.0)).pack();
+    /// ```
+    pub fn boundary() -> ui::Boundary {
+        ui::Boundary::new()
+    }
+    /// **Window** - Declarative layout type that is defined by its size and position.
+    /// Nodes with this layout are not included in the ui flow.
+    /// ## 🛠️ Example
+    /// ```
+    /// # use lunex_engine::{UiLayout, Ab, Rl};
+    /// let layout: UiLayout = UiLayout::window().pos(Ab(100.0)).size(Rl(50.0)).pack();
+    /// ```
+    pub fn window() -> ui::Window {
+        ui::Window::new()
+    }
+    /// **Window** (full) - Declarative layout type that is defined by its size and position.
+    /// Nodes with this layout are not included in the ui flow.
+    /// ## 🛠️ Example
+    /// ```
+    /// # use lunex_engine::{UiLayout, Rl};
+    /// let layout: UiLayout = UiLayout::window().size(Rl(100.0)).pack(); // Same as UiLayout::window_full()
+    /// ```
+    pub fn window_full() -> ui::Window {
+        ui::Window::full()
+    }
+    /// **Solid** - Declarative layout type that is defined by its width and height ratio.
+    /// Scales in a way to fit itself inside parent container. It never deforms.
+    /// Nodes with this layout are not included in the ui flow.
+    /// ## 🛠️ Example
+    /// ```
+    /// # use lunex_engine::UiLayout;
+    /// let layout: UiLayout = UiLayout::solid().size((4.0, 3.0)).align_x(-0.8).pack();
+    /// ```
+    pub fn solid() -> ui::Solid {
+        ui::Solid::new()
+    }
+    /// **Div** - Parametric layout type that is defined by margin, border and padding. Its location and size
+    /// is based on the surrounding nodes, like HTML. It is also the only node layout that uses the [`Sp`] unit.
+    /// You can use this unit for alignment and justification.
+    /// ## 🛠️ Example
+    /// ```
+    /// # use lunex_engine::{UiLayout, Sp};
+    /// let layout: UiLayout = UiLayout::new().pad_x(2.0).margin_y(Sp(1.0)).br().pack();
+    /// ```
+    pub fn div() -> ui::Div {
+        ui::Div::new()
+    }
+}
+impl <S> UiLayout<S> {
+    /// Creates struct from layout
+    pub fn from(layout: impl Into<Layout>) -> UiLayout<S> {
+        UiLayout {
+            layout: layout.into(),
+            state: PhantomData,
+        }
+    }
+}
+impl <S> Default for UiLayout<S> {
+    fn default() -> Self {
+        UiLayout {
+            layout: Layout::default(),
+            state: PhantomData,
+        }
+    }
+}
+
+pub trait PackageLayout {
+    fn pack<S>(self) -> UiLayout<S>;
+}
+
+// Implement packaging 
+impl <S> Into<UiLayout<S>> for ui::Boundary {
+    fn into(self) -> UiLayout<S> {
+        self.pack::<S>()
+    }
+}
+impl PackageLayout for ui::Boundary {
+    fn pack<S>(self) -> UiLayout<S> {
+        UiLayout::<S>::from(self)
+    }
+}
+impl <S> Into<UiLayout<S>> for ui::Window {
+    fn into(self) -> UiLayout<S> {
+        self.pack::<S>()
+    }
+}
+impl PackageLayout for ui::Window {
+    fn pack<S>(self) -> UiLayout<S> {
+        UiLayout::<S>::from(self)
+    }
+}
+impl <S> Into<UiLayout<S>> for ui::Solid {
+    fn into(self) -> UiLayout<S> {
+        self.pack::<S>()
+    }
+}
+impl PackageLayout for ui::Solid {
+    fn pack<S>(self) -> UiLayout<S> {
+        UiLayout::<S>::from(self)
+    }
+}
+impl <S> Into<UiLayout<S>> for ui::Div {
+    fn into(self) -> UiLayout<S> {
+        self.pack::<S>()
+    }
+}
+impl PackageLayout for ui::Div {
+    fn pack<S>(self) -> UiLayout<S> {
+        UiLayout::<S>::from(self)
     }
 }
 
@@ -65,26 +220,12 @@ impl <T> Default for UiLink<T> {
 }
 
 
-/// This struct holds rectangular data. If the component covers some kind of 2D area, it should be stored in this component.
-/// Lunex uses this component to mirror node size in & out from parent [`UiTree`].
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
-pub struct Dimension {
-    pub size: Vec2,
-}
-impl Dimension {
-    pub fn new(size: impl Into<Vec2>) -> Self {
-        Dimension {
-            size: size.into()
-        }
-    }
-}
-
-
 /// This struct holds depth bias that will be relatively added to `depth` in the layout calculation.
 /// Nodes will higher depth bias will be placed on top nodes with lower depth bias.
 /// It is recursive.
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct UiDepthBias (pub f32);
+
 
 // #====================#
 // #=== MAIN BUNDLES ===#

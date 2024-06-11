@@ -44,7 +44,7 @@ pub fn debug_draw_gizmo<T:Component, N:Default + Component>(
 
                 let mut color = Color::LIME_GREEN;
 
-                if let UiLayout::Solid(_) = container.layout { color = Color::YELLOW }
+                if let Layout::Solid(_) = container.layout { color = Color::YELLOW }
 
                 let mut pos = container.rectangle.pos.invert_y() + transform.translation();
                 pos.x += container.rectangle.size.x / 2.0;
@@ -175,7 +175,7 @@ pub fn send_layout_to_node<T:Component, N:Default + Component>(
                     if let Some(container) = node.obtain_data_mut() {
                         #[cfg(feature = "debug")]
                         info!("{} {} - Received Layout data", "->".blue(), link.path.yellow().bold());
-                        container.layout = *layout;
+                        container.layout = layout.layout;
                     }
                 }
             }
@@ -393,9 +393,9 @@ pub fn element_text_size_to_layout<T: Component>(
     for (mut layout, text_info) in &mut query {
         #[cfg(feature = "debug")]
         info!("{} {} - Converted text size into Layout", "--".yellow(), "ELEMENT".red());
-        match layout.as_mut() {
-            UiLayout::Window(window) => {window.size = Rh(text_info.logical_size).into()},
-            UiLayout::Solid(solid) => {solid.size = Ab(text_info.logical_size).into()},
+        match &mut layout.layout {
+            Layout::Window(window) => {window.size = Rh(text_info.logical_size).into()},
+            Layout::Solid(solid) => {solid.size = Ab(text_info.logical_size).into()},
             _ => {},
         }
     }
