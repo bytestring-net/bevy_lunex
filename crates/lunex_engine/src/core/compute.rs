@@ -6,7 +6,7 @@ use crate::NodeTopDataTrait;
 use crate::UiNode;
 use crate::UiTree;
 use crate::Rectangle3D;
-use crate::UiLayout;
+use crate::Layout;
 
 /// Trait with [`UiTree`] layout computation methods.
 pub trait UiNodeTreeComputeTrait {
@@ -56,18 +56,18 @@ impl <N:Default + Component> UiNodeComputeTrait for UiNode<N> {
 
             // Compute node layout
             match &node_data.layout {
-                UiLayout::Div(_) => {
+                Layout::Div(_) => {
                     is_parametric = true;
                 },
-                UiLayout::Boundary(l) => {
+                Layout::Boundary(l) => {
                     node_data.rectangle = l.compute(parent.into(), absolute_scale, viewport_size, font_size).into();
                     skip = false;
                 },
-                UiLayout::Window(l) => {
+                Layout::Window(l) => {
                     node_data.rectangle = l.compute(parent.into(), absolute_scale, viewport_size, font_size).into();
                     skip = false;
                 },
-                UiLayout::Solid(l)  => {
+                Layout::Solid(l)  => {
                     node_data.rectangle = l.compute(parent.into(), absolute_scale, viewport_size, font_size).into();
                     skip = false;
                 },

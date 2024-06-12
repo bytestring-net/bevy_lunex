@@ -8,7 +8,7 @@ pub use stack::*;
 // #=== PRELUDE EXPORT ===#
 
 pub mod prelude {
-    pub use super::UiLayout;
+    pub use super::Layout;
     pub use super::{Align, Scaling, Sizing};
 
     pub use super::UiStack;

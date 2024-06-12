@@ -19,13 +19,13 @@ use crate::{NiceDisplay, Rectangle2D, UiValue, UiValueEvaluate, Ab, Rl};
 /// The expected range is `-1.0` to `1.0`, but you can extrapolate.
 #[cfg_attr(feature = "bevy", derive(Component))]
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum UiLayout {
+pub enum Layout {
     Boundary(Boundary),
     Window(Window),
     Solid(Solid),
     Div(Div),
 }
-impl UiLayout {
+impl Layout {
 
     /// **Boundary** - Declarative layout type that is defined by its top-left corner and bottom-right corner.
     /// Nodes with this layout are not included in the ui flow.
@@ -87,72 +87,72 @@ impl UiLayout {
     /// Unwrap the type, panic if not Boundary variant
     pub fn expect_boundary(&self) -> &Boundary {
         match self {
-            UiLayout::Boundary(b) => b,
+            Layout::Boundary(b) => b,
             _ => panic!("A different layout type than expected! Got {}, expected Boundary", self.to_nicestr())
         }
     }
     /// Unwrap the type, panic if not Boundary variant
     pub fn expect_boundary_mut(&mut self) -> &mut Boundary {
         match self {
-            UiLayout::Boundary(b) => b,
+            Layout::Boundary(b) => b,
             _ => panic!("A different layout type than expected! Got {}, expected Boundary", self.to_nicestr())
         }
     }
     /// Unwrap the type, panic if not Window variant
     pub fn expect_window(&self) -> &Window {
         match self {
-            UiLayout::Window(w) => w,
+            Layout::Window(w) => w,
             _ => panic!("A different layout type than expected! Got {}, expected Window", self.to_nicestr())
         }
     }
     /// Unwrap the type, panic if not Window variant
     pub fn expect_window_mut(&mut self) -> &mut Window {
         match self {
-            UiLayout::Window(w) => w,
+            Layout::Window(w) => w,
             _ => panic!("A different layout type than expected! Got {}, expected Window", self.to_nicestr())
         }
     }
     /// Unwrap the type, panic if not Solid variant
     pub fn expect_solid(&self) -> &Solid {
         match self {
-            UiLayout::Solid(s) => s,
+            Layout::Solid(s) => s,
             _ => panic!("A different layout type than expected! Got {}, expected Solid", self.to_nicestr())
         }
     }
     /// Unwrap the type, panic if not Solid variant
     pub fn expect_solid_mut(&mut self) -> &mut Solid {
         match self {
-            UiLayout::Solid(s) => s,
+            Layout::Solid(s) => s,
             _ => panic!("A different layout type than expected! Got {}, expected Solid", self.to_nicestr())
         }
     }
     /// Unwrap the type, panic if not Div variant
     pub fn expect_div(&self) -> &Div {
         match self {
-            UiLayout::Div(d) => d,
+            Layout::Div(d) => d,
             _ => panic!("A different layout type than expected! Got {}, expected Div", self.to_nicestr())
         }
     }
     /// Unwrap the type, panic if not Div variant
     pub fn expect_div_mut(&mut self) -> &mut Div {
         match self {
-            UiLayout::Div(d) => d,
+            Layout::Div(d) => d,
             _ => panic!("A different layout type than expected! Got {}, expected Div", self.to_nicestr())
         }
     }
 }
-impl Default for UiLayout {
+impl Default for Layout {
     fn default() -> Self {
         Window::new().size(Rl(100.0)).into()
     }
 }
-impl NiceDisplay for UiLayout {
+impl NiceDisplay for Layout {
     fn to_nicestr(&self) -> String {
         match self {
-            UiLayout::Boundary(layout) => format!("{} {}", "Boundary".bold().bright_cyan(), layout.to_nicestr()),
-            UiLayout::Solid(layout) => format!("{} {}", "Solid".bold().bright_cyan(), layout.to_nicestr()),
-            UiLayout::Window(layout) => format!("{} {}", "Window".bold().bright_cyan(), layout.to_nicestr()),
-            UiLayout::Div(layout) => format!("{} {}", "Div".bold().bright_cyan(), layout.to_nicestr()),
+            Layout::Boundary(layout) => format!("{} {}", "Boundary".bold().bright_cyan(), layout.to_nicestr()),
+            Layout::Solid(layout) => format!("{} {}", "Solid".bold().bright_cyan(), layout.to_nicestr()),
+            Layout::Window(layout) => format!("{} {}", "Window".bold().bright_cyan(), layout.to_nicestr()),
+            Layout::Div(layout) => format!("{} {}", "Div".bold().bright_cyan(), layout.to_nicestr()),
         }
     }
 }
@@ -408,14 +408,14 @@ impl Boundary {
             size: pos2 - pos1,
         }
     }
-    /// Packs the struct into UiLayout.
-    pub fn pack(self) -> UiLayout {
+    /// Packs the struct into Layout.
+    pub fn package(self) -> Layout {
         self.into()
     }
 }
-impl Into<UiLayout> for Boundary {
-    fn into(self) -> UiLayout {
-        UiLayout::Boundary(self)
+impl Into<Layout> for Boundary {
+    fn into(self) -> Layout {
+        Layout::Boundary(self)
     }
 }
 impl NiceDisplay for Boundary {
@@ -532,14 +532,14 @@ impl Window {
             size,
         }
     }
-    /// Packs the struct into UiLayout.
-    pub fn pack(self) -> UiLayout {
+    /// Packs the struct into Layout.
+    pub fn package(self) -> Layout {
         self.into()
     }
 }
-impl Into<UiLayout> for Window {
-    fn into(self) -> UiLayout {
-        UiLayout::Window(self)
+impl Into<Layout> for Window {
+    fn into(self) -> Layout {
+        Layout::Window(self)
     }
 }
 impl NiceDisplay for Window {
@@ -660,14 +660,14 @@ impl Solid {
             size: (computed_width, computed_height).into(),
         }
     }
-    /// Packs the struct into UiLayout.
-    pub fn pack(self) -> UiLayout {
+    /// Packs the struct into Layout.
+    pub fn package(self) -> Layout {
         self.into()
     }
 }
-impl Into<UiLayout> for Solid {
-    fn into(self) -> UiLayout {
-        UiLayout::Solid(self)
+impl Into<Layout> for Solid {
+    fn into(self) -> Layout {
+        Layout::Solid(self)
     }
 }
 impl NiceDisplay for Solid {
@@ -1054,14 +1054,14 @@ impl Div {
         self.margin.set_w(margin);
     }
 
-    /// Packs the struct into UiLayout
-    pub fn pack(self) -> UiLayout {
+    /// Packs the struct into Layout
+    pub fn package(self) -> Layout {
         self.into()
     }
 }
-impl Into<UiLayout> for Div {
-    fn into(self) -> UiLayout {
-        UiLayout::Div(self)
+impl Into<Layout> for Div {
+    fn into(self) -> Layout {
+        Layout::Div(self)
     }
 }
 impl NiceDisplay for Div {

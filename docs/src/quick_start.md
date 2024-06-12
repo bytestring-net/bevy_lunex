@@ -80,6 +80,8 @@ Now, any entity with `UiLayout` + `UiLink` spawned as a child of the `UiTree` wi
 
 You can add a `UiImage2dBundle` to the entity to add images to your widgets. Or you can add another `UiTree` as a child, which will use the computed size output in `Dimension` component instead of a `Camera` piping the size to it.
 
+The generic at `pack::<S>()` represents state. Now leave it at `Base`, but when you later want to add hover animation use `Hover` instead.
+
 ```rust
 ui.spawn((
 
@@ -87,7 +89,7 @@ ui.spawn((
     UiLink::<MainUi>::path("Root"),
 
     // Specify UI layout
-    UiLayout::window_full().pos(Ab(20.0)).size(Rl(100.0) - Ab(40.0)).pack(),
+    UiLayout::window_full().pos(Ab(20.0)).size(Rl(100.0) - Ab(40.0)).pack::<Base>(),
 ));
 
 ui.spawn((
@@ -96,7 +98,7 @@ ui.spawn((
     UiLink::<MainUi>::path("Root/Rectangle"),
 
     // Specify UI layout
-    UiLayout::solid().size(Ab((1920.0, 1080.0))).pack(),
+    UiLayout::solid().size(Ab((1920.0, 1080.0))).pack::<Base>(),
 
     // Add image to the entity
     UiImage2dBundle::from(assets.load("background.png")),

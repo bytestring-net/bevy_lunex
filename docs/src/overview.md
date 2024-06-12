@@ -30,7 +30,7 @@ commands.spawn((
 	UiLink::<MainUi>::path("Menu/Button"),
 
 	// Here you can define the layout using the provided units
-	UiLayout::window().pos(Rl((50.0, 50.0))).size((Rh(45.0), Rl(60.0))).pack(),
+	UiLayout::window().pos(Rl((50.0, 50.0))).size((Rh(45.0), Rl(60.0))).pack::<Base>(),
 
 
 	// #=== CUSTOMIZATION ===#

@@ -1,6 +1,17 @@
 #![doc = include_str!("../README.md")]
 
-use bevy::prelude::*;
+// #==============================#
+// #=== IMPORTS FOR THIS CRATE ===#
+
+pub (crate) use std::{borrow::Borrow, marker::PhantomData};
+pub (crate) use bevy::prelude::*;
+pub (crate) use lunex_engine::prelude::*;
+
+#[cfg(feature = "debug")]
+pub (crate) use colored::Colorize;
+
+#[cfg(feature = "picking")]
+pub (crate) use bevy_mod_picking::prelude::*;
 
 
 // #======================#
@@ -24,13 +35,16 @@ impl Plugin for UiGeneralPlugin {
 // #======================#
 // #=== PRELUDE EXPORT ===#
 
-pub mod events;
-pub use events::*;
+//pub mod events;
+//pub use events::*;
 
 pub mod interaction;
 pub use interaction::*;
 
-pub mod macros;
+pub mod logic;
+pub use logic::*;
+
+//pub mod macros;
 
 #[cfg(feature = "picking")]
 pub mod picking;
@@ -47,7 +61,7 @@ pub use systems::*;
 pub mod prelude {
 
     pub use super::Cursor2d;
-    pub use super::events::{SetColor, SetUiLayout};
+    pub use super::{SetColor, SetUiLayout};
 
     // BEVY-LUNEX SPECIFIC
     pub use super::UiGeneralPlugin;
