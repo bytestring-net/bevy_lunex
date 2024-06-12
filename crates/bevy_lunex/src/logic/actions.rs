@@ -110,7 +110,7 @@ fn set_window_resize_constrains_action(mut events: EventReader<SetWindowResizeCo
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
             #[cfg(feature = "debug")]
-            info!("{} - Changed window position to: {:?}", "ACTION".red().bold(), event.0);
+            info!("{} - Changed window resize constrains to: {:?}", "ACTION".red().bold(), event.0);
             window.resize_constraints = event.0;
         }
     }
@@ -183,6 +183,34 @@ pub struct UiEventPlugin;
 impl Plugin for UiEventPlugin {
     fn build(&self, app: &mut App) {
         app
+
+            .add_event::<SetWindowPresentModeAction>()
+            .add_systems(Update, set_window_present_mode_action.run_if(on_event::<SetWindowPresentModeAction>()))
+
+            .add_event::<SetWindowModeAction>()
+            .add_systems(Update, set_window_mode_action.run_if(on_event::<SetWindowModeAction>()))
+
+            .add_event::<SetWindowPositionAction>()
+            .add_systems(Update, set_window_position_action.run_if(on_event::<SetWindowPositionAction>()))
+
+            .add_event::<SetWindowTitleAction>()
+            .add_systems(Update, set_window_title_action.run_if(on_event::<SetWindowTitleAction>()))
+
+            .add_event::<SetWindowResolutionAction>()
+            .add_systems(Update, set_window_resolution_action.run_if(on_event::<SetWindowResolutionAction>()))
+
+            .add_event::<SetWindowResizeConstrainsAction>()
+            .add_systems(Update, set_window_resize_constrains_action.run_if(on_event::<SetWindowResizeConstrainsAction>()))
+
+
+
+
+
+
+
+
+
+
             .add_event::<HideCursor2d>()
             .add_systems(Update, apply_event_hide_cursor_2d.run_if(on_event::<HideCursor2d>()))
 
