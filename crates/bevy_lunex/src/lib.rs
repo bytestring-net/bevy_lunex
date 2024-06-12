@@ -35,14 +35,14 @@ impl Plugin for UiGeneralPlugin {
 // #======================#
 // #=== PRELUDE EXPORT ===#
 
-pub mod events;
-pub use events::*;
+//pub mod events;
+//pub use events::*;
 
 pub mod interaction;
 pub use interaction::*;
 
-//pub mod logic;
-//pub use logic::*;
+pub mod logic;
+pub use logic::*;
 
 //pub mod macros;
 
@@ -61,7 +61,7 @@ pub use systems::*;
 pub mod prelude {
 
     pub use super::Cursor2d;
-    pub use super::events::{SetColor, SetUiLayout};
+    pub use super::{SetColor, SetUiLayout};
 
     // BEVY-LUNEX SPECIFIC
     pub use super::UiGeneralPlugin;
