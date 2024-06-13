@@ -14,7 +14,7 @@ pub use core::*;
 use bevy::prelude::*;
 
 /// Plugin adding all our route logic
-pub struct LogicPlugin;
+pub (crate) struct LogicPlugin;
 impl Plugin for LogicPlugin {
     fn build(&self, app: &mut App) {
         app

@@ -26,8 +26,9 @@ impl Plugin for UiGeneralPlugin {
         app.add_plugins(crate::LunexBackend);
 
         app
-            .add_plugins(crate::CursorPlugin)
-            .add_plugins(crate::UiEventPlugin);
+            .add_plugins(LogicPlugin)
+            .add_plugins(CursorPlugin)
+            .add_plugins(UiEventPlugin);
     }
 }
 
@@ -62,6 +63,8 @@ pub mod prelude {
 
     pub use super::Cursor2d;
     pub use super::{SetColor, SetUiLayout};
+
+    pub use super::logic::*;
 
     // BEVY-LUNEX SPECIFIC
     pub use super::UiGeneralPlugin;
