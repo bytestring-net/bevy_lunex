@@ -6,12 +6,11 @@
 pub (crate) use std::{borrow::Borrow, marker::PhantomData};
 pub (crate) use bevy::prelude::*;
 pub (crate) use lunex_engine::prelude::*;
+pub (crate) use bevy_mod_picking::prelude::*;
 
 #[cfg(feature = "debug")]
 pub (crate) use colored::Colorize;
 
-#[cfg(feature = "picking")]
-pub (crate) use bevy_mod_picking::prelude::*;
 
 
 // #======================#
@@ -21,11 +20,9 @@ pub (crate) use bevy_mod_picking::prelude::*;
 pub struct UiGeneralPlugin;
 impl Plugin for UiGeneralPlugin {
     fn build(&self, app: &mut App) {
-
-        #[cfg(feature = "picking")]
-        app.add_plugins(crate::LunexBackend);
-
         app
+            .add_plugins(DefaultPickingPlugins)
+            .add_plugins(crate::LunexBackend)
             .add_plugins(LogicPlugin)
             .add_plugins(CursorPlugin);
     }
@@ -41,9 +38,7 @@ pub use interaction::*;
 pub mod logic;
 pub use logic::*;
 
-#[cfg(feature = "picking")]
 pub mod picking;
-#[cfg(feature = "picking")]
 pub use picking::*;
 
 pub mod structs;

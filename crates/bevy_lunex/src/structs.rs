@@ -344,7 +344,6 @@ pub struct UiSpatialBundle {
 }
 
 
-#[cfg(feature = "picking")]
 /// Additional bundle for `UiNode` entity that makes the node interactible.
 #[derive(Bundle, Default)]
 pub struct UiInteractibleBundle {

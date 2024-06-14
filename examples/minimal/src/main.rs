@@ -2,19 +2,19 @@ use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 
 
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct MyUiSystem;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((DefaultPlugins, UiGeneralPlugin))
         .add_plugins(UiPlugin::<MyUiSystem>::new())
         .add_plugins(UiDebugPlugin::<MyUiSystem>::new())
         .add_systems(Startup, setup)
         .run();
 }
 
-fn setup(mut cmd: Commands, mut _mat: ResMut<Assets<StandardMaterial>>, assets: Res<AssetServer>) {
+fn setup(mut cmd: Commands, assets: Res<AssetServer>) {
 
     cmd.spawn((
         MyUiSystem,
