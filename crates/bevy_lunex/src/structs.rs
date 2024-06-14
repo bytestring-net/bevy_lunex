@@ -2,15 +2,32 @@ use crate::*;
 use bevy::{render::primitives::Aabb, sprite::Anchor, text::{Text2dBounds, TextLayoutInfo}};
 
 
-// #========================#
-// #=== STATE COMPONENTS ===#
+// #=====================#
+// #=== STATE STRUCTS ===#
 
-
+/// UI state of a component, this is the normal default
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Base;
 
-//#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-//pub struct Hover;
+/// UI state of a component, is active on hover
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Hover;
+
+/// UI state of a component, is active when clicked
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Click;
+
+/// UI state of a component, is active when selected
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Selected;
+
+/// UI state of a component, is active after entity is spawned
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Intro;
+
+/// UI state of a component, is active before entity is despawned
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Outro;
 
 
 // #=========================#
@@ -221,7 +238,7 @@ impl <T> Default for UiLink<T> {
 
 
 /// This struct holds depth bias that will be relatively added to `depth` in the layout calculation.
-/// Nodes will higher depth bias will be placed on top nodes with lower depth bias.
+/// Nodes with higher depth bias will be placed on top of nodes with lower depth bias.
 /// It is recursive.
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct UiDepthBias (pub f32);

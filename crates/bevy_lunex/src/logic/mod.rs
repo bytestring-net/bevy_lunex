@@ -1,5 +1,5 @@
 pub mod actions;
-pub use actions::*;
+use actions::ActionsPlugin;
 
 pub mod core;
 pub use core::*;
@@ -18,7 +18,7 @@ pub (crate) struct LogicPlugin;
 impl Plugin for LogicPlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_plugins(ActionsPlugin)
             .add_plugins(CorePlugin);
-            //.add_plugins(HoverPlugin);
     }
 }

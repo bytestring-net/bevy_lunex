@@ -44,7 +44,6 @@ impl UiClickEmitter {
         }
     }
 }
-
 /// System that triggers when a pointer clicks a node and emmits an event
 fn ui_click_emitter_system(mut events: EventReader<Pointer<Down>>, mut write: EventWriter<UiClickEvent>, query: Query<(&UiClickEmitter, Entity)>) {
     for event in events.read() {
@@ -70,8 +69,7 @@ impl OnUiClickRun {
         }
     }
 }
-
-fn on_ui_click_spawn_system(mut events: EventReader<UiClickEvent>, mut commands: Commands, query: Query<&OnUiClickRun>) {
+pub fn on_ui_click_spawn_system(mut events: EventReader<UiClickEvent>, mut commands: Commands, query: Query<&OnUiClickRun>) {
     for event in events.read() {
         if let Ok(listener) = query.get(event.target) {
             (listener.closure)(&mut commands);
@@ -95,9 +93,8 @@ impl OnUiClickDespawn {
         }
     }
 }
-
 /// System that triggers when a pointer clicks a node and emmits an event
-fn on_ui_click_despawn_system(mut events: EventReader<UiClickEvent>, mut commands: Commands, query: Query<(&OnUiClickDespawn, Entity)>) {
+pub fn on_ui_click_despawn_system(mut events: EventReader<UiClickEvent>, mut commands: Commands, query: Query<(&OnUiClickDespawn, Entity)>) {
     for event in events.read() {
         if let Ok((listener, entity)) = query.get(event.target) {
             commands.entity(if let Some(e) = listener.target { e } else { entity }).despawn_recursive();
@@ -110,7 +107,7 @@ fn on_ui_click_despawn_system(mut events: EventReader<UiClickEvent>, mut command
 // #=== HOVER PLUGIN ===#
 
 /// Plugin adding all our logic
-pub struct CorePlugin;
+pub (crate) struct CorePlugin;
 impl Plugin for CorePlugin {
     fn build(&self, app: &mut App) {
         app

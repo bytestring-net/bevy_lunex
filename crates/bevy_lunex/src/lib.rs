@@ -27,8 +27,7 @@ impl Plugin for UiGeneralPlugin {
 
         app
             .add_plugins(LogicPlugin)
-            .add_plugins(CursorPlugin)
-            .add_plugins(UiEventPlugin);
+            .add_plugins(CursorPlugin);
     }
 }
 
@@ -36,16 +35,11 @@ impl Plugin for UiGeneralPlugin {
 // #======================#
 // #=== PRELUDE EXPORT ===#
 
-//pub mod events;
-//pub use events::*;
-
 pub mod interaction;
 pub use interaction::*;
 
 pub mod logic;
 pub use logic::*;
-
-//pub mod macros;
 
 #[cfg(feature = "picking")]
 pub mod picking;
@@ -62,13 +56,13 @@ pub use systems::*;
 pub mod prelude {
 
     pub use super::Cursor2d;
-    pub use super::{SetColor, SetUiLayout};
+    pub use super::actions;
 
     pub use super::logic::*;
 
     // BEVY-LUNEX SPECIFIC
     pub use super::UiGeneralPlugin;
-    pub use super::systems::*;
+    pub use super::systems::{UiSystems, UiPlugin, UiDebugPlugin};
     pub use super::structs::*;
 
     

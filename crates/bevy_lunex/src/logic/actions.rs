@@ -10,53 +10,10 @@ use crate::*;
 
 // #=== WINDOW ===#
 
-/// This event will change the presentation mode (VSYNC)
+/// This event will change the primary window presentation mode (VSYNC)
 #[derive(Event, Debug, Clone, PartialEq)]
-pub struct SetWindowPresentModeAction (pub PresentMode);
-
-/// This event will change the window mode (FULLSCREEN)
-#[derive(Event, Debug, Clone, PartialEq)]
-pub struct SetWindowModeAction (pub WindowMode);
-
-/// This event will change the window position
-#[derive(Event, Debug, Clone, PartialEq)]
-pub struct SetWindowPositionAction (pub WindowPosition);
-
-/// This event will change the window title
-#[derive(Event, Debug, Clone, PartialEq)]
-pub struct SetWindowTitleAction (pub String);
-
-/// This event will change the window size
-#[derive(Event, Debug, Clone, PartialEq)]
-pub struct SetWindowResolutionAction (pub Vec2);
-
-/// This event will change the window resize contstrains
-#[derive(Event, Debug, Clone, PartialEq)]
-pub struct SetWindowResizeConstrainsAction (pub WindowResizeConstraints);
-
-/// This event will change if window is resizable
-#[derive(Event, Debug, Clone, PartialEq)]
-pub struct SetWindowResizableAction (pub bool);
-
-/// This event will change the enabled buttons for the window
-#[derive(Event, Debug, Clone, PartialEq)]
-pub struct SetWindowEnabledButtonsAction (pub EnabledButtons);
-
-/// This event will change if window decorations are available
-#[derive(Event, Debug, Clone, PartialEq)]
-pub struct SetWindowDecorationsAction (pub bool);
-
-/// This event will focus OS on the window
-#[derive(Event, Debug, Clone, PartialEq)]
-pub struct SetWindowFocusAction (pub bool);
-
-
-
-
-
-
-
-fn set_window_present_mode_action(mut events: EventReader<SetWindowPresentModeAction>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
+pub struct SetWindowPresentMode (pub PresentMode);
+fn set_window_present_mode_action(mut events: EventReader<SetWindowPresentMode>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
             #[cfg(feature = "debug")]
@@ -66,7 +23,10 @@ fn set_window_present_mode_action(mut events: EventReader<SetWindowPresentModeAc
     }
 }
 
-fn set_window_mode_action(mut events: EventReader<SetWindowModeAction>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
+/// This event will change the primary window mode (FULLSCREEN)
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct SetWindowMode (pub WindowMode);
+fn set_window_mode_action(mut events: EventReader<SetWindowMode>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
             #[cfg(feature = "debug")]
@@ -76,7 +36,10 @@ fn set_window_mode_action(mut events: EventReader<SetWindowModeAction>, mut quer
     }
 }
 
-fn set_window_position_action(mut events: EventReader<SetWindowPositionAction>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
+/// This event will change the primary window position
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct SetWindowPosition (pub WindowPosition);
+fn set_window_position_action(mut events: EventReader<SetWindowPosition>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
             #[cfg(feature = "debug")]
@@ -86,7 +49,10 @@ fn set_window_position_action(mut events: EventReader<SetWindowPositionAction>, 
     }
 }
 
-fn set_window_title_action(mut events: EventReader<SetWindowTitleAction>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
+/// This event will change the primary window title
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct SetWindowTitle (pub String);
+fn set_window_title_action(mut events: EventReader<SetWindowTitle>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
             #[cfg(feature = "debug")]
@@ -96,7 +62,10 @@ fn set_window_title_action(mut events: EventReader<SetWindowTitleAction>, mut qu
     }
 }
 
-fn set_window_resolution_action(mut events: EventReader<SetWindowResolutionAction>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
+/// This event will change the primary window size
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct SetWindowResolution (pub Vec2);
+fn set_window_resolution_action(mut events: EventReader<SetWindowResolution>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
             #[cfg(feature = "debug")]
@@ -106,7 +75,10 @@ fn set_window_resolution_action(mut events: EventReader<SetWindowResolutionActio
     }
 }
 
-fn set_window_resize_constrains_action(mut events: EventReader<SetWindowResizeConstrainsAction>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
+/// This event will change the primary window resize contstrains
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct SetWindowResizeConstrains (pub WindowResizeConstraints);
+fn set_window_resize_constrains_action(mut events: EventReader<SetWindowResizeConstrains>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
             #[cfg(feature = "debug")]
@@ -115,6 +87,63 @@ fn set_window_resize_constrains_action(mut events: EventReader<SetWindowResizeCo
         }
     }
 }
+
+/// This event will change if primary window is resizable
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct SetWindowResizable (pub bool);
+fn set_window_resizable_action(mut events: EventReader<SetWindowResizable>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
+    for event in events.read() {
+        if let Ok(window) = &mut query.get_single_mut() {
+            #[cfg(feature = "debug")]
+            info!("{} - Changed window resizable to: {:?}", "ACTION".red().bold(), event.0);
+            window.resizable = event.0;
+        }
+    }
+}
+
+/// This event will change the enabled buttons for the primary window
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct SetWindowEnabledButtons (pub EnabledButtons);
+fn set_window_enabled_buttons_action(mut events: EventReader<SetWindowEnabledButtons>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
+    for event in events.read() {
+        if let Ok(window) = &mut query.get_single_mut() {
+            #[cfg(feature = "debug")]
+            info!("{} - Changed window buttons to: {:?}", "ACTION".red().bold(), event.0);
+            window.enabled_buttons = event.0;
+        }
+    }
+}
+
+/// This event will change if primary window decorations are available
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct SetWindowDecorations (pub bool);
+fn set_window_decorations_action(mut events: EventReader<SetWindowDecorations>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
+    for event in events.read() {
+        if let Ok(window) = &mut query.get_single_mut() {
+            #[cfg(feature = "debug")]
+            info!("{} - Changed window decorations to: {:?}", "ACTION".red().bold(), event.0);
+            window.decorations = event.0;
+        }
+    }
+}
+
+/// This event will focus OS on the primary window
+#[derive(Event, Debug, Clone, PartialEq)]
+pub struct SetWindowFocus (pub bool);
+fn set_window_focus_action(mut events: EventReader<SetWindowFocus>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
+    for event in events.read() {
+        if let Ok(window) = &mut query.get_single_mut() {
+            #[cfg(feature = "debug")]
+            info!("{} - Changed window focus to: {:?}", "ACTION".red().bold(), event.0);
+            window.focused = event.0;
+        }
+    }
+}
+
+
+
+
+
 
 
 
@@ -179,30 +208,39 @@ fn apply_event_set_color(mut events: EventReader<SetColor>, mut query: Query<(Op
 // #==============#
 // #=== PLUGIN ===#
 
-pub struct UiEventPlugin;
-impl Plugin for UiEventPlugin {
+pub (crate) struct ActionsPlugin;
+impl Plugin for ActionsPlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_event::<SetWindowPresentMode>()
+            .add_systems(Update, set_window_present_mode_action.run_if(on_event::<SetWindowPresentMode>()))
 
-            .add_event::<SetWindowPresentModeAction>()
-            .add_systems(Update, set_window_present_mode_action.run_if(on_event::<SetWindowPresentModeAction>()))
+            .add_event::<SetWindowMode>()
+            .add_systems(Update, set_window_mode_action.run_if(on_event::<SetWindowMode>()))
 
-            .add_event::<SetWindowModeAction>()
-            .add_systems(Update, set_window_mode_action.run_if(on_event::<SetWindowModeAction>()))
+            .add_event::<SetWindowPosition>()
+            .add_systems(Update, set_window_position_action.run_if(on_event::<SetWindowPosition>()))
 
-            .add_event::<SetWindowPositionAction>()
-            .add_systems(Update, set_window_position_action.run_if(on_event::<SetWindowPositionAction>()))
+            .add_event::<SetWindowTitle>()
+            .add_systems(Update, set_window_title_action.run_if(on_event::<SetWindowTitle>()))
 
-            .add_event::<SetWindowTitleAction>()
-            .add_systems(Update, set_window_title_action.run_if(on_event::<SetWindowTitleAction>()))
+            .add_event::<SetWindowResolution>()
+            .add_systems(Update, set_window_resolution_action.run_if(on_event::<SetWindowResolution>()))
 
-            .add_event::<SetWindowResolutionAction>()
-            .add_systems(Update, set_window_resolution_action.run_if(on_event::<SetWindowResolutionAction>()))
+            .add_event::<SetWindowResizeConstrains>()
+            .add_systems(Update, set_window_resize_constrains_action.run_if(on_event::<SetWindowResizeConstrains>()))
 
-            .add_event::<SetWindowResizeConstrainsAction>()
-            .add_systems(Update, set_window_resize_constrains_action.run_if(on_event::<SetWindowResizeConstrainsAction>()))
+            .add_event::<SetWindowResizable>()
+            .add_systems(Update, set_window_resizable_action.run_if(on_event::<SetWindowResizable>()))
 
+            .add_event::<SetWindowEnabledButtons>()
+            .add_systems(Update, set_window_enabled_buttons_action.run_if(on_event::<SetWindowEnabledButtons>()))
 
+            .add_event::<SetWindowDecorations>()
+            .add_systems(Update, set_window_decorations_action.run_if(on_event::<SetWindowDecorations>()))
+
+            .add_event::<SetWindowFocus>()
+            .add_systems(Update, set_window_focus_action.run_if(on_event::<SetWindowFocus>()))
 
 
 
