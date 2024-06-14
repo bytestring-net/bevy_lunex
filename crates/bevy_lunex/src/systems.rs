@@ -478,7 +478,7 @@ pub enum UiSystems {
 ///#  }
 /// ```
 #[derive(Debug, Default, Clone)]
-pub struct UiPlugin <T:Component, N:Default + Component = NoData>(PhantomData<T>, PhantomData<N>);
+pub struct UiPlugin <T:Component = MainUi, N:Default + Component = NoData>(PhantomData<T>, PhantomData<N>);
 impl <T:Component, N:Default + Component> UiPlugin<T, N> {
     pub fn new() -> Self {
         UiPlugin::<T, N>(PhantomData, PhantomData)
@@ -551,7 +551,7 @@ impl <T:Component, N:Default + Component> Plugin for UiPlugin<T, N> {
 ///#  }
 /// ```
 #[derive(Debug, Default, Clone)]
-pub struct UiDebugPlugin <T:Component, N:Default + Component = NoData>(PhantomData<T>, PhantomData<N>);
+pub struct UiDebugPlugin <T:Component = MainUi, N:Default + Component = NoData>(PhantomData<T>, PhantomData<N>);
 impl <T:Component, N:Default + Component> UiDebugPlugin<T, N> {
     pub fn new() -> Self {
         UiDebugPlugin::<T, N>(PhantomData, PhantomData)

@@ -147,7 +147,7 @@ impl NiceDisplay for Rectangle3D {
 /// * Generic `(N)` - Node data schema struct defining what node-specific data can be stored in [`Node`]
 /// ## ⚠️ Warning
 /// Please refrain from manually using `".||#:0"`, `".||#:1"`, `".||#:2"`, _and so on.._ as names or [`NodeGeneralTrait::add_node`] will return errors.
-pub type UiTree<T, N = NoData> = NodeTree<MasterData<T>, NodeData<N>>;
+pub type UiTree<T = MainUi, N = NoData> = NodeTree<MasterData<T>, NodeData<N>>;
 
 /// A struct representing organized data in [`UiTree`].
 pub type UiNode<N = NoData> = Node<NodeData<N>>;
@@ -156,8 +156,11 @@ pub type UiNode<N = NoData> = Node<NodeData<N>>;
 // #====================================#
 // #=== DIFFERENT DATA TYPE GENERICS ===#
 
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
+pub struct MainUi;
+
 /// Empty type to tell the compiler that there is no data stored in the node.
-#[derive(Component, Debug, Default, Clone, PartialEq)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct NoData;
 
 

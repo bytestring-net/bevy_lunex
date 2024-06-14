@@ -21,7 +21,9 @@ pub struct UiGeneralPlugin;
 impl Plugin for UiGeneralPlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_plugins(UiPlugin::<MainUi>::new())
             .add_plugins(DefaultPickingPlugins)
+
             .add_plugins(crate::LunexBackend)
             .add_plugins(LogicPlugin)
             .add_plugins(CursorPlugin);

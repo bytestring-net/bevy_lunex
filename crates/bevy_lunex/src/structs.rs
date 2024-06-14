@@ -203,7 +203,7 @@ impl PackageLayout for ui::Div {
 /// This struct is a string reference to a specific node in a parent [`UiTree`].
 /// Lunex uses this component to locate what data this entity should be working with.
 #[derive(Component, Debug, Clone, PartialEq)]
-pub struct UiLink<T> {
+pub struct UiLink<T = MainUi> {
     pub path: String,
     marker: PhantomData<T>,
 }
@@ -249,7 +249,7 @@ pub struct UiDepthBias (pub f32);
 
 /// Main bundle for spawning `UiTree` entity
 #[derive(Bundle, Debug, Clone, PartialEq)]
-pub struct UiTreeBundle <T:Component, N:Default + Component = NoData> {
+pub struct UiTreeBundle <T:Component = MainUi, N:Default + Component = NoData> {
     /// Required to be picked up by compute system.
     pub link: UiLink<T>,
     /// The ui layout data of the entity and it's children.
@@ -292,7 +292,7 @@ impl <T:Component, N:Default + Component> Default for UiTreeBundle<T, N> {
 
 /// Main bundle for spawning `UiNode` entity as a child of `UiTree` entity
 #[derive(Bundle, Debug, Clone, PartialEq)]
-pub struct UiNodeBundle<T: Component> {
+pub struct UiNodeBundle<T: Component = MainUi> {
     /// The corresponding path that leads to the node data in parent UiTree entity.
     pub link: UiLink<T>,
     /// The layout to use when computing this node.
