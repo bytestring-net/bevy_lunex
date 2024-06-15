@@ -57,7 +57,7 @@ commands.spawn((
 	PickableBundle::default(),
 
 	// If we click on this, it will emmit UiClick event we can listen to
-	UiClickEmitter::new(None),
+	UiClickEmitter::SELF,
 ));
 ```
 

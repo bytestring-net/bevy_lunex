@@ -10,29 +10,15 @@ Lunex works by first creating an entity that will contain the future UI. This en
 use bevy_lunex::prelude::*;
 ```
 
-First, we need to define a component, that will be used to mark all entities that will belong to our ui and will be picked up by Lunex internals.
-This is useful for abstractions if you want to make sure 2 different `UiTree`s don't interfere with each other.
-
-```rust
-#[derive(Component)]
-pub struct MainUi;
-```
-
-Afterwards, we need to add `UiPlugin` with our marker component as generic.
+Then we need to add `UiPlugin` to our app.
 
 ```rust
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
 
-        // This plugin is required only once
-        .add_plugins(UiGeneralPlugin)
-
-        // This will be required to be added for every generic you use
-        .add_plugins(UiPlugin::<MainUi>::new())
-
-        // This is required only if you use "picking" feature
-        .add_plugins(DefaultPickingPlugins)
+        // This plugin is required for Lunex to work
+        .add_plugins(UiPlugin)
 
         .run();
 }
@@ -44,13 +30,13 @@ Thats it for the boilerplate!
 
 Because the library supports a lot of different use cases, we need to specify what dimensions will the UI be rendered with.
 
-Right now we want to use the window size, so we will add our marker component to our camera.
-This will make the camera pipe it's size into our future `UiTree`.
+Right now we want to use the window size, so we will use the default marker component and add it to our camera.
+This will make the camera pipe it's size into our future `UiTree` which also needs to have the same marker applied.
 
 ```rust
 commands.spawn((
 
-    // Add this marker
+    // Add this marker component provided by Lunex.
     MainUi,
 
     // Our camera bundle with depth 1000.0 because UI starts at `0` and goes up with each layer.
@@ -60,7 +46,7 @@ commands.spawn((
 
 Now we need create our `UiTree` entity. The core components are `UiTree` + `Dimension` + `Transform`. The `UiTreeBundle` already contains these components for our ease of use.
 
-The newly introduced `Dimension` component is used as the source size for the UI system. We also need to add the `MovableByCamera` component so our entity will receive updates from camera. The last step is adding our `MainUi` type as a generic.
+The newly introduced `Dimension` component is used as the source size for the UI system. We also need to add the `MovableByCamera` component so our entity will receive updates from camera. The last step is adding the default `MainUi` marker as a generic.
 
 ```rust
 commands.spawn((
@@ -80,7 +66,7 @@ Now, any entity with `UiLayout` + `UiLink` spawned as a child of the `UiTree` wi
 
 You can add a `UiImage2dBundle` to the entity to add images to your widgets. Or you can add another `UiTree` as a child, which will use the computed size output in `Dimension` component instead of a `Camera` piping the size to it.
 
-The generic at `pack::<S>()` represents state. Now leave it at `Base`, but when you later want to add hover animation use `Hover` instead.
+The generic in `pack::<S>()` represents state. For now leave it at `Base`, but when you later want to add hover animation use `Hover` instead.
 
 ```rust
 ui.spawn((
@@ -107,7 +93,7 @@ ui.spawn((
 
 `UiLink` is what is used to define the the custom hierarchy. It uses `/` as the separator. If any of the names don't internally exist inside the parent `UiTree`, it will create them.
 
-As you can see in the terminal (If you have added a `UiDebugPlugin`), the debug structure looks like this:
+As you can see in the terminal (If you have enabled `debug` feature or added a `UiDebugPlugin`), the structure looks like this:
 ```rust
 > MyUiSystem == Window [pos: (x: 0, y: 0) size: (x: 100%, y: 100%)]
     |-> Root == Window [pos: (x: 20, y: 20) size: (x: -40 + 100%, y: -40 + 100%)]

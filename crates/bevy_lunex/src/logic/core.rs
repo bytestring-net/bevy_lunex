@@ -32,26 +32,72 @@ pub struct UiChangeEvent {
 /// from another entity that is not the parent and send that data over.
 #[derive(Component, Debug, Clone, PartialEq, Eq)]
 pub struct UiClickEmitter {
-    pub trigger: Option<Entity>,
+    pub target: Option<Entity>,
 }
 impl UiClickEmitter {
     /// The entity will create the event for itself and not other entities.
-    pub const SELF: UiClickEmitter = UiClickEmitter { trigger: None };
+    pub const SELF: UiClickEmitter = UiClickEmitter { target: None };
     /// Specify the entity you want to create events for.
     pub fn new(entity: Entity) -> Self {
         UiClickEmitter {
-            trigger: Some(entity)
+            target: Some(entity)
+        }
+    }
+}
+/// System that triggers when a pointer clicks a node and emmits an event
+fn ui_click_emitter_system(mut events: EventReader<Pointer<Down>>, mut write: EventWriter<UiClickEvent>, query: Query<(&UiClickEmitter, Entity)>) {
+    for event in events.read() {
+        if let Ok((emitter, entity)) = query.get(event.target) {
+            write.send(UiClickEvent {
+                target: if let Some(e) = emitter.target { e } else { entity },
+            });
         }
     }
 }
 
-/// System that triggers when a pointer clicks a node and emmits an event
-fn ui_click_listener_system(mut events: EventReader<Pointer<Down>>, mut write: EventWriter<UiClickEvent>, query: Query<(&UiClickEmitter, Entity)>) {
+
+
+#[derive(Component,  Clone, PartialEq, Eq)]
+pub struct OnUiClickCommands {
+    pub closure: fn(&mut Commands),
+}
+impl OnUiClickCommands {
+    /// Specify the entity you want to create events for.
+    pub fn new(closure: fn(&mut Commands)) -> Self {
+        OnUiClickCommands {
+            closure,
+        }
+    }
+}
+pub fn on_ui_click_commands_system(mut events: EventReader<UiClickEvent>, mut commands: Commands, query: Query<&OnUiClickCommands>) {
     for event in events.read() {
-        if let Ok((emitter, entity)) = query.get(event.target) {
-            write.send(UiClickEvent {
-                target: if let Some(e) = emitter.trigger { e } else { entity },
-            });
+        if let Ok(listener) = query.get(event.target) {
+            (listener.closure)(&mut commands);
+        }
+    }
+}
+
+
+
+#[derive(Component, Debug, Clone, PartialEq, Eq)]
+pub struct OnUiClickDespawn {
+    pub target: Option<Entity>,
+}
+impl OnUiClickDespawn {
+    /// The entity will create the event for itself and not other entities.
+    pub const SELF: OnUiClickDespawn = OnUiClickDespawn { target: None };
+    /// Specify the entity you want to create events for.
+    pub fn new(entity: Entity) -> Self {
+        OnUiClickDespawn {
+            target: Some(entity)
+        }
+    }
+}
+/// System that triggers when a pointer clicks a node and emmits an event
+pub fn on_ui_click_despawn_system(mut events: EventReader<UiClickEvent>, mut commands: Commands, query: Query<(&OnUiClickDespawn, Entity)>) {
+    for event in events.read() {
+        if let Ok((listener, entity)) = query.get(event.target) {
+            commands.entity(if let Some(e) = listener.target { e } else { entity }).despawn_recursive();
         }
     }
 }
@@ -61,16 +107,16 @@ fn ui_click_listener_system(mut events: EventReader<Pointer<Down>>, mut write: E
 // #=== HOVER PLUGIN ===#
 
 /// Plugin adding all our logic
-pub struct CorePlugin;
+pub (crate) struct CorePlugin;
 impl Plugin for CorePlugin {
     fn build(&self, app: &mut App) {
         app
             // Add our events
-
             .add_event::<UiClickEvent>()
-            .add_systems(Update, ui_click_listener_system.run_if(on_event::<Pointer<Down>>()))
-            
+            .add_systems(Update, ui_click_emitter_system.run_if(on_event::<Pointer<Down>>()))
             .add_event::<UiChangeEvent>()
-            ;
+
+            .add_systems(Update, on_ui_click_commands_system.run_if(on_event::<UiClickEvent>()))
+            .add_systems(Update, on_ui_click_despawn_system.run_if(on_event::<UiClickEvent>()));
     }
 }

@@ -2,15 +2,32 @@ use crate::*;
 use bevy::{render::primitives::Aabb, sprite::Anchor, text::{Text2dBounds, TextLayoutInfo}};
 
 
-// #========================#
-// #=== STATE COMPONENTS ===#
+// #=====================#
+// #=== STATE STRUCTS ===#
 
-
+/// UI state of a component, this is the normal default
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Base;
 
-//#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-//pub struct Hover;
+/// UI state of a component, is active on hover
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Hover;
+
+/// UI state of a component, is active when clicked
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Click;
+
+/// UI state of a component, is active when selected
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Selected;
+
+/// UI state of a component, is active after entity is spawned
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Intro;
+
+/// UI state of a component, is active before entity is despawned
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Outro;
 
 
 // #=========================#
@@ -186,7 +203,7 @@ impl PackageLayout for ui::Div {
 /// This struct is a string reference to a specific node in a parent [`UiTree`].
 /// Lunex uses this component to locate what data this entity should be working with.
 #[derive(Component, Debug, Clone, PartialEq)]
-pub struct UiLink<T> {
+pub struct UiLink<T = MainUi> {
     pub path: String,
     marker: PhantomData<T>,
 }
@@ -221,7 +238,7 @@ impl <T> Default for UiLink<T> {
 
 
 /// This struct holds depth bias that will be relatively added to `depth` in the layout calculation.
-/// Nodes will higher depth bias will be placed on top nodes with lower depth bias.
+/// Nodes with higher depth bias will be placed on top of nodes with lower depth bias.
 /// It is recursive.
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct UiDepthBias (pub f32);
@@ -231,24 +248,14 @@ pub struct UiDepthBias (pub f32);
 // #=== MAIN BUNDLES ===#
 
 /// Main bundle for spawning `UiTree` entity
-#[derive(Bundle, Debug, Clone, PartialEq)]
-pub struct UiTreeBundle <T:Component, N:Default + Component = NoData> {
+#[derive(Bundle, Debug, Clone)]
+pub struct UiTreeBundle <T:Component = MainUi, N:Default + Component = NoData> {
     /// Required to be picked up by compute system.
     pub link: UiLink<T>,
     /// The ui layout data of the entity and it's children.
     pub tree: UiTree<T, N>,
-    /// The transform of the entity.
-    pub transform: Transform,
-    /// Contains the ui node size.
-    pub dimension: Dimension,
-    /// The global transform of the entity.
-    pub global_transform: GlobalTransform,
-    /// The visibility properties of the entity.
-    pub visibility: Visibility,
-    /// Inherited visibility of an entity.
-    pub inherited_visibility: InheritedVisibility,
-    /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering.
-    pub view_visibility: ViewVisibility,
+    /// The required components for entity to exist in space
+    pub spatial: UiSpatialBundle,
 }
 impl <T:Component, N:Default + Component> From<UiTree<T, N>> for UiTreeBundle<T, N> {
     fn from(value: UiTree<T, N>) -> Self {
@@ -263,105 +270,75 @@ impl <T:Component, N:Default + Component> Default for UiTreeBundle<T, N> {
         UiTreeBundle {
             link: Default::default(),
             tree: Default::default(),
-            transform: Default::default(),
-            dimension: Default::default(),
-            global_transform: Default::default(),
-            visibility: Default::default(),
-            inherited_visibility: Default::default(),
-            view_visibility: Default::default(),
+            spatial: Default::default(),
         }
     }
 }
 
-/// Main bundle for spawning `UiNode` entity as a child of `UiTree` entity
-#[derive(Bundle, Debug, Clone, PartialEq)]
-pub struct UiNodeBundle<T: Component> {
+
+/// Main bundle for spawning `UiNode` entity as a child of [`UiTree`] entity.
+/// All this does is defines the layout within [`UiTree`]. Use additional
+/// bundles for further functionality.
+#[derive(Bundle, Debug, Clone, Default)]
+pub struct UiNodeBundle<T: Component = MainUi> {
     /// The corresponding path that leads to the node data in parent UiTree entity.
     pub link: UiLink<T>,
     /// The layout to use when computing this node.
     pub layout: UiLayout,
 }
-impl <T: Component> Default for UiNodeBundle<T> {
-    fn default() -> Self {
-        UiNodeBundle {
-            link: UiLink::default(),
-            layout: UiLayout::default(),
-        }
-    }
-}
 
-/// Additional bundle for `UiNode` entity that provides required components to be renderable.
-#[derive(Bundle, Debug, Clone, PartialEq, Default)]
+
+/// Additional bundle for `UiNode` entity.
+/// This is used for entities that have a mesh or a sprite.
+/// For this purpose [`Element`] component is provided which centers
+/// the anchor for piped position from node.
+#[derive(Bundle, Debug, Clone, Default)]
 pub struct UiElementBundle {
     /// Marks this as node element.
     pub element: Element,
-    /// The transform of the entity.
-    pub transform: Transform,
-    /// Contains the ui node size.
-    pub dimension: Dimension,
-    /// The global transform of the entity.
-    pub global_transform: GlobalTransform,
-    /// The visibility properties of the entity.
-    pub visibility: Visibility,
-    /// Inherited visibility of an entity.
-    pub inherited_visibility: InheritedVisibility,
-    /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering.
-    pub view_visibility: ViewVisibility,
-}
-
-/// Additional bundle for `UiNode` entity that provides required components to exist in a 3D world, but not as an element.
-#[derive(Bundle, Debug, Clone, PartialEq, Default)]
-pub struct UiSpatialBundle {
-    /// The transform of the entity.
-    pub transform: Transform,
-    /// Contains the ui node size.
-    pub dimension: Dimension,
-    /// The global transform of the entity.
-    pub global_transform: GlobalTransform,
-    /// The visibility properties of the entity.
-    pub visibility: Visibility,
-    /// Inherited visibility of an entity.
-    pub inherited_visibility: InheritedVisibility,
-    /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering.
-    pub view_visibility: ViewVisibility,
+    /// The required components for entity to exist in space
+    pub spatial: UiSpatialBundle,
 }
 
 
-#[cfg(feature = "picking")]
-/// Additional bundle for `UiNode` entity that makes the node interactible.
+/// Additional bundle for `UiNode` entity.
+/// This is used for entities that don't have a mesh or a sprite,
+/// but still needs to be pickable.
 #[derive(Bundle, Default)]
-pub struct UiInteractibleBundle {
-    pub spacial: UiSpatialBundle,
+pub struct UiZoneBundle {
+    /// The required bundle to make entity pickable
     pub pickable: PickableBundle,
+    /// The required components for entity to exist in space
+    pub spatial: UiSpatialBundle,
+}
+
+
+/// Additional bundle for `UiNode` entity.
+/// This is required by any UI entity that needs to exist in worldspace.
+#[derive(Bundle, Debug, Clone, Default)]
+pub struct UiSpatialBundle {
+    /// Contains the ui node size.
+    pub dimension: Dimension,
+    /// The required components for entity to exist in space
+    pub spatial: SpatialBundle
 }
 
 
 // #=======================#
 // #=== SPECIAL BUNDLES ===#
 
-/// Additional bundle for `UiNode` entity that provides 3D material.
+/// Additional bundle for `UiNode` entity.
+/// Provides functionality to bind sprite in 3D on a plane mesh to `UiNode`.
 #[derive(Bundle, Debug, Default, Clone)]
 pub struct UiMaterial3dBundle {
-    /// Marks this as node element.
-    pub element: Element,
     /// Quad mesh that is generated every time node is changed.
     pub mesh: Handle<Mesh>,
     /// The material used for the quad.
     pub material: Handle<StandardMaterial>,
     /// Image boundary for culling.
     pub aabb: Aabb,
-    /// Contains the ui node size.
-    pub dimension: Dimension,
-    /// The transform of the quad.
-    pub transform: Transform,
-    /// The global transform of the quad.
-    pub global_transform: GlobalTransform,
-    /// The visibility properties of the quad.
-    pub visibility: Visibility,
-    /// Inherited visibility of an entity.
-    pub inherited_visibility: InheritedVisibility,
-    /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering.
-    pub view_visibility: ViewVisibility,
+    /// Required components to make entity spatial in worldspace + be centered within node
+    pub element: UiElementBundle,
 }
 impl From<Handle<StandardMaterial>> for UiMaterial3dBundle {
     fn from(value: Handle<StandardMaterial>) -> Self {
@@ -386,29 +363,19 @@ impl UiMaterial3dBundle {
     }
 }
 
-/// Additional bundle for `UiNode` entity that provides 2D texture.
+
+/// Additional bundle for `UiNode` entity.
+/// Provides functionality to bind sprite to `UiNode`.
 #[derive(Bundle, Clone, Debug, Default)]
 pub struct UiImage2dBundle {
-    /// Marks this as node element.
-    pub element: Element,
     /// Image properties.
     pub sprite: Sprite,
     /// Image texture.
     pub texture: Handle<Image>,
     /// Image boundary for culling.
     pub aabb: Aabb,
-    /// Contains the ui node size.
-    pub dimension: Dimension,
-    /// The transform of the image.
-    pub transform: Transform,
-    /// The global transform of the image.
-    pub global_transform: GlobalTransform,
-    /// The visibility properties of the image.
-    pub visibility: Visibility,
-    /// Inherited visibility of an entity.
-    pub inherited_visibility: InheritedVisibility,
-    /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering.
-    pub view_visibility: ViewVisibility,
+    /// Required components to make entity spatial in worldspace + be centered within node
+    pub element: UiElementBundle,
 }
 impl From<Handle<Image>> for UiImage2dBundle {
     fn from(value: Handle<Image>) -> Self {
@@ -419,29 +386,19 @@ impl From<Handle<Image>> for UiImage2dBundle {
     }
 }
 
-/// Additional bundle for `UiNode` entity that provides 2D text.
+
+/// Additional bundle for `UiNode` entity.
+/// Provides functionality to bind text to `UiNode`.
 #[derive(Bundle, Clone, Debug, Default)]
 pub struct UiText2dBundle {
-    /// Marks this as node element.
-    pub element: Element,
-    /// Contains the ui node size.
-    pub dimension: Dimension,
     /// Contains the text.
     pub text: Text,
     /// How the text is positioned relative to its transform.
     pub text_anchor: Anchor,
     /// The maximum width and height of the text.
     pub text_2d_bounds: Text2dBounds,
-    /// The transform of the text.
-    pub transform: Transform,
-    /// The global transform of the text.
-    pub global_transform: GlobalTransform,
-    /// The visibility properties of the text.
-    pub visibility: Visibility,
-    /// Inherited visibility of an entity.
-    pub inherited_visibility: InheritedVisibility,
-    /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering.
-    pub view_visibility: ViewVisibility,
     /// Contains the size of the text and its glyph's position and scale data. Generated via [`TextPipeline::queue_text`]
     pub text_layout_info: TextLayoutInfo,
+    /// Required components to make entity spatial in worldspace + be centered within node
+    pub element: UiElementBundle,
 }

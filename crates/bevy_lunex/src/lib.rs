@@ -6,28 +6,31 @@
 pub (crate) use std::{borrow::Borrow, marker::PhantomData};
 pub (crate) use bevy::prelude::*;
 pub (crate) use lunex_engine::prelude::*;
+pub (crate) use bevy_mod_picking::prelude::*;
 
 #[cfg(feature = "debug")]
 pub (crate) use colored::Colorize;
 
-#[cfg(feature = "picking")]
-pub (crate) use bevy_mod_picking::prelude::*;
 
 
 // #======================#
 // #=== GENERAL PLUGIN ===#
 
 /// Plugin implementing general logic.
-pub struct UiGeneralPlugin;
-impl Plugin for UiGeneralPlugin {
+pub struct UiPlugin;
+impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-
-        #[cfg(feature = "picking")]
-        app.add_plugins(crate::LunexBackend);
+        #[cfg(feature = "debug")]
+        app.add_plugins(UiDebugPlugin::<MainUi>::new());
 
         app
-            .add_plugins(crate::CursorPlugin)
-            .add_plugins(crate::UiEventPlugin);
+            .add_plugins(UiGenericPlugin::<MainUi>::new())
+
+            .add_plugins(DefaultPickingPlugins)
+
+            .add_plugins(LunexBackend)
+            .add_plugins(LogicPlugin)
+            .add_plugins(CursorPlugin);
     }
 }
 
@@ -35,20 +38,13 @@ impl Plugin for UiGeneralPlugin {
 // #======================#
 // #=== PRELUDE EXPORT ===#
 
-//pub mod events;
-//pub use events::*;
-
 pub mod interaction;
 pub use interaction::*;
 
 pub mod logic;
 pub use logic::*;
 
-//pub mod macros;
-
-#[cfg(feature = "picking")]
 pub mod picking;
-#[cfg(feature = "picking")]
 pub use picking::*;
 
 pub mod structs;
@@ -61,11 +57,13 @@ pub use systems::*;
 pub mod prelude {
 
     pub use super::Cursor2d;
-    pub use super::{SetColor, SetUiLayout};
+    pub use super::actions;
+
+    pub use super::logic::*;
 
     // BEVY-LUNEX SPECIFIC
-    pub use super::UiGeneralPlugin;
-    pub use super::systems::*;
+    pub use super::UiPlugin;
+    pub use super::systems::{UiSystems, UiGenericPlugin, UiDebugPlugin};
     pub use super::structs::*;
 
     

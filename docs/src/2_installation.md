@@ -1,12 +1,12 @@
 # Installation
 
-Installing `Bevy_Lunex` is straightforward, just like any other Rust crate. Ensure that the version is `0.1.0-alpha` and not `0.0.X`.
+Installing `Bevy_Lunex` is straightforward, just like any other Rust crate. Ensure that the version is `0.1.0-alpha.2` and not `0.0.X`.
 
 Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bevy_lunex = { version = "0.1.0-alpha" }
+bevy_lunex = { version = "0.1.0-alpha.2" }
 ```
 
 Alternatively, you can use the latest version from the Git repository:
@@ -40,24 +40,14 @@ bevy = { version = "0.13.2", default_features = false, features = [
 
 ### Interactivity
 
-To react to mouse events, enable the `picking` feature, which adds a custom `bevy_mod_picking` backend.
+Lunex implements interactivity on top of `bevy_mod_picking` crate. For more control it is recommended to add this to your project as well.
+
+Add `bevy_mod_picking` to your dependencies:
 
 ```TOML
-bevy_lunex = { ..., features = ["picking"] }
-```
-
-Then, add `bevy_mod_picking` to your dependencies:
-
-```TOML
-bevy_mod_picking = { version = "0.18.2", default_features = false, features = [
+bevy_mod_picking = { version = "0.19.0", default_features = false, features = [
     "debug",
     "selection",
     "highlight",
 ] }
-```
-
-Additionally, it's recommended (but not required) to include `bevy_eventlistener`:
-
-```TOML
-bevy_eventlistener = { version = "0.7.0" }
 ```

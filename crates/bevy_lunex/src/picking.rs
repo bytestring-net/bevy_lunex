@@ -35,19 +35,11 @@ pub fn lunex_picking(
     mut output: EventWriter<PointerHits>,
 ) {
     let mut sorted_nodes: Vec<_> = node_query.iter().collect();
-    sorted_nodes.sort_by(|a, b| {
-        (b.3.translation().z)
-            .partial_cmp(&a.3.translation().z)
-            .unwrap_or(Ordering::Equal)
-    });
+    sorted_nodes.sort_by(|a, b| { (b.3.translation().z).partial_cmp(&a.3.translation().z).unwrap_or(Ordering::Equal) });
 
-    for (pointer, location) in pointers.iter().filter_map(|(pointer, pointer_location)| {
-        pointer_location.location().map(|loc| (pointer, loc))
-    }) {
+    for (pointer, location) in pointers.iter().filter_map(|(pointer, pointer_location)| { pointer_location.location().map(|loc| (pointer, loc)) }) {
         let mut blocked = false;
-        let Some((cam_entity, camera, cam_transform, cam_ortho)) = cameras
-            .iter()
-            .filter(|(_, camera, _, _)| camera.is_active)
+        let Some((cam_entity, camera, cam_transform, cam_ortho)) = cameras.iter().filter(|(_, camera, _, _)| camera.is_active)
             .find(|(_, camera, _, _)| {
                 camera
                     .target
@@ -58,14 +50,9 @@ pub fn lunex_picking(
                     .unwrap()
                     == location.target
             })
-        else {
-            continue;
-        };
+        else { continue; };
 
-        let Some(cursor_pos_world) = camera.viewport_to_world_2d(cam_transform, location.position)
-        else {
-            continue;
-        };
+        let Some(cursor_pos_world) = camera.viewport_to_world_2d(cam_transform, location.position) else { continue; };
 
         let picks: Vec<(Entity, HitData)> = sorted_nodes
             .iter()
@@ -82,6 +69,7 @@ pub fn lunex_picking(
                     } else {
                         Vec2::new(0.0, 0.0)
                     };
+
                     let rect = Rect::from_center_size(pos, dimension.size);
 
                     // Transform cursor pos to sprite coordinate system

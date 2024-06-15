@@ -28,6 +28,7 @@ pub mod prelude {
 
     pub use super::{UiNode, UiTree};
     pub use super::{MasterData, NodeData, NoData};
+    pub use super::MainUi;
 
 
     // Necessity ?
