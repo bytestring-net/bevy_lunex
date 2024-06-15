@@ -5,7 +5,8 @@ use bevy::{render::primitives::Aabb, sprite::Anchor, text::{Text2dBounds, TextLa
 // #=====================#
 // #=== STATE STRUCTS ===#
 
-pub trait StateIndexTrait {
+/// Trait for creating new UI states
+pub trait UiState where Self: Send + Sync + 'static {
     const INDEX: usize;
 }
 
@@ -13,42 +14,42 @@ pub trait StateIndexTrait {
 /// UI state of a component, this is the normal default
 #[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Base;
-impl StateIndexTrait for Base {
+impl UiState for Base {
     const INDEX: usize = 0;
 }
 
 /// UI state of a component, is active on hover
 #[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Hover;
-impl StateIndexTrait for Hover {
+impl UiState for Hover {
     const INDEX: usize = 1;
 }
 
 /// UI state of a component, is active when clicked
 #[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Clicked;
-impl StateIndexTrait for Clicked {
+impl UiState for Clicked {
     const INDEX: usize = 2;
 }
 
 /// UI state of a component, is active when selected
 #[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Selected;
-impl StateIndexTrait for Selected {
+impl UiState for Selected {
     const INDEX: usize = 3;
 }
 
 /// UI state of a component, is active after entity is spawned
 #[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Intro;
-impl StateIndexTrait for Intro {
+impl UiState for Intro {
     const INDEX: usize = 4;
 }
 
 /// UI state of a component, is active before entity is despawned
 #[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Outro;
-impl StateIndexTrait for Outro {
+impl UiState for Outro {
     const INDEX: usize = 5;
 }
 

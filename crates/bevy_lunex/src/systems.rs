@@ -158,7 +158,7 @@ pub fn touch_camera_if_uitree_added<T:Component, N:Default + Component>(
 // #=== PIPING FOR NODES ===#
 
 /// This system takes [`UiLayout`] data and overwrites coresponding [`UiTree`] data. If node is not found, it creates new ones along the path.
-pub fn send_layout_to_node<T:Component, N:Default + Component, S: StateIndexTrait + Component>(
+pub fn send_layout_to_node<T:Component, N:Default + Component, S: UiState>(
     mut uis: Query<(&mut UiTree<T, N>, &Children)>,
     query: Query<(&UiLink<T>, &UiLayout<S>), (Changed<UiLayout<S>>, Without<UiTree<T, N>>)>,
 ) {
@@ -519,13 +519,14 @@ impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
                 fetch_transform_from_camera::<T, N>.after(touch_camera_if_uitree_added::<T, N>),
             ).in_set(UiSystems::Modify).before(UiSystems::Send))
 
+            .add_plugins(StatePlugin::<T, N, Base>::new())
+            .add_plugins(StatePlugin::<T, N, Hover>::new())
+            .add_plugins(StatePlugin::<T, N, Clicked>::new())
+            .add_plugins(StatePlugin::<T, N, Selected>::new())
+            .add_plugins(StatePlugin::<T, N, Intro>::new())
+            .add_plugins(StatePlugin::<T, N, Outro>::new())
+
             .add_systems(Update, (
-                send_layout_to_node::<T, N, Base>,
-                send_layout_to_node::<T, N, Hover>,
-                send_layout_to_node::<T, N, Clicked>,
-                send_layout_to_node::<T, N, Selected>,
-                send_layout_to_node::<T, N, Intro>,
-                send_layout_to_node::<T, N, Outro>,
                 send_content_size_to_node::<T, N>,
                 send_stack_to_node::<T, N>,
                 send_layout_control_to_node::<T, N>,

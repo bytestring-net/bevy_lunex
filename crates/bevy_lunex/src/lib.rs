@@ -25,21 +25,15 @@ impl Plugin for UiPlugin {
 
         app
             .add_plugins(UiGenericPlugin::<MainUi>::new())
-
             .add_plugins(DefaultPickingPlugins)
-
             .add_plugins(LunexBackend)
-            .add_plugins(LogicPlugin)
-            .add_plugins(CursorPlugin);
+            .add_plugins(LogicPlugin);
     }
 }
 
 
 // #======================#
 // #=== PRELUDE EXPORT ===#
-
-pub mod interaction;
-pub use interaction::*;
 
 pub mod logic;
 pub use logic::*;

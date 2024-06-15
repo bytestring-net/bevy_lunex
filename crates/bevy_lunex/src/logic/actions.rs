@@ -151,9 +151,6 @@ fn set_window_focus_action(mut events: EventReader<SetWindowFocus>, mut query: Q
 
 
 
-
-
-
 /// This event will override layout of targetted entity
 #[derive(Event, PartialEq, Clone, Copy)]
 pub struct HideCursor2d (pub bool);
@@ -208,7 +205,7 @@ fn apply_event_set_color(mut events: EventReader<SetColor>, mut query: Query<(Op
 // #==============#
 // #=== PLUGIN ===#
 
-pub (crate) struct ActionsPlugin;
+pub struct ActionsPlugin;
 impl Plugin for ActionsPlugin {
     fn build(&self, app: &mut App) {
         app
