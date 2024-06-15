@@ -1,6 +1,6 @@
 # Debug
 
-Lunex offers great debugging functionality. To enable these features, add the following plugin:
+Lunex offers great debugging functionality. To enable these features, enable `debug` feature or add the following plugin:
 
 ```rust
 App::new()
@@ -28,9 +28,7 @@ Additionally, it will print the `UiTree` to the console whenever a change is det
   |    |    |-> QUIT GAME == Window [pos: (x: 0, y: 102%) size: (x: 100%, y: 14%) anchor: TopLeft]
 ```
 
-### More detail
-
-For even more detailed debugging, such as tracking what each system is doing and when, enable the `debug` feature. This will output detailed information to the console, which can be useful if you are integrating custom logic into the system.
+And this will also output detailed information to the console, which can be useful if you are integrating custom logic into the system.
 
 ```rust
 INFO bevy_lunex::systems: -> UiTree - Fetched Transform data from Camera

@@ -478,13 +478,13 @@ pub enum UiSystems {
 ///#  }
 /// ```
 #[derive(Debug, Default, Clone)]
-pub struct UiPlugin <T:Component = MainUi, N:Default + Component = NoData>(PhantomData<T>, PhantomData<N>);
-impl <T:Component, N:Default + Component> UiPlugin<T, N> {
+pub struct UiGenericPlugin <T:Component = MainUi, N:Default + Component = NoData>(PhantomData<T>, PhantomData<N>);
+impl <T:Component, N:Default + Component> UiGenericPlugin<T, N> {
     pub fn new() -> Self {
-        UiPlugin::<T, N>(PhantomData, PhantomData)
+        UiGenericPlugin::<T, N>(PhantomData, PhantomData)
     }
 }
-impl <T:Component, N:Default + Component> Plugin for UiPlugin<T, N> {
+impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Update, (

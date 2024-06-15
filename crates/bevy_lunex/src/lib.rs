@@ -17,14 +17,18 @@ pub (crate) use colored::Colorize;
 // #=== GENERAL PLUGIN ===#
 
 /// Plugin implementing general logic.
-pub struct UiGeneralPlugin;
-impl Plugin for UiGeneralPlugin {
+pub struct UiPlugin;
+impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
+        #[cfg(feature = "debug")]
+        app.add_plugins(UiDebugPlugin::<MainUi>::new());
+
         app
-            .add_plugins(UiPlugin::<MainUi>::new())
+            .add_plugins(UiGenericPlugin::<MainUi>::new())
+
             .add_plugins(DefaultPickingPlugins)
 
-            .add_plugins(crate::LunexBackend)
+            .add_plugins(LunexBackend)
             .add_plugins(LogicPlugin)
             .add_plugins(CursorPlugin);
     }
@@ -58,8 +62,8 @@ pub mod prelude {
     pub use super::logic::*;
 
     // BEVY-LUNEX SPECIFIC
-    pub use super::UiGeneralPlugin;
-    pub use super::systems::{UiSystems, UiPlugin, UiDebugPlugin};
+    pub use super::UiPlugin;
+    pub use super::systems::{UiSystems, UiGenericPlugin, UiDebugPlugin};
     pub use super::structs::*;
 
     

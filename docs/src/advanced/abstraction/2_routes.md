@@ -21,24 +21,34 @@ Next, create a system that builds the route when the component is added. This sy
 
 /// System that builds the route when the component is added
 fn build_route(mut commands: Commands, assets: Res<AssetServer>, query: Query<Entity, Added<MyRoute>>) {
-    for entity in &query {
-        commands.entity(entity).insert((
-            // Insert this bundle into the entity that just got the MyRoute component
-            UiTreeBundle::<MainUi>::from(UiTree::new("MyRoute")),
-        // Now spawn the UI as children
-        )).with_children(|ui| {
-            // Spawn some UI nodes
-            ui.spawn((
-                UiLink::<MainUi>::path("Background"),
-                UiLayout::solid().size((1920.0, 1080.0)).scaling(Scaling::Fill).pack::<Base>(),
-                UiImage2dBundle::from(assets.load("images/background.png")),
-            ));
+    for route_entity in &query {
+
+        commands.entity(route_entity).insert(
+            SpatialBundle::default()
+        ).with_children(|route| {
+
+            // Spawn some additional non UI components if you need to.
+
+            // Here you can spawn the UI
+            route.spawn((
+                UiTreeBundle::<MainUi>::from(UiTree::new("MyRoute")),
+                MovableByCamera,
+            )).with_children(|ui| {
+
+                // Spawn some UI nodes
+                ui.spawn((
+                    UiLink::<MainUi>::path("Background"),
+                    UiLayout::solid().size((1920.0, 1080.0)).scaling(Scaling::Fill).pack::<Base>(),
+                    UiImage2dBundle::from(assets.load("images/background.png")),
+                ));
+            });
+
         });
     }
 }
 ```
 
-Finally, add the system to a plugin.
+Lastly, add the system to a plugin.
 
 ```rust
 // routes/my_route.rs
@@ -62,10 +72,7 @@ To spawn the route, simply call:
 
 ```rust
 // Spawning the route
-commands.spawn((
-    MyRoute,
-    MovableByCamera,    // Marks this ui to receive Transform & Dimension updates from camera size
-));
+commands.spawn(MyRoute);
 ```
 
 To despawn the route, call `.despawn_recursive` on the spawned entity.
