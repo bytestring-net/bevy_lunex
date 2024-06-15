@@ -43,8 +43,8 @@ impl <N:Default + Component> UiNodeComputeTrait for UiNode<N> {
         // Get depth before mutating self
         let depth = self.get_depth();
         
-        let mut skip = true;
-        let mut is_parametric = false;
+        let skip = true;
+        let is_parametric = false;
 
         // Check here if computation is required for partial recalculation
 

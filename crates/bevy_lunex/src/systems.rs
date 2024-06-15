@@ -158,12 +158,9 @@ pub fn touch_camera_if_uitree_added<T:Component, N:Default + Component>(
 // #=== PIPING FOR NODES ===#
 
 /// This system takes [`UiLayout`] data and overwrites coresponding [`UiTree`] data. If node is not found, it creates new ones along the path.
-/// ## 📦 Types
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
-/// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn send_layout_to_node<T:Component, N:Default + Component>(
+pub fn send_layout_to_node<T:Component, N:Default + Component, S: StateIndexTrait + Component>(
     mut uis: Query<(&mut UiTree<T, N>, &Children)>,
-    query: Query<(&UiLink<T>, &UiLayout), (Changed<UiLayout>, Without<UiTree<T, N>>)>,
+    query: Query<(&UiLink<T>, &UiLayout<S>), (Changed<UiLayout<S>>, Without<UiTree<T, N>>)>,
 ) {
     for (mut ui, children) in &mut uis {
         for child in children {
@@ -175,7 +172,34 @@ pub fn send_layout_to_node<T:Component, N:Default + Component>(
                     if let Some(container) = node.obtain_data_mut() {
                         #[cfg(feature = "debug")]
                         info!("{} {} - Received Layout data", "->".blue(), link.path.yellow().bold());
-                        container.layout.insert(0, layout.layout);
+                        container.layout.insert(S::INDEX, layout.layout);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// This system takes [`UiLayoutController`] data and overwrites coresponding [`UiTree`] data.
+/// ## 📦 Types
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
+/// * Generic `(T)` - Marker component grouping entities into one widget type
+pub fn send_layout_control_to_node<T:Component, N:Default + Component>(
+    mut uis: Query<(&mut UiTree<T, N>, &Children)>,
+    query: Query<(&UiLink<T>, &UiLayoutController), Changed<UiLayoutController>>,
+) {
+    for (mut ui, children) in &mut uis {
+        for child in children {
+            // If child matches
+            if let Ok((link, control)) = query.get(*child) {
+                // If node exists
+                if let Ok(node) = ui.borrow_node_mut(link.path.clone()) {
+                    //Should always be Some but just in case
+                    if let Some(container) = node.obtain_data_mut() {
+                        #[cfg(feature = "debug")]
+                        info!("{} {} - Tweening between [{}] [{}] - {}", "->".blue(), link.path.yellow().bold(), control.index[0], control.index[1], control.tween);
+                        container.layout_index = control.index;
+                        container.layout_tween = (control.method)(control.tween);
                     }
                 }
             }
@@ -496,11 +520,17 @@ impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
             ).in_set(UiSystems::Modify).before(UiSystems::Send))
 
             .add_systems(Update, (
+                send_layout_to_node::<T, N, Base>,
+                send_layout_to_node::<T, N, Hover>,
+                send_layout_to_node::<T, N, Clicked>,
+                send_layout_to_node::<T, N, Selected>,
+                send_layout_to_node::<T, N, Intro>,
+                send_layout_to_node::<T, N, Outro>,
                 send_content_size_to_node::<T, N>,
                 send_stack_to_node::<T, N>,
-                send_layout_to_node::<T, N>,
-                send_depth_bias_to_node::<T, N>,
-            ).in_set(UiSystems::Send).before(UiSystems::Compute))
+                send_layout_control_to_node::<T, N>,
+                send_depth_bias_to_node::<T, N>
+            ).chain().in_set(UiSystems::Send).before(UiSystems::Compute))
 
             .add_systems(Update, (
                 compute_ui::<T, N>.in_set(UiSystems::Compute)

@@ -5,29 +5,52 @@ use bevy::{render::primitives::Aabb, sprite::Anchor, text::{Text2dBounds, TextLa
 // #=====================#
 // #=== STATE STRUCTS ===#
 
+pub trait StateIndexTrait {
+    const INDEX: usize;
+}
+
+
 /// UI state of a component, this is the normal default
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Base;
+impl StateIndexTrait for Base {
+    const INDEX: usize = 0;
+}
 
 /// UI state of a component, is active on hover
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Hover;
+impl StateIndexTrait for Hover {
+    const INDEX: usize = 1;
+}
 
 /// UI state of a component, is active when clicked
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Click;
+#[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Clicked;
+impl StateIndexTrait for Clicked {
+    const INDEX: usize = 2;
+}
 
 /// UI state of a component, is active when selected
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Selected;
+impl StateIndexTrait for Selected {
+    const INDEX: usize = 3;
+}
 
 /// UI state of a component, is active after entity is spawned
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Intro;
+impl StateIndexTrait for Intro {
+    const INDEX: usize = 4;
+}
 
 /// UI state of a component, is active before entity is despawned
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Outro;
+impl StateIndexTrait for Outro {
+    const INDEX: usize = 5;
+}
 
 
 // #=========================#
@@ -196,6 +219,26 @@ impl <S> Into<UiLayout<S>> for ui::Div {
 impl PackageLayout for ui::Div {
     fn pack<S>(self) -> UiLayout<S> {
         UiLayout::<S>::from(self)
+    }
+}
+
+/// This struct controls what 2 layouts should be computed and lerped between.
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct UiLayoutController {
+    /// Indexes of the two layouts to tween between
+    pub index: [usize; 2],
+    /// The transition ranging from 0.0 to 1.0
+    pub tween: f32,
+    /// The method called for smoothing the tween value
+    pub method: fn(f32) -> f32,
+}
+impl Default for UiLayoutController {
+    fn default() -> Self {
+        UiLayoutController { 
+            index: [0, 0],
+            tween: 0.0,
+            method: |i|{i},
+        }
     }
 }
 
