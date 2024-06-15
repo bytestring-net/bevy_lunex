@@ -255,7 +255,7 @@ pub struct Node<T> {
     /// ## Nodes
     /// All subnodes this node contains. Treat is as `Read-only` unless you know what you are doing.
     /// Use the struct methods to manipulate the values inside.
-    pub nodes: HashMap<String, Node<T>>,
+    pub nodes: IndexMap<String, Node<T>>,
 }
 impl <T> Node<T> {
     /// Generate overview of the inner tree and write the mapped output to the given string with data formatted to a certain level depth
@@ -299,7 +299,7 @@ impl <T> NodeInitTrait for Node<T> {
             depth: 0.0,
 
             data: None,
-            nodes: HashMap::new(),
+            nodes: IndexMap::new(),
         }
     }
 }

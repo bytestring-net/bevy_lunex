@@ -55,23 +55,59 @@ impl <N:Default + Component> UiNodeComputeTrait for UiNode<N> {
             if let Some(fnt) = node_data.font_size { font_size = fnt }
 
             // Compute node layout
-            match &node_data.layout {
+
+            let layout_0 = node_data.layout.get(&node_data.layout_index[0]).unwrap_or(node_data.layout.get(&0).unwrap());
+            let layout_0: Option<Rectangle3D> = match layout_0 {
+                Layout::Div(_) => {
+                    None
+                },
+                Layout::Boundary(l) => {
+                    Some(l.compute(parent.into(), absolute_scale, viewport_size, font_size).into())
+                },
+                Layout::Window(l) => {
+                    Some(l.compute(parent.into(), absolute_scale, viewport_size, font_size).into())
+                },
+                Layout::Solid(l)  => {
+                    Some(l.compute(parent.into(), absolute_scale, viewport_size, font_size).into())
+                },
+            };
+
+            let layout_1 = node_data.layout.get(&node_data.layout_index[1]).unwrap_or(node_data.layout.get(&0).unwrap());
+            let layout_1: Option<Rectangle3D> = match layout_1 {
+                Layout::Div(_) => {
+                    None
+                },
+                Layout::Boundary(l) => {
+                    Some(l.compute(parent.into(), absolute_scale, viewport_size, font_size).into())
+                },
+                Layout::Window(l) => {
+                    Some(l.compute(parent.into(), absolute_scale, viewport_size, font_size).into())
+                },
+                Layout::Solid(l)  => {
+                    Some(l.compute(parent.into(), absolute_scale, viewport_size, font_size).into())
+                },
+            };
+
+            /* match &node_data.layout {
                 Layout::Div(_) => {
                     is_parametric = true;
                 },
                 Layout::Boundary(l) => {
-                    node_data.rectangle = l.compute(parent.into(), absolute_scale, viewport_size, font_size).into();
                     skip = false;
                 },
                 Layout::Window(l) => {
-                    node_data.rectangle = l.compute(parent.into(), absolute_scale, viewport_size, font_size).into();
                     skip = false;
                 },
                 Layout::Solid(l)  => {
-                    node_data.rectangle = l.compute(parent.into(), absolute_scale, viewport_size, font_size).into();
                     skip = false;
                 },
-            }
+            } */
+
+            if let Some(l0) = layout_0 {
+                if let Some(l1) = layout_1 {
+                    node_data.rectangle = l0.lerp(l1, node_data.layout_tween);
+                };
+            };
 
             // Adding depth
             node_data.rectangle.pos.z = depth + node_data.depth_bias;

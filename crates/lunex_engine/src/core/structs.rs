@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use crate::{import::*, NiceDisplay, UiStack};
 use bevy::ecs::component::Component;
+use bevy::math::FloatExt;
 use colored::Colorize;
 
 use crate::nodes::prelude::*;
@@ -33,6 +34,14 @@ impl From<NodeError> for UiError {
 pub struct Rectangle2D {
     pub pos : Vec2,
     pub size: Vec2,
+}
+impl Rectangle2D {
+    pub fn lerp(self, rhs: Self, lerp: f32) -> Self {
+        Rectangle2D {
+            pos: self.pos.lerp(rhs.pos, lerp),
+            size: self.size.lerp(rhs.size, lerp),
+        }
+    }
 }
 impl Rectangle2D {
     /// A new empty [`Rectangle2D`]. Has `0` size. 
@@ -91,6 +100,17 @@ pub struct Rectangle3D {
     pub roll: f32,
     pub yaw : f32,
     pub tilt: f32,
+}
+impl Rectangle3D {
+    pub fn lerp(self, rhs: Self, lerp: f32) -> Self {
+        Rectangle3D {
+            pos: self.pos.lerp(rhs.pos, lerp),
+            size: self.size.lerp(rhs.size, lerp),
+            roll: self.roll.lerp(rhs.roll, lerp),
+            yaw: self.yaw.lerp(rhs.yaw, lerp),
+            tilt: self.tilt.lerp(rhs.tilt, lerp),
+        }
+    }
 }
 impl Into<Rectangle2D> for Rectangle3D {
     fn into(self) -> Rectangle2D {
@@ -193,14 +213,17 @@ impl <T> NiceDisplay for MasterData<T> {
 
 /// A struct holding all data appended to [`UiNode`]. Responsible for storing layout, custom data, cache, etc.
 /// Every [`UiNode`] needs to have this to work properly.
-#[derive(Component, Debug, Default, Clone, PartialEq)]
+#[derive(Component, Debug, Clone, PartialEq)]
 pub struct NodeData<N:Default + Component> {
     /// Optional data the user can append.
     pub data: Option<N>,
     /// Calculated rectangle from layout.
     pub rectangle: Rectangle3D,
-    /// Layout of this node.
-    pub layout: Layout,
+    /// Layouts of this node.
+    pub layout: HashMap<usize, Layout>,
+    pub layout_index: [usize; 2],
+    pub layout_tween: f32,
+
     /// Layout of subnodes and how to stack them.
     pub stack: UiStack,
     /// Optional font size to overwrite the inherited master font size.
@@ -210,6 +233,21 @@ pub struct NodeData<N:Default + Component> {
     /// Size of the content to wrap around. Affects this node's size only if the layout is parametric (Div).
     pub content_size: Vec2,
 }
+impl <N:Default + Component> Default for NodeData<N> {
+    fn default() -> Self {
+        NodeData {
+            data: Default::default(),
+            rectangle: Default::default(),
+            layout: HashMap::from([(0, Layout::default())]),
+            layout_index: Default::default(),
+            layout_tween: Default::default(),
+            stack: Default::default(),
+            font_size: Default::default(),
+            depth_bias: Default::default(),
+            content_size: Default::default(),
+        }
+    }
+}
 impl <N:Default + Component> NodeData<N> {
     pub fn new() -> NodeData<N> {
         NodeData::default()
@@ -217,6 +255,11 @@ impl <N:Default + Component> NodeData<N> {
 }
 impl <N:Default + Component> NiceDisplay for NodeData<N> {
     fn to_nicestr(&self) -> String {
-        format!("{} {} {}", self.layout.to_nicestr(), "|||".black(), self.rectangle.to_nicestr())
+        let mut st = String::new();
+        for l in &self.layout {
+            st += &l.1.to_nicestr();
+            st += " | "
+        }
+        format!("{} {} {}", st, "|||".black(), self.rectangle.to_nicestr())
     }
 }

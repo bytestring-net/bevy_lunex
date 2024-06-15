@@ -44,7 +44,7 @@ pub fn debug_draw_gizmo<T:Component, N:Default + Component>(
 
                 let mut color = Color::LIME_GREEN;
 
-                if let Layout::Solid(_) = container.layout { color = Color::YELLOW }
+                if let Some(Layout::Solid(_)) = container.layout.get(&container.layout_index[0]) { color = Color::YELLOW }
 
                 let mut pos = container.rectangle.pos.invert_y() + transform.translation();
                 pos.x += container.rectangle.size.x / 2.0;
@@ -175,7 +175,7 @@ pub fn send_layout_to_node<T:Component, N:Default + Component>(
                     if let Some(container) = node.obtain_data_mut() {
                         #[cfg(feature = "debug")]
                         info!("{} {} - Received Layout data", "->".blue(), link.path.yellow().bold());
-                        container.layout = layout.layout;
+                        container.layout.insert(0, layout.layout);
                     }
                 }
             }

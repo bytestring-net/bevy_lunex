@@ -5,7 +5,6 @@ use bevy_lunex::prelude::*;
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, UiPlugin))
-        .add_plugins(UiDebugPlugin::<MainUi>::new())
         .add_systems(Startup, setup)
         .run();
 }
