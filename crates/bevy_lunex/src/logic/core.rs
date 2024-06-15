@@ -58,18 +58,18 @@ fn ui_click_emitter_system(mut events: EventReader<Pointer<Down>>, mut write: Ev
 
 
 #[derive(Component,  Clone, PartialEq, Eq)]
-pub struct OnUiClickRun {
+pub struct OnUiClickCommands {
     pub closure: fn(&mut Commands),
 }
-impl OnUiClickRun {
+impl OnUiClickCommands {
     /// Specify the entity you want to create events for.
     pub fn new(closure: fn(&mut Commands)) -> Self {
-        OnUiClickRun {
+        OnUiClickCommands {
             closure,
         }
     }
 }
-pub fn on_ui_click_spawn_system(mut events: EventReader<UiClickEvent>, mut commands: Commands, query: Query<&OnUiClickRun>) {
+pub fn on_ui_click_commands_system(mut events: EventReader<UiClickEvent>, mut commands: Commands, query: Query<&OnUiClickCommands>) {
     for event in events.read() {
         if let Ok(listener) = query.get(event.target) {
             (listener.closure)(&mut commands);
@@ -116,7 +116,7 @@ impl Plugin for CorePlugin {
             .add_systems(Update, ui_click_emitter_system.run_if(on_event::<Pointer<Down>>()))
             .add_event::<UiChangeEvent>()
 
-            .add_systems(Update, on_ui_click_spawn_system.run_if(on_event::<UiClickEvent>()))
+            .add_systems(Update, on_ui_click_commands_system.run_if(on_event::<UiClickEvent>()))
             .add_systems(Update, on_ui_click_despawn_system.run_if(on_event::<UiClickEvent>()));
     }
 }
