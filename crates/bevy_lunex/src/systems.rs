@@ -519,7 +519,7 @@ impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
                 fetch_transform_from_camera::<T, N>.after(touch_camera_if_uitree_added::<T, N>),
             ).in_set(UiSystems::Modify).before(UiSystems::Send))
 
-            .add_plugins(StatePlugin::<T, N, Base>::new())
+            //.add_plugins(StatePlugin::<T, N, Base>::new())
             .add_plugins(StatePlugin::<T, N, Hover>::new())
             .add_plugins(StatePlugin::<T, N, Clicked>::new())
             .add_plugins(StatePlugin::<T, N, Selected>::new())
@@ -527,6 +527,7 @@ impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
             .add_plugins(StatePlugin::<T, N, Outro>::new())
 
             .add_systems(Update, (
+                send_layout_to_node::<T, N, Base>,
                 send_content_size_to_node::<T, N>,
                 send_stack_to_node::<T, N>,
                 send_layout_control_to_node::<T, N>,

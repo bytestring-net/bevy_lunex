@@ -92,6 +92,12 @@ fn ui_animation<S: UiState>(time: Res<Time>, mut query: Query<&mut UiAnimation<S
         control.animation_transition = control.animation_transition.clamp(0.0, 1.0);
     }
 }
+fn ui_animation_state<S: UiState>(mut query: Query<(&UiAnimation<S>, &mut UiLayoutController)>) {
+    for (animator, mut controller) in &mut query {
+        controller.index[1] = Hover::INDEX;
+        controller.tween = animator.animation_transition;
+    }
+}
 
 
 /// This struct synchronizes different entities hover state.
@@ -190,7 +196,9 @@ impl <T:Component, N:Default + Component, S: UiState> Plugin for StatePlugin<T,N
 
             .add_systems(Update, ui_state_pipe_system::<S>)
 
-            .add_systems(Update, (set_ui_color::<S>, ui_animation::<S>).chain())
+            .add_systems(Update, ui_animation_state::<S>)
+
+            .add_systems(Update, (ui_animation::<S>, set_ui_color::<S>).chain())
 
             .add_systems(Update, send_layout_to_node::<T, N, S>.in_set(UiSystems::Send).before(send_content_size_to_node::<T, N>));
     }
