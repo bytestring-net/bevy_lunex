@@ -1,15 +1,15 @@
 # Installation
 
-Installing `Bevy_Lunex` is straightforward, just like any other Rust crate. Ensure that the version is `0.1.0-alpha.2` and not `0.0.X`.
+Installing `Bevy_Lunex` is straightforward, just like any other Rust crate. Ensure that the version is `0.1.0` and not `0.0.X`.
 
 Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bevy_lunex = { version = "0.1.0-alpha.2" }
+bevy_lunex = { version = "0.1.0" }
 ```
 
-Alternatively, you can use the latest version from the Git repository:
+Alternatively, you can use the latest bleeding edge version from the Git repository:
 
 ```toml
 [dependencies]
@@ -18,7 +18,7 @@ bevy_lunex = { git = "https://github.com/bytestring-net/bevy_lunex" }
 
 ### Bevy
 
-To avoid conflicts with `bevy_ui`, you can disable the default features and enable them manually. This prevents mixing different UI crates and reduces confusion. Refer to Bevy's [Cargo.toml](https://github.com/bevyengine/bevy/blob/main/Cargo.toml#L55) file for the complete list of features.
+To avoid potential conflicts with `bevy_ui`, you can disable the default features and enable them manually. This prevents mixing different UI crates and reduces confusion. Refer to Bevy's [Cargo.toml](https://github.com/bevyengine/bevy/blob/main/Cargo.toml#L55) file for the complete list of features.
 
 Add the following to your `Cargo.toml`:
 
@@ -35,19 +35,7 @@ bevy = { version = "0.13.2", default_features = false, features = [
     # Core formats
     "vorbis",
     "png",
-] }
-```
 
-### Interactivity
-
-Lunex implements interactivity on top of `bevy_mod_picking` crate. For more control it is recommended to add this to your project as well.
-
-Add `bevy_mod_picking` to your dependencies:
-
-```TOML
-bevy_mod_picking = { version = "0.19.0", default_features = false, features = [
-    "debug",
-    "selection",
-    "highlight",
+    # ... Enable what you need here
 ] }
 ```

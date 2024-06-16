@@ -1,16 +1,10 @@
-use bevy::{prelude::*, utils::HashMap, window::PrimaryWindow};
+use crate::*;
+use bevy::{utils::HashMap, window::PrimaryWindow};
+
 
 // #===================#
 // #=== CURSOR TYPE ===#
 
-/// **Cursor2d** - Declarative layout type that is defined by its width and height ratio.
-/// Scales in a way to fit itself inside parent container. It never deforms.
-/// Nodes with this layout are not included in the ui flow.
-/// ## 🛠️ Example
-/// ```
-/// # use lunex_engine::Solid;
-/// let layout: Layout = Solid::new().size((4.0, 3.0)).align_x(-0.8).pack();
-/// ```
 #[derive(Component, Default)]
 pub struct Cursor2d {
     /// Indicates which cursor is being requested.
@@ -54,7 +48,8 @@ impl Cursor2d {
     }
 }
 
-pub fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut query: Query<(&Cursor2d, &mut Transform, &mut Visibility)>) {
+
+fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut query: Query<(&Cursor2d, &mut Transform, &mut Visibility)>) {
     if let Ok(mut window) = windows.get_single_mut() {
         for (cursor, mut transform, mut visibility) in &mut query {
 
@@ -77,19 +72,39 @@ pub fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut 
         }
     }
 }
-
-/// Set's the requested cursor index to be default
-pub fn cursor_preupdate(mut query: Query<&mut Cursor2d>) {
+fn cursor_preupdate(mut query: Query<&mut Cursor2d>) {
     for mut cursor in &mut query {
         cursor.cursor_request = CursorIcon::Default;
         cursor.cursor_request_priority = 0.0;
     }
 }
-
-/// Applies requested cursor index as sprite index
-pub fn cursor_update_texture(mut query: Query<(&Cursor2d, &mut TextureAtlas)>) {
+fn cursor_update_texture(mut query: Query<(&Cursor2d, &mut TextureAtlas)>) {
     for (cursor, mut atlas) in &mut query {
         atlas.index = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).0;
+    }
+}
+
+
+/// Requests cursor icon on hover
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct OnHoverSetCursor {
+    /// Cursor type to request on hover
+    pub cursor: CursorIcon,
+}
+impl OnHoverSetCursor {
+    /// Creates new struct
+    pub fn new(cursor: CursorIcon) -> Self {
+        OnHoverSetCursor {
+            cursor
+        }
+    }
+}
+fn on_hover_set_cursor(query: Query<(&UiAnimator<Hover>, &OnHoverSetCursor)>, mut cursor: Query<&mut Cursor2d>) {
+    for (control, hover_cursor) in &query {
+        if control.is_forward() {
+            let mut cursor = cursor.single_mut();
+            cursor.request_cursor(hover_cursor.cursor, 1.0);
+        }
     }
 }
 
@@ -101,8 +116,9 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(PreUpdate, cursor_preupdate)
+            .add_systems(PreUpdate,  cursor_preupdate)
             .add_systems(PostUpdate, cursor_update)
-            .add_systems(PostUpdate, cursor_update_texture);
+            .add_systems(PostUpdate, cursor_update_texture)
+            .add_systems(Update, on_hover_set_cursor);
     }
 }

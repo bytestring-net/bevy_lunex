@@ -17,7 +17,7 @@ pub struct CustomButtom {
 }
 ```
 
-Best practice is that all components should be sandboxed. For that reason we need to define a new marker component, that will be used ONLY for UI inside this button component.
+Best practice is that all components should be sandboxed. For that reason we need to define a new marker component, that will be used ONLY for UI inside this button component (instead of `MainUi`).
 
 ```rust
 // components/custom_button.rs
@@ -34,12 +34,13 @@ Next, create a system that builds the component UI when the component is added. 
 // components/custom_button.rs
 
 /// System that builds the route when the component is added
-fn build_route(mut commands: Commands, assets: Res<AssetServer>, query: Query<Entity, Added<MyRoute>>) {
+fn build_route(mut commands: Commands, assets: Res<AssetServer>, query: Query<Entity, Added<CustomButtom>>) {
     for entity in &query {
         commands.entity(entity).insert((
-            // Insert this bundle into the entity that just got the MyRoute component
+            // Insert this bundle into the entity that just got the CustomButtom component
             // Note that CustomButtonUi is used here instead of MainUi
             UiTreeBundle::<CustomButtonUi>::from(UiTree::new("CustomButton")),
+
         // Now spawn the UI as children
         )).with_children(|ui| {
             // Spawn some UI nodes
@@ -76,7 +77,7 @@ impl Plugin for CustomButtonPlugin {
     fn build(&self, app: &mut App) {
         app
             // Add Lunex plugins for our sandboxed UI
-            .add_plugins(UiPlugin::<CustomButtonUi>::new())
+            .add_plugins(UiGenericPlugin::<CustomButtonUi>::new())
 
             // NOTE! Systems changing the UI need to run before UiSystems::Compute
             // or they will not get picked up by change detection.

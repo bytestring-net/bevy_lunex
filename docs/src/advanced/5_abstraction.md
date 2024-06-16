@@ -75,11 +75,12 @@ mod components;
 mod routes;
 
 pub use bevy::prelude::*;
+pub use bevy_lunex::prelude::*;
 pub use {components::*, routes::*};
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((DefaultPlugins, UiPlugin))
         .add_plugins(ComponentPlugin)
         .add_plugins(RoutePlugin)
         .run();

@@ -1,6 +1,6 @@
 # Cursor
 
-Lunex provides a custom API for styling a cursor within your Bevy application.
+Lunex provides a custom API for a cursor within your Bevy application.
 
 This feature works by spawning a cursor atlas image alongside a special `Cursor2d` component as a child of a 2D camera.
 

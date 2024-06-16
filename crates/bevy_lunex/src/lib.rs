@@ -25,21 +25,15 @@ impl Plugin for UiPlugin {
 
         app
             .add_plugins(UiGenericPlugin::<MainUi>::new())
-
             .add_plugins(DefaultPickingPlugins)
-
             .add_plugins(LunexBackend)
-            .add_plugins(LogicPlugin)
-            .add_plugins(CursorPlugin);
+            .add_plugins(LogicPlugin);
     }
 }
 
 
 // #======================#
 // #=== PRELUDE EXPORT ===#
-
-pub mod interaction;
-pub use interaction::*;
 
 pub mod logic;
 pub use logic::*;
@@ -66,6 +60,8 @@ pub mod prelude {
     pub use super::systems::{UiSystems, UiGenericPlugin, UiDebugPlugin};
     pub use super::structs::*;
 
+    // RE-EXPORT BEVY MOD PICKING
+    pub use bevy_mod_picking::prelude::*;
     
     // RE-EXPORT LUNEX ENGINE
     pub use lunex_engine::prelude::*;
