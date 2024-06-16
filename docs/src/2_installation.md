@@ -18,7 +18,7 @@ bevy_lunex = { git = "https://github.com/bytestring-net/bevy_lunex" }
 
 ### Bevy
 
-To avoid conflicts with `bevy_ui`, you can disable the default features and enable them manually. This prevents mixing different UI crates and reduces confusion. Refer to Bevy's [Cargo.toml](https://github.com/bevyengine/bevy/blob/main/Cargo.toml#L55) file for the complete list of features.
+To avoid potential conflicts with `bevy_ui`, you can disable the default features and enable them manually. This prevents mixing different UI crates and reduces confusion. Refer to Bevy's [Cargo.toml](https://github.com/bevyengine/bevy/blob/main/Cargo.toml#L55) file for the complete list of features.
 
 Add the following to your `Cargo.toml`:
 
@@ -37,19 +37,5 @@ bevy = { version = "0.13.2", default_features = false, features = [
     "png",
 
     # ... Enable what you need here
-] }
-```
-
-### Interactivity
-
-Lunex implements interactivity on top of `bevy_mod_picking` crate. You have to add this to your project as well.
-
-Add `bevy_mod_picking` to your dependencies:
-
-```TOML
-bevy_mod_picking = { version = "0.19.0", default_features = false, features = [
-    "debug",
-    "selection",
-    "highlight",
 ] }
 ```

@@ -60,6 +60,8 @@ pub mod prelude {
     pub use super::systems::{UiSystems, UiGenericPlugin, UiDebugPlugin};
     pub use super::structs::*;
 
+    // RE-EXPORT BEVY MOD PICKING
+    pub use bevy_mod_picking::prelude::*;
     
     // RE-EXPORT LUNEX ENGINE
     pub use lunex_engine::prelude::*;
