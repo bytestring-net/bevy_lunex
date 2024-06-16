@@ -36,6 +36,7 @@
   bevy = { version = "0.13.2", default_features = false, features = [
     "bevy_pbr",
     "bevy_sprite",
+    "bevy_audio",
     "bevy_text",
     "multi-threaded",
     "bevy_gizmos",

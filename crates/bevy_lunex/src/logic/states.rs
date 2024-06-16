@@ -38,10 +38,6 @@ pub struct UiAnimator<S: UiState> {
     pub (crate) animation_direction: f32,
     /// Range from `0.0` to `1.0`
     pub (crate) animation_transition: f32,
-    /// Range from `0.0` to `1.0`, animation_transition from last tick
-    previous_transition: f32,
-    /// Whenever the hover transition is currently changing
-    pub is_changing: bool,
     /// Setting this to true will disable logic with intention that something else will pipe the control data instead
     pub receiver: bool,
     /// Hover animation speed when transitioning to state
@@ -56,8 +52,6 @@ impl <S: UiState> UiAnimator<S> {
             marker: PhantomData,
             animation_direction: 0.0,
             animation_transition: 0.0,
-            previous_transition: 0.0,
-            is_changing: false,
             receiver: false,
             animation_speed_backward: 8.0,
             animation_speed_forward: 8.0,
@@ -85,11 +79,11 @@ impl <S: UiState> UiAnimator<S> {
 }
 fn ui_animation<S: UiState>(time: Res<Time>, mut query: Query<&mut UiAnimator<S>>) {
     for mut control in &mut query {
-        control.is_changing = control.previous_transition != control.animation_transition;
-        control.previous_transition = control.animation_transition;
         if control.receiver { continue }
-        control.animation_transition += time.delta_seconds() * control.animation_direction * if control.animation_direction == 1.0 { control.animation_speed_forward } else { control.animation_speed_backward };
-        control.animation_transition = control.animation_transition.clamp(0.0, 1.0);
+        if !((control.animation_transition == 0.0 && control.animation_direction.is_sign_negative()) && (control.animation_transition == 1.0 && control.animation_direction.is_sign_positive())) {
+            control.animation_transition += time.delta_seconds() * control.animation_direction * if control.animation_direction == 1.0 { control.animation_speed_forward } else { control.animation_speed_backward };
+            control.animation_transition = control.animation_transition.clamp(0.0, 1.0);
+        }
     }
 }
 fn ui_animation_state<S: UiState>(mut query: Query<(&UiAnimator<S>, &mut UiLayoutController)>) {
@@ -119,10 +113,8 @@ impl <S: UiState> UiAnimatorPipe<S> {
 }
 fn ui_state_pipe_system<S: UiState>(query: Query<(&UiAnimator<S>, &UiAnimatorPipe<S>), Changed<UiAnimator<S>>>, mut event: EventWriter<SetUiStateTransition<S>>) {
     for (state, pipe) in &query {
-        if state.is_changing {
-            for e in &pipe.entity {
-                event.send(SetUiStateTransition::new(*e, state.animation_transition));
-            }
+        for e in &pipe.entity {
+            event.send(SetUiStateTransition::new(*e, state.animation_transition));
         }
     }
 }
@@ -145,20 +137,52 @@ impl <S: UiState> UiColor<S> {
         }
     }
 }
-fn set_ui_color<S: UiState>(query: Query<(&UiAnimator<S>, &UiColor<Base>, &UiColor<S>, Entity)>, mut set_color: EventWriter<actions::SetColor>) {
+fn set_ui_color<S: UiState>(query: Query<(&UiAnimator<S>, &UiColor<Base>, &UiColor<S>, Entity), Changed<UiAnimator<S>>>, mut set_color: EventWriter<actions::SetColor>) {
     for (hover, basecolor, hovercolor, entity) in &query {
-        if hover.is_changing {
-            set_color.send(actions::SetColor {
-                target: entity,
-                color: basecolor.color.lerp(hovercolor.color, hover.animation_transition),
-            });
-        }
+        info!("CHANGED COLOR");
+        set_color.send(actions::SetColor {
+            target: entity,
+            color: basecolor.color.lerp(hovercolor.color, hover.animation_transition),
+        });
     }
 }
 
 
 // #=============#
 // #=== HOVER ===#
+
+#[derive(Resource)]
+struct UiSoundPlayer {
+    entity: Option<Entity>,
+}
+
+#[derive(Component, Debug, Clone, PartialEq, Eq)]
+pub struct OnHoverPlaySound {
+    pub sound: Handle<AudioSource>,
+}
+impl OnHoverPlaySound {
+    /// Specify the entity you want to create events for.
+    pub fn new(sound: Handle<AudioSource>) -> Self {
+        OnHoverPlaySound {
+            sound,
+        }
+    }
+}
+fn on_hover_play_sound_system(mut events: EventReader<Pointer<Over>>, mut commands: Commands, query: Query<&OnHoverPlaySound>, mut player: ResMut<UiSoundPlayer>) {
+    for event in events.read() {
+        if let Ok(listener) = query.get(event.target) {
+
+            if let Some(entity) = player.entity {
+                if let Some(cmd) = commands.get_entity(entity) {
+                    cmd.despawn_recursive();
+                }
+            }
+
+            let entity = commands.spawn(AudioBundle { source: listener.sound.clone(), settings: PlaybackSettings::DESPAWN }).id();
+            player.entity = Some(entity);
+        }
+    }
+}
 
 /// System that changes animation direction on hover
 fn hover_enter_system(mut events: EventReader<Pointer<Over>>, mut query: Query<&mut UiAnimator<Hover>>) {
@@ -208,6 +232,8 @@ pub struct DefaultStatesPlugin;
 impl Plugin for DefaultStatesPlugin {
     fn build(&self, app: &mut App) {
         app
+            .insert_resource(UiSoundPlayer { entity: None })
+            .add_systems(Update, on_hover_play_sound_system.run_if(on_event::<Pointer<Over>>()))
             .add_systems(Update, hover_enter_system.run_if(on_event::<Pointer<Over>>()))
             .add_systems(Update, hover_leave_system.run_if(on_event::<Pointer<Out>>()));
     }
