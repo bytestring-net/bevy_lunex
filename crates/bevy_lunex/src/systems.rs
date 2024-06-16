@@ -42,9 +42,9 @@ pub fn debug_draw_gizmo<T:Component, N:Default + Component>(
         for node in list {
             if let Some(container) = node.obtain_data() {
 
-                let mut color = Color::LIME_GREEN;
+                let mut color = Color::linear_rgb(0.0, 1.0, 0.0);
 
-                if let Some(Layout::Solid(_)) = container.layout.get(&container.layout_index[0]) { color = Color::YELLOW }
+                if let Some(Layout::Solid(_)) = container.layout.get(&container.layout_index[0]) { color = Color::linear_rgb(1.0, 1.0, 0.0) }
 
                 let mut pos = container.rectangle.pos.invert_y() + transform.translation();
                 pos.x += container.rectangle.size.x / 2.0;

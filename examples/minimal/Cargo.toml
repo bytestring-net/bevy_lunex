@@ -6,7 +6,7 @@
   publish = false
 
 [dependencies]
-  bevy = { version = "0.13.2", default_features = false, features = [
+  bevy = { version = "0.14.0-rc.3", default_features = false, features = [
     "bevy_asset",
     "bevy_gilrs",
     "bevy_winit",
@@ -15,7 +15,7 @@
     "bevy_render",
     "bevy_sprite",
     "bevy_text",
-    "multi-threaded",
+    "multi_threaded",
     "png",
     "hdr",
     "x11",

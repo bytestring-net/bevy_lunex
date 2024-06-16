@@ -139,7 +139,7 @@ impl <S: UiState> UiColor<S> {
 }
 fn set_ui_color<S: UiState>(query: Query<(&UiAnimator<S>, &UiColor<Base>, &UiColor<S>, Entity), Changed<UiAnimator<S>>>, mut set_color: EventWriter<actions::SetColor>) {
     for (hover, basecolor, hovercolor, entity) in &query {
-        info!("CHANGED COLOR");
+        info!("CHANGED COLOR {:?}", entity);
         set_color.send(actions::SetColor {
             target: entity,
             color: basecolor.color.lerp(hovercolor.color, hover.animation_transition),
@@ -178,7 +178,7 @@ fn on_hover_play_sound_system(mut events: EventReader<Pointer<Over>>, mut comman
                 }
             }
 
-            let entity = commands.spawn(AudioBundle { source: listener.sound.clone(), settings: PlaybackSettings::DESPAWN }).id();
+            let entity = commands.spawn(AudioBundle { source: listener.sound.clone(), settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new(0.3)) }).id();
             player.entity = Some(entity);
         }
     }
