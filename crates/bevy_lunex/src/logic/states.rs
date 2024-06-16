@@ -16,7 +16,7 @@ impl <S: UiState> SetUiStateTransition<S> {
         Self { target, transition, phantom: PhantomData }
     }
 }
-fn set_ui_state_transition<S: UiState>(mut events: EventReader<SetUiStateTransition<S>>, mut query: Query<&mut UiAnimation<S>>) {
+fn set_ui_state_transition<S: UiState>(mut events: EventReader<SetUiStateTransition<S>>, mut query: Query<&mut UiAnimator<S>>) {
     for event in events.read() {
         if let Ok(mut hover) = query.get_mut(event.target) {
             if hover.animation_transition != event.transition {
@@ -32,7 +32,7 @@ fn set_ui_state_transition<S: UiState>(mut events: EventReader<SetUiStateTransit
 
 /// Control struct for the button state
 #[derive(Component, Debug, Clone, PartialEq)]
-pub struct UiAnimation<S: UiState> {
+pub struct UiAnimator<S: UiState> {
     marker: PhantomData<S>,
     /// -1.0 backwards, 1.0 forward
     pub (crate) animation_direction: f32,
@@ -49,10 +49,10 @@ pub struct UiAnimation<S: UiState> {
     /// Hover animation speed when transitioning back to default
     pub animation_speed_backward: f32,
 }
-impl <S: UiState> UiAnimation<S> {
+impl <S: UiState> UiAnimator<S> {
     /// Creates new struct
     pub fn new() -> Self {
-        UiAnimation {
+        UiAnimator {
             marker: PhantomData,
             animation_direction: 0.0,
             animation_transition: 0.0,
@@ -83,7 +83,7 @@ impl <S: UiState> UiAnimation<S> {
         self.animation_direction == 1.0
     }
 }
-fn ui_animation<S: UiState>(time: Res<Time>, mut query: Query<&mut UiAnimation<S>>) {
+fn ui_animation<S: UiState>(time: Res<Time>, mut query: Query<&mut UiAnimator<S>>) {
     for mut control in &mut query {
         control.is_changing = control.previous_transition != control.animation_transition;
         control.previous_transition = control.animation_transition;
@@ -92,7 +92,7 @@ fn ui_animation<S: UiState>(time: Res<Time>, mut query: Query<&mut UiAnimation<S
         control.animation_transition = control.animation_transition.clamp(0.0, 1.0);
     }
 }
-fn ui_animation_state<S: UiState>(mut query: Query<(&UiAnimation<S>, &mut UiLayoutController)>) {
+fn ui_animation_state<S: UiState>(mut query: Query<(&UiAnimator<S>, &mut UiLayoutController)>) {
     for (animator, mut controller) in &mut query {
         controller.index[1] = Hover::INDEX;
         controller.tween = animator.animation_transition;
@@ -103,21 +103,21 @@ fn ui_animation_state<S: UiState>(mut query: Query<(&UiAnimation<S>, &mut UiLayo
 /// This struct synchronizes different entities hover state.
 /// It takes corresponding [`Hover`] and pipes it into specified entities.
 #[derive(Component, Clone, PartialEq)]
-pub struct UiStatePipe<S: UiState> {
+pub struct UiAnimatorPipe<S: UiState> {
     /// All entities to to pipe hover state control data to
     pub entity: Vec<Entity>,
     marker: PhantomData<S>
 }
-impl <S: UiState> UiStatePipe<S> {
+impl <S: UiState> UiAnimatorPipe<S> {
     /// Creates new struct
     pub fn new(entity: Vec<Entity>) -> Self {
-        UiStatePipe {
+        UiAnimatorPipe {
             entity,
             marker: PhantomData
         }
     }
 }
-fn ui_state_pipe_system<S: UiState>(query: Query<(&UiAnimation<S>, &UiStatePipe<S>), Changed<UiAnimation<S>>>, mut event: EventWriter<SetUiStateTransition<S>>) {
+fn ui_state_pipe_system<S: UiState>(query: Query<(&UiAnimator<S>, &UiAnimatorPipe<S>), Changed<UiAnimator<S>>>, mut event: EventWriter<SetUiStateTransition<S>>) {
     for (state, pipe) in &query {
         if state.is_changing {
             for e in &pipe.entity {
@@ -145,7 +145,7 @@ impl <S: UiState> UiColor<S> {
         }
     }
 }
-fn set_ui_color<S: UiState>(query: Query<(&UiAnimation<S>, &UiColor<Base>, &UiColor<S>, Entity)>, mut set_color: EventWriter<actions::SetColor>) {
+fn set_ui_color<S: UiState>(query: Query<(&UiAnimator<S>, &UiColor<Base>, &UiColor<S>, Entity)>, mut set_color: EventWriter<actions::SetColor>) {
     for (hover, basecolor, hovercolor, entity) in &query {
         if hover.is_changing {
             set_color.send(actions::SetColor {
@@ -161,7 +161,7 @@ fn set_ui_color<S: UiState>(query: Query<(&UiAnimation<S>, &UiColor<Base>, &UiCo
 // #=== HOVER ===#
 
 /// System that changes animation direction on hover
-fn hover_enter_system(mut events: EventReader<Pointer<Over>>, mut query: Query<&mut UiAnimation<Hover>>) {
+fn hover_enter_system(mut events: EventReader<Pointer<Over>>, mut query: Query<&mut UiAnimator<Hover>>) {
     for event in events.read() {
         if let Ok(mut hover) = query.get_mut(event.target) {
             hover.animation_direction = 1.0;
@@ -170,7 +170,7 @@ fn hover_enter_system(mut events: EventReader<Pointer<Over>>, mut query: Query<&
 }
 
 /// System that changes animation direction on hover
-fn hover_leave_system(mut events: EventReader<Pointer<Out>>, mut query: Query<&mut UiAnimation<Hover>>) {
+fn hover_leave_system(mut events: EventReader<Pointer<Out>>, mut query: Query<&mut UiAnimator<Hover>>) {
     for event in events.read() {
         if let Ok(mut hover) = query.get_mut(event.target) {
             hover.animation_direction = -1.0;

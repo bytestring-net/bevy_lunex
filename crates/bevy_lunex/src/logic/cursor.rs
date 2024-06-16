@@ -99,7 +99,7 @@ impl OnHoverSetCursor {
         }
     }
 }
-fn on_hover_set_cursor(query: Query<(&UiAnimation<Hover>, &OnHoverSetCursor)>, mut cursor: Query<&mut Cursor2d>) {
+fn on_hover_set_cursor(query: Query<(&UiAnimator<Hover>, &OnHoverSetCursor)>, mut cursor: Query<&mut Cursor2d>) {
     for (control, hover_cursor) in &query {
         if control.is_forward() {
             let mut cursor = cursor.single_mut();
