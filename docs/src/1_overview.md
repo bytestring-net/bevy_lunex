@@ -29,7 +29,7 @@ commands.spawn((
 	// This specifies the name and hierarchy of the node
 	UiLink::<MainUi>::path("Menu/Button"),
 
-	// Here you can define the layout using the provided units
+	// Here you can define the layout using the provided units (per state like Base, Hover, Selected, etc.)
 	UiLayout::window().pos(Rl((50.0, 50.0))).size((Rh(45.0), Rl(60.0))).pack::<Base>(),
 
 
@@ -42,19 +42,22 @@ commands.spawn((
 	ImageScaleMode::Sliced(TextureSlicer { border: BorderRect::square(32.0), ..default() }),
 
 	// This is required to control our hover animation
-	Hover::new().forward_speed(20.0).backward_speed(5.0),
+	UiAnimator::<Hover>::new().forward_speed(5.0).backward_speed(1.0),
 
-	// This will set the color to red
-	BaseColor::new(Color::RED),
+	// This will set the base color to red
+	UiColor<Base>::new(Color::RED),
 
 	// This will set hover color to yellow
-	HoverColor::new(Color::YELLOW),
+	UiColor<Hover>::new(Color::YELLOW),
 
 
 	// #=== INTERACTIVITY ===#
 
 	// This is required for hit detection (make it clickable)
 	PickableBundle::default(),
+
+	// This will change cursor icon on mouse hover
+    OnHoverSetCursor::new(CursorIcon::Pointer),
 
 	// If we click on this, it will emmit UiClick event we can listen to
 	UiClickEmitter::SELF,

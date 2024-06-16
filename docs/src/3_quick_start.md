@@ -15,11 +15,7 @@ Then we need to add `UiPlugin` to our app.
 ```rust
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-
-        // This plugin is required for Lunex to work
-        .add_plugins(UiPlugin)
-
+        .add_plugins((DefaultPlugins, UiPlugin))
         .run();
 }
 ```
@@ -35,7 +31,6 @@ This will make the camera pipe it's size into our future `UiTree` which also nee
 
 ```rust
 commands.spawn((
-
     // Add this marker component provided by Lunex.
     MainUi,
 
@@ -50,12 +45,11 @@ The newly introduced `Dimension` component is used as the source size for the UI
 
 ```rust
 commands.spawn((
-
     // This makes the UI entity able to receive camera data
     MovableByCamera,
 
     // This is our UI system
-    UiTreeBundle::<MainUi>::from(UiTree::new("MainUi")),
+    UiTreeBundle::<MainUi>::from(UiTree::new("Hello UI!")),
 
 )).with_children(|ui| {
     // Here we will spawn our UI as children
@@ -66,7 +60,7 @@ Now, any entity with `UiLayout` + `UiLink` spawned as a child of the `UiTree` wi
 
 You can add a `UiImage2dBundle` to the entity to add images to your widgets. Or you can add another `UiTree` as a child, which will use the computed size output in `Dimension` component instead of a `Camera` piping the size to it.
 
-The generic in `pack::<S>()` represents state. For now leave it at `Base`, but when you later want to add hover animation use `Hover` instead.
+The generic in `pack::<S>()` represents state. For now leave it at `Base`, but when you for example later want to add hover animation use `Hover` instead.
 
 ```rust
 ui.spawn((
@@ -93,7 +87,7 @@ ui.spawn((
 
 `UiLink` is what is used to define the the custom hierarchy. It uses `/` as the separator. If any of the names don't internally exist inside the parent `UiTree`, it will create them.
 
-As you can see in the terminal (If you have enabled `debug` feature or added a `UiDebugPlugin`), the structure looks like this:
+As you can see in the terminal (If you have enabled `debug` feature or added the `UiDebugPlugin`), the structure looks like this:
 ```rust
 > MyUiSystem == Window [pos: (x: 0, y: 0) size: (x: 100%, y: 100%)]
     |-> Root == Window [pos: (x: 20, y: 20) size: (x: -40 + 100%, y: -40 + 100%)]

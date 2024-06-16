@@ -23,6 +23,7 @@ Next, create a system that builds the route when the component is added. This sy
 fn build_route(mut commands: Commands, assets: Res<AssetServer>, query: Query<Entity, Added<MyRoute>>) {
     for route_entity in &query {
 
+        // Make our route a spatial entity
         commands.entity(route_entity).insert(
             SpatialBundle::default()
         ).with_children(|route| {
