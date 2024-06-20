@@ -1,12 +1,12 @@
 # Installation
 
-Installing `Bevy_Lunex` is straightforward, just like any other Rust crate. Ensure that the version is `0.1.0` and not `0.0.X`.
+Installing `Bevy_Lunex` is straightforward, just like any other Rust crate. Ensure that the version is `0.1.1` and not `0.0.X`.
 
 Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bevy_lunex = { version = "0.1.0" }
+bevy_lunex = { version = "0.1.1" }
 ```
 
 Alternatively, you can use the latest bleeding edge version from the Git repository:
@@ -23,7 +23,7 @@ To avoid potential conflicts with `bevy_ui`, you can disable the default feature
 Add the following to your `Cargo.toml`:
 
 ```TOML
-bevy = { version = "0.13.2", default_features = false, features = [
+bevy = { version = "0.14.0", default_features = false, features = [
     # Core
     "bevy_core_pipeline",
     "multi-threaded",

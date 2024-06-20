@@ -1,5 +1,5 @@
 use crate::*;
-use bevy::{render::primitives::Aabb, sprite::Anchor, text::{Text2dBounds, TextLayoutInfo}};
+use bevy::{render::primitives::Aabb, sprite::{Anchor, SpriteSource}, text::{Text2dBounds, TextLayoutInfo}};
 
 
 // #=====================#
@@ -352,6 +352,8 @@ pub struct UiElementBundle {
 pub struct UiZoneBundle {
     /// The required bundle to make entity pickable
     pub pickable: PickableBundle,
+    /// This component is required for picking to work on non-sprite entities
+    pub sprite_source: SpriteSource,
     /// The required components for entity to exist in space
     pub spatial: UiSpatialBundle,
 }
@@ -437,6 +439,8 @@ impl From<Handle<Image>> for UiImage2dBundle {
 pub struct UiText2dBundle {
     /// Contains the text.
     pub text: Text,
+    /// This is needed for visibility computation to work properly.
+    pub sprite_source: SpriteSource,
     /// How the text is positioned relative to its transform.
     pub text_anchor: Anchor,
     /// The maximum width and height of the text.

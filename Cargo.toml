@@ -17,7 +17,7 @@
 
 [workspace.package]
   authors     = ["IDEDARY"]
-  version     = "0.1.0"
+  version     = "0.1.1"
   edition     = "2021"
   license     = "MIT OR Apache-2.0"
   repository  = "https://github.com/bytestring-net/bevy-lunex"
@@ -26,19 +26,21 @@
 
 [workspace.dependencies]
 
-  bevy_lunex   = { path = "crates/bevy_lunex", version = "0.1.0" }
-  lunex_engine = { path = "crates/lunex_engine", version = "0.1.0" }
+  bevy_lunex   = { path = "crates/bevy_lunex", version = "0.1.1" }
+  lunex_engine = { path = "crates/lunex_engine", version = "0.1.1" }
 
   colored            = { version = "^2.1" }
   indexmap           = { version = "^2.1" }
   thiserror          = { version = "^1.0" }
 
-  bevy = { version = "0.13.2", default_features = false, features = [
+  bevy = { version = "0.14.0-rc.3", default_features = false, features = [
     "bevy_pbr",
     "bevy_sprite",
+    "bevy_audio",
     "bevy_text",
-    "multi-threaded",
+    "multi_threaded",
     "bevy_gizmos",
   ] }
 
-  bevy_mod_picking = { version = "0.19.0", default_features = false, features = [] }
+  #bevy_mod_picking = { path = "../../Prototypes/bevy_mod_picking", default_features = false, features = [] }
+  bevy_mod_picking = { version = "0.20.0-rc.0", default_features = false, features = ["selection","highlight","debug",] }

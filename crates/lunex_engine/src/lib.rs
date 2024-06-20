@@ -29,5 +29,5 @@ pub(crate) mod import {
     pub(crate) use colored::Colorize;
 
     pub(crate) use bevy::math::{Vec2, Vec3, Vec4};
-    pub(crate) use bevy::utils::thiserror::Error;
+    pub(crate) use thiserror::Error;
 }

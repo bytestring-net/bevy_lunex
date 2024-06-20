@@ -59,21 +59,21 @@ pub fn lunex_picking(
             .copied()
             .filter(|(.., visibility)| visibility.get())
             .filter_map(
-                |(entity, dimension, element, sprite_transform, pickable, ..)| {
+                |(entity, dimension, element, node_transform, pickable, ..)| {
                     if blocked {
                         return None;
                     }
 
-                    let pos = if !element.is_some() {
-                        dimension.size.invert_y() / 2.0
-                    } else {
-                        Vec2::new(0.0, 0.0)
-                    };
+                    let pos = if !element.is_some() { dimension.size.invert_y() / 2.0 } else { Vec2::ZERO };
 
                     let rect = Rect::from_center_size(pos, dimension.size);
 
+                    /* let s = rect.max - rect.min;
+                    let p = (rect.min + s/2.0).extend(0.0) + node_transform.translation();
+                    gizmos.rect(p, Quat::from_rotation_y(0.0), s, Color::linear_rgb(0.0, 0.0, 1.0)); */
+
                     // Transform cursor pos to sprite coordinate system
-                    let cursor_pos_sprite = sprite_transform
+                    let cursor_pos_sprite = node_transform
                         .affine()
                         .inverse()
                         .transform_point3((cursor_pos_world, 0.0).into());
@@ -82,7 +82,7 @@ pub fn lunex_picking(
                     blocked = is_cursor_in_sprite && pickable.map(|p| p.should_block_lower) != Some(false);
 
                     // HitData requires a depth as calculated from the camera's near clipping plane
-                    let depth = -cam_ortho.near - sprite_transform.translation().z;
+                    let depth = -cam_ortho.near - node_transform.translation().z;
 
                     is_cursor_in_sprite.then_some((entity, HitData::new(cam_entity, depth, None, None)))
                 },

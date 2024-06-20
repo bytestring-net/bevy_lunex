@@ -55,7 +55,6 @@ fn ui_click_emitter_system(mut events: EventReader<Pointer<Down>>, mut write: Ev
 }
 
 
-
 #[derive(Component,  Clone, PartialEq, Eq)]
 pub struct OnUiClickCommands {
     pub closure: fn(&mut Commands),
