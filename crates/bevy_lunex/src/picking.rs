@@ -81,8 +81,6 @@ pub fn lunex_picking(
                     let is_cursor_in_sprite = rect.contains(cursor_pos_sprite.truncate());
                     blocked = is_cursor_in_sprite && pickable.map(|p| p.should_block_lower) != Some(false);
 
-                    if is_cursor_in_sprite { info!("Cursor in {entity} - Is not blocked: {blocked} {:?}", pickable); }
-
                     // HitData requires a depth as calculated from the camera's near clipping plane
                     let depth = -cam_ortho.near - node_transform.translation().z;
 
