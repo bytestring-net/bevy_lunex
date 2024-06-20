@@ -33,7 +33,6 @@ pub fn lunex_picking(
         )
     >,
     mut output: EventWriter<PointerHits>,
-    mut gizmos: Gizmos,
 ) {
     let mut sorted_nodes: Vec<_> = node_query.iter().collect();
     sorted_nodes.sort_by(|a, b| { (b.3.translation().z).partial_cmp(&a.3.translation().z).unwrap_or(Ordering::Equal) });
@@ -65,19 +64,13 @@ pub fn lunex_picking(
                         return None;
                     }
 
-                    let pos = if !element.is_some() {
-                        dimension.size.invert_y() / 2.0
-                    } else {
-                        let _ = Vec2::ZERO;
-                        //dimension.size.invert_y() / 2.0
-                        Vec2::ZERO
-                    };
+                    let pos = if !element.is_some() { dimension.size.invert_y() / 2.0 } else { Vec2::ZERO };
 
                     let rect = Rect::from_center_size(pos, dimension.size);
 
-                    let s = rect.max - rect.min;
+                    /* let s = rect.max - rect.min;
                     let p = (rect.min + s/2.0).extend(0.0) + node_transform.translation();
-                    gizmos.rect(p, Quat::from_rotation_y(0.0), s, Color::linear_rgb(0.0, 0.0, 1.0));
+                    gizmos.rect(p, Quat::from_rotation_y(0.0), s, Color::linear_rgb(0.0, 0.0, 1.0)); */
 
                     // Transform cursor pos to sprite coordinate system
                     let cursor_pos_sprite = node_transform
