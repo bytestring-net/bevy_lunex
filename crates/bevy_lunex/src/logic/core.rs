@@ -46,7 +46,6 @@ impl UiClickEmitter {
 }
 fn ui_click_emitter_system(mut events: EventReader<Pointer<Down>>, mut write: EventWriter<UiClickEvent>, query: Query<(&UiClickEmitter, Entity)>) {
     for event in events.read() {
-        info!("UI CLICK {:?} at {} depth {}", event.target, event.pointer_location.position, event.hit.depth);
         if let Ok((emitter, entity)) = query.get(event.target) {
             write.send(UiClickEvent {
                 target: if let Some(e) = emitter.target { e } else { entity },
@@ -55,13 +54,6 @@ fn ui_click_emitter_system(mut events: EventReader<Pointer<Down>>, mut write: Ev
     }
 }
 
-#[derive(Component,  Clone, PartialEq, Eq)]
-pub struct DebugPicker;
-fn debug_picker(query: Query<(Entity, &Pickable), With<DebugPicker>>) {
-    for (entity, pickable) in &query {
-        info!("Entity {entity} has: {:?}", pickable)
-    }
-}
 
 #[derive(Component,  Clone, PartialEq, Eq)]
 pub struct OnUiClickCommands {
@@ -120,8 +112,6 @@ impl Plugin for CorePlugin {
             .add_event::<UiClickEvent>()
             .add_systems(Update, ui_click_emitter_system.run_if(on_event::<Pointer<Down>>()))
             .add_event::<UiChangeEvent>()
-
-            .add_systems(Update, debug_picker)
 
             .add_systems(Update, on_ui_click_commands_system.run_if(on_event::<UiClickEvent>()))
             .add_systems(Update, on_ui_click_despawn_system.run_if(on_event::<UiClickEvent>()));
