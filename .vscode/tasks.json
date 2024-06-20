@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "cargo",
-			"command": "cargo run",
+			"command": "run",
 			"args": ["--bin", "minimal"],
 			"problemMatcher": [
 				"$rustc"
@@ -13,7 +13,7 @@
 		},
 		{
 			"type": "cargo",
-			"command": "cargo run",
+			"command": "run",
 			"args": ["--bin", "minimal"],
 			"problemMatcher": [
 				"$rustc"
@@ -23,7 +23,7 @@
 		},
 		{
 			"type": "cargo",
-			"command": "cargo run",
+			"command": "run",
 			"args": ["--bin", "minimal"],
 			"problemMatcher": [
 				"$rustc"
