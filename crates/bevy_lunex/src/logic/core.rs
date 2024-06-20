@@ -46,6 +46,7 @@ impl UiClickEmitter {
 }
 fn ui_click_emitter_system(mut events: EventReader<Pointer<Down>>, mut write: EventWriter<UiClickEvent>, query: Query<(&UiClickEmitter, Entity)>) {
     for event in events.read() {
+        info!("UI CLICK {:?} at {} depth {}", event.target, event.pointer_location.position, event.hit.depth);
         if let Ok((emitter, entity)) = query.get(event.target) {
             write.send(UiClickEvent {
                 target: if let Some(e) = emitter.target { e } else { entity },

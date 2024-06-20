@@ -139,7 +139,7 @@ impl <S: UiState> UiColor<S> {
 }
 fn set_ui_color<S: UiState>(query: Query<(&UiAnimator<S>, &UiColor<Base>, &UiColor<S>, Entity), Changed<UiAnimator<S>>>, mut set_color: EventWriter<actions::SetColor>) {
     for (hover, basecolor, hovercolor, entity) in &query {
-        info!("CHANGED COLOR {:?}", entity);
+        //info!("CHANGED COLOR {:?}", entity);
         set_color.send(actions::SetColor {
             target: entity,
             color: basecolor.color.lerp(hovercolor.color, hover.animation_transition),

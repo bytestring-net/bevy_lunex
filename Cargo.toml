@@ -33,7 +33,7 @@
   indexmap           = { version = "^2.1" }
   thiserror          = { version = "^1.0" }
 
-  bevy = { version = "0.14.0-rc.3", default_features = false, features = [
+  bevy = { version = "0.14.0-rc.2", default_features = false, features = [
     "bevy_pbr",
     "bevy_sprite",
     "bevy_audio",
@@ -42,4 +42,5 @@
     "bevy_gizmos",
   ] }
 
-  bevy_mod_picking = { version = "0.20.0-rc.0", default_features = false, features = [] }
+  #bevy_mod_picking = { path = "../../Prototypes/bevy_mod_picking", default_features = false, features = [] }
+  bevy_mod_picking = { version = "0.20.0-rc.0", default_features = false, features = ["selection","highlight","debug",] }
