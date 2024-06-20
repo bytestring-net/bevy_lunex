@@ -221,7 +221,7 @@ impl <T:Component, N:Default + Component, S: UiState> Plugin for StatePlugin<T,N
 
             .add_systems(Update, ui_animation_state::<S>)
 
-            .add_systems(Update, (ui_animation::<S>, set_ui_color::<S>).chain())
+            .add_systems(Update, (ui_animation::<S>, set_ui_color::<S>.after(UiSystems::Process)).chain())
 
             .add_systems(Update, send_layout_to_node::<T, N, S>.in_set(UiSystems::Send).before(send_content_size_to_node::<T, N>));
     }
