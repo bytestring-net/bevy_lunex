@@ -86,7 +86,7 @@ fn ui_animation<S: UiState>(time: Res<Time>, mut query: Query<&mut UiAnimator<S>
         }
     }
 }
-fn ui_animation_state<S: UiState>(mut query: Query<(&UiAnimator<S>, &mut UiLayoutController)>) {
+fn ui_animation_state<S: UiState>(mut query: Query<(&UiAnimator<S>, &mut UiLayoutController), Changed<UiAnimator<S>>>) {
     for (animator, mut controller) in &mut query {
         controller.index[1] = Hover::INDEX;
         controller.tween = animator.animation_transition;

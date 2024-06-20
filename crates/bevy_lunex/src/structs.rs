@@ -352,6 +352,8 @@ pub struct UiElementBundle {
 pub struct UiZoneBundle {
     /// The required bundle to make entity pickable
     pub pickable: PickableBundle,
+    /// This component is required for picking to work on non-sprite entities
+    pub sprite_source: SpriteSource,
     /// The required components for entity to exist in space
     pub spatial: UiSpatialBundle,
 }
