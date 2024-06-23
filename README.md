@@ -72,7 +72,7 @@ commands.spawn((
 	PickableBundle::default(),
 
 	// This will change cursor icon on mouse hover
-    OnHoverSetCursor::new(CursorIcon::Pointer),
+	OnHoverSetCursor::new(CursorIcon::Pointer),
 
 	// If we click on this, it will emmit UiClick event we can listen to
 	UiClickEmitter::SELF,

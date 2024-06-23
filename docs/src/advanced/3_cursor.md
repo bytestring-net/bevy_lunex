@@ -13,7 +13,7 @@ commands.spawn((
     Camera2dBundle { transform: Transform::from_xyz(0.0, 0.0, 1000.0), ..default() }
 )).with_children(|camera| {
 
-    // Spawn cursor entity
+    // Spawn cursor
     camera.spawn ((
 
         // Here we can map different native cursor icons to texture atlas indexes and sprite offsets
@@ -22,28 +22,25 @@ commands.spawn((
             .register_cursor(CursorIcon::Pointer, 1, (10.0, 12.0))
             .register_cursor(CursorIcon::Grab, 2, (40.0, 40.0)),
 
-        // Add a SpriteSheetBundle to the cursor
-        SpriteSheetBundle {
-            texture: assets.load("cursor.png"),
+        // Add texture atlas to the cursor
+        TextureAtlas {
+            layout: atlas_layout.add(TextureAtlasLayout::from_grid(UVec2::splat(80), 3, 1, None, None)),
+            index: 0,
+        },
 
-            // Define the texture atlas layout
-            atlas: TextureAtlas {
-                layout: atlas_layout.add(TextureAtlasLayout::from_grid(Vec2::splat(80.0), 3, 1, None, None)),
-                index: 0,
-            },
-
-            // Modify the scale of the cursor
+        // Add sprite bundle to the cursor
+        SpriteBundle {
+            texture: assets.cursor.clone(),
             transform: Transform { scale: Vec3::new(0.45, 0.45, 1.0), ..default() },
-
-            // Set the anchor to top-left
             sprite: Sprite {
-                anchor: bevy::sprite::Anchor::TopLeft,
+                color: Color::BEVYPUNK_YELLOW.with_alpha(2.0),
+                anchor: Anchor::TopLeft,
                 ..default()
             },
             ..default()
         },
 
-        // Make the raycaster ignore this entity to prevent the cursor from blocking clicks
+        // Make the raycaster ignore this entity, we don't want our cursor to block clicking
         Pickable::IGNORE,
     ));
 });
@@ -59,3 +56,7 @@ By default, spawning the cursor entity will hide the native system cursor unless
 Additionally, you must register each cursor icon with its respective texture atlas indices and sprite offsets to define the appearance and positioning of different cursor states.
 
 Finally, to prevent the cursor from interfering with clicking events, we add the `Pickable::IGNORE` component. This ensures that the cursor sprite does not block any button interactions or other clickable elements in the UI.
+
+### Cursor position
+
+You can query for `GlobalTransform` of `Cursor2d` to get it's worldspace location. For localspace, use regular `Transform`.

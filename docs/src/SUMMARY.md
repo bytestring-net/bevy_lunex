@@ -13,6 +13,7 @@
 ---
 
 # Advanced
+- [Linking](advanced/0_linking.md)
 - [Layouts](advanced/1_layouts.md)
 - [Units](advanced/2_units.md)
 - [Cursor](advanced/3_cursor.md)
