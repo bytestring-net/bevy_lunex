@@ -380,6 +380,22 @@ pub fn element_sprite_size_from_dimension<T: Component>(
     }
 }
 
+/// This system fetches [`Dimension`] data and overwrites querried [`Handle<Image>`] data to fit.
+/// ## 📦 Types
+/// * Generic `(T)` - Marker component grouping entities into one widget type
+pub fn element_image_size_from_dimension<T: Component>(
+    query: Query<(&Handle<Image>, &Dimension), (With<UiLink<T>>, With<Element>, With<MovableByCamera>, Changed<Dimension>)>,
+    mut images: ResMut<Assets<Image>>,
+) {
+    for (handle, dimension) in &query {
+        #[cfg(feature = "debug")]
+        info!("{} {} - Resizing texture based on Dimension", "--".yellow(), "ELEMENT".red());
+        if let Some(image) = images.get_mut(handle) {
+            image.resize(bevy::render::render_resource::Extent3d { width: dimension.size.x as u32, height: dimension.size.y as u32, ..default() });
+        }
+    }
+}
+
 /// This system reconstructs the mesh on [`UiTree`] change.
 /// ## 📦 Types
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
@@ -546,6 +562,7 @@ impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
 
             .add_systems(Update, (
                 element_sprite_size_from_dimension::<T>,
+                element_image_size_from_dimension::<T>,
                 element_text_size_scale_fit_to_dimension::<T>,
                 element_reconstruct_mesh::<T>,
             ).in_set(UiSystems::Process).after(UiSystems::Fetch))
