@@ -49,9 +49,13 @@ impl Cursor2d {
 }
 
 
-fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut query: Query<(&Cursor2d, &mut Transform, &mut Visibility)>) {
+fn cursor_update(
+    mut windows: Query<&mut Window, With<PrimaryWindow>>,
+    cameras: Query<&OrthographicProjection>,
+    mut query: Query<(&Cursor2d, &Parent, &mut Transform, &mut Visibility)>
+) {
     if let Ok(mut window) = windows.get_single_mut() {
-        for (cursor, mut transform, mut visibility) in &mut query {
+        for (cursor, parent, mut transform, mut visibility) in &mut query {
 
             window.cursor.visible = if cursor.native_cursor { !cursor.hidden } else { false };
             if window.cursor.visible { window.cursor.icon = cursor.cursor_request; }
@@ -61,8 +65,12 @@ fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut quer
 
                     let sprite_offset = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).1;
 
-                    transform.translation.x = position.x - window.width()*0.5 - sprite_offset.x * transform.scale.x;
-                    transform.translation.y = -(position.y - window.height()*0.5 - sprite_offset.y * transform.scale.y);
+                    let scale = if let Ok(projection) = cameras.get(**parent) {
+                        projection.scale
+                    } else { 1.0 };
+
+                    transform.translation.x = (position.x - window.width()*0.5) * scale - sprite_offset.x * transform.scale.x;
+                    transform.translation.y = -((position.y - window.height()*0.5) * scale - sprite_offset.y * transform.scale.y);
                     *visibility = if cursor.hidden || cursor.native_cursor { Visibility::Hidden } else { Visibility::Visible };
                 }
                 None => {

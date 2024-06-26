@@ -88,7 +88,7 @@ pub fn debug_print_tree<T:Component, N:Default + Component>(
 ///   Otherwise, it will lead to value overwriting. Just make sure only one camera
 ///   is marked with `(T)` component at the same time.
 pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
-    source: Query<&Camera, (With<T>, Changed<Camera>)>,
+    source: Query<&Camera, (With<T>, Without<BindProjectionScale>, Changed<Camera>)>,
     mut destination: Query<&mut Dimension, (With<UiTree<T, N>>, With<MovableByCamera>)>
 ) {
     // Undesired behaviour if source.len() > 1
@@ -104,6 +104,32 @@ pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
     }
 }
 
+/// This system takes [`Camera`] data and overwrites querried [`Dimension`] data.
+/// It is mainly used to pipe [`Camera`] data into [`UiTree`] for root node computation.
+/// ## 📦 Types
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
+/// * Generic `(T)` - Marker component grouping entities into one widget type
+/// ## ⚠️ Warning
+/// * Developer should ensure that source query returns only one camera.
+///   Otherwise, it will lead to value overwriting. Just make sure only one camera
+///   is marked with `(T)` component at the same time.
+pub fn fetch_dimension_from_camera_with_projection<T:Component, N:Default + Component>(
+    source: Query<(&Camera, &OrthographicProjection), (With<T>, With<BindProjectionScale>, Changed<Camera>)>,
+    mut destination: Query<&mut Dimension, (With<UiTree<T, N>>, With<MovableByCamera>)>
+) {
+    // Undesired behaviour if source.len() > 1
+    for (cam, projection) in &source {
+        for mut dimension in &mut destination {
+            // Extract camera size
+            if let Some(size) = cam.physical_viewport_size() {
+                #[cfg(feature = "debug")]
+                info!("{} {} - Fetched Dimension data from Camera", "->".blue(), "UiTree".purple().bold());
+                dimension.size = Vec2::from((size.x as f32, size.y as f32)) * projection.scale;
+            }
+        }
+    }
+}
+
 /// This system takes [`Camera`] data and overwrites querried [`Transform`] + [`MovableByCamera`].
 /// It is mainly used to pipe [`Camera`] data into [`UiTree`] for positioning.
 /// ## 📦 Types
@@ -114,7 +140,7 @@ pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
 ///   Otherwise, it will lead to value overwriting. Just make sure only one camera
 ///   is marked with `(T)` component at the same time.
 pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
-    source: Query<&Camera, (With<T>, Changed<Camera>)>,
+    source: Query<&Camera, (With<T>, Without<BindProjectionScale>, Changed<Camera>)>,
     mut destination: Query<&mut Transform, (With<UiTree<T, N>>, With<MovableByCamera>)>,
     window: Query<&bevy::window::Window, With<PrimaryWindow>>,
 ) {
@@ -126,7 +152,37 @@ pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
             if let Some(size) = cam.physical_viewport_size() {
                 #[cfg(feature = "debug")]
                 info!("{} {} - Fetched Transform data from Camera", "->".blue(), "UiTree".purple().bold());
-                transform.translation = Vec3::from((size.x as f32 /-2.0 / scale, size.y as f32 / 2.0 / scale, 0.0));
+                transform.translation.x = size.x as f32 /-2.0 / scale;
+                transform.translation.y = size.y as f32 / 2.0 / scale;
+            }
+        }
+    }
+}
+
+/// This system takes [`Camera`] data and overwrites querried [`Transform`] + [`MovableByCamera`].
+/// It is mainly used to pipe [`Camera`] data into [`UiTree`] for positioning.
+/// ## 📦 Types
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
+/// * Generic `(T)` - Marker component grouping entities into one widget type
+/// ## ⚠️ Warning
+/// * Developer should ensure that source query returns only one camera.
+///   Otherwise, it will lead to value overwriting. Just make sure only one camera
+///   is marked with `(T)` component at the same time.
+pub fn fetch_transform_from_camera_with_projection<T:Component, N:Default + Component>(
+    source: Query<(&Camera, &OrthographicProjection), (With<T>, With<BindProjectionScale>, Changed<Camera>)>,
+    mut destination: Query<&mut Transform, (With<UiTree<T, N>>, With<MovableByCamera>)>,
+    window: Query<&bevy::window::Window, With<PrimaryWindow>>,
+) {
+    // Undesired behaviour if source.len() > 1
+    for (cam, projection) in &source {
+        let scale = if let Ok(window) = window.get_single() { window.resolution.scale_factor() } else { 1.0 };
+        for mut transform in &mut destination {
+            // Extract camera size
+            if let Some(size) = cam.physical_viewport_size() {
+                #[cfg(feature = "debug")]
+                info!("{} {} - Fetched Transform data from Camera", "->".blue(), "UiTree".purple().bold());
+                transform.translation.x = (size.x as f32 /-2.0 / scale) * projection.scale;
+                transform.translation.y = (size.y as f32 / 2.0 / scale) * projection.scale;
             }
         }
     }
@@ -532,7 +588,9 @@ impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
                 element_text_size_to_content::<T>,
                 touch_camera_if_uitree_added::<T, N>,
                 fetch_dimension_from_camera::<T, N>.after(touch_camera_if_uitree_added::<T, N>),
+                fetch_dimension_from_camera_with_projection::<T, N>.after(touch_camera_if_uitree_added::<T, N>),
                 fetch_transform_from_camera::<T, N>.after(touch_camera_if_uitree_added::<T, N>),
+                fetch_transform_from_camera_with_projection::<T, N>.after(touch_camera_if_uitree_added::<T, N>),
             ).in_set(UiSystems::Modify).before(UiSystems::Send))
 
             //.add_plugins(StatePlugin::<T, N, Base>::new())
