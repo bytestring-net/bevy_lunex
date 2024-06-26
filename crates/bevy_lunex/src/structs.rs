@@ -61,10 +61,6 @@ impl UiState for Outro {
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
 pub struct MovableByCamera;
 
-/// When [`Camera`] has this component, it scales the UI size with projection scale (ZOOM)
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
-pub struct BindProjectionScale;
-
 /// This struct is used to mark linked UI entities as elements for easier rendering.
 /// They are picked up by different systems, that ensure their piped [`Transform`] is centered,
 /// instead of being aligned in a top-left corner like the normal UI entities.
