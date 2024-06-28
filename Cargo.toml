@@ -33,7 +33,7 @@
   indexmap           = { version = "^2.1" }
   thiserror          = { version = "^1.0" }
 
-  bevy = { version = "0.14.0-rc.3", default_features = false, features = [
+  bevy = { version = "0.14.0-rc.4", default_features = false, features = [
     "bevy_pbr",
     "bevy_sprite",
     "bevy_audio",

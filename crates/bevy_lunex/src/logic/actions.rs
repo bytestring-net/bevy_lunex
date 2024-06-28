@@ -16,7 +16,7 @@ pub struct SetWindowPresentMode (pub PresentMode);
 fn set_window_present_mode_action(mut events: EventReader<SetWindowPresentMode>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "verbose")]
             info!("{} - Changed present mode to: {:?}", "ACTION".red().bold(), event.0);
             window.present_mode = event.0;
         }
@@ -29,7 +29,7 @@ pub struct SetWindowMode (pub WindowMode);
 fn set_window_mode_action(mut events: EventReader<SetWindowMode>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "verbose")]
             info!("{} - Changed window mode to: {:?}", "ACTION".red().bold(), event.0);
             window.mode = event.0;
         }
@@ -42,7 +42,7 @@ pub struct SetWindowPosition (pub WindowPosition);
 fn set_window_position_action(mut events: EventReader<SetWindowPosition>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "verbose")]
             info!("{} - Changed window position to: {:?}", "ACTION".red().bold(), event.0);
             window.position = event.0;
         }
@@ -55,7 +55,7 @@ pub struct SetWindowTitle (pub String);
 fn set_window_title_action(mut events: EventReader<SetWindowTitle>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "verbose")]
             info!("{} - Changed window title to: {:?}", "ACTION".red().bold(), event.0);
             window.title = event.0.clone();
         }
@@ -68,7 +68,7 @@ pub struct SetWindowResolution (pub Vec2);
 fn set_window_resolution_action(mut events: EventReader<SetWindowResolution>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "verbose")]
             info!("{} - Changed window resolution to: {:?}", "ACTION".red().bold(), event.0);
             window.resolution.set(event.0.x, event.0.y);
         }
@@ -81,7 +81,7 @@ pub struct SetWindowResizeConstrains (pub WindowResizeConstraints);
 fn set_window_resize_constrains_action(mut events: EventReader<SetWindowResizeConstrains>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "verbose")]
             info!("{} - Changed window resize constrains to: {:?}", "ACTION".red().bold(), event.0);
             window.resize_constraints = event.0;
         }
@@ -94,7 +94,7 @@ pub struct SetWindowResizable (pub bool);
 fn set_window_resizable_action(mut events: EventReader<SetWindowResizable>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "verbose")]
             info!("{} - Changed window resizable to: {:?}", "ACTION".red().bold(), event.0);
             window.resizable = event.0;
         }
@@ -107,7 +107,7 @@ pub struct SetWindowEnabledButtons (pub EnabledButtons);
 fn set_window_enabled_buttons_action(mut events: EventReader<SetWindowEnabledButtons>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "verbose")]
             info!("{} - Changed window buttons to: {:?}", "ACTION".red().bold(), event.0);
             window.enabled_buttons = event.0;
         }
@@ -120,7 +120,7 @@ pub struct SetWindowDecorations (pub bool);
 fn set_window_decorations_action(mut events: EventReader<SetWindowDecorations>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "verbose")]
             info!("{} - Changed window decorations to: {:?}", "ACTION".red().bold(), event.0);
             window.decorations = event.0;
         }
@@ -133,7 +133,7 @@ pub struct SetWindowFocus (pub bool);
 fn set_window_focus_action(mut events: EventReader<SetWindowFocus>, mut query: Query<&mut Window, With<PrimaryWindow>>) {
     for event in events.read() {
         if let Ok(window) = &mut query.get_single_mut() {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "verbose")]
             info!("{} - Changed window focus to: {:?}", "ACTION".red().bold(), event.0);
             window.focused = event.0;
         }
@@ -157,7 +157,7 @@ pub struct HideCursor2d (pub bool);
 fn apply_event_hide_cursor_2d(mut events: EventReader<HideCursor2d>, mut query: Query<&mut Cursor2d>) {
     for event in events.read() {
         for mut cursor in &mut query {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "verbose")]
             info!("{} - Set cursor to hidden: {}", "EVENT".purple().bold(), event.0);
             cursor.hidden = event.0;
         }

@@ -93,3 +93,32 @@ pub fn lunex_picking(
         output.send(PointerHits::new(*pointer, picks, order));
     }
 }
+
+#[derive(Component)]
+pub struct PickingPortal;
+
+/* pub fn rendered_texture_picking(
+    mut commands: Commands,
+    texture_viewports: Query<(Entity, &Handle<Image>, &Dimension), With<PickingPortal>>,
+    mut pointer_move: EventWriter<pointer::InputMove>,
+) {
+
+    // Draw each viewport in a window. This isn't as robust as it could be for the sake of
+    // demonstration. This only works if the render target and egui texture are rendered at the same
+    // resolution, and this completely ignores touch inputs and treats everything as a mouse input.
+    for (viewport_entity, texture_handle, viewport_dimension) in &texture_viewports {
+        if let Some(pointer_pos_window) = viewport_response.hover_pos() {
+            // Compute the position of the pointer relative to the texture.
+            pointer_move.send(pointer::InputMove {
+                pointer_id: PointerId::Mouse,
+                location: pointer::Location {
+                    target: bevy::render::camera::NormalizedRenderTarget::Image(
+                        texture_handle.clone_weak(),
+                    ),
+                    position: pointer_pos_window - viewport_dimension.size,
+                },
+                delta: Vec2::ZERO,
+            });
+        }
+    }
+} */

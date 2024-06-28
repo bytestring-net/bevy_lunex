@@ -50,7 +50,7 @@ impl <S: UiState> UiAnimator<S> {
     pub fn new() -> Self {
         UiAnimator {
             marker: PhantomData,
-            animation_direction: 0.0,
+            animation_direction: -1.0,
             animation_transition: 0.0,
             receiver: false,
             animation_speed_backward: 8.0,
@@ -80,7 +80,12 @@ impl <S: UiState> UiAnimator<S> {
 fn ui_animation<S: UiState>(time: Res<Time>, mut query: Query<&mut UiAnimator<S>>) {
     for mut control in &mut query {
         if control.receiver { continue }
-        if !((control.animation_transition == 0.0 && control.animation_direction.is_sign_negative()) && (control.animation_transition == 1.0 && control.animation_direction.is_sign_positive())) {
+        if !(
+            (control.animation_transition == 0.0 && control.animation_direction.is_sign_negative()) ||
+            (control.animation_transition == 1.0 && control.animation_direction.is_sign_positive())
+        ) {
+            #[cfg(feature = "verbose")]
+            info!("{} {} - Transitioning ... dir: {} transition: {}", "--".yellow(), "ELEMENT".red(), control.animation_direction, control.animation_transition);
             control.animation_transition += time.delta_seconds() * control.animation_direction * if control.animation_direction == 1.0 { control.animation_speed_forward } else { control.animation_speed_backward };
             control.animation_transition = control.animation_transition.clamp(0.0, 1.0);
         }

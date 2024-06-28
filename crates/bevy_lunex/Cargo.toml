@@ -20,4 +20,5 @@
   default = []
 
   # Features
-  debug = []
+  debug = ["verbose"]
+  verbose = []

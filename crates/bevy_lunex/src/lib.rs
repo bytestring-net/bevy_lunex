@@ -8,7 +8,7 @@ pub (crate) use bevy::prelude::*;
 pub (crate) use lunex_engine::prelude::*;
 pub (crate) use bevy_mod_picking::prelude::*;
 
-#[cfg(feature = "debug")]
+#[cfg(feature = "verbose")]
 pub (crate) use colored::Colorize;
 
 
