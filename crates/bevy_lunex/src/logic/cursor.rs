@@ -110,8 +110,9 @@ impl OnHoverSetCursor {
 fn on_hover_set_cursor(query: Query<(&UiAnimator<Hover>, &OnHoverSetCursor)>, mut cursor: Query<&mut Cursor2d>) {
     for (control, hover_cursor) in &query {
         if control.is_forward() {
-            let mut cursor = cursor.single_mut();
-            cursor.request_cursor(hover_cursor.cursor, 1.0);
+            if let Ok(mut cursor) = cursor.get_single_mut(){
+                cursor.request_cursor(hover_cursor.cursor, 1.0);
+            }
         }
     }
 }
