@@ -69,7 +69,7 @@ fn cursor_update(
             if window.cursor.visible { window.cursor.icon = cursor.cursor_request; }
 
             if cursor.confined {
-                window.cursor.grab_mode = CursorGrabMode::Locked;
+                window.cursor.grab_mode = CursorGrabMode::Confined;
             } else {
                 window.cursor.grab_mode = CursorGrabMode::None;
             }
