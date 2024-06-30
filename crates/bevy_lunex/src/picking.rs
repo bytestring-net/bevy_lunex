@@ -8,12 +8,18 @@ use bevy_mod_picking::backend::prelude::*;
 use crate::{Dimension, Element};
 
 
+// #===============#
+// #=== BACKEND ===#
+
 /// Adds picking support for [`bevy_lunex`].
 #[derive(Clone)]
 pub struct LunexBackend;
 impl Plugin for LunexBackend {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreUpdate, lunex_picking.in_set(PickSet::Backend));
+        app
+            .add_plugins(DefaultPickingPlugins)
+            .add_systems(PreUpdate, lunex_picking.in_set(PickSet::Backend))
+            .add_systems(Update, rendered_texture_picking);
     }
 }
 
@@ -94,31 +100,31 @@ pub fn lunex_picking(
     }
 }
 
+
+// #===============================#
+// #=== VIEWPORT PORTAL PICKING ===#
+
+/// This component should be attached to any entity that displays rendered texture from camera and pointers should propagate.
 #[derive(Component)]
 pub struct PickingPortal;
-
-/* pub fn rendered_texture_picking(
-    mut commands: Commands,
+pub fn rendered_texture_picking(
+    mut events: EventReader<Pointer<Move>>,
     texture_viewports: Query<(Entity, &Handle<Image>, &Dimension), With<PickingPortal>>,
     mut pointer_move: EventWriter<pointer::InputMove>,
 ) {
-
-    // Draw each viewport in a window. This isn't as robust as it could be for the sake of
-    // demonstration. This only works if the render target and egui texture are rendered at the same
-    // resolution, and this completely ignores touch inputs and treats everything as a mouse input.
-    for (viewport_entity, texture_handle, viewport_dimension) in &texture_viewports {
-        if let Some(pointer_pos_window) = viewport_response.hover_pos() {
-            // Compute the position of the pointer relative to the texture.
+    for event in events.read() {
+        if let Ok((_viewport_entity, texture_handle, _viewport_dimension)) = texture_viewports.get(event.target) {
+            let position = event.pointer_location.position;
             pointer_move.send(pointer::InputMove {
                 pointer_id: PointerId::Mouse,
                 location: pointer::Location {
                     target: bevy::render::camera::NormalizedRenderTarget::Image(
                         texture_handle.clone_weak(),
                     ),
-                    position: pointer_pos_window - viewport_dimension.size,
+                    position,
                 },
-                delta: Vec2::ZERO,
+                delta: event.delta,
             });
         }
     }
-} */
+}

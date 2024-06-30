@@ -25,7 +25,6 @@ impl Plugin for UiPlugin {
 
         app
             .add_plugins(UiGenericPlugin::<MainUi>::new())
-            .add_plugins(DefaultPickingPlugins)
             .add_plugins(LunexBackend)
             .add_plugins(LogicPlugin);
     }
@@ -59,6 +58,8 @@ pub mod prelude {
     pub use super::UiPlugin;
     pub use super::systems::{UiSystems, UiGenericPlugin, UiDebugPlugin};
     pub use super::structs::*;
+
+    pub use super::PickingPortal;
 
     // RE-EXPORT BEVY MOD PICKING
     pub use bevy_mod_picking::prelude::*;
