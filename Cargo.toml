@@ -43,4 +43,4 @@
   ] }
 
   #bevy_mod_picking = { path = "../../Prototypes/bevy_mod_picking", default_features = false, features = [] }
-  bevy_mod_picking = { version = "0.20.0-rc.0", default_features = false, features = ["selection","highlight","debug","backend_raycast"] }
+  bevy_mod_picking = { version = "0.20.0-rc.0", default_features = false, features = ["selection", "backend_raycast"] }
