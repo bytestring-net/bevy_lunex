@@ -13,6 +13,7 @@
   bevy             = { workspace = true }
   colored          = { workspace = true }
   lunex_engine     = { workspace = true, features = ["bevy"] }
+  bevy_kira_audio  = { workspace = true, optional = true }
   bevy_mod_picking = { workspace = true }
 
 [features]
@@ -22,3 +23,4 @@
   # Features
   debug = ["verbose"]
   verbose = []
+  kira = ["bevy_kira_audio"]

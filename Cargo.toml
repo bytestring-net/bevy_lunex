@@ -36,11 +36,10 @@
   bevy = { version = "0.14.0-rc.4", default_features = false, features = [
     "bevy_pbr",
     "bevy_sprite",
-    "bevy_audio",
     "bevy_text",
     "multi_threaded",
     "bevy_gizmos",
   ] }
 
-  #bevy_mod_picking = { path = "../../Prototypes/bevy_mod_picking", default_features = false, features = [] }
+  bevy_kira_audio = { version = "0.20.0-rc.1" }
   bevy_mod_picking = { version = "0.20.0-rc.0", default_features = false, features = ["selection", "backend_raycast"] }

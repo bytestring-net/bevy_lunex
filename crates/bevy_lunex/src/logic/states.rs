@@ -1,3 +1,6 @@
+#[cfg(feature = "kira")]
+use bevy_kira_audio::prelude::*;
+
 use crate::*;
 
 
@@ -155,15 +158,16 @@ fn set_ui_color<S: UiState>(query: Query<(&UiAnimator<S>, &UiColor<Base>, &UiCol
 // #=============#
 // #=== HOVER ===#
 
+#[cfg(feature = "kira")]
 #[derive(Resource)]
-struct UiSoundPlayer {
-    entity: Option<Entity>,
-}
+struct UiSoundChannel;
 
+#[cfg(feature = "kira")]
 #[derive(Component, Debug, Clone, PartialEq, Eq)]
 pub struct OnHoverPlaySound {
     pub sound: Handle<AudioSource>,
 }
+#[cfg(feature = "kira")]
 impl OnHoverPlaySound {
     /// Specify the entity you want to create events for.
     pub fn new(sound: Handle<AudioSource>) -> Self {
@@ -172,18 +176,12 @@ impl OnHoverPlaySound {
         }
     }
 }
-fn on_hover_play_sound_system(mut events: EventReader<Pointer<Over>>, mut commands: Commands, query: Query<&OnHoverPlaySound>, mut player: ResMut<UiSoundPlayer>) {
+#[cfg(feature = "kira")]
+fn on_hover_play_sound_system(mut events: EventReader<Pointer<Over>>, audio: Res<AudioChannel<UiSoundChannel>>, query: Query<&OnHoverPlaySound>) {
     for event in events.read() {
         if let Ok(listener) = query.get(event.target) {
-
-            if let Some(entity) = player.entity {
-                if let Some(cmd) = commands.get_entity(entity) {
-                    cmd.despawn_recursive();
-                }
-            }
-
-            let entity = commands.spawn(AudioBundle { source: listener.sound.clone(), settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new(0.3)) }).id();
-            player.entity = Some(entity);
+            audio.stop();
+            audio.play(listener.sound.clone());
         }
     }
 }
@@ -235,9 +233,12 @@ impl <T:Component, N:Default + Component, S: UiState> Plugin for StatePlugin<T,N
 pub struct DefaultStatesPlugin;
 impl Plugin for DefaultStatesPlugin {
     fn build(&self, app: &mut App) {
+        #[cfg(feature = "kira")]
         app
-            .insert_resource(UiSoundPlayer { entity: None })
-            .add_systems(Update, on_hover_play_sound_system.run_if(on_event::<Pointer<Over>>()))
+            .add_audio_channel::<UiSoundChannel>()
+            .add_systems(Update, on_hover_play_sound_system.run_if(on_event::<Pointer<Over>>()));
+
+        app
             .add_systems(Update, hover_enter_system.run_if(on_event::<Pointer<Over>>()))
             .add_systems(Update, hover_leave_system.run_if(on_event::<Pointer<Out>>()));
     }
