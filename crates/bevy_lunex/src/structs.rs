@@ -298,8 +298,18 @@ pub struct UiTreeBundle <T:Component = MainUi, N:Default + Component = NoData> {
     pub link: UiLink<T>,
     /// The ui layout data of the entity and it's children.
     pub tree: UiTree<T, N>,
-    /// The required components for entity to exist in space
-    pub spatial: UiSpatialBundle,
+    /// Contains the ui node size.
+    pub dimension: Dimension,
+    /// The visibility of the entity.
+    pub visibility: Visibility,
+    /// The inherited visibility of the entity.
+    pub inherited_visibility: InheritedVisibility,
+    /// The view visibility of the entity.
+    pub view_visibility: ViewVisibility,
+    /// The transform of the entity.
+    pub transform: Transform,
+    /// The global transform of the entity.
+    pub global_transform: GlobalTransform,
 }
 impl <T:Component, N:Default + Component> From<UiTree<T, N>> for UiTreeBundle<T, N> {
     fn from(value: UiTree<T, N>) -> Self {
@@ -314,7 +324,12 @@ impl <T:Component, N:Default + Component> Default for UiTreeBundle<T, N> {
         UiTreeBundle {
             link: Default::default(),
             tree: Default::default(),
-            spatial: Default::default(),
+            dimension: Default::default(),
+            visibility: Default::default(),
+            inherited_visibility: Default::default(),
+            view_visibility: Default::default(),
+            transform: Default::default(),
+            global_transform: Default::default(),
         }
     }
 }
@@ -340,8 +355,18 @@ pub struct UiNodeBundle<T: Component = MainUi> {
 pub struct UiElementBundle {
     /// Marks this as node element.
     pub element: Element,
-    /// The required components for entity to exist in space
-    pub spatial: UiSpatialBundle,
+    /// Contains the ui node size.
+    pub dimension: Dimension,
+    /// The visibility of the entity.
+    pub visibility: Visibility,
+    /// The inherited visibility of the entity.
+    pub inherited_visibility: InheritedVisibility,
+    /// The view visibility of the entity.
+    pub view_visibility: ViewVisibility,
+    /// The transform of the entity.
+    pub transform: Transform,
+    /// The global transform of the entity.
+    pub global_transform: GlobalTransform,
 }
 
 
@@ -354,8 +379,18 @@ pub struct UiZoneBundle {
     pub pickable: PickableBundle,
     /// This component is required for picking to work on non-sprite entities
     pub sprite_source: SpriteSource,
-    /// The required components for entity to exist in space
-    pub spatial: UiSpatialBundle,
+    /// Contains the ui node size.
+    pub dimension: Dimension,
+    /// The visibility of the entity.
+    pub visibility: Visibility,
+    /// The inherited visibility of the entity.
+    pub inherited_visibility: InheritedVisibility,
+    /// The view visibility of the entity.
+    pub view_visibility: ViewVisibility,
+    /// The transform of the entity.
+    pub transform: Transform,
+    /// The global transform of the entity.
+    pub global_transform: GlobalTransform,
 }
 
 
@@ -365,8 +400,16 @@ pub struct UiZoneBundle {
 pub struct UiSpatialBundle {
     /// Contains the ui node size.
     pub dimension: Dimension,
-    /// The required components for entity to exist in space
-    pub spatial: SpatialBundle
+    /// The visibility of the entity.
+    pub visibility: Visibility,
+    /// The inherited visibility of the entity.
+    pub inherited_visibility: InheritedVisibility,
+    /// The view visibility of the entity.
+    pub view_visibility: ViewVisibility,
+    /// The transform of the entity.
+    pub transform: Transform,
+    /// The global transform of the entity.
+    pub global_transform: GlobalTransform,
 }
 
 
@@ -383,8 +426,20 @@ pub struct UiMaterial3dBundle {
     pub material: Handle<StandardMaterial>,
     /// Image boundary for culling.
     pub aabb: Aabb,
-    /// Required components to make entity spatial in worldspace + be centered within node
-    pub element: UiElementBundle,
+    /// Marks this as node element.
+    pub element: Element,
+    /// Contains the ui node size.
+    pub dimension: Dimension,
+    /// The visibility of the entity.
+    pub visibility: Visibility,
+    /// The inherited visibility of the entity.
+    pub inherited_visibility: InheritedVisibility,
+    /// The view visibility of the entity.
+    pub view_visibility: ViewVisibility,
+    /// The transform of the entity.
+    pub transform: Transform,
+    /// The global transform of the entity.
+    pub global_transform: GlobalTransform,
 }
 impl From<Handle<StandardMaterial>> for UiMaterial3dBundle {
     fn from(value: Handle<StandardMaterial>) -> Self {
@@ -420,8 +475,20 @@ pub struct UiImage2dBundle {
     pub texture: Handle<Image>,
     /// Image boundary for culling.
     pub aabb: Aabb,
-    /// Required components to make entity spatial in worldspace + be centered within node
-    pub element: UiElementBundle,
+    /// Marks this as node element.
+    pub element: Element,
+    /// Contains the ui node size.
+    pub dimension: Dimension,
+    /// The visibility of the entity.
+    pub visibility: Visibility,
+    /// The inherited visibility of the entity.
+    pub inherited_visibility: InheritedVisibility,
+    /// The view visibility of the entity.
+    pub view_visibility: ViewVisibility,
+    /// The transform of the entity.
+    pub transform: Transform,
+    /// The global transform of the entity.
+    pub global_transform: GlobalTransform,
 }
 impl From<Handle<Image>> for UiImage2dBundle {
     fn from(value: Handle<Image>) -> Self {
@@ -447,6 +514,18 @@ pub struct UiText2dBundle {
     pub text_2d_bounds: Text2dBounds,
     /// Contains the size of the text and its glyph's position and scale data. Generated via [`TextPipeline::queue_text`]
     pub text_layout_info: TextLayoutInfo,
-    /// Required components to make entity spatial in worldspace + be centered within node
-    pub element: UiElementBundle,
+    /// Marks this as node element.
+    pub element: Element,
+    /// Contains the ui node size.
+    pub dimension: Dimension,
+    /// The visibility of the entity.
+    pub visibility: Visibility,
+    /// The inherited visibility of the entity.
+    pub inherited_visibility: InheritedVisibility,
+    /// The view visibility of the entity.
+    pub view_visibility: ViewVisibility,
+    /// The transform of the entity.
+    pub transform: Transform,
+    /// The global transform of the entity.
+    pub global_transform: GlobalTransform,
 }
