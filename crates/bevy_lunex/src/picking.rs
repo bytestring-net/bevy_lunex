@@ -109,11 +109,11 @@ pub fn lunex_picking(
 pub struct PickingPortal;
 pub fn rendered_texture_picking(
     mut events: EventReader<Pointer<Move>>,
-    texture_viewports: Query<(Entity, &Handle<Image>, &Dimension), With<PickingPortal>>,
+    texture_viewports: Query<&Handle<Image>, With<PickingPortal>>,
     mut pointer_move: EventWriter<pointer::InputMove>,
 ) {
     for event in events.read() {
-        if let Ok((_viewport_entity, texture_handle, _viewport_dimension)) = texture_viewports.get(event.target) {
+        if let Ok(texture_handle) = texture_viewports.get(event.target) {
             let position = event.pointer_location.position;
             pointer_move.send(pointer::InputMove {
                 pointer_id: PointerId::Mouse,
