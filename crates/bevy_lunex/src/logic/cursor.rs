@@ -1,5 +1,5 @@
 use crate::*;
-use bevy::{utils::HashMap, window::PrimaryWindow};
+use bevy::{utils::HashMap, window::{CursorGrabMode, PrimaryWindow}};
 
 
 // #===================#
@@ -15,6 +15,8 @@ pub struct Cursor2d {
     cursor_atlas_map: HashMap<CursorIcon, (usize, Vec2)>,
     /// A toggle if this cursor should replace the native cursor
     native_cursor: bool,
+    /// If the cursor is allowed to leave window
+    pub confined: bool,
     /// A toggle if the cursor should be hidden
     pub hidden: bool,
 }
@@ -26,8 +28,14 @@ impl Cursor2d {
             cursor_request_priority: 0.0,
             cursor_atlas_map: HashMap::new(),
             native_cursor: true,
+            confined: false,
             hidden: false,
         }
+    }
+    /// If the cursor is allowed to leave window
+    pub fn confined(mut self, confined: bool) -> Self {
+        self.confined = confined;
+        self
     }
     /// A toggle if this cursor should be native
     pub fn native_cursor(mut self, enable: bool) -> Self {
@@ -59,6 +67,12 @@ fn cursor_update(
 
             window.cursor.visible = if cursor.native_cursor { !cursor.hidden } else { false };
             if window.cursor.visible { window.cursor.icon = cursor.cursor_request; }
+
+            if cursor.confined {
+                window.cursor.grab_mode = CursorGrabMode::Locked;
+            } else {
+                window.cursor.grab_mode = CursorGrabMode::None;
+            }
 
             match window.cursor_position() {
                 Some(position) => {
