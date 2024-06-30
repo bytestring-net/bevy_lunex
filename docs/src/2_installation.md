@@ -26,7 +26,7 @@ Add the following to your `Cargo.toml`:
 bevy = { version = "0.14.0", default_features = false, features = [
     # Core
     "bevy_core_pipeline",
-    "multi-threaded",
+    "multi_threaded",
     "bevy_winit",
     "bevy_audio",
     "bevy_sprite",

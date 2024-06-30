@@ -8,12 +8,18 @@ use bevy_mod_picking::backend::prelude::*;
 use crate::{Dimension, Element};
 
 
+// #===============#
+// #=== BACKEND ===#
+
 /// Adds picking support for [`bevy_lunex`].
 #[derive(Clone)]
 pub struct LunexBackend;
 impl Plugin for LunexBackend {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreUpdate, lunex_picking.in_set(PickSet::Backend));
+        app
+            .add_plugins(DefaultPickingPlugins)
+            .add_systems(PreUpdate, lunex_picking.in_set(PickSet::Backend))
+            .add_systems(Update, rendered_texture_picking);
     }
 }
 
@@ -91,5 +97,34 @@ pub fn lunex_picking(
 
         let order = camera.order as f32;
         output.send(PointerHits::new(*pointer, picks, order));
+    }
+}
+
+
+// #===============================#
+// #=== VIEWPORT PORTAL PICKING ===#
+
+/// This component should be attached to any entity that displays rendered texture from camera and pointers should propagate.
+#[derive(Component)]
+pub struct PickingPortal;
+pub fn rendered_texture_picking(
+    mut events: EventReader<Pointer<Move>>,
+    texture_viewports: Query<&Handle<Image>, With<PickingPortal>>,
+    mut pointer_move: EventWriter<pointer::InputMove>,
+) {
+    for event in events.read() {
+        if let Ok(texture_handle) = texture_viewports.get(event.target) {
+            let position = event.pointer_location.position;
+            pointer_move.send(pointer::InputMove {
+                pointer_id: PointerId::Mouse,
+                location: pointer::Location {
+                    target: bevy::render::camera::NormalizedRenderTarget::Image(
+                        texture_handle.clone_weak(),
+                    ),
+                    position,
+                },
+                delta: event.delta,
+            });
+        }
     }
 }

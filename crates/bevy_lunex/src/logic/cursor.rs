@@ -1,5 +1,5 @@
 use crate::*;
-use bevy::{utils::HashMap, window::PrimaryWindow};
+use bevy::{utils::HashMap, window::{CursorGrabMode, PrimaryWindow}};
 
 
 // #===================#
@@ -15,6 +15,8 @@ pub struct Cursor2d {
     cursor_atlas_map: HashMap<CursorIcon, (usize, Vec2)>,
     /// A toggle if this cursor should replace the native cursor
     native_cursor: bool,
+    /// If the cursor is allowed to leave window
+    pub confined: bool,
     /// A toggle if the cursor should be hidden
     pub hidden: bool,
 }
@@ -26,8 +28,14 @@ impl Cursor2d {
             cursor_request_priority: 0.0,
             cursor_atlas_map: HashMap::new(),
             native_cursor: true,
+            confined: false,
             hidden: false,
         }
+    }
+    /// If the cursor is allowed to leave window
+    pub fn confined(mut self, confined: bool) -> Self {
+        self.confined = confined;
+        self
     }
     /// A toggle if this cursor should be native
     pub fn native_cursor(mut self, enable: bool) -> Self {
@@ -49,20 +57,34 @@ impl Cursor2d {
 }
 
 
-fn cursor_update( mut windows: Query<&mut Window, With<PrimaryWindow>>, mut query: Query<(&Cursor2d, &mut Transform, &mut Visibility)>) {
+fn cursor_update(
+    mut windows: Query<&mut Window, With<PrimaryWindow>>,
+    cameras: Query<&OrthographicProjection>,
+    mut query: Query<(&Cursor2d, &Parent, &mut Transform, &mut Visibility)>
+) {
     if let Ok(mut window) = windows.get_single_mut() {
-        for (cursor, mut transform, mut visibility) in &mut query {
+        for (cursor, parent, mut transform, mut visibility) in &mut query {
 
             window.cursor.visible = if cursor.native_cursor { !cursor.hidden } else { false };
             if window.cursor.visible { window.cursor.icon = cursor.cursor_request; }
+
+            if cursor.confined {
+                window.cursor.grab_mode = CursorGrabMode::Locked;
+            } else {
+                window.cursor.grab_mode = CursorGrabMode::None;
+            }
 
             match window.cursor_position() {
                 Some(position) => {
 
                     let sprite_offset = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).1;
 
-                    transform.translation.x = position.x - window.width()*0.5 - sprite_offset.x * transform.scale.x;
-                    transform.translation.y = -(position.y - window.height()*0.5 - sprite_offset.y * transform.scale.y);
+                    let scale = if let Ok(projection) = cameras.get(**parent) {
+                        projection.scale
+                    } else { 1.0 };
+
+                    transform.translation.x = (position.x - window.width()*0.5) * scale - sprite_offset.x * transform.scale.x;
+                    transform.translation.y = -((position.y - window.height()*0.5) * scale - sprite_offset.y * transform.scale.y);
                     *visibility = if cursor.hidden || cursor.native_cursor { Visibility::Hidden } else { Visibility::Visible };
                 }
                 None => {
@@ -102,8 +124,9 @@ impl OnHoverSetCursor {
 fn on_hover_set_cursor(query: Query<(&UiAnimator<Hover>, &OnHoverSetCursor)>, mut cursor: Query<&mut Cursor2d>) {
     for (control, hover_cursor) in &query {
         if control.is_forward() {
-            let mut cursor = cursor.single_mut();
-            cursor.request_cursor(hover_cursor.cursor, 1.0);
+            if let Ok(mut cursor) = cursor.get_single_mut(){
+                cursor.request_cursor(hover_cursor.cursor, 1.0);
+            }
         }
     }
 }

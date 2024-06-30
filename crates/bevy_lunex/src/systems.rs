@@ -17,7 +17,7 @@ pub fn compute_ui<T:Component, N:Default + Component>(
 ) {
     let scale = if let Ok(window) = window.get_single() { window.resolution.scale_factor() } else { 1.0 };
     for (dimension, mut ui, is_camera_sourced) in &mut query {
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "verbose")]
         info!("{} {} - {}", "<>".red(), "UiTree".purple().bold(), "Recomputed".underline().bold());
         let scale = if is_camera_sourced.is_none() { 1.0 } else { scale };
         ui.compute(Rectangle2D::new().with_size(dimension.size / scale).into());
@@ -88,17 +88,17 @@ pub fn debug_print_tree<T:Component, N:Default + Component>(
 ///   Otherwise, it will lead to value overwriting. Just make sure only one camera
 ///   is marked with `(T)` component at the same time.
 pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
-    source: Query<&Camera, (With<T>, Changed<Camera>)>,
+    source: Query<(&Camera, Option<&OrthographicProjection>), (With<T>, Changed<Camera>)>,
     mut destination: Query<&mut Dimension, (With<UiTree<T, N>>, With<MovableByCamera>)>
 ) {
     // Undesired behaviour if source.len() > 1
-    for cam in &source {
+    for (cam, o_projection) in &source {
         for mut dimension in &mut destination {
             // Extract camera size
             if let Some(size) = cam.physical_viewport_size() {
-                #[cfg(feature = "debug")]
+                #[cfg(feature = "verbose")]
                 info!("{} {} - Fetched Dimension data from Camera", "->".blue(), "UiTree".purple().bold());
-                dimension.size = Vec2::from((size.x as f32, size.y as f32));
+                dimension.size = Vec2::from((size.x as f32, size.y as f32)) * if let Some(p) = o_projection { p.scale } else { 1.0 };
             }
         }
     }
@@ -114,19 +114,21 @@ pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
 ///   Otherwise, it will lead to value overwriting. Just make sure only one camera
 ///   is marked with `(T)` component at the same time.
 pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
-    source: Query<&Camera, (With<T>, Changed<Camera>)>,
+    source: Query<(&Camera, Option<&OrthographicProjection>), (With<T>, Changed<Camera>)>,
     mut destination: Query<&mut Transform, (With<UiTree<T, N>>, With<MovableByCamera>)>,
     window: Query<&bevy::window::Window, With<PrimaryWindow>>,
 ) {
     // Undesired behaviour if source.len() > 1
-    for cam in &source {
+    for (cam, o_projection) in &source {
         let scale = if let Ok(window) = window.get_single() { window.resolution.scale_factor() } else { 1.0 };
         for mut transform in &mut destination {
             // Extract camera size
             if let Some(size) = cam.physical_viewport_size() {
-                #[cfg(feature = "debug")]
+                #[cfg(feature = "verbose")]
                 info!("{} {} - Fetched Transform data from Camera", "->".blue(), "UiTree".purple().bold());
-                transform.translation = Vec3::from((size.x as f32 /-2.0 / scale, size.y as f32 / 2.0 / scale, 0.0));
+                let s = if let Some(p) = o_projection { p.scale } else { 1.0 };
+                transform.translation.x = (size.x as f32 /-2.0 / scale) * s;
+                transform.translation.y = (size.y as f32 / 2.0 / scale) * s;
             }
         }
     }
@@ -146,7 +148,7 @@ pub fn touch_camera_if_uitree_added<T:Component, N:Default + Component>(
     mut camera: Query<&mut Camera, With<T>>,
 ){
     if !query.is_empty() {
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "verbose")]
         info!("{} {} - Touched all cameras", "<>".red(), "Camera".purple().bold());
         for mut camera in &mut camera {
             camera.as_mut();
@@ -170,7 +172,7 @@ pub fn send_layout_to_node<T:Component, N:Default + Component, S: UiState>(
                 if let Ok(node) = ui.borrow_or_create_ui_node_mut(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
-                        #[cfg(feature = "debug")]
+                        #[cfg(feature = "verbose")]
                         info!("{} {} - Received Layout data", "->".blue(), link.path.yellow().bold());
                         container.layout.insert(S::INDEX, layout.layout);
                     }
@@ -196,7 +198,7 @@ pub fn send_layout_control_to_node<T:Component, N:Default + Component>(
                 if let Ok(node) = ui.borrow_node_mut(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
-                        #[cfg(feature = "debug")]
+                        #[cfg(feature = "verbose")]
                         info!("{} {} - Tweening between [{}] [{}] - {}", "->".blue(), link.path.yellow().bold(), control.index[0], control.index[1], control.tween);
                         container.layout_index = control.index;
                         container.layout_tween = (control.method)(control.tween);
@@ -223,7 +225,7 @@ pub fn send_stack_to_node<T:Component, N:Default + Component>(
                 if let Ok(node) = ui.borrow_node_mut(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
-                        #[cfg(feature = "debug")]
+                        #[cfg(feature = "verbose")]
                         info!("{} {} - Received Stack data", "->".blue(), link.path.yellow().bold());
                         container.stack = *stack;
                     }
@@ -249,7 +251,7 @@ pub fn send_depth_bias_to_node<T:Component, N:Default + Component>(
                 if let Ok(node) = ui.borrow_node_mut(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
-                        #[cfg(feature = "debug")]
+                        #[cfg(feature = "verbose")]
                         info!("{} {} - Received Depth bias data", "->".blue(), link.path.yellow().bold());
                         container.depth_bias = bias.0;
                     }
@@ -275,7 +277,7 @@ pub fn send_content_size_to_node<T:Component, N:Default + Component>(
                 if let Ok(node) = ui.borrow_node_mut(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data_mut() {
-                        #[cfg(feature = "debug")]
+                        #[cfg(feature = "verbose")]
                         info!("{} {} - Received Content size data", "->".blue(), link.path.yellow().bold());
                         container.content_size = content.size;
                     }
@@ -301,7 +303,7 @@ pub fn fetch_transform_from_node<T:Component, N:Default + Component>(
                 if let Ok(node) = ui.borrow_node(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data() {
-                        #[cfg(feature = "debug")]
+                        #[cfg(feature = "verbose")]
                         info!("{} {} - Linked {} fetched Transform data from node", "<-".bright_green(), link.path.yellow().bold(), "ENTITY".blue());
                         transform.translation = container.rectangle.pos.invert_y();
                     }
@@ -328,7 +330,7 @@ pub fn fetch_dimension_from_node<T:Component, N:Default + Component>(
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data() {
                         if dimension.as_ref().size != container.rectangle.size {
-                            #[cfg(feature = "debug")]
+                            #[cfg(feature = "verbose")]
                             info!("{} {} - Linked {} fetched Dimension data from node", "<-".bright_green(), link.path.yellow().bold(), "ENTITY".blue());
                             dimension.size = container.rectangle.size;
                         }
@@ -355,7 +357,7 @@ pub fn element_fetch_transform_from_node<T:Component, N:Default + Component>(
                 if let Ok(node) = ui.borrow_node(link.path.clone()) {
                     //Should always be Some but just in case
                     if let Some(container) = node.obtain_data() {
-                        #[cfg(feature = "debug")]
+                        #[cfg(feature = "verbose")]
                         info!("{} {} - Linked {} fetched Transform data", "<-".bright_green(), link.path.yellow().bold(), "ELEMENT".red());
                         transform.translation = container.rectangle.pos.invert_y();
                         transform.translation.x += container.rectangle.size.x /  2.0;
@@ -374,9 +376,25 @@ pub fn element_sprite_size_from_dimension<T: Component>(
     mut query: Query<(&mut Sprite, &Dimension), (With<UiLink<T>>, With<Element>, Changed<Dimension>)>,
 ) {
     for (mut sprite, dimension) in &mut query {
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "verbose")]
         info!("{} {} - Piped Dimension into sprite size", "--".yellow(), "ELEMENT".red());
         sprite.custom_size = Some(dimension.size)
+    }
+}
+
+/// This system fetches [`Dimension`] data and overwrites querried [`Handle<Image>`] data to fit.
+/// ## 📦 Types
+/// * Generic `(T)` - Marker component grouping entities into one widget type
+pub fn element_image_size_from_dimension<T: Component>(
+    query: Query<(&Handle<Image>, &Dimension), (With<UiLink<T>>, With<Element>, With<MovableByCamera>, Changed<Dimension>)>,
+    mut images: ResMut<Assets<Image>>,
+) {
+    for (handle, dimension) in &query {
+        #[cfg(feature = "verbose")]
+        info!("{} {} - Resizing texture based on Dimension", "--".yellow(), "ELEMENT".red());
+        if let Some(image) = images.get_mut(handle) {
+            image.resize(bevy::render::render_resource::Extent3d { width: dimension.size.x as u32, height: dimension.size.y as u32, ..default() });
+        }
     }
 }
 
@@ -391,7 +409,7 @@ pub fn element_reconstruct_mesh<T: Component>(
 ) {
     for (dimension, mut mesh, mut aabb) in &mut query {
 
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "verbose")]
         info!("{} {} - Reconstructed mesh size", "--".yellow(), "ELEMENT".red());
 
         // Unload old mesh
@@ -415,7 +433,7 @@ pub fn element_text_size_to_layout<T: Component>(
     mut query: Query<(&mut UiLayout, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<TextLayoutInfo>)>,
 ) {
     for (mut layout, text_info) in &mut query {
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "verbose")]
         info!("{} {} - Converted text size into Layout", "--".yellow(), "ELEMENT".red());
         match &mut layout.layout {
             Layout::Window(window) => {window.size = Rh(text_info.logical_size).into()},
@@ -432,7 +450,7 @@ pub fn element_text_size_to_content<T: Component>(
     mut query: Query<(&mut UiContent, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<TextLayoutInfo>)>,
 ) {
     for (mut content, text_info) in &mut query {
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "verbose")]
         info!("{} {} - Piped text size into content", "--".yellow(), "ELEMENT".red());
         content.size = text_info.logical_size;
     }
@@ -445,7 +463,7 @@ pub fn element_text_size_scale_fit_to_dimension<T: Component>(
     mut query: Query<(&mut Transform, &Dimension, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<Dimension>)>,
 ) {
     for (mut transform, dimension, text_info) in &mut query {
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "verbose")]
         info!("{} {} - Scaled Transform for text size to fit into Dimension", "--".yellow(), "ELEMENT".red());
         let scale = dimension.size / text_info.logical_size;
         transform.scale.x = scale.x;
@@ -546,6 +564,7 @@ impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
 
             .add_systems(Update, (
                 element_sprite_size_from_dimension::<T>,
+                element_image_size_from_dimension::<T>,
                 element_text_size_scale_fit_to_dimension::<T>,
                 element_reconstruct_mesh::<T>,
             ).in_set(UiSystems::Process).after(UiSystems::Fetch))
