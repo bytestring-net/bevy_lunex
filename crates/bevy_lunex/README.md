@@ -26,9 +26,9 @@ Blazingly fast ***path based*** retained ***layout engine*** for Bevy entities, 
 
 ![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/bevypunk_1.png?raw=true)
 
-![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/bevypunk_2.png?raw=true)
+![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/bevypunk_3.png?raw=true)
 
-> *A recreation of ***Cyberpunk*** UI in ***Bevy***. Try out the live WASM demo on [`Itch.io`](https://idedary.itch.io/bevypunk) or [`GitHub Pages`](https://idedary.github.io/Bevypunk/). You can find [source code here](https://github.com/IDEDARY/Bevypunk).*
+> *Try out the live WASM demo on [`Itch.io`](https://idedary.itch.io/bevypunk) or [`GitHub Pages`](https://idedary.github.io/Bevypunk/) (Limited performance & stutter due to running on a single thread). For best experience compile the project natively. You can find [source code here](https://github.com/IDEDARY/Bevypunk).*
 
 ## Syntax Example
 
