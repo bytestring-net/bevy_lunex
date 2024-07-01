@@ -14,7 +14,7 @@
 		{
 			"type": "cargo",
 			"command": "run",
-			"args": ["--bin", "minimal"],
+			"args": ["--bin", "mesh2d"],
 			"problemMatcher": [
 				"$rustc"
 			],

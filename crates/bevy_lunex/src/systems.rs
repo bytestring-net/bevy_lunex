@@ -1,5 +1,5 @@
 use crate::*;
-use bevy::{math::Vec3A, render::primitives::Aabb, text::TextLayoutInfo, window::PrimaryWindow};
+use bevy::{math::Vec3A, render::primitives::Aabb, sprite::Mesh2dHandle, text::TextLayoutInfo, window::PrimaryWindow};
 use lunex_engine::*;
 
 
@@ -331,7 +331,7 @@ pub fn fetch_dimension_from_node<T:Component, N:Default + Component>(
                     if let Some(container) = node.obtain_data() {
                         if dimension.as_ref().size != container.rectangle.size {
                             #[cfg(feature = "verbose")]
-                            info!("{} {} - Linked {} fetched Dimension data from node", "<-".bright_green(), link.path.yellow().bold(), "ENTITY".blue());
+                            info!("{} {} - Linked {} fetched Dimension data from node: {:?}", "<-".bright_green(), link.path.yellow().bold(), "ENTITY".blue(), container.rectangle.size);
                             dimension.size = container.rectangle.size;
                         }
                     }
@@ -405,24 +405,36 @@ pub fn element_image_size_from_dimension<T: Component>(
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_reconstruct_mesh<T: Component>(
     mut msh: ResMut<Assets<Mesh>>,
-    mut query: Query<(&Dimension, &mut Handle<Mesh>, &mut Aabb), (With<UiLink<T>>, With<Element>, Changed<Dimension>)>,
+    mut query: Query<(&Dimension, Option<&mut Handle<Mesh>>, Option<&mut Mesh2dHandle>, Option<&mut Aabb>), (With<UiLink<T>>, With<Element>, Or<(Changed<Dimension>, Added<Mesh2dHandle>)>)>,
 ) {
-    for (dimension, mut mesh, mut aabb) in &mut query {
+    for (dimension, mut mesh_option, mut mesh2d_option, mut aabb_option) in &mut query {
 
         #[cfg(feature = "verbose")]
         info!("{} {} - Reconstructed mesh size", "--".yellow(), "ELEMENT".red());
 
-        // Unload old mesh
-        let _ = msh.remove(mesh.id());
+        if let Some(aabb) = aabb_option.as_mut() {
+            // Create new culling boundary
+            **aabb = Aabb {
+                center: Vec3A::ZERO,
+                half_extents: Vec3A::new(dimension.size.x/2.0, dimension.size.y/2.0, 1.0),
+            };
+        }
 
-        // Create new culling boundary
-        *aabb = Aabb {
-            center: Vec3A::ZERO,
-            half_extents: Vec3A::new(dimension.size.x/2.0, dimension.size.y/2.0, 1.0),
-        };
+        if let Some(mesh) = mesh_option.as_mut() {
+            // Unload old mesh
+            let _ = msh.remove(mesh.id());
 
-        // Create new mesh
-        *mesh = msh.add(Rectangle {half_size: dimension.size / 2.0})
+            // Create new mesh
+            **mesh = msh.add(Rectangle {half_size: dimension.size / 2.0});
+        }
+
+        if let Some(mesh2d) = mesh2d_option.as_mut() {
+            // Unload old mesh
+            let _ = msh.remove(mesh2d.0.id());
+
+            // Create new mesh
+            **mesh2d = Mesh2dHandle(msh.add(Rectangle {half_size: dimension.size / 2.0}));
+        }
     }
 }
 
