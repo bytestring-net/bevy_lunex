@@ -12,21 +12,21 @@
 
 Blazingly fast ***path based*** retained ***layout engine*** for Bevy entities, built around vanilla **Bevy ECS**. It gives you the ability to make ***your own custom UI*** using regular ECS like every other part of your app.
 
-* **Resizable:** Lunex is designed to support ALL window sizes out of the box without deforming. The built in layout types react nicely and intuitively to aspect ratio changes.
+* **Any aspect ratio:** Lunex is designed to support ALL window sizes out of the box without deforming. The built in layout types react nicely and intuitively to aspect ratio changes.
 
-* **Retained mode:** Unlike immediate mode GUI systems, Bevy_Lunex is a retained layout engine. This means the layout is calculated and stored, reducing the need for constant recalculations and offering potential performance benefits, especially for static or infrequently updated UIs.
+* **Optimized:** Unlike immediate mode GUI systems, Bevy_Lunex is a retained layout engine. This means the layout is calculated and stored, reducing the need for constant recalculations and offering potential performance benefits, especially for static or infrequently updated UIs.
 
-* **ECS friendly:** Since it's built with ECS, you can extend or customize the behavior of your UI by simply adding or modifying components. The interactivity is done by regular systems and events.
+* **ECS focused:** Since it's built with ECS, you can extend or customize the behavior of your UI by simply adding or modifying components. The interactivity is done by regular systems and events.
 
-* **2D + 3D UI:** One of the features of Bevy_Lunex is its support for both 2D and 3D UI elements, leveraging Bevy's `Transform` component. This opens up a wide range of possibilities for developers looking to integrate UI elements seamlessly into both flat and spatial environments. Diegetic UI is no problem.
+* **Worldspace UI:** One of the features of Bevy_Lunex is its support for both 2D and 3D UI elements, leveraging Bevy's `Transform` component. This opens up a wide range of possibilities for developers looking to integrate UI elements seamlessly into both flat and spatial environments. Diegetic UI is no problem.
 
-* **Cursor styling:** Lunex offers a cursor API so you can style your cursor however you want! For interactions, we intagrate with [bevy_mod_picking](https://github.com/aevyrie/bevy_mod_picking), which is getting upstreamed into Bevy.
+* **Custom cursor:** You can style your cursor with any image you want! Lunex also provides easy drop-in components for mouse interactivity.
 
 ##
 
 ![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/bevypunk_1.png?raw=true)
 
-![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/bevypunk_3.png?raw=true)
+![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/bevypunk_3.jpeg?raw=true)
 
 > *Try out the live WASM demo on [`Itch.io`](https://idedary.itch.io/bevypunk) or [`GitHub Pages`](https://idedary.github.io/Bevypunk/) (Limited performance & stutter due to running on a single thread). For best experience compile the project natively. You can find [source code here](https://github.com/IDEDARY/Bevypunk).*
 
