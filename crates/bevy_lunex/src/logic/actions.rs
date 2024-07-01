@@ -166,6 +166,20 @@ fn apply_event_hide_cursor_2d(mut events: EventReader<HideCursor2d>, mut query: 
 
 /// This event will override layout of targetted entity
 #[derive(Event, PartialEq, Clone, Copy)]
+pub struct ConfineCursor2d (pub bool);
+fn apply_event_confine_cursor_2d(mut events: EventReader<ConfineCursor2d>, mut query: Query<&mut Cursor2d>) {
+    for event in events.read() {
+        for mut cursor in &mut query {
+            #[cfg(feature = "verbose")]
+            info!("{} - Confined cursor: {}", "EVENT".purple().bold(), event.0);
+            cursor.confined = event.0;
+        }
+    }
+}
+
+
+/// This event will override layout of targetted entity
+#[derive(Event, PartialEq, Clone, Copy)]
 pub struct SetUiLayout {
     pub target: Entity,
     pub layout: UiLayout,
@@ -186,15 +200,20 @@ pub struct SetColor {
     pub target: Entity,
     pub color: Color,
 }
-fn apply_event_set_color(mut events: EventReader<SetColor>, mut query: Query<(Option<&mut Sprite>, Option<&mut Text>)>) {
+fn apply_event_set_color(mut events: EventReader<SetColor>, mut materials: ResMut<Assets<StandardMaterial>>, mut query: Query<(Option<&mut Sprite>, Option<&mut Text>, Option<&Handle<StandardMaterial>>)>) {
     for event in events.read() {
-        if let Ok((sprite_option, text_option)) = query.get_mut(event.target) {
+        if let Ok((sprite_option, text_option, material_option)) = query.get_mut(event.target) {
             if let Some(mut sprite) = sprite_option {
                 sprite.color = event.color;
             }
             if let Some(mut text) = text_option {
                 for section in &mut text.sections {
                     section.style.color = event.color;
+                }
+            }
+            if let Some(material_handle) = material_option {
+                if let Some(material) = materials.get_mut(material_handle) {
+                    material.base_color = event.color;
                 }
             }
         }
@@ -248,6 +267,9 @@ impl Plugin for ActionsPlugin {
 
             .add_event::<HideCursor2d>()
             .add_systems(Update, apply_event_hide_cursor_2d.run_if(on_event::<HideCursor2d>()))
+
+            .add_event::<ConfineCursor2d>()
+            .add_systems(Update, apply_event_confine_cursor_2d.run_if(on_event::<ConfineCursor2d>()))
 
             .add_event::<SetUiLayout>()
             .add_systems(Update, apply_event_set_ui_layout.run_if(on_event::<SetUiLayout>()))
