@@ -41,5 +41,5 @@
     "bevy_gizmos",
   ] }
 
-  bevy_kira_audio = { version = "^0.20.0-rc.1" }
-  bevy_mod_picking = { version = "^0.20.0-rc.0", default_features = false, features = ["selection", "backend_raycast"] }
+  bevy_kira_audio = { version = "^0.20.0" }
+  bevy_mod_picking = { version = "^0.20.0", default_features = false, features = ["selection", "backend_raycast"] }
