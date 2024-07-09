@@ -97,6 +97,29 @@ impl UiContent {
 }
 
 
+/// This struct is used to specify size of the font in UI.
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct UiTextSize {
+    /// The unit type and scale value of the text height
+    pub size: UiValueType<f32>,
+}
+impl Default for UiTextSize {
+    fn default() -> Self {
+        Self { size: Rh(1.0).into() }
+    }
+}
+impl UiTextSize {
+    /// Creates new instance from default
+    pub fn new() -> Self {
+        Default::default()
+    }
+    /// Specify the height of the font
+    pub fn size(mut self, size: impl Into<UiValueType<f32>>) -> Self {
+        self.size = size.into();
+        self
+    }
+}
+
 // #=======================#
 // #=== MAIN COMPONENTS ===#
 

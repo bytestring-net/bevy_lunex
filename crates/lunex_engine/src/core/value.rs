@@ -516,6 +516,13 @@ macro_rules! unit_implement {
                     $unit(Vec4::new(self.0, self.0, self.0, self.0)).into()
                 }
             }
+        
+
+            impl Into<UiValueType<f32>> for $unit<f32> {
+                fn into(self) -> UiValueType<f32> {
+                    UiValueType::$unit(self)
+                }
+            }
         )*
     };
 }
@@ -644,6 +651,19 @@ pub struct Vw<T>(pub T);
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Vh<T>(pub T);
 
+/// **Unit type** - Enum with all possible ui unit types.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum UiValueType<T> {
+    Ab(Ab<T>),
+    Rl(Rl<T>),
+    Rw(Rw<T>),
+    Rh(Rh<T>),
+    Em(Em<T>),
+    Sp(Sp<T>),
+    Vp(Vp<T>),
+    Vw(Vw<T>),
+    Vh(Vh<T>),
+}
 
 // #===================#
 // #=== MACRO CALLS ===#

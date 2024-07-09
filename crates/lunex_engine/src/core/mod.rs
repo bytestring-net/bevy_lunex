@@ -19,7 +19,7 @@ pub mod prelude {
     // #============================#
     // #=== ALL DEFAULT UI UNITS ===#
 
-    pub use super::UiValue;
+    pub use super::{UiValue, UiValueType};
     pub use super::{Ab, Rl, Rw, Rh, Em, Sp, Vp, Vw, Vh};
 
 

@@ -82,6 +82,7 @@ ui.spawn((
     root.add("Camera3d"),
     UiLayout::solid().size((1920.0, 1080.0)).scaling(Scaling::Fill).pack::<Base>(),
     UiImage2dBundle::from(render_image),
+    PickingPortal, // You can add this component to send picking events through the viewport.
 ));
 ```
 
