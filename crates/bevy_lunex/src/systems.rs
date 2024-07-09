@@ -442,13 +442,28 @@ pub fn element_reconstruct_mesh<T: Component>(
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_text_size_to_layout<T: Component>(
-    mut query: Query<(&mut UiLayout, &TextLayoutInfo), (With<UiLink<T>>, With<Element>, Changed<TextLayoutInfo>)>,
+    mut query: Query<(&mut UiLayout, &TextLayoutInfo, &Text, Option<&UiTextSize>), (With<UiLink<T>>, With<Element>, Changed<TextLayoutInfo>)>,
 ) {
-    for (mut layout, text_info) in &mut query {
+    for (mut layout, text_info, text, optional_text_size) in &mut query {
         #[cfg(feature = "verbose")]
         info!("{} {} - Converted text size into Layout", "--".yellow(), "ELEMENT".red());
         match &mut layout.layout {
-            Layout::Window(window) => {window.size = Rh(text_info.logical_size).into()},
+            Layout::Window(window) => {
+                let font_size = text.sections[0].style.font_size;
+                window.size = if let Some(text_size) = optional_text_size {
+                    match text_size.size {
+                        UiValueType::Ab(t) => Ab(text_info.logical_size/font_size * t.0).into(),
+                        UiValueType::Rl(t) => Rl(text_info.logical_size/font_size * t.0).into(),
+                        UiValueType::Rw(t) => Rw(text_info.logical_size/font_size * t.0).into(),
+                        UiValueType::Rh(t) => Rh(text_info.logical_size/font_size * t.0).into(),
+                        UiValueType::Em(t) => Em(text_info.logical_size/font_size * t.0).into(),
+                        UiValueType::Sp(t) => Sp(text_info.logical_size/font_size * t.0).into(),
+                        UiValueType::Vp(t) => Vp(text_info.logical_size/font_size * t.0).into(),
+                        UiValueType::Vw(t) => Vw(text_info.logical_size/font_size * t.0).into(),
+                        UiValueType::Vh(t) => Vh(text_info.logical_size/font_size * t.0).into(),
+                    }
+                } else { Rh(text_info.logical_size).into() };
+            },
             Layout::Solid(solid) => {solid.size = Ab(text_info.logical_size).into()},
             _ => {},
         }

@@ -5,8 +5,7 @@ All you have to do is specify the position and the anchor of the text node.
 
 You can disregard any size parameters, as they get overwritten by text-size.
 
-For text-size, the provided `font_size` parameter is used, but instead of pixels it becomes `Rh` unit.
-Currently it is hardcoded, but in the future you will be able to specify which unit to use.
+For text-size, the provided `font_size` parameter is used, but instead of pixels it becomes `Rh` unit. You can change this with `UiTextSize` component.
 
 ```rust
 // Link this widget
@@ -21,9 +20,15 @@ UiText2dBundle {
     text: Text::from_section("Hello world!",
         TextStyle {
             font: assets.load("font.ttf"),
-            font_size: 60.0, // Currently hardcoded as Relative height (Rh) - so 60% of the node height
+            font_size: 60.0, // By default hardcoded as Relative height (Rh) - so 60% of the node height
             color: Color::RED,
         }),
     ..default()
 },
+```
+
+You can also decouple the font size from the logical font size by adding this component. This new value will be used instead and native bevy font size will used purely for rendering (font resolution).
+
+```rust
+UiTextSize::new().size(Rh(5.0)),
 ```
