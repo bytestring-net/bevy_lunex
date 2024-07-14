@@ -1,5 +1,7 @@
 use crate::*;
-use bevy::{render::camera::RenderTarget, utils::HashMap, window::{CursorGrabMode, PrimaryWindow, WindowRef}};
+use bevy::{input::{gamepad::GamepadButtonChangedEvent, mouse::MouseButtonInput, ButtonState}, render::camera::RenderTarget, utils::HashMap, window::{CursorGrabMode, PrimaryWindow, WindowRef}};
+use picking_core::PickSet;
+use pointer::InputPress;
 
 // #===================#
 // #=== CURSOR TYPE ===#
@@ -46,7 +48,7 @@ impl Cursor2d {
 
 
 /// This will make the [`Cursor2d`] controllable by specific gamepad.
-#[derive(Component, Debug, Clone, Default, PartialEq)]
+#[derive(Component, Debug, Clone, PartialEq)]
 pub struct GamepadCursor {
     /// Gamepad index
     pub id: usize,
@@ -54,6 +56,17 @@ pub struct GamepadCursor {
     pub mode: GamepadCursorMode,
     /// Cursor speed scale
     pub speed: f32,
+}
+impl GamepadCursor {
+    /// Creates a new instance from gamepad id.
+    pub fn new(id: usize) -> Self {
+        Self { id, ..Default::default() }
+    }
+}
+impl Default for GamepadCursor {
+    fn default() -> Self {
+        Self { id: 0, mode: Default::default(), speed: 1.0 }
+    }
 }
 
 
@@ -78,22 +91,37 @@ fn cursor_set_visibility(
 ) {
     if let Ok(mut window) = windows.get_single_mut() {
         for (cursor, optional_visibility, has_gamepad, has_image) in &mut query {
-
             // If we have visibility then change it
             if let Some(mut visibility) = optional_visibility {
                 *visibility = if cursor.visible { Visibility::Visible } else { Visibility::Hidden };
-                if window.cursor_position().is_none() { *visibility = Visibility::Hidden }
+                if window.cursor_position().is_none() && !has_gamepad { *visibility = Visibility::Hidden }
             }
 
             // If it is not a gamepad
             if !has_gamepad {
-
                 // Set native cursor to invisible if image is attached to the cursor
                 window.cursor.visible = if has_image { false } else { cursor.visible };
             }
         }
     }
 }
+
+/// This function controls the native mouse cursor settings
+fn cursor_change_native(
+    mut windows: Query<&mut Window, With<PrimaryWindow>>,
+    mut query: Query<&Cursor2d, Without<GamepadCursor>>
+) {
+    if let Ok(mut window) = windows.get_single_mut() {
+        for cursor in &mut query {
+            // Change native cursor
+            if window.cursor.visible { window.cursor.icon = cursor.cursor_request; }
+
+            // Change grab mode
+            window.cursor.grab_mode = if cursor.confined { CursorGrabMode::Confined } else { CursorGrabMode::None }
+        }
+    }
+}
+
 
 /// This function controls the location of the cursor based on gamepad input
 fn gamepad_move_cursor(
@@ -145,6 +173,7 @@ fn mouse_move_cursor(
     }
 }
 
+
 /// This function controls virtual pointer attached to the cursor
 fn cursor_move_virtual_pointer(
     windows: Query<(Entity, &Window), With<PrimaryWindow>>,
@@ -167,6 +196,74 @@ fn cursor_move_virtual_pointer(
     }
 }
 
+/// This function sends mouse pointer events to be processed by the mod picking core plugin
+fn cursor_mouse_pick_events(
+    // Input
+    mut mouse_inputs: EventReader<MouseButtonInput>,
+    pointers: Query<&PointerId, (With<Cursor2d>, Without<GamepadCursor>)>,
+    // Output
+    mut pointer_presses: EventWriter<InputPress>,
+) {
+    for input in mouse_inputs.read() {
+        let button = match input.button {
+            MouseButton::Left => PointerButton::Primary,
+            MouseButton::Right => PointerButton::Secondary,
+            MouseButton::Middle => PointerButton::Middle,
+            MouseButton::Other(_) => continue,
+            MouseButton::Back => continue,
+            MouseButton::Forward => continue,
+        };
+
+        match input.state {
+            ButtonState::Pressed => {
+                for pointer in &pointers {
+                    pointer_presses.send(InputPress::new_down(*pointer, button));
+                }
+            }
+            ButtonState::Released => {
+                for pointer in &pointers {
+                    pointer_presses.send(InputPress::new_up(*pointer, button));
+                }
+            }
+        }
+    }
+}
+
+/// This function sends mouse pointer events to be processed by the mod picking core plugin
+fn cursor_gamepad_pick_events(
+    // Input
+    mut gamepad_inputs: EventReader<GamepadButtonChangedEvent>,
+    pointers: Query<(&PointerId, &GamepadCursor), With<Cursor2d>>,
+    // Output
+    mut pointer_presses: EventWriter<InputPress>,
+) {
+    for input in gamepad_inputs.read() {
+
+
+        let button = match input.button_type {
+            GamepadButtonType::South => PointerButton::Primary,
+            GamepadButtonType::East => PointerButton::Secondary,
+            GamepadButtonType::West => PointerButton::Middle,
+            _ => continue,
+        };
+
+        match input.value {
+            1.0 => {
+                for (pointer, gamepad) in &pointers {
+                    if gamepad.id != input.gamepad.id { continue; }
+                    pointer_presses.send(InputPress::new_down(*pointer, button));
+                }
+            }
+            0.0 => {
+                for (pointer, gamepad) in &pointers {
+                    if gamepad.id != input.gamepad.id { continue; }
+                    pointer_presses.send(InputPress::new_up(*pointer, button));
+                }
+            },
+            _ => {}
+        }
+    }
+}
 
 /* fn cursor_update(
     mut windows: Query<&mut Window, With<PrimaryWindow>>,
@@ -249,8 +346,13 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app
+
+            // Add systems for mod picking event emitters
+            .add_systems(First, (cursor_mouse_pick_events, cursor_gamepad_pick_events, apply_deferred).chain().in_set(PickSet::Input))
+
+
             .add_systems(PreUpdate,  cursor_preupdate)
-            //.add_systems(PostUpdate, cursor_update)
+            .add_systems(PostUpdate, cursor_change_native)
             .add_systems(PostUpdate, cursor_update_texture)
 
             
