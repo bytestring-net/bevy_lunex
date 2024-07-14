@@ -1,10 +1,62 @@
 # Cursor
 
-Lunex provides a custom API for a cursor within your Bevy application.
+Lunex provides a custom abstraction for a cursor related features within your Bevy application.
 
-This feature works by spawning a cursor atlas image alongside a special `Cursor2d` component as a child of a 2D camera.
+This is achieved by moving all logic to a an entity that is spawned as a child of a `Camera2d`.
 
-To use the custom cursor styling, we need to expand our `Camera2d` entity as follows:
+It is required that you spawn this entity, otherwise picking won't work.
+
+### Required components
+
+You need to spawn these components for 
+
+```rust
+// This is the main component
+Cursor2d::new(),
+// This is required so that the sprite doesn't block our picking raycaster
+Pickable::IGNORE,
+// This is required so that the sprite doesn't block our picking raycaster
+PointerBundle::new(PointerId::Custom(pointer::Uuid::new_v4())),
+```
+
+### Styling components
+
+If you want to attach custom image to your cursor, you have to attach texture atlas to the entity.
+You will need to have all the icons in a image strip like this.
+
+![Cursor](../images/cursor.png)
+
+
+```rust
+// Specify the texture atlas properties
+TextureAtlas {
+    // ...
+},
+// Specify the image to load 
+SpriteBundle {
+    // ...
+},
+```
+
+### Gamepad support
+
+To bind a cursor to a gamepad, you have to add this component:
+
+```rust
+GamepadCursor::new(0),
+```
+
+If you want the cursor to accept both Mouse and Gamepad inputs, you have to create an additional
+system that listens to recent input events and based on them "removes" or "adds" this component.
+
+Currently, there is only 1 mode supported and that is `Free` which means you just use your stick to move
+the cursor around. There is no "jumping" yet.
+
+However, it is planned to add `Snap` mode, which makes the cursor "jump" and snap to the next node in input direction.
+
+## Example
+
+Here's an example of how to set up a custom cursor with gamepad control:
 
 ```rust
 # fn setup(mut commands: Commands, assets: Res<AssetServer>, mut atlas_layout: ResMut<Assets<TextureAtlasLayout>>){
@@ -13,50 +65,44 @@ commands.spawn((
     Camera2dBundle { transform: Transform::from_xyz(0.0, 0.0, 1000.0), ..default() }
 )).with_children(|camera| {
 
-    // Spawn cursor
-    camera.spawn ((
+    // Spawn 2D camera
+    commands.spawn(camera()).with_children(|camera| {
 
-        // Here we can map different native cursor icons to texture atlas indexes and sprite offsets
-        Cursor2d::new().native_cursor(false)
-            .register_cursor(CursorIcon::Default, 0, (14.0, 14.0))
-            .register_cursor(CursorIcon::Pointer, 1, (10.0, 12.0))
-            .register_cursor(CursorIcon::Grab, 2, (40.0, 40.0)),
+        // Spawn cursor
+        camera.spawn ((
 
-        // Add texture atlas to the cursor
-        TextureAtlas {
-            layout: atlas_layout.add(TextureAtlasLayout::from_grid(UVec2::splat(80), 3, 1, None, None)),
-            index: 0,
-        },
+            // Here we can map different native cursor icons to texture atlas indexes and sprite offsets
+            Cursor2d::new()
+                .set_index(CursorIcon::Default, 0, (14.0, 14.0))
+                .set_index(CursorIcon::Pointer, 1, (10.0, 12.0))
+                .set_index(CursorIcon::Grab, 2, (40.0, 40.0)),
 
-        // Add sprite bundle to the cursor
-        SpriteBundle {
-            texture: assets.cursor.clone(),
-            transform: Transform { scale: Vec3::new(0.45, 0.45, 1.0), ..default() },
-            sprite: Sprite {
-                color: Color::BEVYPUNK_YELLOW.with_alpha(2.0),
-                anchor: Anchor::TopLeft,
+            // Here we specify that the cursor should be controlled by gamepad 0
+            GamepadCursor::new(0),
+
+            // This is required for picking to work
+            PointerBundle::new(PointerId::Custom(pointer::Uuid::new_v4())),
+            
+            // Add texture atlas to the cursor
+            TextureAtlas {                                           // Size 80x80, 3 columns, 1 row
+                layout: atlas_layout.add(TextureAtlasLayout::from_grid(UVec2::splat(80), 3, 1, None, None)),
+                index: 0,
+            },
+            SpriteBundle {
+                texture: assets.load("cursor.png"),
+                transform: Transform { scale: Vec3::new(0.45, 0.45, 1.0), ..default() },
+                sprite: Sprite {
+                    color: Color::YELLOW.with_alpha(2.0),
+                    anchor: Anchor::TopLeft,
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        },
 
-        // Make the raycaster ignore this entity, we don't want our cursor to block clicking
-        Pickable::IGNORE,
-    ));
+            // Make the raycaster ignore this entity, we don't want our cursor to block clicking
+            Pickable::IGNORE,
+        ));
+    });
 });
 # }
 ```
-
-When creating a `Cursor2d` component, you can use the `native_cursor()` method to specify whether the cursor should exist as an entity within the game world or be injected into the `Winit` crate as a custom cursor sprite. (Note: This feature is currently a work in progress, and enabling it only hides the sprite for now.)
-
-![Cursor](../images/cursor.png)
-
-By default, spawning the cursor entity will hide the native system cursor unless `native_cursor(true)` is set.
-
-Additionally, you must register each cursor icon with its respective texture atlas indices and sprite offsets to define the appearance and positioning of different cursor states.
-
-Finally, to prevent the cursor from interfering with clicking events, we add the `Pickable::IGNORE` component. This ensures that the cursor sprite does not block any button interactions or other clickable elements in the UI.
-
-### Cursor position
-
-You can query for `GlobalTransform` of `Cursor2d` to get it's worldspace location. For localspace, use regular `Transform`.
