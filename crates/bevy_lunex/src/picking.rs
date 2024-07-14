@@ -114,6 +114,7 @@ pub fn rendered_texture_picking(
 ) {
     for event in events.read() {
         if let Ok(texture_handle) = texture_viewports.get(event.target) {
+            //info!("{:?}", event);
             let position = event.pointer_location.position;
             pointer_move.send(pointer::InputMove {
                 pointer_id: event.pointer_id,
