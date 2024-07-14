@@ -2,6 +2,6 @@
 
 For issues related to the library, please create a ticket on [`GitHub`](https://github.com/bytestring-net/bevy_lunex/issues).
 
-You can also reach out on the [`Bevy Discord`](https://discord.gg/bevy), where I am likely to see your message.
+You can also reach out to me on the [`Bevy Discord`](https://discord.gg/bevy), where you can use the [`#Ecosystem-crates: Bevy Lunex`](https://discord.com/channels/691052431525675048/1034543904478998539) thread.
 
-For questions or additional help, feel free to send me a direct message on Discord: `@idedary`.
+For specific questions, feel free to send me a direct message on Discord: `@idedary`.

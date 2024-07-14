@@ -17,7 +17,7 @@ pub struct LunexBackend;
 impl Plugin for LunexBackend {
     fn build(&self, app: &mut App) {
         app
-            .add_plugins(DefaultPickingPlugins)
+            .add_plugins(DefaultPickingPlugins.build().disable::<InputPlugin>())
             .add_systems(PreUpdate, lunex_picking.in_set(PickSet::Backend))
             .add_systems(Update, rendered_texture_picking);
     }
@@ -116,7 +116,7 @@ pub fn rendered_texture_picking(
         if let Ok(texture_handle) = texture_viewports.get(event.target) {
             let position = event.pointer_location.position;
             pointer_move.send(pointer::InputMove {
-                pointer_id: PointerId::Mouse,
+                pointer_id: event.pointer_id,
                 location: pointer::Location {
                     target: bevy::render::camera::NormalizedRenderTarget::Image(
                         texture_handle.clone_weak(),
