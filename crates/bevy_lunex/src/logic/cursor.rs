@@ -16,7 +16,9 @@ pub struct Cursor2d {
     cursor_request_priority: f32,
     /// Map which cursor has which atlas index and offset
     cursor_atlas_map: HashMap<CursorIcon, (usize, Vec2)>,
-    /// If the cursor is allowed to leave window
+    /// Location of the cursor (same as [`Transform`] without sprite offset).
+    pub location: Vec2,
+    /// If the cursor is allowed to leave window. Does nothing is cursor is controlled by gamepad.
     pub confined: bool,
     /// A toggle if the cursor should be visible
     pub visible: bool,
@@ -28,6 +30,7 @@ impl Cursor2d {
             cursor_request: CursorIcon::Default,
             cursor_request_priority: 0.0,
             cursor_atlas_map: HashMap::new(),
+            location: Vec2::ZERO,
             confined: false,
             visible: true,
         }
@@ -76,8 +79,8 @@ pub enum GamepadCursorMode {
     /// Cursor will freely move on input.
     #[default]
     Free,
-    /// Will try to snap to nearby nodes on input.
-    Snap,
+    // /// Will try to snap to nearby nodes on input.
+    //Snap,
 }
 
 
@@ -128,25 +131,24 @@ fn gamepad_move_cursor(
     axis: Res<Axis<GamepadAxis>>,
     time: Res<Time>,
     windows: Query<&Window, With<PrimaryWindow>>,
-    mut query: Query<(&Cursor2d, &GamepadCursor, &mut Transform)>,
+    mut query: Query<(&mut Cursor2d, &GamepadCursor)>,
 ) {
     if let Ok(window) = windows.get_single() {
-        for (cursor, gamepad, mut transform) in query.iter_mut() {
+        for (mut cursor, gamepad) in query.iter_mut() {
             // Pull axis values
             let x = axis.get(GamepadAxis { gamepad: Gamepad::new(gamepad.id), axis_type: GamepadAxisType::LeftStickX });
             let y = axis.get(GamepadAxis { gamepad: Gamepad::new(gamepad.id), axis_type: GamepadAxisType::LeftStickY });
 
             if let (Some(x), Some(y)) = (x, y) {
                 // Move the cursor
-                transform.translation.x += x * time.delta_seconds() * 500.0 * gamepad.speed;
-                transform.translation.y += y * time.delta_seconds() * 500.0 * gamepad.speed;
+                cursor.location.x += x * time.delta_seconds() * 500.0 * gamepad.speed;
+                cursor.location.y += y * time.delta_seconds() * 500.0 * gamepad.speed;
 
                 // Clamp the cursor within window
                 let w = window.width()/2.0;
                 let h = window.height()/2.0;
-                let sprite_offset = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).1;
-                transform.translation.x = transform.translation.x.clamp(-w - sprite_offset.x * transform.scale.x, w - sprite_offset.x * transform.scale.x);
-                transform.translation.y = transform.translation.y.clamp(-h + sprite_offset.y * transform.scale.y, h + sprite_offset.y * transform.scale.y);
+                cursor.location.x = cursor.location.x.clamp(-w, w);
+                cursor.location.y = cursor.location.y.clamp(-h, h);
             }
         }
     }
@@ -156,40 +158,46 @@ fn gamepad_move_cursor(
 fn mouse_move_cursor(
     windows: Query<&Window, With<PrimaryWindow>>,
     cameras: Query<&OrthographicProjection>,
-    mut query: Query<(&Cursor2d, &Parent, &mut Transform), Without<GamepadCursor>>
+    mut query: Query<(&mut Cursor2d, &Parent), Without<GamepadCursor>>
 ) {
     if let Ok(window) = windows.get_single() {
-        for (cursor, parent, mut transform) in &mut query {
+        for (mut cursor, parent) in &mut query {
             if let Some(position) = window.cursor_position() {
                 // Get projection scale to account for zoomed cameras
                 let scale = if let Ok(projection) = cameras.get(**parent) { projection.scale } else { 1.0 };
 
                 // Move the cursor
-                let sprite_offset = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).1;
-                transform.translation.x = (position.x - window.width()*0.5) * scale - sprite_offset.x * transform.scale.x;
-                transform.translation.y = -((position.y - window.height()*0.5) * scale - sprite_offset.y * transform.scale.y);
+                cursor.location.x = (position.x - window.width()*0.5) * scale;
+                cursor.location.y = -((position.y - window.height()*0.5) * scale);
             }
         }
     }
 }
 
+/// This function updates the transform component with the modified location and sprite offsets
+fn cursor_update_transform(
+    mut query: Query<(&Cursor2d, &mut Transform)>
+) {
+    for (cursor, mut transform) in &mut query {
+        let sprite_offset = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).1;
+        transform.translation.x = cursor.location.x - sprite_offset.x * transform.scale.x;
+        transform.translation.y = cursor.location.y + sprite_offset.y * transform.scale.y;
+    }
+}
 
 /// This function controls virtual pointer attached to the cursor
 fn cursor_move_virtual_pointer(
     windows: Query<(Entity, &Window), With<PrimaryWindow>>,
-    mut query: Query<(&mut PointerLocation, &Transform, &Cursor2d)>,
+    mut query: Query<(&mut PointerLocation, &Cursor2d)>,
 ) {
     if let Ok((win_entity, window)) = windows.get_single() {
-        for (mut pointer, transform, cursor) in query.iter_mut() {
-            // Get sprite offset
-            let sprite_offset = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).1;
-
+        for (mut pointer, cursor) in query.iter_mut() {
             // Change the pointer location
             pointer.location = Some(pointer::Location {
                 target: RenderTarget::Window(WindowRef::Primary).normalize(Some(win_entity)).unwrap(),
                 position: Vec2 {
-                    x: transform.translation.x + window.width()/2.0 + sprite_offset.x * transform.scale.x,
-                    y: -transform.translation.y + window.height()/2.0 + sprite_offset.y * transform.scale.y,
+                    x: cursor.location.x + window.width()/2.0,
+                    y: -cursor.location.y + window.height()/2.0,
                 }.round(),
             });
         }
@@ -265,49 +273,21 @@ fn cursor_gamepad_pick_events(
     }
 }
 
-/* fn cursor_update(
-    mut windows: Query<&mut Window, With<PrimaryWindow>>,
-    cameras: Query<&OrthographicProjection>,
-    mut query: Query<(&Cursor2d, &Parent, &mut Transform), Without<GamepadCursor>>
+
+/// This function resets the requested cursor back to default every tick
+fn cursor_reset_icon(
+    mut query: Query<&mut Cursor2d>
 ) {
-    if let Ok(mut window) = windows.get_single_mut() {
-        for (cursor, parent, mut transform) in &mut query {
-
-            if window.cursor.visible { window.cursor.icon = cursor.cursor_request; }
-
-            if cursor.confined {
-                window.cursor.grab_mode = CursorGrabMode::Confined;
-            } else {
-                window.cursor.grab_mode = CursorGrabMode::None;
-            }
-
-            match window.cursor_position() {
-                Some(position) => {
-
-                    let sprite_offset = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).1;
-
-                    let scale = if let Ok(projection) = cameras.get(**parent) {
-                        projection.scale
-                    } else { 1.0 };
-
-                    transform.translation.x = (position.x - window.width()*0.5) * scale - sprite_offset.x * transform.scale.x;
-                    transform.translation.y = -((position.y - window.height()*0.5) * scale - sprite_offset.y * transform.scale.y);
-
-
-                }
-                None => {
-                }
-            }
-        }
-    }
-} */
-fn cursor_preupdate(mut query: Query<&mut Cursor2d>) {
     for mut cursor in &mut query {
         cursor.cursor_request = CursorIcon::Default;
         cursor.cursor_request_priority = 0.0;
     }
 }
-fn cursor_update_texture(mut query: Query<(&Cursor2d, &mut TextureAtlas)>) {
+
+/// This function updates the atlas index texture based on requested cursor icon
+fn cursor_update_texture(
+    mut query: Query<(&Cursor2d, &mut TextureAtlas)>
+) {
     for (cursor, mut atlas) in &mut query {
         atlas.index = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).0;
     }
@@ -350,15 +330,14 @@ impl Plugin for CursorPlugin {
             // Add systems for mod picking event emitters
             .add_systems(First, (cursor_mouse_pick_events, cursor_gamepad_pick_events, apply_deferred).chain().in_set(PickSet::Input))
 
-
-            .add_systems(PreUpdate,  cursor_preupdate)
+            // Add core systems 
+            .add_systems(PreUpdate, cursor_reset_icon)
+            .add_systems(Update, (gamepad_move_cursor, mouse_move_cursor, cursor_update_transform, cursor_move_virtual_pointer).chain())
+            .add_systems(PostUpdate, cursor_set_visibility)
             .add_systems(PostUpdate, cursor_change_native)
             .add_systems(PostUpdate, cursor_update_texture)
 
-            
-            .add_systems(Update, (gamepad_move_cursor, mouse_move_cursor, cursor_move_virtual_pointer).chain())
-            .add_systems(PostUpdate, cursor_set_visibility)
-
+            // Other stuff
             .add_systems(Update, on_hover_set_cursor);
     }
 }
