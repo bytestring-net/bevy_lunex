@@ -362,7 +362,7 @@ impl Plugin for CursorPlugin {
 
             // Add core systems 
             .add_systems(PreUpdate, cursor_reset_icon)
-            .add_systems(Update, (gamepad_move_cursor, mouse_move_cursor, cursor_update_transform, cursor_move_virtual_pointer).chain())
+            .add_systems(PreUpdate, (gamepad_move_cursor, mouse_move_cursor, cursor_update_transform, cursor_move_virtual_pointer).chain())
             .add_systems(PostUpdate, cursor_set_visibility)
             .add_systems(PostUpdate, cursor_change_native)
             .add_systems(PostUpdate, cursor_update_texture)
