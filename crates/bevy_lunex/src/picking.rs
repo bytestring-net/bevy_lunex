@@ -116,7 +116,7 @@ pub fn rendered_texture_picking(
         if let Ok(texture_handle) = texture_viewports.get(event.target) {
             let position = event.pointer_location.position;
             pointer_move.send(pointer::InputMove {
-                pointer_id: PointerId::Mouse,
+                pointer_id: event.pointer_id,
                 location: pointer::Location {
                     target: bevy::render::camera::NormalizedRenderTarget::Image(
                         texture_handle.clone_weak(),

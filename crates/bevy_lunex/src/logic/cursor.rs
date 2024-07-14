@@ -1,7 +1,7 @@
 use crate::*;
 use bevy::{input::{gamepad::GamepadButtonChangedEvent, mouse::MouseButtonInput, ButtonState}, render::camera::RenderTarget, utils::HashMap, window::{CursorGrabMode, PrimaryWindow, WindowRef}};
 use picking_core::PickSet;
-use pointer::InputPress;
+use pointer::{InputMove, InputPress, Location};
 
 // #===================#
 // #=== CURSOR TYPE ===#
@@ -208,10 +208,26 @@ fn cursor_move_virtual_pointer(
 fn cursor_mouse_pick_events(
     // Input
     mut mouse_inputs: EventReader<MouseButtonInput>,
-    pointers: Query<&PointerId, (With<Cursor2d>, Without<GamepadCursor>)>,
+    pointers: Query<(&PointerId, &PointerLocation), (With<Cursor2d>, Without<GamepadCursor>)>,
     // Output
+    mut pointer_move: EventWriter<InputMove>,
     mut pointer_presses: EventWriter<InputPress>,
 ) {
+    // Send mouse movement events
+    for (pointer, location) in &pointers {
+        if let Some(location) = &location.location {
+            pointer_move.send(InputMove::new(
+                *pointer,
+                Location {
+                    target: location.target.clone(),
+                    position: location.position,
+                },
+                location.position,
+            ));
+        }
+    }
+
+    // Send mouse click events
     for input in mouse_inputs.read() {
         let button = match input.button {
             MouseButton::Left => PointerButton::Primary,
@@ -224,12 +240,12 @@ fn cursor_mouse_pick_events(
 
         match input.state {
             ButtonState::Pressed => {
-                for pointer in &pointers {
+                for (pointer, _) in &pointers {
                     pointer_presses.send(InputPress::new_down(*pointer, button));
                 }
             }
             ButtonState::Released => {
-                for pointer in &pointers {
+                for (pointer, _) in &pointers {
                     pointer_presses.send(InputPress::new_up(*pointer, button));
                 }
             }
@@ -241,13 +257,27 @@ fn cursor_mouse_pick_events(
 fn cursor_gamepad_pick_events(
     // Input
     mut gamepad_inputs: EventReader<GamepadButtonChangedEvent>,
-    pointers: Query<(&PointerId, &GamepadCursor), With<Cursor2d>>,
+    pointers: Query<(&PointerId, &PointerLocation, &GamepadCursor), With<Cursor2d>>,
     // Output
+    mut pointer_move: EventWriter<InputMove>,
     mut pointer_presses: EventWriter<InputPress>,
 ) {
+    // Send mouse movement events
+    for (pointer, location, _) in &pointers {
+        if let Some(location) = &location.location {
+            pointer_move.send(InputMove::new(
+                *pointer,
+                Location {
+                    target: location.target.clone(),
+                    position: location.position,
+                },
+                location.position,
+            ));
+        }
+    }
+
+    // Send mouse click events
     for input in gamepad_inputs.read() {
-
-
         let button = match input.button_type {
             GamepadButtonType::South => PointerButton::Primary,
             GamepadButtonType::East => PointerButton::Secondary,
@@ -257,13 +287,13 @@ fn cursor_gamepad_pick_events(
 
         match input.value {
             1.0 => {
-                for (pointer, gamepad) in &pointers {
+                for (pointer, _, gamepad) in &pointers {
                     if gamepad.id != input.gamepad.id { continue; }
                     pointer_presses.send(InputPress::new_down(*pointer, button));
                 }
             }
             0.0 => {
-                for (pointer, gamepad) in &pointers {
+                for (pointer, _, gamepad) in &pointers {
                     if gamepad.id != input.gamepad.id { continue; }
                     pointer_presses.send(InputPress::new_up(*pointer, button));
                 }
