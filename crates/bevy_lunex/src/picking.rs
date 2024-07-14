@@ -17,7 +17,7 @@ pub struct LunexBackend;
 impl Plugin for LunexBackend {
     fn build(&self, app: &mut App) {
         app
-            .add_plugins(DefaultPickingPlugins)
+            .add_plugins(DefaultPickingPlugins.build().disable::<InputPlugin>())
             .add_systems(PreUpdate, lunex_picking.in_set(PickSet::Backend))
             .add_systems(Update, rendered_texture_picking);
     }

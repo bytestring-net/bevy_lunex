@@ -159,7 +159,7 @@ fn apply_event_hide_cursor_2d(mut events: EventReader<HideCursor2d>, mut query: 
         for mut cursor in &mut query {
             #[cfg(feature = "verbose")]
             info!("{} - Set cursor to hidden: {}", "EVENT".purple().bold(), event.0);
-            cursor.hidden = event.0;
+            cursor.visible = !event.0;
         }
     }
 }
