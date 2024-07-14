@@ -208,6 +208,7 @@ fn cursor_move_virtual_pointer(
 fn cursor_mouse_pick_events(
     // Input
     mut mouse_inputs: EventReader<MouseButtonInput>,
+    mut cursor_last: Local<HashMap<PointerId, Vec2>>,
     pointers: Query<(&PointerId, &PointerLocation), (With<Cursor2d>, Without<GamepadCursor>)>,
     // Output
     mut pointer_move: EventWriter<InputMove>,
@@ -216,14 +217,18 @@ fn cursor_mouse_pick_events(
     // Send mouse movement events
     for (pointer, location) in &pointers {
         if let Some(location) = &location.location {
+            let last = cursor_last.get(pointer).unwrap_or(&Vec2::ZERO);
+            if *last == location.position { continue; }
+
             pointer_move.send(InputMove::new(
                 *pointer,
                 Location {
                     target: location.target.clone(),
                     position: location.position,
                 },
-                location.position,
+                location.position - *last,
             ));
+            cursor_last.insert(*pointer, location.position);
         }
     }
 
@@ -257,6 +262,7 @@ fn cursor_mouse_pick_events(
 fn cursor_gamepad_pick_events(
     // Input
     mut gamepad_inputs: EventReader<GamepadButtonChangedEvent>,
+    mut cursor_last: Local<HashMap<PointerId, Vec2>>,
     pointers: Query<(&PointerId, &PointerLocation, &GamepadCursor), With<Cursor2d>>,
     // Output
     mut pointer_move: EventWriter<InputMove>,
@@ -265,14 +271,18 @@ fn cursor_gamepad_pick_events(
     // Send mouse movement events
     for (pointer, location, _) in &pointers {
         if let Some(location) = &location.location {
+            let last = cursor_last.get(pointer).unwrap_or(&Vec2::ZERO);
+            if *last == location.position { continue; }
+
             pointer_move.send(InputMove::new(
                 *pointer,
                 Location {
                     target: location.target.clone(),
                     position: location.position,
                 },
-                location.position,
+                location.position - *last,
             ));
+            cursor_last.insert(*pointer, location.position);
         }
     }
 
