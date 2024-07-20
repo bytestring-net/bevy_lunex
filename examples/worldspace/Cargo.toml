@@ -1,5 +1,5 @@
 [package]
-  name = "mesh2d"
+  name = "worldspace"
   authors.workspace    = true
   version.workspace    = true
   edition.workspace    = true
@@ -8,7 +8,6 @@
 [dependencies]
   bevy = { version = "^0.14.0", default_features = false, features = [
     "bevy_asset",
-    "bevy_gilrs",
     "bevy_winit",
     "bevy_core_pipeline",
     "bevy_pbr",
@@ -17,6 +16,9 @@
     "bevy_text",
     "multi_threaded",
     "png",
+    "hdr",
+    "vorbis",
     "x11",
+    "tonemapping_luts",
   ] }
   bevy_lunex   = { workspace = true, features=["debug"] }

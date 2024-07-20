@@ -24,7 +24,7 @@
 		{
 			"type": "cargo",
 			"command": "run",
-			"args": ["--bin", "minimal"],
+			"args": ["--bin", "worldspace"],
 			"problemMatcher": [
 				"$rustc"
 			],

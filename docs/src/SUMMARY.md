@@ -1,33 +1,33 @@
 # Summary
 
-[Introduction](1_overview.md)
+[Introduction](overview.md)
 
 ---
 
 # Getting started
 
-- [Installation](2_installation.md)
-- [Quick start](3_quick_start.md)
-- [Debug](4_debug.md)
+- [Installation](installation.md)
+- [Quick start](quick_start.md)
+- [Debug](debug.md)
 
 ---
 
 # Advanced
-- [Linking](advanced/0_linking.md)
-- [Layouts](advanced/1_layouts.md)
-- [Units](advanced/2_units.md)
-- [Cursor](advanced/3_cursor.md)
-- [Text](advanced/4_text.md)
-- [Abstraction](advanced/5_abstraction.md)
-    - [Components](advanced/abstraction/1_components.md)
-    - [Routes](advanced/abstraction/2_routes.md)
-- [Interactivity](advanced/6_interactivity.md)
-- [Animation](advanced/7_animation.md)
-- [2D & 3D](advanced/8_2d_and_3d.md)
-- [Worldspace UI](advanced/9_worldspace_ui.md)
-- [Custom rendering](advanced/10_rendering.md)
+- [Linking](advanced/linking.md)
+- [Layouts](advanced/layouts.md)
+- [Units](advanced/units.md)
+- [Cursor](advanced/cursor.md)
+- [Text](advanced/text.md)
+- [Abstraction](advanced/abstraction.md)
+    - [Components](advanced/abstraction/components.md)
+    - [Routes](advanced/abstraction/routes.md)
+- [Interactivity](advanced/interactivity.md)
+- [Animation](advanced/animation.md)
+- [2D & 3D](advanced/2d_and_3d.md)
+- [Worldspace UI](advanced/worldspace_ui.md)
+- [Custom rendering](advanced/rendering.md)
 
 -----------
 
-[Contributors](5_contributors.md)
-[Help](6_help.md)
+[Contributors](contributors.md)
+[Help](help.md)

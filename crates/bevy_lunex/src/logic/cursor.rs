@@ -105,15 +105,12 @@ pub struct CursorBundle {
     pub cursor: Cursor2d,
     /// The virtual pointer that the cursor controls
     pub pointer: PointerBundle,
-    /// Required for Cursor to exist
-    pub spatial: SpatialBundle,
 }
 impl Default for CursorBundle {
     fn default() -> Self {
         Self {
             cursor: default(),
             pointer: PointerBundle::new(PointerId::Custom(pointer::Uuid::new_v4())),
-            spatial: default(),
         }
     }
 }
