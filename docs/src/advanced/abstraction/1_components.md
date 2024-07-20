@@ -11,7 +11,7 @@ Begin by creating a new `.rs` file in the `components` folder. First, define a p
 
 /// When this component is added, a UI system is built
 #[derive(Component)]
-pub struct CustomButtom {
+pub struct CustomButton {
     // Any fields we want to interact with should be here.
     text: String,
 }

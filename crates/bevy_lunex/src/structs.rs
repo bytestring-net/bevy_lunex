@@ -1,5 +1,5 @@
 use crate::*;
-use bevy::{render::primitives::Aabb, sprite::{Anchor, SpriteSource}, text::{Text2dBounds, TextLayoutInfo}};
+use bevy::{render::primitives::Aabb, sprite::{Anchor, Material2d, Mesh2dHandle, SpriteSource}, text::{Text2dBounds, TextLayoutInfo}};
 
 
 // #=====================#
@@ -485,6 +485,31 @@ impl UiMaterial3dBundle {
             ..default()
         }
     }
+}
+
+
+/// Additional bundle for `UiNode` entity.
+/// Provides functionality to bind mesh in 2D to a `UiNode`.
+#[derive(Bundle, Default, Clone)]
+pub struct UiMaterial2dBundle<M: Material2d> {
+    /// The mesh
+    pub mesh: Mesh2dHandle,
+    /// Material of the mesh
+    pub material: Handle<M>,
+    /// Marks this as node element.
+    pub element: Element,
+    /// Contains the ui node size.
+    pub dimension: Dimension,
+    /// The visibility of the entity.
+    pub visibility: Visibility,
+    /// The inherited visibility of the entity.
+    pub inherited_visibility: InheritedVisibility,
+    /// The view visibility of the entity.
+    pub view_visibility: ViewVisibility,
+    /// The transform of the entity.
+    pub transform: Transform,
+    /// The global transform of the entity.
+    pub global_transform: GlobalTransform,
 }
 
 
