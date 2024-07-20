@@ -1,4 +1,4 @@
-use bevy::{prelude::*, sprite::{MaterialMesh2dBundle, Mesh2dHandle}};
+use bevy::prelude::*;
 use bevy_lunex::prelude::*;
 
 
@@ -9,8 +9,9 @@ fn main() {
         .run();
 }
 
-fn setup(mut cmd: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>) {
+fn setup(mut cmd: Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
 
+    // Spawn camera
     cmd.spawn((
         MainUi,
         Camera2dBundle {
@@ -20,6 +21,7 @@ fn setup(mut cmd: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: Res
         }
     ));
 
+    // Spawn UiTree
     cmd.spawn((
         UiTreeBundle::<MainUi> {
             tree: UiTree::new("MyUiSystem"),
@@ -28,23 +30,20 @@ fn setup(mut cmd: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: Res
         MovableByCamera,
     )).with_children(|ui| {
 
+        // Spawn boundary node
         ui.spawn((
             UiLink::<MainUi>::path("Root"),
             UiLayout::boundary().pos1(Ab(20.0)).pos2(Rl(100.0) - Ab(20.0)).pack::<Base>(),
         ));
 
+        // Spawn a color filled node
         ui.spawn((
             UiLink::<MainUi>::path("Root/Rectangle"),
             UiLayout::solid().size((Ab(1920.0), Ab(1080.0))).pack::<Base>(),
-            Element,
-            Dimension::default(),
-            MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Rectangle { half_size: Vec2::splat(50.0) })),
+            UiMaterial2dBundle {
                 material: materials.add(Color::srgb(1.0, 0.5, 0.5)),
                 ..default()
             }
         ));
-
     });
-
 }
