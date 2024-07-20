@@ -8,7 +8,7 @@ use pointer::{InputMove, InputPress, Location};
 
 /// Component for easy cursor control.
 /// Read more about it in the [docs](https://bytestring-net.github.io/bevy_lunex/advanced/3_cursor.html)
-#[derive(Component, Default)]
+#[derive(Component, Debug, Clone, PartialEq)]
 pub struct Cursor2d {
     /// Indicates which cursor is being requested.
     cursor_request: CursorIcon,
@@ -48,7 +48,18 @@ impl Cursor2d {
         self
     }
 }
-
+impl Default for Cursor2d {
+    fn default() -> Self {
+        Self {
+            cursor_request: Default::default(),
+            cursor_request_priority: Default::default(),
+            cursor_atlas_map: Default::default(),
+            location: Default::default(),
+            confined: Default::default(),
+            visible: true,
+        }
+    }
+}
 
 /// This will make the [`Cursor2d`] controllable by specific gamepad.
 #[derive(Component, Debug, Clone, PartialEq)]
@@ -81,6 +92,56 @@ pub enum GamepadCursorMode {
     Free,
     // /// Will try to snap to nearby nodes on input.
     //Snap,
+}
+
+
+// #======================#
+// #=== CURSOR BUNDLES ===#
+
+/// Use this bundle to spawn native cursor
+#[derive(Bundle)]
+pub struct CursorBundle {
+    /// Main cursor component
+    pub cursor: Cursor2d,
+    /// The virtual pointer that the cursor controls
+    pub pointer: PointerBundle,
+    /// Required for Cursor to exist
+    pub spatial: SpatialBundle,
+}
+impl Default for CursorBundle {
+    fn default() -> Self {
+        Self {
+            cursor: default(),
+            pointer: PointerBundle::new(PointerId::Custom(pointer::Uuid::new_v4())),
+            spatial: default(),
+        }
+    }
+}
+
+/// Use this bundle to spawn styled custom cursor
+#[derive(Bundle)]
+pub struct StyledCursorBundle {
+    /// Main cursor component
+    pub cursor: Cursor2d,
+    /// The virtual pointer that the cursor controls
+    pub pointer: PointerBundle,
+    /// Sprite atlas for the cursor
+    pub atlas: TextureAtlas,
+    /// Sprite cursor
+    pub sprite: SpriteBundle,
+    /// Required to be [`Pickable::IGNORE`]
+    pub pickable: Pickable,
+}
+impl Default for StyledCursorBundle {
+    fn default() -> Self {
+        Self {
+            cursor: default(),
+            pointer: PointerBundle::new(PointerId::Custom(pointer::Uuid::new_v4())),
+            atlas: default(),
+            sprite: default(),
+            pickable: Pickable::IGNORE,
+        }
+    }
 }
 
 
@@ -158,13 +219,16 @@ fn gamepad_move_cursor(
 fn mouse_move_cursor(
     windows: Query<&Window, With<PrimaryWindow>>,
     cameras: Query<&OrthographicProjection>,
-    mut query: Query<(&mut Cursor2d, &Parent), Without<GamepadCursor>>
+    mut query: Query<(&mut Cursor2d, Option<&Parent>), Without<GamepadCursor>>
 ) {
     if let Ok(window) = windows.get_single() {
-        for (mut cursor, parent) in &mut query {
+        for (mut cursor, parent_option) in &mut query {
             if let Some(position) = window.cursor_position() {
                 // Get projection scale to account for zoomed cameras
-                let scale = if let Ok(projection) = cameras.get(**parent) { projection.scale } else { 1.0 };
+                let scale = if let Some(parent) = parent_option {
+                    if let Ok(projection) = cameras.get(**parent) { projection.scale } else { 1.0 }
+                } else { 1.0 };
+                
 
                 // Move the cursor
                 cursor.location.x = (position.x - window.width()*0.5) * scale;
