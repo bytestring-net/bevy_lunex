@@ -49,7 +49,7 @@ commands.spawn((
     MovableByCamera,
 
     // This is our UI system
-    UiTreeBundle::<MainUi>::from(UiTree::new("Hello UI!")),
+    UiTreeBundle::<MainUi>::from(UiTree::new2d("Hello UI!")),
 
 )).with_children(|ui| {
     // Here we will spawn our UI as children

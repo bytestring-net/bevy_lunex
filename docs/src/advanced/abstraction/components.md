@@ -39,7 +39,7 @@ fn build_route(mut commands: Commands, assets: Res<AssetServer>, query: Query<En
         commands.entity(entity).insert((
             // Insert this bundle into the entity that just got the CustomButtom component
             // Note that CustomButtonUi is used here instead of MainUi
-            UiTreeBundle::<CustomButtonUi>::from(UiTree::new("CustomButton")),
+            UiTreeBundle::<CustomButtonUi>::from(UiTree::new2d("CustomButton")),
 
         // Now spawn the UI as children
         )).with_children(|ui| {
