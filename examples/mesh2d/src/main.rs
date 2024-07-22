@@ -24,7 +24,7 @@ fn setup(mut cmd: Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
     // Spawn UiTree
     cmd.spawn((
         UiTreeBundle::<MainUi> {
-            tree: UiTree::new("MyUiSystem"),
+            tree: UiTree::new2d("MyUiSystem"),
             ..default()
         },
         MovableByCamera,

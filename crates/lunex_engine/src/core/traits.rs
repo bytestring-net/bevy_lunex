@@ -265,13 +265,23 @@ impl <N: Default + Component> UiNodeDataTrait<N> for UiNode<N> {
 /// Trait that abstracts over [`NodeTreeInitTrait`] to provide tailored
 /// implementations for the primitive in layouting context.
 pub trait UiNodeTreeInitTrait {
-    /// Creates new [`UiTree`].
-    fn new(name: impl Borrow<str>) -> Self;
+    /// Creates new [`UiTree`] configured for 2D enviroment.
+    fn new2d(name: impl Borrow<str>) -> Self;
+    /// Creates new [`UiTree`] configured for 3D enviroment.
+    fn new3d(name: impl Borrow<str>) -> Self;
 }
 impl <T, N: Default + Component> UiNodeTreeInitTrait for UiTree<T, N> {
-    fn new(name: impl Borrow<str>) -> Self {
+    fn new2d(name: impl Borrow<str>) -> Self {
         let mut tree: UiTree<T, N> = NodeTreeInitTrait::new(name);
         tree.add_topdata(MasterData::default());
+        tree.add_data(NodeData::default());
+        tree
+    }
+    fn new3d(name: impl Borrow<str>) -> Self {
+        let mut tree: UiTree<T, N> = NodeTreeInitTrait::new(name);
+        let mut md = MasterData::default();
+        md.abs_scale = 0.001;
+        tree.add_topdata(md);
         tree.add_data(NodeData::default());
         tree
     }

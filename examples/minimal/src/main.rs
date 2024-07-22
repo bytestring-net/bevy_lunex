@@ -24,7 +24,7 @@ fn setup(mut cmd: Commands, assets: Res<AssetServer>) {
     // Spawn UiTree
     cmd.spawn((
         UiTreeBundle::<MainUi> {
-            tree: UiTree::new("MyUiSystem"),
+            tree: UiTree::new2d("MyUiSystem"),
             ..default()
         },
         MovableByCamera,
