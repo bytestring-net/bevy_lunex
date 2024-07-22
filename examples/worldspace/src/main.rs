@@ -26,7 +26,7 @@ fn setup(
         Camera3dBundle::default(),
         PlayerCam {
             orbit: Vec3::new(0.0, 0.0, 0.0),
-            distance: 800.0,
+            distance: 2.0,
             sensitivity: Vec2::splat(0.1),
         }
     ));
@@ -37,8 +37,8 @@ fn setup(
         // Spawn the floating Ui panel
         commands.spawn((
             UiTreeBundle::<MainUi> {
-                transform: Transform::from_xyz(-400.0, 300.0, 0.0 + (300.0 * x as f32)),
-                tree: UiTree::new("PanelWidget"),
+                transform: Transform::from_xyz(-0.4, 0.3, 0.0 + (0.3 * x as f32)),
+                tree: UiTree::new3d("PanelWidget"),
                 ..default()
             },
         )).with_children(|ui| {
