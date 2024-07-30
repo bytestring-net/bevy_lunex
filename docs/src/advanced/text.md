@@ -27,7 +27,7 @@ UiText2dBundle {
 },
 ```
 
-You can also decouple the font size from the logical font size by adding this component. This new value will be used instead and native bevy font size will used purely for rendering (font resolution).
+You can also decouple the font size from the logical font size by adding this component. This new value will be used instead and native bevy font size will be used purely for rendering (font resolution).
 
 ```rust
 UiTextSize::new().size(Rh(5.0)),

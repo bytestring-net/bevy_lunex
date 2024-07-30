@@ -11,8 +11,9 @@ Centered around **Bevy ECS**, Bevy_Lunex allows developers to manage their UI el
 	- Requiring worldspace (diegetic) UI
 
 - **Lunex is not optimal for**:
-	- Making a dektop application (WIP)
-	- Wanting to make UI quickly (WIP)
+	- Making a dektop application
+	- Wanting to make UI quickly
+	- Complex editor-like UI
 
 
 ### Syntax Example
@@ -79,7 +80,3 @@ commands.spawn((
 
 - **Resizable Layouts:**
 	As a game-first UI framework, Bevy_Lunex is designed to support all aspect ratios and resolutions out of the box. UI layouts automatically adapt to different window sizes without collapsing or requiring explicit instructions for various circumstances. For instance, a UI designed for a 1920x1080 pixel window will maintain its layout proportionally when scaled down to a 1280x720 pixel window, simply appearing smaller. This behavior is ideal for games, though it may differ from traditional HTML-based layouts. For regular applications requiring different behavior, the `Div` layout (currently a work in progress) is recommended.
-
-### Comparison with `bevy_ui`
-
-While `bevy_ui` offers a straightforward approach to UI creation within Bevy, Bevy_Lunex provides a more advanced and hands-on alternative. Additionally, the ability to integrate both 2D and 3D elements and the seamless extension of UI behavior through ECS components make Bevy_Lunex a powerful tool for developers aiming to create sophisticated and stylized user interfaces.
