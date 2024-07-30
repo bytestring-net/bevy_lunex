@@ -2,15 +2,19 @@
 
 ## Explanation
 
-Lunex works by first creating an entity that will contain the future UI. This entity is called `UiTree` and has a component with the same name. Afterwards, any entity that will be part of that UI needs to be spawned as it's child.
+Lunex is first and foremost a worldspace layout engine, which means that **ALL** your UI entities exist in the same space as your game objects.
+
+This for example means, that if you have a moving camera, you **HAVE TO** spawn your UI as children of the camera, otherwise your UI would stay where you spawned it. _(Most likely at [0,0,0])_
 
 ## Boilerplate
+
+First import Lunex library
 
 ```rust
 use bevy_lunex::prelude::*;
 ```
 
-Then we need to add `UiPlugin` to our app.
+Then we add `UiPlugin` to our app.
 
 ```rust
 fn main() {
@@ -24,10 +28,11 @@ Thats it for the boilerplate!
 
 ## Start
 
-Because the library supports a lot of different use cases, we need to specify what dimensions will the UI be rendered with.
+Lunex works by creating an entity that will contain all UI within it. This entity is called `UiTree` and has a component with the same name. Afterwards, any entity that will be part of that UI needs to be spawned as it's **direct** child.
 
-Right now we want to use the window size, so we will use the default marker component and add it to our camera.
-This will make the camera pipe it's size into our future `UiTree` which also needs to have the same marker applied.
+Because the library supports a lot of different use cases, we **MUST** specify what source dimensions will the UI be be using. In most cases, we want it to take camera's viewport size.
+
+To do that, you can tag your camera with the default `MainUi` marker provided by Lunex. If the library detects a camera with this marker, **ALL** `UiTree`s with the same tag will use this camera's size as size source.
 
 ```rust
 commands.spawn((
@@ -39,9 +44,9 @@ commands.spawn((
 ));
 ```
 
-Now we need create our `UiTree` entity. The core components are `UiTree` + `Dimension` + `Transform`. The `UiTreeBundle` already contains these components for our ease of use.
+### UiTree
 
-The newly introduced `Dimension` component is used as the source size for the UI system. We also need to add the `MovableByCamera` component so our entity will receive updates from camera. The last step is adding the default `MainUi` marker as a generic.
+Now we need create our `UiTree` entity. Use the bundle below and attach `MovableByCamera` component so our `UiTree` will receive updates from our camera. The last step is adding the default `MainUi` marker as a generic.
 
 ```rust
 commands.spawn((
@@ -52,13 +57,18 @@ commands.spawn((
     UiTreeBundle::<MainUi>::from(UiTree::new2d("Hello UI!")),
 
 )).with_children(|ui| {
-    // Here we will spawn our UI as children
+    // Here we will spawn our UI as direct children
 });
 ```
 
-Now, any entity with `UiLayout` + `UiLink` spawned as a child of the `UiTree` will be managed as a UI entity. If it has a `Transform` component, it will get aligned based on the `UiLayout` calculations taking place in the parent `UiTree`. If it has a `Dimension` component then its size will also get updated by the `UiTree` output. This allows you to create your own systems reacting to changes in `Dimension` and `Transform` components.
+### UiNodes
 
-You can add a `UiImage2dBundle` to the entity to add images to your widgets. Or you can add another `UiTree` as a child, which will use the computed size output in `Dimension` component instead of a `Camera` piping the size to it.
+Now, any entity with `UiLayout` + `UiLink` spawned as a child of the `UiTree` will be managed as a UI entity. If it has a `Transform` component, it will get aligned based on the `UiLayout` calculations taking place in the parent `UiTree`. If it has a `Dimension` component then its size will also get updated by the `UiTree` output.
+
+This allows you to create your own systems reacting to changes in `Dimension` and `Transform` components.
+You can very easily for example write a custom renderer system, that styles your nodes based on measurements in these components.
+
+To quickly attach an image to our node, you can add a `UiImage2dBundle` to the entity to add images to your widgets.
 
 The generic in `pack::<S>()` represents state. For now leave it at `Base`, but when you for example later want to add hover animation use `Hover` instead.
 
@@ -93,3 +103,5 @@ As you can see in the terminal (If you have enabled `debug` feature or added the
     |-> Root == Window [pos: (x: 20, y: 20) size: (x: -40 + 100%, y: -40 + 100%)]
     |    |-> Rectangle == Solid [size: (x: 1920, y: 1080) align_x: 0 align_y: 0]
 ```
+
+You can read more about this hierarchy in [**Linking**](advanced/linking.md)

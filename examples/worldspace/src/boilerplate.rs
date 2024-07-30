@@ -58,7 +58,7 @@ pub fn default_plugins() -> PluginGroupBuilder {
     DefaultPlugins.set (
         WindowPlugin {
             primary_window: Some(Window {
-                title: "Bevycom".into(),
+                title: "Worldspace".into(),
                 mode: bevy::window::WindowMode::Windowed,
                 present_mode: bevy::window::PresentMode::AutoNoVsync,
                 resolution: bevy::window::WindowResolution::new(1280.0, 720.0),
