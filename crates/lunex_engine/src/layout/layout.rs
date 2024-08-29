@@ -1,6 +1,3 @@
-#[cfg(feature = "bevy")]
-use bevy::prelude::Component;
-
 use crate::{import::*, YInvert};
 use crate::{NiceDisplay, Rectangle2D, UiValue, UiValueEvaluate, Ab, Rl};
 
@@ -17,8 +14,8 @@ use crate::{NiceDisplay, Rectangle2D, UiValue, UiValueEvaluate, Ab, Rl};
 /// let layout: UiLayout = UiLayout::solid().size(Rl(50.0)).pack();
 /// ```
 /// The expected range is `-1.0` to `1.0`, but you can extrapolate.
-#[cfg_attr(feature = "bevy", derive(Component))]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug, Clone, Copy, PartialEq, Reflect)]
 pub enum Layout {
     Boundary(Boundary),
     Window(Window),
@@ -162,7 +159,7 @@ impl NiceDisplay for Layout {
 // #=== LAYOUT PROPERTIES ===#
 
 /// **Anchor** - A type used to define where should Window node layout be anchored at.
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub enum Anchor {
     Center,
     BottomLeft,
@@ -209,10 +206,9 @@ impl Anchor {
         }
     }
 }
-#[cfg(feature = "bevy")]
-impl Into<Anchor> for bevy::sprite::Anchor {
-    fn into(self) -> Anchor {
-        match self {
+impl From<bevy::sprite::Anchor> for Anchor {
+    fn from(val: bevy::sprite::Anchor) -> Self {
+        match val {
             bevy::sprite::Anchor::Center => Anchor::Center,
             bevy::sprite::Anchor::BottomLeft => Anchor::BottomLeft,
             bevy::sprite::Anchor::BottomCenter => Anchor::BottomCenter,
@@ -237,7 +233,7 @@ impl Into<Anchor> for bevy::sprite::Anchor {
 /// let align: Align = -1.0.into();  // -> -1.0
 /// ```
 /// The expected range is `-1.0` to `1.0`, but you can extrapolate.
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Align (pub f32);
 impl Align {
     pub const START: Align = Align(-1.0);
@@ -247,9 +243,9 @@ impl Align {
     pub const END: Align = Align(1.0);
     pub const RIGHT: Align = Align(1.0);
 }
-impl Into<Align> for f32 {
-    fn into(self) -> Align {
-        Align(self)
+impl From<f32> for Align {
+    fn from(val: f32) -> Self {
+        Align(val)
     }
 }
 impl NiceDisplay for Align {
@@ -268,7 +264,7 @@ impl NiceDisplay for Align {
 /// let scaling: Scaling = Scaling::Fit;  // -> always fit inside
 /// let scaling: Scaling = Scaling::Fill; // -> always cover all
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub enum Scaling {
     /// Node layout should always cover the horizontal axis of the parent node.
     HorFill,
@@ -299,7 +295,7 @@ impl NiceDisplay for Scaling {
 /// let scaling: Sizing = Sizing::Basic; // -> Default value, as big as its content
 /// let scaling: Sizing = Sizing::Max;   // -> Tries to reach maximum size limit
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub enum Sizing {
     /// Div node layout should be as small as possible.
     Min,
@@ -329,7 +325,7 @@ impl NiceDisplay for Sizing {
 /// # use lunex_engine::{Boundary, Rl};
 /// let layout: UiLayout = Boundary::new().pos1(Rl(20.0)).pos2(Rl(80.0)).pack();
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Boundary {
     /// Position of the top-left corner.
     pub pos1: UiValue<Vec2>,
@@ -413,9 +409,9 @@ impl Boundary {
         self.into()
     }
 }
-impl Into<Layout> for Boundary {
-    fn into(self) -> Layout {
-        Layout::Boundary(self)
+impl From<Boundary> for Layout {
+    fn from(val: Boundary) -> Self {
+        Layout::Boundary(val)
     }
 }
 impl NiceDisplay for Boundary {
@@ -433,7 +429,7 @@ impl NiceDisplay for Boundary {
 /// # use lunex_engine::{Window, Ab, Rl};
 /// let layout: UiLayout = Window::new().pos(Ab(100.0)).size(Rl(50.0)).pack();
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Window {
     /// Position of the node.
     pub pos : UiValue<Vec2>,
@@ -537,9 +533,9 @@ impl Window {
         self.into()
     }
 }
-impl Into<Layout> for Window {
-    fn into(self) -> Layout {
-        Layout::Window(self)
+impl From<Window> for Layout {
+    fn from(val: Window) -> Self {
+        Layout::Window(val)
     }
 }
 impl NiceDisplay for Window {
@@ -558,7 +554,7 @@ impl NiceDisplay for Window {
 /// # use lunex_engine::Solid;
 /// let layout: UiLayout = Solid::new().size((4.0, 3.0)).align_x(-0.8).pack();
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Solid {
     /// Aspect ratio of the width and height. `1:1 == 10:10 == 100:100`.
     pub size: UiValue<Vec2>,
@@ -665,9 +661,9 @@ impl Solid {
         self.into()
     }
 }
-impl Into<Layout> for Solid {
-    fn into(self) -> Layout {
-        Layout::Solid(self)
+impl From<Solid> for Layout {
+    fn from(val: Solid) -> Self {
+        Layout::Solid(val)
     }
 }
 impl NiceDisplay for Solid {
@@ -686,7 +682,7 @@ impl NiceDisplay for Solid {
 /// # use lunex_engine::{Div, Sp};
 /// let layout: UiLayout = Div::new().pad_x(2.0).margin_y(Sp(1.0)).br().pack();
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Div {
     /// Describes how width should size itself.
     pub width: Sizing,
@@ -1059,9 +1055,9 @@ impl Div {
         self.into()
     }
 }
-impl Into<Layout> for Div {
-    fn into(self) -> Layout {
-        Layout::Div(self)
+impl From<Div> for Layout {
+    fn from(val: Div) -> Self {
+        Layout::Div(val)
     }
 }
 impl NiceDisplay for Div {

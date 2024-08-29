@@ -59,7 +59,7 @@ impl UiState for Outro {
 
 /// This struct marks [`UiTree`] entity to receive piped [`Camera`] size and position to its [`Dimension`] and [`Transform`] component.
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
-pub struct MovableByCamera;
+pub struct SourceFromCamera;
 
 /// This struct is used to mark linked UI entities as elements for easier rendering.
 /// They are picked up by different systems, that ensure their piped [`Transform`] is centered,
@@ -73,7 +73,7 @@ pub struct Element;
 
 /// This struct holds rectangular data. If the component covers some kind of 2D area, it should be stored in this component.
 /// Lunex uses this component to mirror node size in & out from parent [`UiTree`].
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Dimension {
     pub size: Vec2,
 }
@@ -86,7 +86,7 @@ impl Dimension {
 }
 
 /// # WIP - used for Div layout
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct UiContent {
     pub size: Vec2,
 }
@@ -98,7 +98,7 @@ impl UiContent {
 
 
 /// This struct is used to specify size of the font in UI.
-#[derive(Component, Debug, Clone, Copy, PartialEq)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Reflect)]
 pub struct UiTextSize {
     /// The unit type and scale value of the text height
     pub size: UiValueType<f32>,
@@ -123,7 +123,7 @@ impl UiTextSize {
 // #=======================#
 // #=== MAIN COMPONENTS ===#
 
-#[derive(Component, Debug, Copy, Clone, PartialEq)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Reflect)]
 pub struct UiLayout<S = Base> {
     pub layout: Layout,
     state: PhantomData<S>,
@@ -205,9 +205,9 @@ pub trait PackageLayout {
 }
 
 // Implement packaging 
-impl <S> Into<UiLayout<S>> for ui::Boundary {
-    fn into(self) -> UiLayout<S> {
-        self.pack::<S>()
+impl <S> From<ui::Boundary> for UiLayout<S> {
+    fn from(val: ui::Boundary) -> Self {
+        val.pack::<S>()
     }
 }
 impl PackageLayout for ui::Boundary {
@@ -215,9 +215,9 @@ impl PackageLayout for ui::Boundary {
         UiLayout::<S>::from(self)
     }
 }
-impl <S> Into<UiLayout<S>> for ui::Window {
-    fn into(self) -> UiLayout<S> {
-        self.pack::<S>()
+impl <S> From<ui::Window> for UiLayout<S> {
+    fn from(val: ui::Window) -> Self {
+        val.pack::<S>()
     }
 }
 impl PackageLayout for ui::Window {
@@ -225,9 +225,9 @@ impl PackageLayout for ui::Window {
         UiLayout::<S>::from(self)
     }
 }
-impl <S> Into<UiLayout<S>> for ui::Solid {
-    fn into(self) -> UiLayout<S> {
-        self.pack::<S>()
+impl <S> From<ui::Solid> for UiLayout<S> {
+    fn from(val: ui::Solid) -> Self {
+        val.pack::<S>()
     }
 }
 impl PackageLayout for ui::Solid {
@@ -235,9 +235,9 @@ impl PackageLayout for ui::Solid {
         UiLayout::<S>::from(self)
     }
 }
-impl <S> Into<UiLayout<S>> for ui::Div {
-    fn into(self) -> UiLayout<S> {
-        self.pack::<S>()
+impl <S> From<ui::Div> for UiLayout<S> {
+    fn from(val: ui::Div) -> Self {
+        val.pack::<S>()
     }
 }
 impl PackageLayout for ui::Div {
@@ -269,7 +269,7 @@ impl Default for UiLayoutController {
 
 /// This struct is a string reference to a specific node in a parent [`UiTree`].
 /// Lunex uses this component to locate what data this entity should be working with.
-#[derive(Component, Debug, Clone, PartialEq)]
+#[derive(Component, Debug, Clone, PartialEq, Reflect)]
 pub struct UiLink<T = MainUi> {
     pub path: String,
     marker: PhantomData<T>,
@@ -289,7 +289,7 @@ impl <T> UiLink<T> {
     }
     pub fn new() -> Self {
         UiLink {
-            path: format!("/"),
+            path: "/".to_string(),
             marker: PhantomData,
         }
     }
@@ -297,7 +297,7 @@ impl <T> UiLink<T> {
 impl <T> Default for UiLink<T> {
     fn default() -> Self {
         UiLink {
-            path: String::new(),
+            path: "/".to_string(),
             marker: PhantomData,
         }
     }
@@ -307,7 +307,7 @@ impl <T> Default for UiLink<T> {
 /// This struct holds depth bias that will be relatively added to `depth` in the layout calculation.
 /// Nodes with higher depth bias will be placed on top of nodes with lower depth bias.
 /// It is recursive.
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct UiDepthBias (pub f32);
 
 

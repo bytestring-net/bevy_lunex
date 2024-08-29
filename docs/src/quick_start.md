@@ -46,12 +46,12 @@ commands.spawn((
 
 ### UiTree
 
-Now we need create our `UiTree` entity. Use the bundle below and attach `MovableByCamera` component so our `UiTree` will receive updates from our camera. The last step is adding the default `MainUi` marker as a generic.
+Now we need create our `UiTree` entity. Use the bundle below and attach `SourceFromCamera` component so our `UiTree` will receive updates from our camera. The last step is adding the default `MainUi` marker as a generic.
 
 ```rust
 commands.spawn((
     // This makes the UI entity able to receive camera data
-    MovableByCamera,
+    SourceFromCamera,
 
     // This is our UI system
     UiTreeBundle::<MainUi>::from(UiTree::new2d("Hello UI!")),

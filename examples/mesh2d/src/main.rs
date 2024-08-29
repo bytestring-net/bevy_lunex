@@ -27,7 +27,7 @@ fn setup(mut cmd: Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
             tree: UiTree::new2d("MyUiSystem"),
             ..default()
         },
-        MovableByCamera,
+        SourceFromCamera,
     )).with_children(|ui| {
 
         // Spawn boundary node

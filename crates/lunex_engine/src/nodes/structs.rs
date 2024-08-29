@@ -81,7 +81,7 @@ impl <D, T> NodeTopDataTrait<D> for NodeTree<D, T> {
     }
 
     fn take_topdata(&mut self) -> Option<D> {
-        core::mem::replace(&mut self.data, None)
+        self.data.take()
     }
 
     fn obtain_topdata(&self) -> Option<&D> {
@@ -152,11 +152,11 @@ impl <D, T> NodeGeneralTrait<T> for NodeTree<D, T> {
     }
 
     fn get_name(&self) -> &String {
-        &self.node.get_name()
+        self.node.get_name()
     }
 
     fn get_path(&self) -> &String {
-        &self.node.get_path()
+        self.node.get_path()
     }
 
     fn get_depth(&self) -> f32 {
@@ -226,9 +226,9 @@ impl <D, T: NiceDisplay> NodeDisplayTrait<T> for NodeTree<D, T> {
         self.node.tree(params)
     }
 }
-impl <D, T> Into<Node<T>> for NodeTree<D, T>{
-    fn into(self) -> Node<T> {
-        self.node
+impl <D, T> From<NodeTree<D, T>> for Node<T>{
+    fn from(val: NodeTree<D, T>) -> Self {
+        val.node
     }
 }
 
@@ -308,9 +308,9 @@ impl <T> NodeGeneralTrait<T> for Node<T> {
         let mut node = node.into();
         if !name.borrow().is_empty() {
             if name.borrow() == "." { return Err(NodeError::NameInUse("The special symbol '.' is used to refer to 'self' and is not available for use".to_owned())) }
-            if self.nodes.contains_key(name.borrow()) == false {
+            if !self.nodes.contains_key(name.borrow()) {
                 node.name = name.borrow().to_owned();
-                node.path = if self.path.is_empty() { name.borrow().to_owned() } else { self.path.to_owned() + "/" + name.borrow() };
+                node.path = if self.path.is_empty() { name.borrow().to_string() } else { self.path.to_string() + "/" + name.borrow() };
                 node.depth = self.depth + 1.0;
                 self.nodes.insert(name.borrow().to_owned(), node);
                 Ok(name.borrow().to_owned())
@@ -320,7 +320,7 @@ impl <T> NodeGeneralTrait<T> for Node<T> {
         } else {
             let mut generated_name = format!(".||#:{}", self.nodes.len());
             let mut i = 0;
-            while self.nodes.contains_key(&generated_name) == true {
+            while self.nodes.contains_key(&generated_name) {
                 generated_name = format!(".||#:{}", self.nodes.len()+i);
                 i += 1;
                 if i > 100 { return Err(NodeError::InvalidPath("Failed to generate name, max threshold reached!".to_owned())); }
@@ -440,10 +440,10 @@ impl <T> NodeCreationTrait<T> for Node<T> {
     fn make_node(&mut self, name: impl Borrow<str>) -> Result<String, NodeError> {
         if !name.borrow().is_empty() {
             if name.borrow() == "." { return Err(NodeError::NameInUse("The special symbol '.' is used to refer to 'self' and is not available for use".to_owned())) }
-            if self.nodes.contains_key(name.borrow()) == false {
+            if !self.nodes.contains_key(name.borrow()) {
                 let mut node = Node::new();
                 node.name = name.borrow().to_owned();
-                node.path = if self.path.is_empty() { name.borrow().to_owned() } else { self.path.to_owned() + "/" + name.borrow() };
+                node.path = if self.path.is_empty() { name.borrow().to_string() } else { self.path.to_string() + "/" + name.borrow() };
                 node.depth = self.depth + 1.0;
                 self.nodes.insert(name.borrow().to_owned(), node);
                 Ok(name.borrow().to_owned())
@@ -453,7 +453,7 @@ impl <T> NodeCreationTrait<T> for Node<T> {
         } else {
             let mut generated_name = format!(".||#:{}", self.nodes.len());
             let mut i = 0;
-            while self.nodes.contains_key(&generated_name) == true {
+            while self.nodes.contains_key(&generated_name) {
                 generated_name = format!(".||#:{}", self.nodes.len()+i);
                 i += 1;
                 if i > 100 { return Err(NodeError::InvalidPath("Failed to generate name, max threshold reached!".to_owned())); }
@@ -505,7 +505,7 @@ impl <T> NodeDataTrait<T> for Node<T> {
     }
 
     fn take_data(&mut self) -> Option<T> {
-        core::mem::replace(&mut self.data, None)
+        self.data.take()
     }
 
     fn remove_data(&mut self, path: impl Borrow<str>) -> Result<Option<T>, NodeError> {

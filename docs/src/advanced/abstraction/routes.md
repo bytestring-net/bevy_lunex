@@ -33,7 +33,7 @@ fn build_route(mut commands: Commands, assets: Res<AssetServer>, query: Query<En
             // Here you can spawn the UI
             route.spawn((
                 UiTreeBundle::<MainUi>::from(UiTree::new2d("MyRoute")),
-                MovableByCamera,
+                SourceFromCamera,
             )).with_children(|ui| {
 
                 // Spawn some UI nodes

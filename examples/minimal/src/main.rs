@@ -27,7 +27,7 @@ fn setup(mut cmd: Commands, assets: Res<AssetServer>) {
             tree: UiTree::new2d("MyUiSystem"),
             ..default()
         },
-        MovableByCamera,
+        SourceFromCamera,
     )).with_children(|ui| {
 
         // Spawn boundary node

@@ -12,7 +12,7 @@ use lunex_engine::*;
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn compute_ui<T:Component, N:Default + Component>(
-    mut query: Query<(&Dimension, &mut UiTree<T, N>, Option<&MovableByCamera>), (With<UiLink<T>>, Or<(Changed<UiTree<T, N>>, Changed<Dimension>)>)>,
+    mut query: Query<(&Dimension, &mut UiTree<T, N>, Option<&SourceFromCamera>), (With<UiLink<T>>, Or<(Changed<UiTree<T, N>>, Changed<Dimension>)>)>,
     window: Query<&bevy::window::Window, With<PrimaryWindow>>,
 ) {
     let scale = if let Ok(window) = window.get_single() { window.resolution.scale_factor() } else { 1.0 };
@@ -89,7 +89,7 @@ pub fn debug_print_tree<T:Component, N:Default + Component>(
 ///   is marked with `(T)` component at the same time.
 pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
     source: Query<(&Camera, Option<&OrthographicProjection>), (With<T>, Changed<Camera>)>,
-    mut destination: Query<&mut Dimension, (With<UiTree<T, N>>, With<MovableByCamera>)>
+    mut destination: Query<&mut Dimension, (With<UiTree<T, N>>, With<SourceFromCamera>)>
 ) {
     // Undesired behaviour if source.len() > 1
     for (cam, o_projection) in &source {
@@ -104,7 +104,7 @@ pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
     }
 }
 
-/// This system takes [`Camera`] data and overwrites querried [`Transform`] + [`MovableByCamera`].
+/// This system takes [`Camera`] data and overwrites querried [`Transform`] + [`SourceFromCamera`].
 /// It is mainly used to pipe [`Camera`] data into [`UiTree`] for positioning.
 /// ## 📦 Types
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
@@ -115,7 +115,7 @@ pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
 ///   is marked with `(T)` component at the same time.
 pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
     source: Query<(&Camera, Option<&OrthographicProjection>), (With<T>, Changed<Camera>)>,
-    mut destination: Query<&mut Transform, (With<UiTree<T, N>>, With<MovableByCamera>)>,
+    mut destination: Query<&mut Transform, (With<UiTree<T, N>>, With<SourceFromCamera>)>,
     window: Query<&bevy::window::Window, With<PrimaryWindow>>,
 ) {
     // Undesired behaviour if source.len() > 1
@@ -144,7 +144,7 @@ pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
 ///   Otherwise, it will lead to value overwriting. Just make sure only one camera
 ///   is marked with `(T)` component at the same time.
 pub fn touch_camera_if_uitree_added<T:Component, N:Default + Component>(
-    query: Query<Entity, (Added<UiTree<T, N>>, With<MovableByCamera>)>,
+    query: Query<Entity, (Added<UiTree<T, N>>, With<SourceFromCamera>)>,
     mut camera: Query<&mut Camera, With<T>>,
 ){
     if !query.is_empty() {
@@ -227,7 +227,7 @@ pub fn send_stack_to_node<T:Component, N:Default + Component>(
                     if let Some(container) = node.obtain_data_mut() {
                         #[cfg(feature = "verbose")]
                         info!("{} {} - Received Stack data", "->".blue(), link.path.yellow().bold());
-                        container.stack = *stack;
+                        container.stack = stack.clone();
                     }
                 }
             }
@@ -386,7 +386,7 @@ pub fn element_sprite_size_from_dimension<T: Component>(
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_image_size_from_dimension<T: Component>(
-    query: Query<(&Handle<Image>, &Dimension), (With<UiLink<T>>, With<Element>, With<MovableByCamera>, Changed<Dimension>)>,
+    query: Query<(&Handle<Image>, &Dimension), (With<UiLink<T>>, With<Element>, With<SourceFromCamera>, Changed<Dimension>)>,
     mut images: ResMut<Assets<Image>>,
 ) {
     for (handle, dimension) in &query {

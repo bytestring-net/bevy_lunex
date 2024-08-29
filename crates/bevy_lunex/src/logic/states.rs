@@ -51,14 +51,7 @@ pub struct UiAnimator<S: UiState> {
 impl <S: UiState> UiAnimator<S> {
     /// Creates new struct
     pub fn new() -> Self {
-        UiAnimator {
-            marker: PhantomData,
-            animation_direction: -1.0,
-            animation_transition: 0.0,
-            receiver: false,
-            animation_speed_backward: 8.0,
-            animation_speed_forward: 8.0,
-        }
+        Self::default()
     }
     /// Marks this hover as receiver
     pub fn receiver(mut self, receiver: bool) -> Self {
@@ -78,6 +71,18 @@ impl <S: UiState> UiAnimator<S> {
     /// Checks if animation is moving forward
     pub fn is_forward(&self) -> bool {
         self.animation_direction == 1.0
+    }
+}
+impl <S: UiState> Default for UiAnimator<S> {
+    fn default() -> Self {
+        Self {
+            marker: PhantomData,
+            animation_direction: -1.0,
+            animation_transition: 0.0,
+            receiver: false,
+            animation_speed_backward: 8.0,
+            animation_speed_forward: 8.0,
+        }
     }
 }
 fn ui_animation<S: UiState>(time: Res<Time>, mut query: Query<&mut UiAnimator<S>>) {
@@ -227,6 +232,11 @@ impl <T:Component, N:Default + Component, S: UiState> Plugin for StatePlugin<T,N
             .add_systems(Update, (ui_animation::<S>, set_ui_color::<S>.after(UiSystems::Process)).chain())
 
             .add_systems(Update, send_layout_to_node::<T, N, S>.in_set(UiSystems::Send).before(send_content_size_to_node::<T, N>));
+    }
+}
+impl <T:Component, N:Default + Component, S: UiState> Default for StatePlugin<T,N,S> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
