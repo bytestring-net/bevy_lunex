@@ -25,7 +25,7 @@
 - [Animation](advanced/animation.md)
 - [2D & 3D](advanced/2d_and_3d.md)
 - [Worldspace UI](advanced/worldspace_ui.md)
-- [Custom rendering](advanced/rendering.md)
+- [Custom rendering]()
 
 -----------
 
