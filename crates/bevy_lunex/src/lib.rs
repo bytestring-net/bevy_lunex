@@ -1,4 +1,6 @@
 #![doc = include_str!("../README.md")]
+#![allow(clippy::type_complexity)]
+#![allow(clippy::too_many_arguments)]
 
 // #==============================#
 // #=== IMPORTS FOR THIS CRATE ===#

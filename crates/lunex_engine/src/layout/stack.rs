@@ -28,7 +28,7 @@ pub enum StackDirection {
 /// let margin = StackMargin::Evenly; // -> All subnodes will inherit 1sp on both sides except 1st
 /// let margin = StackMargin::Around; // -> All subnodes will inherit 1sp on both sides
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub enum StackMargin {
     /// Default, does nothing.
     #[default]
@@ -44,7 +44,7 @@ pub enum StackMargin {
     /// All subnodes will inherit 1sp on both sides.
     Around,
     /// Manually set margin for all subnodes.
-    Manual (UiValue<Vec4>),
+    Manual(Box<UiValue<Vec4>>),
 }
 
 
@@ -58,7 +58,7 @@ pub enum StackMargin {
 /// let stack: UiStack = UiStack::new().flipped(true);
 /// ```
 #[cfg_attr(feature = "bevy", derive(Component))]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct UiStack {
     /// Populating direction
     pub direction: StackDirection,
@@ -70,17 +70,6 @@ pub struct UiStack {
     pub gap: UiValue<Vec2>,
     /// The margin that subnodes should inherit.
     pub margin: StackMargin,
-}
-impl Default for UiStack {
-    fn default() -> Self {
-        UiStack {
-            direction: Default::default(),
-            flipped: false,
-            inverted: false,
-            gap: Default::default(),
-            margin: Default::default(),
-        }
-    }
 }
 impl UiStack {
     /// Creates new empty Stack.

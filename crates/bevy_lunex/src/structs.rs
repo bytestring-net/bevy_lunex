@@ -59,7 +59,7 @@ impl UiState for Outro {
 
 /// This struct marks [`UiTree`] entity to receive piped [`Camera`] size and position to its [`Dimension`] and [`Transform`] component.
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
-pub struct MovableByCamera;
+pub struct SourceFromCamera;
 
 /// This struct is used to mark linked UI entities as elements for easier rendering.
 /// They are picked up by different systems, that ensure their piped [`Transform`] is centered,
@@ -205,9 +205,9 @@ pub trait PackageLayout {
 }
 
 // Implement packaging 
-impl <S> Into<UiLayout<S>> for ui::Boundary {
-    fn into(self) -> UiLayout<S> {
-        self.pack::<S>()
+impl <S> From<ui::Boundary> for UiLayout<S> {
+    fn from(val: ui::Boundary) -> Self {
+        val.pack::<S>()
     }
 }
 impl PackageLayout for ui::Boundary {
@@ -215,9 +215,9 @@ impl PackageLayout for ui::Boundary {
         UiLayout::<S>::from(self)
     }
 }
-impl <S> Into<UiLayout<S>> for ui::Window {
-    fn into(self) -> UiLayout<S> {
-        self.pack::<S>()
+impl <S> From<ui::Window> for UiLayout<S> {
+    fn from(val: ui::Window) -> Self {
+        val.pack::<S>()
     }
 }
 impl PackageLayout for ui::Window {
@@ -225,9 +225,9 @@ impl PackageLayout for ui::Window {
         UiLayout::<S>::from(self)
     }
 }
-impl <S> Into<UiLayout<S>> for ui::Solid {
-    fn into(self) -> UiLayout<S> {
-        self.pack::<S>()
+impl <S> From<ui::Solid> for UiLayout<S> {
+    fn from(val: ui::Solid) -> Self {
+        val.pack::<S>()
     }
 }
 impl PackageLayout for ui::Solid {
@@ -235,9 +235,9 @@ impl PackageLayout for ui::Solid {
         UiLayout::<S>::from(self)
     }
 }
-impl <S> Into<UiLayout<S>> for ui::Div {
-    fn into(self) -> UiLayout<S> {
-        self.pack::<S>()
+impl <S> From<ui::Div> for UiLayout<S> {
+    fn from(val: ui::Div) -> Self {
+        val.pack::<S>()
     }
 }
 impl PackageLayout for ui::Div {
@@ -289,7 +289,7 @@ impl <T> UiLink<T> {
     }
     pub fn new() -> Self {
         UiLink {
-            path: format!("/"),
+            path: "/".to_string(),
             marker: PhantomData,
         }
     }
@@ -297,7 +297,7 @@ impl <T> UiLink<T> {
 impl <T> Default for UiLink<T> {
     fn default() -> Self {
         UiLink {
-            path: String::new(),
+            path: "/".to_string(),
             marker: PhantomData,
         }
     }

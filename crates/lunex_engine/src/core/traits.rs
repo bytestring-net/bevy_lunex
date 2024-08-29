@@ -145,7 +145,7 @@ pub trait UiNodeDataTrait<N> {
     /// * Use [`UiNodeDataTrait::insert_ui_data`] for hierarchy insert `(supports path recursion)`
     /// ## ⚠️ Panics
     /// * Panics if [`UiNode`] is missing [`NodeData`] struct that holds layout data + user data.
-    /// Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
+    ///   Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
     fn add_ui_data(&mut self, data: N) -> Option<N>;
     /// ## 🚸 Recursive
     /// Inserts new data to this node or any other subnode and returns the previous data.
@@ -153,14 +153,14 @@ pub trait UiNodeDataTrait<N> {
     /// * Use [`UiNodeDataTrait::add_ui_data`] for direct insert on this node `(no recursion)`
     /// ## ⚠️ Panics
     /// * Panics if [`UiNode`] is missing [`NodeData`] struct that holds layout data + user data.
-    /// Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
+    ///   Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
     fn insert_ui_data(&mut self, path: impl Borrow<str>, data: N) -> Result<Option<N>, NodeError>;
     /// Removes data from this node and returns them.
     /// ## 📌 Note
     /// * Use [`UiNodeDataTrait::remove_ui_data`] for hierarchy retrieval `(supports path recursion)`
     /// ## ⚠️ Panics
     /// * Panics if [`UiNode`] is missing [`NodeData`] struct that holds layout data + user data.
-    /// Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
+    ///   Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
     fn take_ui_data(&mut self) -> Option<N>;
     /// ## 🚸 Recursive
     /// Removes data from this node or any other subnode and returns them.
@@ -168,21 +168,21 @@ pub trait UiNodeDataTrait<N> {
     /// * Use [`UiNodeDataTrait::take_ui_data`] for direct retrieval on this node `(no recursion)`
     /// ## ⚠️ Panics
     /// * Panics if [`UiNode`] is missing [`NodeData`] struct that holds layout data + user data.
-    /// Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
+    ///   Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
     fn remove_ui_data(&mut self, path: impl Borrow<str>) -> Result<Option<N>, NodeError>;
     /// Borrows data from this node.
     /// ## 📌 Note
     /// * Use [`UiNodeDataTrait::borrow_ui_data`] for hierarchy retrieval `(supports path recursion)`
     /// ## ⚠️ Panics
     /// * Panics if [`UiNode`] is missing [`NodeData`] struct that holds layout data + user data.
-    /// Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
+    ///   Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
     fn obtain_ui_data(&self) -> Option<&N>;
     /// Borrows data from this node as mut.
     /// ## 📌 Note
     /// * Use [`UiNodeDataTrait::borrow_ui_data_mut`] for hierarchy retrieval `(supports path recursion)`
     /// ## ⚠️ Panics
     /// * Panics if [`UiNode`] is missing [`NodeData`] struct that holds layout data + user data.
-    /// Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
+    ///   Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
     fn obtain_ui_data_mut(&mut self) -> Option<&mut N>;
     /// ## 🚸 Recursive
     /// Borrows data from this node or any other subnode.
@@ -190,7 +190,7 @@ pub trait UiNodeDataTrait<N> {
     /// * Use [`UiNodeDataTrait::obtain_ui_data`] for direct retrieval on this node `(no recursion)`
     /// ## ⚠️ Panics
     /// * Panics if [`UiNode`] is missing [`NodeData`] struct that holds layout data + user data.
-    /// Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
+    ///   Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
     fn borrow_ui_data(&self, path: impl Borrow<str>) -> Result<Option<&N>, NodeError>;
     /// ## 🚸 Recursive
     /// Borrows data from this node or any other subnode as mut.
@@ -198,7 +198,7 @@ pub trait UiNodeDataTrait<N> {
     /// * Use [`UiNodeDataTrait::obtain_ui_data_mut`] for direct retrieval on this node `(no recursion)`
     /// ## ⚠️ Panics
     /// * Panics if [`UiNode`] is missing [`NodeData`] struct that holds layout data + user data.
-    /// Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
+    ///   Wont happen unless somebody messed with internals using elevated access methods _(not in prelude)_.
     fn borrow_ui_data_mut(&mut self, path: impl Borrow<str>) -> Result<Option<&mut N>, NodeError>;
 }
 impl <T, N: Default + Component> UiNodeDataTrait<N> for UiTree<T, N> {
@@ -238,11 +238,11 @@ impl <N: Default + Component> UiNodeDataTrait<N> for UiNode<N> {
     }
     fn take_ui_data(&mut self) -> Option<N> {
         let Some(container) = self.obtain_data_mut() else { panic!("This UiNode is missing Ui data!") };
-        core::mem::replace(&mut container.data, None)
+        container.data.take()
     }
     fn remove_ui_data(&mut self, path: impl Borrow<str>) -> Result<Option<N>, NodeError> {
         let Some(container) = self.borrow_data_mut(path)? else { panic!("This UiNode is missing Ui data!") };
-        Ok(core::mem::replace(&mut container.data, None))
+        Ok(container.data.take())
     }
     fn obtain_ui_data(&self) -> Option<&N> {
         let Some(container) = self.obtain_data() else { panic!("This UiNode is missing Ui data!") };
@@ -279,9 +279,10 @@ impl <T, N: Default + Component> UiNodeTreeInitTrait for UiTree<T, N> {
     }
     fn new3d(name: impl Borrow<str>) -> Self {
         let mut tree: UiTree<T, N> = NodeTreeInitTrait::new(name);
-        let mut md = MasterData::default();
-        md.abs_scale = 0.001;
-        tree.add_topdata(md);
+        tree.add_topdata(MasterData {
+            abs_scale : 0.001,
+            ..Default::default()
+        });
         tree.add_data(NodeData::default());
         tree
     }

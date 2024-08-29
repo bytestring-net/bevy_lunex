@@ -115,7 +115,7 @@ impl <N:Default + Component> UiNodeComputeTrait for UiNode<N> {
 
         } else { return; };
 
-        if skip == false {
+        if !skip {
             if is_parametric {
                 //compute divs with inherited scale
                 //self.compute_content(parent.size, Vec4::ZERO, absolute_scale, font_size);

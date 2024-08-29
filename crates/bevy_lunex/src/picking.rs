@@ -70,7 +70,7 @@ pub fn lunex_picking(
                         return None;
                     }
 
-                    let pos = if !element.is_some() { dimension.size.invert_y() / 2.0 } else { Vec2::ZERO };
+                    let pos = if element.is_none() { dimension.size.invert_y() / 2.0 } else { Vec2::ZERO };
 
                     let rect = Rect::from_center_size(pos, dimension.size);
 

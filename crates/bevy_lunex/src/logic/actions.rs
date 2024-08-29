@@ -187,7 +187,7 @@ pub struct SetUiLayout {
 fn apply_event_set_ui_layout(mut events: EventReader<SetUiLayout>, mut query: Query<&mut UiLayout>) {
     for event in events.read() {
         if let Ok(mut layout) = query.get_mut(event.target) {
-            if layout.clone() != event.layout{
+            if *layout != event.layout{
                 *layout = event.layout;
             }
         }

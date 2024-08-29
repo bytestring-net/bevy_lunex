@@ -18,6 +18,7 @@ use crate::{NiceDisplay, Rectangle2D, UiValue, UiValueEvaluate, Ab, Rl};
 /// ```
 /// The expected range is `-1.0` to `1.0`, but you can extrapolate.
 #[cfg_attr(feature = "bevy", derive(Component))]
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Layout {
     Boundary(Boundary),
@@ -210,9 +211,9 @@ impl Anchor {
     }
 }
 #[cfg(feature = "bevy")]
-impl Into<Anchor> for bevy::sprite::Anchor {
-    fn into(self) -> Anchor {
-        match self {
+impl From<bevy::sprite::Anchor> for Anchor {
+    fn from(val: bevy::sprite::Anchor) -> Self {
+        match val {
             bevy::sprite::Anchor::Center => Anchor::Center,
             bevy::sprite::Anchor::BottomLeft => Anchor::BottomLeft,
             bevy::sprite::Anchor::BottomCenter => Anchor::BottomCenter,
@@ -247,9 +248,9 @@ impl Align {
     pub const END: Align = Align(1.0);
     pub const RIGHT: Align = Align(1.0);
 }
-impl Into<Align> for f32 {
-    fn into(self) -> Align {
-        Align(self)
+impl From<f32> for Align {
+    fn from(val: f32) -> Self {
+        Align(val)
     }
 }
 impl NiceDisplay for Align {
@@ -413,9 +414,9 @@ impl Boundary {
         self.into()
     }
 }
-impl Into<Layout> for Boundary {
-    fn into(self) -> Layout {
-        Layout::Boundary(self)
+impl From<Boundary> for Layout {
+    fn from(val: Boundary) -> Self {
+        Layout::Boundary(val)
     }
 }
 impl NiceDisplay for Boundary {
@@ -537,9 +538,9 @@ impl Window {
         self.into()
     }
 }
-impl Into<Layout> for Window {
-    fn into(self) -> Layout {
-        Layout::Window(self)
+impl From<Window> for Layout {
+    fn from(val: Window) -> Self {
+        Layout::Window(val)
     }
 }
 impl NiceDisplay for Window {
@@ -665,9 +666,9 @@ impl Solid {
         self.into()
     }
 }
-impl Into<Layout> for Solid {
-    fn into(self) -> Layout {
-        Layout::Solid(self)
+impl From<Solid> for Layout {
+    fn from(val: Solid) -> Self {
+        Layout::Solid(val)
     }
 }
 impl NiceDisplay for Solid {
@@ -1059,9 +1060,9 @@ impl Div {
         self.into()
     }
 }
-impl Into<Layout> for Div {
-    fn into(self) -> Layout {
-        Layout::Div(self)
+impl From<Div> for Layout {
+    fn from(val: Div) -> Self {
+        Layout::Div(val)
     }
 }
 impl NiceDisplay for Div {

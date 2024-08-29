@@ -81,11 +81,11 @@ impl Rectangle2D {
         self
     }    
 }
-impl Into<Rectangle3D> for Rectangle2D {
-    fn into(self) -> Rectangle3D {
+impl From<Rectangle2D> for Rectangle3D {
+    fn from(val: Rectangle2D) -> Self {
         Rectangle3D {
-            pos: self.pos.extend(0.0),
-            size: self.size,
+            pos: val.pos.extend(0.0),
+            size: val.size,
             ..Default::default()
         }
     }
@@ -112,17 +112,17 @@ impl Rectangle3D {
         }
     }
 }
-impl Into<Rectangle2D> for Rectangle3D {
-    fn into(self) -> Rectangle2D {
+impl From<Rectangle3D> for Rectangle2D {
+    fn from(val: Rectangle3D) -> Self {
         Rectangle2D {
-            pos: self.pos.truncate(),
-            size: self.size,
+            pos: val.pos.truncate(),
+            size: val.size,
         }
     }
 }
 impl NiceDisplay for Rectangle3D {
     fn to_nicestr(&self) -> String {
-        let text = format!("[pos: {} size: {}]", self.pos.to_string(), self.size.to_string());
+        let text = format!("[pos: {} size: {}]", self.pos, self.size);
         format!("{} {}", "Computed".bright_magenta(), text.black())
     }
 }
