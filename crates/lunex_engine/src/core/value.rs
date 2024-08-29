@@ -32,7 +32,7 @@ macro_rules! uivalue_declare {
         /// let c: UiValue<f32> = Sp(5.0).into();     // -> 5 space
         /// let d: UiValue<Vec2> = (Ab(20.0), Em(2.0)).into() // -> [20px, 2em]
         /// ```
-        #[derive(Debug, Default, Clone, Copy, PartialEq)]
+        #[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
         pub struct UiValue<T> {
             $(
                 $ufield: Option<T>,
@@ -562,7 +562,7 @@ macro_rules! unit_cross_operations {
 /// let a: Ab<f32> = Ab(4.0) + Ab(6.0); // -> 10px
 /// let b: Ab<f32> = Ab(4.0) * 2.0;     // -> 8px
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Deref, DerefMut, Reflect)]
 pub struct Ab<T>(pub T);
 
 /// **Relative** - Represents scalable unit `0% to 100%`. `120%` is allowed.
@@ -572,7 +572,7 @@ pub struct Ab<T>(pub T);
 /// let a: Rl<f32> = Rl(25.0) + Rl(40.0); // -> 65%
 /// let b: Rl<f32> = Rl(25.0) * 3.0;      // -> 75%
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Deref, DerefMut, Reflect)]
 pub struct Rl<T>(pub T);
 
 /// **Relative width** - Represents scalable unit `0% to 100%`. `120%` is allowed.
@@ -583,7 +583,7 @@ pub struct Rl<T>(pub T);
 /// let a: Rw<f32> = Rw(25.0) + Rw(40.0); // -> 65%
 /// let b: Rw<f32> = Rw(25.0) * 3.0;      // -> 75%
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Deref, DerefMut, Reflect)]
 pub struct Rw<T>(pub T);
 
 /// **Relative height** - Represents scalable unit `0% to 100%`. `120%` is allowed.
@@ -594,7 +594,7 @@ pub struct Rw<T>(pub T);
 /// let a: Rh<f32> = Rh(25.0) + Rh(40.0); // -> 65%
 /// let b: Rh<f32> = Rh(25.0) * 3.0;      // -> 75%
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Deref, DerefMut, Reflect)]
 pub struct Rh<T>(pub T);
 
 /// **Size of M** - Represents unit that is the size of the symbol `M`. Which is `16px` with `font size 16px` and so on.
@@ -603,7 +603,7 @@ pub struct Rh<T>(pub T);
 /// # use lunex_engine::Em;
 /// let a: Em<f32> = Em(1.0) + Em(2.0); // -> 3em == 48px with font size 16px
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Deref, DerefMut, Reflect)]
 pub struct Em<T>(pub T);
 
 /// **Space** - Represents proportional empty space left in the parent container. Requires to know space unit of surrounding
@@ -616,7 +616,7 @@ pub struct Em<T>(pub T);
 /// let b: Sp<f32> = Sp(2.0) * 3.0;     // -> 6 space
 /// ```
 /// If container `a` and `b` were next to each other, they would split remaining space in **3:6** ratio.
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Deref, DerefMut, Reflect)]
 pub struct Sp<T>(pub T);
 
 /// **Viewport** - Represents scalable unit `0% to 100%` of the root container. `120%` is allowed.
@@ -626,7 +626,7 @@ pub struct Sp<T>(pub T);
 /// let a: Vp<f32> = Vp(25.0) + Vp(40.0); // -> 65%
 /// let b: Vp<f32> = Vp(25.0) * 3.0;      // -> 75%
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Deref, DerefMut, Reflect)]
 pub struct Vp<T>(pub T);
 
 /// **Viewport width** - Represents scalable unit `0% to 100%` of the root container. `120%` is allowed.
@@ -637,7 +637,7 @@ pub struct Vp<T>(pub T);
 /// let a: Vw<f32> = Vw(25.0) + Vw(40.0); // -> 65%
 /// let b: Vw<f32> = Vw(25.0) * 3.0;      // -> 75%
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Deref, DerefMut, Reflect)]
 pub struct Vw<T>(pub T);
 
 /// **Viewport Height** - Represents scalable unit `0% to 100%` of the root container. `120%` is allowed.
@@ -648,11 +648,11 @@ pub struct Vw<T>(pub T);
 /// let a: Vh<f32> = Vh(25.0) + Vh(40.0); // -> 65%
 /// let b: Vh<f32> = Vh(25.0) * 3.0;      // -> 75%
 /// ```
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Deref, DerefMut, Reflect)]
 pub struct Vh<T>(pub T);
 
 /// **Unit type** - Enum with all possible ui unit types.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Reflect)]
 pub enum UiValueType<T> {
     Ab(Ab<T>),
     Rl(Rl<T>),

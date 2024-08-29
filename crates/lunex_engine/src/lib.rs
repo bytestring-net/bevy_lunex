@@ -23,6 +23,8 @@ pub mod prelude {
 
 pub(crate) mod import {
     pub(crate) use std::borrow::Borrow;
+    pub(crate) use bevy::reflect::Reflect;
+    pub(crate) use bevy::prelude::{Component, Deref, DerefMut};
 
     pub(crate) use indexmap::IndexMap;
     pub(crate) use bevy::utils::HashMap;

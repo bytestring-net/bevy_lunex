@@ -16,4 +16,3 @@
   thiserror.workspace = true
 
 [features]
-  bevy  = []

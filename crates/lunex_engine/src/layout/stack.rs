@@ -1,6 +1,3 @@
-#[cfg(feature = "bevy")]
-use bevy::prelude::Component;
-
 use crate::import::*;
 use crate::UiValue;
 
@@ -57,8 +54,7 @@ pub enum StackMargin {
 /// # use lunex_engine::UiStack;
 /// let stack: UiStack = UiStack::new().flipped(true);
 /// ```
-#[cfg_attr(feature = "bevy", derive(Component))]
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, Component)]
 pub struct UiStack {
     /// Populating direction
     pub direction: StackDirection,

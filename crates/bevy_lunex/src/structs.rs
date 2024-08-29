@@ -73,7 +73,7 @@ pub struct Element;
 
 /// This struct holds rectangular data. If the component covers some kind of 2D area, it should be stored in this component.
 /// Lunex uses this component to mirror node size in & out from parent [`UiTree`].
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Dimension {
     pub size: Vec2,
 }
@@ -86,7 +86,7 @@ impl Dimension {
 }
 
 /// # WIP - used for Div layout
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct UiContent {
     pub size: Vec2,
 }
@@ -98,7 +98,7 @@ impl UiContent {
 
 
 /// This struct is used to specify size of the font in UI.
-#[derive(Component, Debug, Clone, Copy, PartialEq)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Reflect)]
 pub struct UiTextSize {
     /// The unit type and scale value of the text height
     pub size: UiValueType<f32>,
@@ -123,7 +123,7 @@ impl UiTextSize {
 // #=======================#
 // #=== MAIN COMPONENTS ===#
 
-#[derive(Component, Debug, Copy, Clone, PartialEq)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Reflect)]
 pub struct UiLayout<S = Base> {
     pub layout: Layout,
     state: PhantomData<S>,
@@ -269,7 +269,7 @@ impl Default for UiLayoutController {
 
 /// This struct is a string reference to a specific node in a parent [`UiTree`].
 /// Lunex uses this component to locate what data this entity should be working with.
-#[derive(Component, Debug, Clone, PartialEq)]
+#[derive(Component, Debug, Clone, PartialEq, Reflect)]
 pub struct UiLink<T = MainUi> {
     pub path: String,
     marker: PhantomData<T>,
@@ -307,7 +307,7 @@ impl <T> Default for UiLink<T> {
 /// This struct holds depth bias that will be relatively added to `depth` in the layout calculation.
 /// Nodes with higher depth bias will be placed on top of nodes with lower depth bias.
 /// It is recursive.
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct UiDepthBias (pub f32);
 
 

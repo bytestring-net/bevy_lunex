@@ -12,7 +12,7 @@
 [dependencies]
   bevy             = { workspace = true }
   colored          = { workspace = true }
-  lunex_engine     = { workspace = true, features = ["bevy"] }
+  lunex_engine     = { workspace = true }
   bevy_kira_audio  = { workspace = true, optional = true }
   bevy_mod_picking = { workspace = true }
 
