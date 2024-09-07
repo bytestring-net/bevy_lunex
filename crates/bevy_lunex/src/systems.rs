@@ -8,9 +8,8 @@ use lunex_engine::*;
 
 /// This system computes [`UiTree`] with data from querried [`Dimension`] component if there is a change.
 /// ## 📦 Types
-/// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn compute_ui<T:Component, N:Default + Component>(
     mut query: Query<(&Dimension, &mut UiTree<T, N>, Option<&SourceFromCamera>), (With<UiLink<T>>, Or<(Changed<UiTree<T, N>>, Changed<Dimension>)>)>,
     window: Query<&bevy::window::Window, With<PrimaryWindow>>,
@@ -30,10 +29,9 @@ pub fn compute_ui<T:Component, N:Default + Component>(
 
 /// This system draws the outlines of [`UiTree`] nodes as gizmos.
 /// ## 📦 Types
-/// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-/// * Generic `(G)` - `GizmoConfigGroup` that will be used to draw the outlines
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
+/// * Generic `(G)` - [`GizmoConfigGroup`] that will be used to draw the outlines
 pub fn debug_draw_gizmo<T:Component, N:Default + Component, G:GizmoConfigGroup>(
     mut query: Query<(&UiTree<T, N>, &GlobalTransform)>,
     mut gizmos: Gizmos<G>
@@ -64,9 +62,8 @@ pub fn debug_draw_gizmo<T:Component, N:Default + Component, G:GizmoConfigGroup>(
 
 /// This system prints [`UiTree`] if there is a change.
 /// ## 📦 Types
-/// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn debug_print_tree<T:Component, N:Default + Component>(
     uis: Query<&UiTree<T, N>, Changed<UiTree<T, N>>>
 ) {
@@ -79,71 +76,65 @@ pub fn debug_print_tree<T:Component, N:Default + Component>(
 // #=========================#
 // #=== PIPING FOR UITREE ===#
 
-/// This system takes [`Camera`] data and overwrites querried [`Dimension`] data.
+/// This system takes [`Camera`] data and overwrites querried [`Dimension`] + [`SourceFromCamera`].
 /// It is mainly used to pipe [`Camera`] data into [`UiTree`] for root node computation.
 /// ## 📦 Types
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-/// ## ⚠️ Warning
-/// * Developer should ensure that source query returns only one camera.
-///   Otherwise, it will lead to value overwriting. Just make sure only one camera
-///   is marked with `(T)` component at the same time.
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn fetch_dimension_from_camera<T:Component, N:Default + Component>(
     source: Query<(&Camera, Option<&OrthographicProjection>), (With<T>, Changed<Camera>)>,
     mut destination: Query<&mut Dimension, (With<UiTree<T, N>>, With<SourceFromCamera>)>
 ) {
-    // Undesired behaviour if source.len() > 1
-    for (cam, o_projection) in &source {
-        for mut dimension in &mut destination {
-            // Extract camera size
-            if let Some(size) = cam.physical_viewport_size() {
-                #[cfg(feature = "verbose")]
-                info!("{} {} - Fetched Dimension data from Camera", "->".blue(), "UiTree".purple().bold());
-                dimension.size = Vec2::from((size.x as f32, size.y as f32)) * if let Some(p) = o_projection { p.scale } else { 1.0 };
-            }
+    if source.is_empty() { return; }
+    let Ok((cam, o_projection)) = source.get_single() else {
+        warn!("Multiple D cameras with UI marker component. Only a single camera can be used as source!");
+        return;
+    };
+
+    for mut dimension in &mut destination {
+        // Extract camera size
+        if let Some(size) = cam.physical_viewport_size() {
+            #[cfg(feature = "verbose")]
+            info!("{} {} - Fetched Dimension data from Camera", "->".blue(), "UiTree".purple().bold());
+            dimension.size = Vec2::from((size.x as f32, size.y as f32)) * if let Some(p) = o_projection { p.scale } else { 1.0 };
         }
     }
 }
 
 /// This system takes [`Camera`] data and overwrites querried [`Transform`] + [`SourceFromCamera`].
-/// It is mainly used to pipe [`Camera`] data into [`UiTree`] for positioning.
+/// It is mainly used to pipe [`Camera`] data into [`UiTree`] for root node computation.
 /// ## 📦 Types
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-/// ## ⚠️ Warning
-/// * Developer should ensure that source query returns only one camera.
-///   Otherwise, it will lead to value overwriting. Just make sure only one camera
-///   is marked with `(T)` component at the same time.
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn fetch_transform_from_camera<T:Component, N:Default + Component>(
     source: Query<(&Camera, Option<&OrthographicProjection>), (With<T>, Changed<Camera>)>,
     mut destination: Query<&mut Transform, (With<UiTree<T, N>>, With<SourceFromCamera>)>,
     window: Query<&bevy::window::Window, With<PrimaryWindow>>,
 ) {
-    // Undesired behaviour if source.len() > 1
-    for (cam, o_projection) in &source {
-        let scale = if let Ok(window) = window.get_single() { window.resolution.scale_factor() } else { 1.0 };
-        for mut transform in &mut destination {
-            // Extract camera size
-            if let Some(size) = cam.physical_viewport_size() {
-                #[cfg(feature = "verbose")]
-                info!("{} {} - Fetched Transform data from Camera", "->".blue(), "UiTree".purple().bold());
-                let s = if let Some(p) = o_projection { p.scale } else { 1.0 };
-                transform.translation.x = (size.x as f32 /-2.0 / scale) * s;
-                transform.translation.y = (size.y as f32 / 2.0 / scale) * s;
-            }
+    if source.is_empty() { return; }
+    let Ok((cam, o_projection)) = source.get_single() else {
+        warn!("Multiple cameras with UI marker component. Only a single camera can be used as source!");
+        return;
+    };
+
+    let scale = if let Ok(window) = window.get_single() { window.resolution.scale_factor() } else { 1.0 };
+    for mut transform in &mut destination {
+        // Extract camera size
+        if let Some(size) = cam.physical_viewport_size() {
+            #[cfg(feature = "verbose")]
+            info!("{} {} - Fetched Transform data from Camera", "->".blue(), "UiTree".purple().bold());
+            let s = if let Some(p) = o_projection { p.scale } else { 1.0 };
+            transform.translation.x = (size.x as f32 /-2.0 / scale) * s;
+            transform.translation.y = (size.y as f32 / 2.0 / scale) * s;
         }
     }
 }
 
-/// This system listens for added [`UiTree`] component and if it finds one, mutable accesses all [`Camera`] without changing them.
-/// This way UiTrees that are spawned independently get the correct size piped into them.
+/// This system listens for added [`UiTree`] components and if it finds one, mutable accesses all [`Camera`]s without changing them.
+/// This way [`UiTree`]s that are spawned independently get the correct size immidietly piped into them.
 /// ## 📦 Types
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-/// ## ⚠️ Warning
-/// * Developer should ensure that source query returns only one camera.
-///   Otherwise, it will lead to value overwriting. Just make sure only one camera
-///   is marked with `(T)` component at the same time.
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn touch_camera_if_uitree_added<T:Component, N:Default + Component>(
     query: Query<Entity, (Added<UiTree<T, N>>, With<SourceFromCamera>)>,
     mut camera: Query<&mut Camera, With<T>>,
@@ -161,6 +152,10 @@ pub fn touch_camera_if_uitree_added<T:Component, N:Default + Component>(
 // #=== PIPING FOR NODES ===#
 
 /// This system takes [`UiLayout`] data and overwrites coresponding [`UiTree`] data. If node is not found, it creates new ones along the path.
+/// ## 📦 Types
+/// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
+/// * Generic `(S)` - A state generic for the given layout, as entities can have multiple layouts
 pub fn send_layout_to_node<T:Component, N:Default + Component, S: UiState>(
     mut uis: Query<(&mut UiTree<T, N>, &Children)>,
     query: Query<(&UiLink<T>, &UiLayout<S>), (Changed<UiLayout<S>>, Without<UiTree<T, N>>)>,
@@ -185,8 +180,8 @@ pub fn send_layout_to_node<T:Component, N:Default + Component, S: UiState>(
 
 /// This system takes [`UiLayoutController`] data and overwrites coresponding [`UiTree`] data.
 /// ## 📦 Types
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn send_layout_control_to_node<T:Component, N:Default + Component>(
     mut uis: Query<(&mut UiTree<T, N>, &Children)>,
     query: Query<(&UiLink<T>, &UiLayoutController), Changed<UiLayoutController>>,
@@ -210,10 +205,11 @@ pub fn send_layout_control_to_node<T:Component, N:Default + Component>(
     }
 }
 
+/// # WORK IN PROGRESS!!! DOES NOTHING CURRENTLY.
 /// This system takes [`UiStack`] data and overwrites coresponding [`UiTree`] data.
 /// ## 📦 Types
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn send_stack_to_node<T:Component, N:Default + Component>(
     mut uis: Query<(&mut UiTree<T, N>, &Children)>,
     query: Query<(&UiLink<T>, &UiStack), Changed<UiStack>>,
@@ -238,8 +234,8 @@ pub fn send_stack_to_node<T:Component, N:Default + Component>(
 
 /// This system takes [`UiDepthBias`] data and overwrites coresponding [`UiTree`] data.
 /// ## 📦 Types
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn send_depth_bias_to_node<T:Component, N:Default + Component>(
     mut uis: Query<(&mut UiTree<T, N>, &Children)>,
     query: Query<(&UiLink<T>, &UiDepthBias), Changed<UiDepthBias>>,
@@ -262,10 +258,11 @@ pub fn send_depth_bias_to_node<T:Component, N:Default + Component>(
     }
 }
 
+/// # WORK IN PROGRESS!!! DOES NOTHING CURRENTLY.
 /// This system takes [`UiContent`] data and overwrites coresponding [`UiTree`] data.
 /// ## 📦 Types
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn send_content_size_to_node<T:Component, N:Default + Component>(
     mut uis: Query<(&mut UiTree<T, N>, &Children)>,
     query: Query<(&UiLink<T>, &UiContent), Changed<UiContent>>,
@@ -288,10 +285,10 @@ pub fn send_content_size_to_node<T:Component, N:Default + Component>(
     }
 }
 
-/// This system fetches [`UiTree`] data and overwrites querried [`Transform`] data.
+/// This system fetches computed [`UiTree`] data and overwrites querried [`Transform`] data.
 /// ## 📦 Types
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn fetch_transform_from_node<T:Component, N:Default + Component>(
     uis: Query<(&UiTree<T, N>, &Children), Changed<UiTree<T, N>>>,
     mut query: Query<(&UiLink<T>, &mut Transform), Without<Element>>,
@@ -314,10 +311,10 @@ pub fn fetch_transform_from_node<T:Component, N:Default + Component>(
     }
 }
 
-/// This system fetches [`UiTree`] data and overwrites querried [`Dimension`] data.
+/// This system fetches computed [`UiTree`] data and overwrites querried [`Dimension`] data.
 /// ## 📦 Types
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn fetch_dimension_from_node<T:Component, N:Default + Component>(
     uis: Query<(&UiTree<T, N>, &Children), Changed<UiTree<T, N>>>,
     mut query: Query<(&UiLink<T>, &mut Dimension)>,
@@ -342,10 +339,10 @@ pub fn fetch_dimension_from_node<T:Component, N:Default + Component>(
     }
 }
 
-/// This system fetches [`UiTree`] data and overwrites querried [`Transform`] + [`Element`] data in specific way.
+/// This system takes computed [`UiTree`] data and overwrites querried [`Transform`] + [`Element`] data in specific way.
 /// ## 📦 Types
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
+/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 pub fn element_fetch_transform_from_node<T:Component, N:Default + Component>(
     uis: Query<(&UiTree<T, N>, &Children), Changed<UiTree<T, N>>>,
     mut query: Query<(&UiLink<T>, &mut Transform), With<Element>>,
@@ -370,7 +367,7 @@ pub fn element_fetch_transform_from_node<T:Component, N:Default + Component>(
     }
 }
 
-/// This system fetches [`Dimension`] data and overwrites querried [`Sprite`] data to fit.
+/// This system takes updated [`Dimension`] data and overwrites querried [`Sprite`] data to fit.
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_sprite_size_from_dimension<T: Component>(
@@ -383,7 +380,8 @@ pub fn element_sprite_size_from_dimension<T: Component>(
     }
 }
 
-/// This system fetches [`Dimension`] data and overwrites querried [`Handle<Image>`] data to fit.
+/// This system takes updated [`Dimension`] data and overwrites querried [`Handle<Image>`] data to fit.
+/// This is used to resize manually created render targets for secondary cameras, not textures.
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_image_size_from_dimension<T: Component>(
@@ -399,10 +397,8 @@ pub fn element_image_size_from_dimension<T: Component>(
     }
 }
 
-/// This system reconstructs the mesh on [`UiTree`] change.
+/// This system takes updated [`Dimension`] data and reconstructs the mesh.
 /// ## 📦 Types
-/// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
-/// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_reconstruct_mesh<T: Component>(
     mut msh: ResMut<Assets<Mesh>>,
@@ -439,7 +435,7 @@ pub fn element_reconstruct_mesh<T: Component>(
     }
 }
 
-/// This system takes [`TextLayoutInfo`] data and overwrites coresponding [`Layout`] solid data.
+/// This system takes updated [`TextLayoutInfo`] data and overwrites coresponding [`Layout`] data to match the text size.
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_text_size_to_layout<T: Component>(
@@ -471,7 +467,8 @@ pub fn element_text_size_to_layout<T: Component>(
     }
 }
 
-/// This system takes [`TextLayoutInfo`] data and overwrites coresponding [`UiContent`] data.
+/// # WORK IN PROGRESS!!! DOES NOTHING CURRENTLY.
+/// This system takes updated [`TextLayoutInfo`] data and overwrites coresponding [`UiContent`] data to match the text size.
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_text_size_to_content<T: Component>(
@@ -484,7 +481,7 @@ pub fn element_text_size_to_content<T: Component>(
     }
 }
 
-/// This system takes [`TextLayoutInfo`] data and overwrites coresponding [`Transform`] scale data for text to fit inside [`Dimension`].
+/// This system takes updated [`TextLayoutInfo`] data and overwrites coresponding [`Transform`] scale data for text to fit inside [`Dimension`].
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 pub fn element_text_size_scale_fit_to_dimension<T: Component>(
@@ -526,17 +523,17 @@ pub enum UiSystems {
 /// ## 🛠️ Example
 /// *1. Define the types used*
 /// ```
-///  #[derive(Component, Default)]
-///  struct MyNodeData { value: i32 } // What data will each node contain
-/// 
 ///  #[derive(Component)]
 ///  struct MyUiWidget; // Empty marker, used for selecting entities
+/// 
+///  #[derive(Component, Default)]
+///  struct MyNodeData { value: i32 } // What data will each node contain
 /// ```
 /// *2. Add the plugin to your app*
 /// ```
 ///  App::new()
 ///      .add_plugins(DefaultPlugins)
-///      .add_plugins(UiPlugin::<MyUiWidget, MyNodeData>::new())
+///      .add_plugins(UiGenericPlugin::<MyUiWidget, MyNodeData>::new())
 ///      .run();
 /// ```
 /// *3. Use the [`UiTree`] freely*
@@ -604,21 +601,23 @@ impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
 /// ## 📦 Types
 /// * Generic `(T)` - Marker component grouping entities into one widget type
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
+/// * Generic `(G)` - [`GizmoConfigGroup`] that will be used to draw the outlines
 /// 
 /// ## 🛠️ Example
 /// *1. Define the types used*
 /// ```
-///  #[derive(Component, Default)]
-///  struct MyNodeData { value: i32 } // What data will each node contain
-/// 
 ///  #[derive(Component)]
 ///  struct MyUiWidget; // Empty marker, used for selecting entities
+/// 
+///  #[derive(Component, Default)]
+///  struct MyNodeData { value: i32 } // What data will each node contain
 /// ```
 /// *2. Add the plugin to your app*
 /// ```
 ///  App::new()
 ///      .add_plugins(DefaultPlugins)
-///      .add_plugins(UiPlugin::<MyUiWidget, MyNodeData>::new())
+///      .add_plugins(UiGenericPlugin::<MyUiWidget, MyNodeData>::new())
+///      .add_plugins(UiDebugPlugin::<MyUiWidget, MyNodeData>::new())
 ///      .run();
 /// ```
 /// *3. Use the [`UiTree`] freely*
