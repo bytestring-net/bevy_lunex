@@ -33,7 +33,7 @@
   indexmap           = { version = "^2.1" }
   thiserror          = { version = "^1.0" }
 
-  bevy = { version = "^0.14.0", default_features = false, features = [
+  bevy = { version = "^0.14.0", default-features = false, features = [
     "bevy_pbr",
     "bevy_sprite",
     "bevy_text",
@@ -42,4 +42,4 @@
   ] }
 
   bevy_kira_audio = { version = "^0.20.0" }
-  bevy_mod_picking = { version = "^0.20.0", default_features = false, features = ["selection", "backend_raycast"] }
+  bevy_mod_picking = { version = "^0.20.0", default-features = false, features = ["selection", "backend_raycast"] }
