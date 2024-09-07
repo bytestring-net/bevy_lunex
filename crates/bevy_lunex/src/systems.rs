@@ -33,9 +33,10 @@ pub fn compute_ui<T:Component, N:Default + Component>(
 /// * Generic `(M)` - Master data schema struct defining what can be stored in [`UiTree`]
 /// * Generic `(N)` - Node data schema struct defining what can be stored in [`UiNode`]
 /// * Generic `(T)` - Marker component grouping entities into one widget type
-pub fn debug_draw_gizmo<T:Component, N:Default + Component>(
+/// * Generic `(G)` - `GizmoConfigGroup` that will be used to draw the outlines
+pub fn debug_draw_gizmo<T:Component, N:Default + Component, G:GizmoConfigGroup>(
     mut query: Query<(&UiTree<T, N>, &GlobalTransform)>,
-    mut gizmos: Gizmos
+    mut gizmos: Gizmos<G>
 ) {
     for (tree, transform) in &mut query {
         let list = tree.crawl();
@@ -629,16 +630,16 @@ impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
 ///#  }
 /// ```
 #[derive(Debug, Default, Clone)]
-pub struct UiDebugPlugin <T:Component = MainUi, N:Default + Component = NoData>(PhantomData<T>, PhantomData<N>);
-impl <T:Component, N:Default + Component> UiDebugPlugin<T, N> {
+pub struct UiDebugPlugin <T:Component = MainUi, N:Default + Component = NoData, G:GizmoConfigGroup = DefaultGizmoConfigGroup>(PhantomData<T>, PhantomData<N>, PhantomData<G>);
+impl <T:Component, N:Default + Component, G:GizmoConfigGroup> UiDebugPlugin<T, N, G> {
     pub fn new() -> Self {
-        UiDebugPlugin::<T, N>(PhantomData, PhantomData)
+        UiDebugPlugin::<T, N, G>(PhantomData, PhantomData, PhantomData)
     }
 }
-impl <T:Component, N:Default + Component> Plugin for UiDebugPlugin<T, N> {
+impl <T:Component, N:Default + Component, G:GizmoConfigGroup> Plugin for UiDebugPlugin<T, N, G> {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Update, debug_draw_gizmo::<T, N>)
+            .add_systems(Update, debug_draw_gizmo::<T, N, G>)
             .add_systems(Update, debug_print_tree::<T, N>.after(UiSystems::Compute));
     }
 }
