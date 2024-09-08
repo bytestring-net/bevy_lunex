@@ -14,12 +14,12 @@ First import Lunex library
 use bevy_lunex::prelude::*;
 ```
 
-Then we add `UiPlugin` to our app.
+Then we add `UiDefaultPlugins` to our app.
 
 ```rust
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, UiPlugin))
+        .add_plugins((DefaultPlugins, UiDefaultPlugins))
         .run();
 }
 ```

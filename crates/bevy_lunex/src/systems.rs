@@ -533,7 +533,7 @@ pub enum UiSystems {
 /// ```
 ///  App::new()
 ///      .add_plugins(DefaultPlugins)
-///      .add_plugins(UiGenericPlugin::<MyUiWidget, MyNodeData>::new())
+///      .add_plugins(UiCorePlugin::<MyUiWidget, MyNodeData>::new())
 ///      .run();
 /// ```
 /// *3. Use the [`UiTree`] freely*
@@ -545,13 +545,13 @@ pub enum UiSystems {
 ///#  }
 /// ```
 #[derive(Debug, Default, Clone)]
-pub struct UiGenericPlugin <T:Component = MainUi, N:Default + Component = NoData>(PhantomData<T>, PhantomData<N>);
-impl <T:Component, N:Default + Component> UiGenericPlugin<T, N> {
+pub struct UiCorePlugin <T:Component = MainUi, N:Default + Component = NoData>(PhantomData<T>, PhantomData<N>);
+impl <T:Component, N:Default + Component> UiCorePlugin<T, N> {
     pub fn new() -> Self {
-        UiGenericPlugin::<T, N>(PhantomData, PhantomData)
+        UiCorePlugin::<T, N>(PhantomData, PhantomData)
     }
 }
-impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
+impl <T:Component, N:Default + Component> Plugin for UiCorePlugin<T, N> {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Update, (
@@ -561,13 +561,6 @@ impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
                 fetch_dimension_from_camera::<T, N>.after(touch_camera_if_uitree_added::<T, N>),
                 fetch_transform_from_camera::<T, N>.after(touch_camera_if_uitree_added::<T, N>),
             ).in_set(UiSystems::Modify).before(UiSystems::Send))
-
-            //.add_plugins(StatePlugin::<T, N, Base>::new())
-            .add_plugins(StatePlugin::<T, N, Hover>::new())
-            .add_plugins(StatePlugin::<T, N, Clicked>::new())
-            .add_plugins(StatePlugin::<T, N, Selected>::new())
-            .add_plugins(StatePlugin::<T, N, Intro>::new())
-            .add_plugins(StatePlugin::<T, N, Outro>::new())
 
             .add_systems(Update, (
                 send_layout_to_node::<T, N, Base>,
@@ -616,7 +609,7 @@ impl <T:Component, N:Default + Component> Plugin for UiGenericPlugin<T, N> {
 /// ```
 ///  App::new()
 ///      .add_plugins(DefaultPlugins)
-///      .add_plugins(UiGenericPlugin::<MyUiWidget, MyNodeData>::new())
+///      .add_plugins(UiCorePlugin::<MyUiWidget, MyNodeData>::new())
 ///      .add_plugins(UiDebugPlugin::<MyUiWidget, MyNodeData>::new())
 ///      .run();
 /// ```

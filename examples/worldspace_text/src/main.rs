@@ -15,7 +15,7 @@ use boilerplate::*;
 
 fn main() {
     App::new()
-        .add_plugins((default_plugins(), UiPlugin, BillboardPlugin))
+        .add_plugins((default_plugins(), UiDefaultPlugins, BillboardPlugin))
         .add_systems(Startup, setup)
         .add_systems(Update, (rotate_playercam, zoom_playercam))
         .run();

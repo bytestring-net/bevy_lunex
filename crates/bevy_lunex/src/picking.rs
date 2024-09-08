@@ -13,11 +13,10 @@ use crate::{Dimension, Element};
 
 /// Adds picking support for [`bevy_lunex`].
 #[derive(Clone)]
-pub struct LunexBackend;
-impl Plugin for LunexBackend {
+pub struct UiLunexPickingPlugin;
+impl Plugin for UiLunexPickingPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_plugins(DefaultPickingPlugins.build().disable::<InputPlugin>())
             .add_systems(PreUpdate, lunex_picking.in_set(PickSet::Backend))
             .add_systems(Update, rendered_texture_picking);
     }

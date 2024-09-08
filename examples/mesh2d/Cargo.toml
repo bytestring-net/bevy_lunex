@@ -6,7 +6,7 @@
   publish = false
 
 [dependencies]
-  bevy = { version = "^0.14.0", default-features = false, features = [
+  bevy = { version = "^0.14", default-features = false, features = [
     "bevy_asset",
     "bevy_gilrs",
     "bevy_winit",

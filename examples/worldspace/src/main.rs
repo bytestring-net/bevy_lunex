@@ -7,7 +7,7 @@ use boilerplate::*;
 
 fn main() {
     App::new()
-        .add_plugins((default_plugins(), UiPlugin))
+        .add_plugins((default_plugins(), UiDefaultPlugins))
         .add_systems(Startup, setup)
         .add_systems(Update, (rotate_playercam, zoom_playercam))
         .run();

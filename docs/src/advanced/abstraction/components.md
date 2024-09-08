@@ -77,7 +77,7 @@ impl Plugin for CustomButtonPlugin {
     fn build(&self, app: &mut App) {
         app
             // Add Lunex plugins for our sandboxed UI
-            .add_plugins(UiGenericPlugin::<CustomButtonUi>::new())
+            .add_plugins(UiGenericPlugins::<CustomButtonUi>::new())
 
             // NOTE! Systems changing the UI need to run before UiSystems::Compute
             // or they will not get picked up by change detection.
