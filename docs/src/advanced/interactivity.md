@@ -6,7 +6,11 @@ This crate allows us to detect mouse clicks, hovers, drags, etc.
 
 ### Requirements
 
-Please note that `Cursor2d` **MUST** be spawned for any picking to work.
+* Please note that `Cursor2d` **MUST** be spawned for any picking to work.
+
+* `UiLunexPickingPlugin` must be added (Part of `UiDefaultPlugins` but not part of `UiMinimalPlugins`)
+
+* `DefaultPickingPlugins.build().disable::<InputPlugin>()` version of picking plugins must also be added (Part of `UiDefaultPlugins` but not part of `UiMinimalPlugins`)
 
 ### Getting started
 
