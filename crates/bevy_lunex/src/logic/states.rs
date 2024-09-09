@@ -170,12 +170,12 @@ struct UiSoundChannel;
 #[cfg(feature = "kira")]
 #[derive(Component, Debug, Clone, PartialEq, Eq)]
 pub struct OnHoverPlaySound {
-    pub sound: Handle<AudioSource>,
+    pub sound: Handle<bevy_kira_audio::AudioSource>,
 }
 #[cfg(feature = "kira")]
 impl OnHoverPlaySound {
     /// Specify the entity you want to create events for.
-    pub fn new(sound: Handle<AudioSource>) -> Self {
+    pub fn new(sound: Handle<bevy_kira_audio::AudioSource>) -> Self {
         OnHoverPlaySound {
             sound,
         }
