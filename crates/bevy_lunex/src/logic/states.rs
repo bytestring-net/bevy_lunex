@@ -165,7 +165,7 @@ fn set_ui_color<S: UiState>(query: Query<(&UiAnimator<S>, &UiColor<Base>, &UiCol
 
 #[cfg(feature = "kira")]
 #[derive(Resource)]
-struct UiSoundChannel;
+pub struct UiSoundChannel;
 
 #[cfg(feature = "kira")]
 #[derive(Component, Debug, Clone, PartialEq, Eq)]
