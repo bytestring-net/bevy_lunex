@@ -6,7 +6,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bevy_lunex = { version = "0.2.3" }
+bevy_lunex = { version = "0.2.4" }
 ```
 
 Alternatively, you can use the latest bleeding edge version from the Git repository:

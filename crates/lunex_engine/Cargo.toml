@@ -1,3 +1,6 @@
+#====================#
+#=== PACKAGE INFO ===#
+
 [package]
   name = "lunex_engine"
   description = "This crate is not inteded to be used standalone. It is a dependency of Bevy_Lunex"
@@ -9,10 +12,11 @@
   keywords.workspace   = true
   categories.workspace = true
 
+#===============================#
+#=== DEPENDENCIES & FEATURES ===#
+
 [dependencies]
   bevy.workspace = true
   colored.workspace = true
   indexmap.workspace = true
   thiserror.workspace = true
-
-[features]
