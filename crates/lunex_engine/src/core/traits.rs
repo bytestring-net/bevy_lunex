@@ -3,7 +3,6 @@ use std::borrow::Borrow;
 use bevy::ecs::component::Component;
 
 use crate::nodes::prelude::*;
-//use crate::layout;
 use crate::MasterData;
 use crate::import::*;
 
@@ -287,49 +286,3 @@ impl <T, N: Default + Component> UiNodeTreeInitTrait for UiTree<T, N> {
         tree
     }
 }
-
-
-// #=======================#
-// #=== TAILORED TRAITS ===#
-
-// Trait that [Layout] types implement so they can be build as new node.
-/* pub trait BuildAsNode {
-    /// Build the widget inside the [`UiTree`] at the given path.
-    fn build<T: Component, N: Default + Component>(self, ui: &mut UiTree<T, N>, path: impl Borrow<str>) -> Result<(), NodeError> where Self: Sized;
-}
-impl BuildAsNode for layout::Boundary {
-    fn build<T: Component, N: Default + Component>(self, ui: &mut UiTree<T, N>, path: impl Borrow<str>) -> Result<(), NodeError> where Self: Sized {
-        ui.create_node(path.borrow())?;
-        let mut container: NodeData<N> = NodeData::new();
-        container.layout = self.into();
-        ui.insert_data(path, container)?;
-        Ok(())
-    }
-} 
-impl BuildAsNode for layout::Window {
-    fn build<T: Component, N: Default + Component>(self, ui: &mut UiTree<T, N>, path: impl Borrow<str>) -> Result<(), NodeError> where Self: Sized {
-        ui.create_node(path.borrow())?;
-        let mut container: NodeData<N> = NodeData::new();
-        container.layout = self.into();
-        ui.insert_data(path, container)?;
-        Ok(())
-    }
-}
-impl BuildAsNode for layout::Solid {
-    fn build<T: Component, N: Default + Component>(self, ui: &mut UiTree<T, N>, path: impl Borrow<str>) -> Result<(), NodeError> where Self: Sized {
-        ui.create_node(path.borrow())?;
-        let mut container: NodeData<N> = NodeData::new();
-        container.layout = self.into();
-        ui.insert_data(path, container)?;
-        Ok(())
-    }
-}
-impl BuildAsNode for layout::Div {
-    fn build<T: Component, N: Default + Component>(self, ui: &mut UiTree<T, N>, path: impl Borrow<str>) -> Result<(), NodeError> where Self: Sized {
-        ui.create_node(path.borrow())?;
-        let mut container: NodeData<N> = NodeData::new();
-        container.layout = self.into();
-        ui.insert_data(path, container)?;
-        Ok(())
-    }
-}  */
