@@ -9,7 +9,7 @@
 				"$rustc"
 			],
 			"group": "build",
-			"label": "rust: cargo run 1"
+			"label": "Run 1"
 		},
 		{
 			"type": "cargo",
@@ -19,7 +19,7 @@
 				"$rustc"
 			],
 			"group": "build",
-			"label": "rust: cargo run 2"
+			"label": "Run 2"
 		},
 		{
 			"type": "cargo",
@@ -29,7 +29,7 @@
 				"$rustc"
 			],
 			"group": "build",
-			"label": "rust: cargo run 3"
+			"label": "Run 3"
 		}
 	]
 }

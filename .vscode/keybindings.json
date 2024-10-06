@@ -3,19 +3,19 @@
     { 
         "key": "f5",
         "command": "workbench.action.tasks.runTask",
-        "args": "rust: cargo run 1",
+        "args": "Run 1",
         "when": "editorLangId == 'rust'"
     },
     { 
         "key": "f6",
         "command": "workbench.action.tasks.runTask",
-        "args": "rust: cargo run 2",
+        "args": "Run 2",
         "when": "editorLangId == 'rust'"
     },
     { 
         "key": "f7",
         "command": "workbench.action.tasks.runTask",
-        "args": "rust: cargo run 3",
+        "args": "Run 3",
         "when": "editorLangId == 'rust'"
     }
 ]
