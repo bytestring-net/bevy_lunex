@@ -5,13 +5,13 @@ use crate::{NiceDisplay, Rectangle2D, UiValue, UiValueEvaluate, Ab, Rl};
 // #===================#
 // #=== LAYOUT ENUM ===#
 
-/// **UiLayout** - Component that defines where should a node be located.
+/// **Layout** - Component that defines where should a node be located.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_engine::{UiLayout, Rl};
-/// let layout: UiLayout = UiLayout::boundary().size(Rl(50.0)).pack();
-/// let layout: UiLayout = UiLayout::window().size(Rl(50.0)).pack();
-/// let layout: UiLayout = UiLayout::solid().size(Rl(50.0)).pack();
+/// # use lunex_engine::{Layout, Rl};
+/// let layout: Layout = Layout::boundary().pos1(Rl(50.0)).package();
+/// let layout: Layout = Layout::window().size(Rl(50.0)).package();
+/// let layout: Layout = Layout::solid().size(Rl(50.0)).package();
 /// ```
 /// The expected range is `-1.0` to `1.0`, but you can extrapolate.
 #[allow(clippy::large_enum_variant)]
@@ -28,8 +28,8 @@ impl Layout {
     /// Nodes with this layout are not included in the ui flow.
     /// ## 🛠️ Example
     /// ```
-    /// # use lunex_engine::{UiLayout, Rl};
-    /// let layout: UiLayout = UiLayout::boundary().pos1(Rl(20.0)).pos2(Rl(80.0)).pack();
+    /// # use lunex_engine::{Layout, Rl};
+    /// let layout: Layout = Layout::boundary().pos1(Rl(20.0)).pos2(Rl(80.0)).package();
     /// ```
     pub fn boundary() -> Boundary {
         Boundary::new()
@@ -39,8 +39,8 @@ impl Layout {
     /// Nodes with this layout are not included in the ui flow.
     /// ## 🛠️ Example
     /// ```
-    /// # use lunex_engine::{UiLayout, Ab, Rl};
-    /// let layout: UiLayout = UiLayout::window().pos(Ab(100.0)).size(Rl(50.0)).pack();
+    /// # use lunex_engine::{Layout, Ab, Rl};
+    /// let layout: Layout = Layout::window().pos(Ab(100.0)).size(Rl(50.0)).package();
     /// ```
     pub fn window() -> Window {
         Window::new()
@@ -50,8 +50,8 @@ impl Layout {
     /// Nodes with this layout are not included in the ui flow.
     /// ## 🛠️ Example
     /// ```
-    /// # use lunex_engine::{UiLayout, Rl};
-    /// let layout: UiLayout = UiLayout::window().size(Rl(100.0)).pack(); // Same as UiLayout::window_full()
+    /// # use lunex_engine::{Layout, Rl};
+    /// let layout: Layout = Layout::window().size(Rl(100.0)).package(); // Same as Layout::window_full()
     /// ```
     pub fn window_full() -> Window {
         Window::full()
@@ -62,8 +62,8 @@ impl Layout {
     /// Nodes with this layout are not included in the ui flow.
     /// ## 🛠️ Example
     /// ```
-    /// # use lunex_engine::UiLayout;
-    /// let layout: UiLayout = UiLayout::solid().size((4.0, 3.0)).align_x(-0.8).pack();
+    /// # use lunex_engine::Layout;
+    /// let layout: Layout = Layout::solid().size((4.0, 3.0)).align_x(-0.8).package();
     /// ```
     pub fn solid() -> Solid {
         Solid::new()
@@ -74,8 +74,8 @@ impl Layout {
     /// You can use this unit for alignment and justification.
     /// ## 🛠️ Example
     /// ```
-    /// # use lunex_engine::{UiLayout, Sp};
-    /// let layout: UiLayout = UiLayout::new().pad_x(2.0).margin_y(Sp(1.0)).br().pack();
+    /// # use lunex_engine::{Layout, Sp};
+    /// let layout: Layout = Layout::div().pad_x(2.0).margin_y(Sp(1.0)).br().package();
     /// ```
     pub fn div() -> Div {
         Div::new()
@@ -230,7 +230,7 @@ impl From<bevy::sprite::Anchor> for Anchor {
 /// # use lunex_engine::Align;
 /// let align: Align = Align::START; // -> -1.0
 /// let align: Align = Align(-1.0);  // -> -1.0
-/// let align: Align = -1.0.into();  // -> -1.0
+/// let align: Align = (-1.0).into();  // -> -1.0
 /// ```
 /// The expected range is `-1.0` to `1.0`, but you can extrapolate.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
@@ -322,8 +322,8 @@ impl NiceDisplay for Sizing {
 /// Nodes with this layout are not included in the ui flow.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_engine::{Boundary, Rl};
-/// let layout: UiLayout = Boundary::new().pos1(Rl(20.0)).pos2(Rl(80.0)).pack();
+/// # use lunex_engine::{Boundary, Rl, Layout};
+/// let layout: Layout = Boundary::new().pos1(Rl(20.0)).pos2(Rl(80.0)).package();
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Boundary {
@@ -426,8 +426,8 @@ impl NiceDisplay for Boundary {
 /// Nodes with this layout are not included in the ui flow.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_engine::{Window, Ab, Rl};
-/// let layout: UiLayout = Window::new().pos(Ab(100.0)).size(Rl(50.0)).pack();
+/// # use lunex_engine::{Layout, Window, Ab, Rl};
+/// let layout: Layout = Window::new().pos(Ab(100.0)).size(Rl(50.0)).package();
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Window {
@@ -551,8 +551,8 @@ impl NiceDisplay for Window {
 /// Nodes with this layout are not included in the ui flow.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_engine::Solid;
-/// let layout: UiLayout = Solid::new().size((4.0, 3.0)).align_x(-0.8).pack();
+/// # use lunex_engine::{Layout, Solid};
+/// let layout: Layout = Solid::new().size((4.0, 3.0)).align_x(-0.8).package();
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Solid {
@@ -679,8 +679,8 @@ impl NiceDisplay for Solid {
 /// You can use this unit for alignment and justification.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_engine::{Div, Sp};
-/// let layout: UiLayout = Div::new().pad_x(2.0).margin_y(Sp(1.0)).br().pack();
+/// # use lunex_engine::{Div, Sp, Layout};
+/// let layout: Layout = Div::new().pad_x(2.0).margin_y(Sp(1.0)).br().package();
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Div {

@@ -26,11 +26,12 @@ macro_rules! uivalue_declare {
         /// * [`f32`] [`Vec2`] [`Vec3`] [`Vec4`]
         /// ## 🛠️ Example
         /// ```
-        /// # use lunex_core::{UiValue, Ab, Em, Rl, Sp};
+        /// # use lunex_engine::{UiValue, Ab, Em, Rl, Sp};
+        /// # use bevy::prelude::Vec2;
         /// let a: UiValue<f32> = Ab(4.0) + Em(1.0);  // -> 4px + 1em
         /// let b: UiValue<f32> = Ab(40.0) - Rl(5.0); // -> 40px - 5%
         /// let c: UiValue<f32> = Sp(5.0).into();     // -> 5 space
-        /// let d: UiValue<Vec2> = (Ab(20.0), Em(2.0)).into() // -> [20px, 2em]
+        /// let d: UiValue<Vec2> = (Ab(20.0), Em(2.0)).into(); // -> [20px, 2em]
         /// ```
         #[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
         pub struct UiValue<T> {
