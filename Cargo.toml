@@ -3,12 +3,12 @@
 
 [workspace]
   resolver = "2"
-  members  = ["crates/*", "examples/*"]
-  exclude  = [".vscode", "docs/*", "examples/*", "promo/*", ".gitignore"]
+  members  = ["crate"]
+  exclude  = [".github", ".vscode", "docs/*", "examples/*", "promo/*", ".gitignore", "examples/*"]
 
 [workspace.package]
   authors    = ["IDEDARY"]
-  version    = "0.2.4"
+  version    = "0.3.0"
   edition    = "2021"
   license    = "MIT OR Apache-2.0"
   repository = "https://github.com/bytestring-net/bevy-lunex"
@@ -16,33 +16,54 @@
   categories = ["gui", "mathematics", "game-development"]
 
 #========================#
-#=== PACKAGE SETTINGS ===#
+#=== PROFILE SETTINGS ===#
 
 [profile.dev]
+  debug = 0
+  strip = "debuginfo"
   opt-level = 1
+
+[profile.dev.package."*"]
+  opt-level = 3
+
+[profile.release]
+  opt-level = 3
+  panic = 'abort'
+  debug = 0
+  strip = true
+  lto = "thin"
+  codegen-units = 1
 
 #===============================#
 #=== DEPENDENCIES & FEATURES ===#
 
 [workspace.dependencies]
-  # LOCAL CRATES
-  bevy_lunex   = { path = "crates/bevy_lunex", version = "0.2.4" }
-  lunex_engine = { path = "crates/lunex_engine", version = "0.2.4" }
 
-  # STANDART DEPENDENCIES
-  colored   = { version = "^2.1" }
-  indexmap  = { version = "^2.1" }
-  thiserror = { version = "^1.0" }
+  # LIBRARY CRATES
+  bevy_lunex = { path = "crate" }
+
+  #===========================#
+  #=== GAME ENGINE SOURCE === #
 
   # GAME ENGINE
-  bevy = { version = "^0.14", default-features = false, features = [
+  bevy = { version = "^0.15.1", default-features = false, features = [
     "bevy_pbr",
     "bevy_sprite",
     "bevy_text",
-    "multi_threaded",
     "bevy_gizmos",
+    "bevy_picking",
+    "bevy_ui",
   ] }
 
-  # 3RD-PARTY GAME ENGINE CRATES
-  bevy_kira_audio  = { version = "^0.20" }
-  bevy_mod_picking = { version = "^0.20", default-features = false, features = ["selection", "backend_raycast"] }
+  #===============================#
+  #=== GAME ENGINE EXTENSIONS === #
+
+  # AUDIO
+  bevy_kira_audio  = { version = "^0.22.0" }
+
+  #===========================#
+  #=== RUST MISCELLANEOUS === #
+  
+  colored   = { version = "^3.0.0" }
+  indexmap  = { version = "^2.7.1" }
+  thiserror = { version = "^2.0.11" }
