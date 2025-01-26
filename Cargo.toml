@@ -53,6 +53,9 @@
     "bevy_gizmos",
     "bevy_picking",
     "bevy_ui",
+    "bevy_window",
+    "bevy_winit",
+    "custom_cursor",
   ] }
 
   #===============================#
