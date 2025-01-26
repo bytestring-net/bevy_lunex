@@ -1,13 +1,16 @@
 #![allow(clippy::type_complexity)]
 
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 
 #[derive(Component)]
 #[require(Visibility, Transform, Dimension)]
 pub struct UiLayoutRoot;
 
+
 #[derive(Component)]
+#[require(Visibility, Transform, Dimension)]
 pub struct UiLayout {
 
 }
@@ -26,33 +29,6 @@ impl UiLayout {
 
 #[derive(Component, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
 pub struct Dimension(pub Vec2);
-
-
-
-#[derive(Component, Deref, DerefMut, Clone, PartialEq, Debug)]
-pub struct UiSource(pub Entity);
-
-
-/// This system takes [`Camera`] data and overwrites querried [`Dimension`] + [`SourceFromCamera`].
-/// It is mainly used to pipe [`Camera`] data into [`UiRoot`] for root node computation.
-pub fn fetch_size_from_camera(
-    src_query: Query<(&Camera, Option<&OrthographicProjection>), Changed<Camera>>,
-    mut dst_query: Query<(&mut Dimension, &UiSource), With<UiLayoutRoot>>
-) {
-    if src_query.is_empty() { return; }
-
-    for (mut size, source) in &mut dst_query {
-        // Retrieve targetted camera
-        if let Ok((camera, projection_option)) = src_query.get(**source) {
-            // Pipe the viewport size from camera
-            if let Some(cam_size) = camera.physical_viewport_size() {
-                **size = Vec2::from((cam_size.x as f32, cam_size.y as f32)) * if let Some(p) = projection_option { p.scale } else { 1.0 };
-                println!("{:?}", size);
-            }
-        }
-    }
-}
-
 
 
 
@@ -80,11 +56,9 @@ pub fn fetch_dimension_from_camera<const INDEX: usize>(
     if let Some(cam_size) = camera.physical_viewport_size() {
         for mut size in &mut dst_query {
             **size = Vec2::from((cam_size.x as f32, cam_size.y as f32)) * if let Some(p) = projection_option { p.scale } else { 1.0 };
-            println!("{:?}", size);
         }
     }
 }
-
 
 /// This system takes [`Camera`] viewport data and pipes them into querried [`Transform`] + [`UiLayoutRoot`] + [`UiFetchFromCamera`].
 pub fn fetch_transform_from_camera<const INDEX: usize>(
@@ -112,6 +86,27 @@ pub fn fetch_transform_from_camera<const INDEX: usize>(
     }
 }
 
+/// This system draws the outlines of [`UiLayout`] and [`UiLayoutRoot`] as gizmos.
+pub fn debug_draw_gizmo<G:GizmoConfigGroup>(
+    query: Query<(&GlobalTransform, &Dimension), Or<(With<UiLayout>, With<UiLayoutRoot>)>>,
+    mut gizmos: Gizmos<G>
+) {
+    for (transform, dimension) in &query {
+
+        // Align the gizmo to top left corner
+        let position = transform.translation();
+        let position = position + transform.right() * dimension.x / 2.0;
+        let position = position + transform.down() * dimension.y / 2.0;
+
+        // Draw the gizmo outline
+        gizmos.rect(
+            Isometry3d::from(position),
+            **dimension,
+            Color::linear_rgb(0.0, 1.0, 0.0),
+        );
+    }
+}
+
 
 pub struct UiLunexPlugin;
 impl Plugin for UiLunexPlugin {
@@ -125,9 +120,13 @@ impl Plugin for UiLunexPlugin {
 
         app.add_systems(Update, (
             fetch_transform_from_camera::<0>,
-            //fetch_transform_from_camera::<1>,
-            //fetch_transform_from_camera::<2>,
-            //fetch_transform_from_camera::<3>,
+            fetch_transform_from_camera::<1>,
+            fetch_transform_from_camera::<2>,
+            fetch_transform_from_camera::<3>,
+        ));
+
+        app.add_systems(Update, (
+            debug_draw_gizmo::<DefaultGizmoConfigGroup>,
         ));
     }
 }
