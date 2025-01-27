@@ -197,39 +197,51 @@ pub fn debug_draw_gizmo<G:GizmoConfigGroup>(
     }
 }
 
-
-/// The experimental computation system
+/// This system traverses the hierarchy and computes all nodes.
 pub fn compute_children(
     root_query: Query<(&UiLayoutRoot, &Transform, &Dimension, &Children), (Without<UiLayout>, Changed<Dimension>)>,
-    mut child_query: Query<(&UiLayout, &mut Transform, &mut Dimension, Option<&Children>), Without<UiLayoutRoot>>,
+    mut node_query: Query<(&UiLayout, &mut Transform, &mut Dimension, Option<&Children>), Without<UiLayoutRoot>>,
 ) {
-    for (root_layout, root_transform, root_dimension, root_children) in &root_query {
-
+    for (_, root_transform, root_dimension, root_children) in &root_query {
+        // Size of the viewport
         let root_rectangle = Rectangle2D {
             pos: root_transform.translation.xy(),
             size: **root_dimension,
         };
 
-        for child in root_children {
-            if let Ok((layout, mut transform, mut dimension, children_option)) = child_query.get_mut(*child) {
+        // Stack-based traversal
+        let mut stack: Vec<(Entity, Rectangle2D, usize)> = root_children
+            .iter()
+            .map(|&child| (child, root_rectangle, 1))
+            .collect();
 
+        while let Some((current_entity, parent_rectangle, depth)) = stack.pop() {
+            if let Ok((node_layout, mut node_transform, mut node_dimension, node_children_option)) = node_query.get_mut(current_entity) {
                 // Compute all layouts for the node
-                let mut computed_rectangles = Vec::with_capacity(layout.layouts.len());
-                for layout in &layout.layouts {
-                    computed_rectangles.push(layout.compute(root_rectangle, 1.0, root_transform.translation.xy(), 16.0));
+                let mut computed_rectangles = Vec::with_capacity(node_layout.layouts.len());
+                for layout in &node_layout.layouts {
+                    computed_rectangles.push(layout.compute(&parent_rectangle, 1.0, root_rectangle.size, 16.0));
                 }
 
-                println!("At {:?}", computed_rectangles[0]);
+                // Save the computed layout
+                node_transform.translation.x = computed_rectangles[0].pos.x;
+                node_transform.translation.y = -computed_rectangles[0].pos.y;
+                node_transform.translation.z = depth as f32;
+                **node_dimension = computed_rectangles[0].size;
 
-                transform.translation.x = computed_rectangles[0].pos.x;
-                transform.translation.y = -computed_rectangles[0].pos.y;
-                **dimension = computed_rectangles[0].size;
+                if let Some(node_children) = node_children_option {
+                    let child_parent_rectangle = Rectangle2D {
+                        pos: node_transform.translation.xy(),
+                        size: **node_dimension,
+                    };
+
+                    // Add children to the stack
+                    stack.extend(node_children.iter().map(|&child| (child, child_parent_rectangle, depth + 1)));
+                }
             }
         }
-
     }
 }
-
 
 /// This system takes [`Dimension`] data and pipes them into querried [`Sprite`].
 pub fn element_sprite_size_from_dimension(
@@ -389,11 +401,11 @@ pub enum UiLayoutType {
 }
 impl UiLayoutType {
     /// Computes the layout based on given parameters.
-    pub(crate) fn compute(&self, parent: Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
+    pub(crate) fn compute(&self, parent: &Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
         match self {
-            UiLayoutType::Boundary(layout) => layout.compute(parent, absolute_scale, viewport_size, font_size),
-            UiLayoutType::Window(layout) => layout.compute(parent, absolute_scale, viewport_size, font_size),
-            UiLayoutType::Solid(layout) => layout.compute(parent, absolute_scale, viewport_size, font_size),
+            UiLayoutType::Boundary(layout) => layout.compute(&parent, absolute_scale, viewport_size, font_size),
+            UiLayoutType::Window(layout) => layout.compute(&parent, absolute_scale, viewport_size, font_size),
+            UiLayoutType::Solid(layout) => layout.compute(&parent, absolute_scale, viewport_size, font_size),
         }
     }
 }
@@ -489,7 +501,7 @@ impl UiLayoutTypeBoundary {
         UiLayout::from(self)
     }
     /// Computes the layout based on given parameters.
-    pub(crate) fn compute(&self, parent: Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
+    pub(crate) fn compute(&self, parent: &Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
         let pos1 = self.pos1.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size));
         let pos2 = self.pos2.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size));
         Rectangle2D {
@@ -590,11 +602,13 @@ impl UiLayoutTypeWindow {
         UiLayout::from(self)
     }
     /// Computes the layout based on given parameters.
-    pub(crate) fn compute(&self, parent: Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
+    pub(crate) fn compute(&self, parent: &Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
         let pos = self.pos.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size));
         let size = self.size.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size));
+        let mut anchor = self.anchor.as_vec();
+        anchor.y *= -1.0;
         Rectangle2D {
-            pos: pos - size * self.anchor.as_vec(),
+            pos: pos - size * (anchor + 0.5),
             size,
         }
     }
@@ -681,7 +695,7 @@ impl UiLayoutTypeSolid {
         UiLayout::from(self)
     }
     /// Computes the layout based on given parameters.
-    pub(crate) fn compute(&self, parent: Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
+    pub(crate) fn compute(&self, parent: &Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
         
         let size = self.size.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size));
 
