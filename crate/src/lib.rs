@@ -1,8 +1,10 @@
+#![feature(const_type_id)]
 #![allow(clippy::type_complexity)]
 
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::text::TextLayoutInfo;
+use bevy::utils::HashMap;
 
 
 // #=================================#
@@ -73,9 +75,9 @@ pub struct UiLayoutRoot;
 /// # }
 /// ```
 #[derive(Component)]
-#[require(Visibility, Transform, Dimension)]
+#[require(Visibility, Transform, Dimension, UiState)]
 pub struct UiLayout {
-    layouts: Vec<UiLayoutType>
+    layouts: HashMap<TypeId, UiLayoutType>
 }
 impl UiLayout {
     /// **Boundary** - Declarative layout type that is defined by its top-left corner and bottom-right corner.
@@ -109,11 +111,21 @@ impl UiLayout {
     pub fn solid() -> UiLayoutTypeSolid {
         UiLayoutTypeSolid::new()
     }
+    /// Create multiple layouts for a different states at once.
+    pub fn new_vec(value: Vec<(&dyn UiStateTrait, impl Into<UiLayoutType>)>) -> Self {
+        let mut map = HashMap::new();
+        for (state, layout) in value {
+            map.insert(state.id(), layout.into());
+        }
+        Self { layouts: map }
+    }
 }
 impl From<UiLayoutType> for UiLayout {
     fn from(value: UiLayoutType) -> Self {
-        UiLayout {
-            layouts: vec![value],
+        let mut map = HashMap::new();
+        map.insert(UiBase.id(), value);
+        Self {
+            layouts: map,
         }
     }
 }
@@ -137,6 +149,73 @@ impl From<UiLayoutTypeSolid> for UiLayout {
 }
 
 
+#[derive(Component)]
+pub struct UiState {
+    /// Create multiple layouts for a different states at once.
+    states: HashMap<TypeId, f32>,
+}
+impl UiState {
+    pub fn new_vec(value: Vec<(&dyn UiStateTrait, impl Into<f32>)>) -> Self {
+        let mut map = HashMap::new();
+        map.insert(UiBase.id(), 1.0);
+        for (state, layout) in value {
+            map.insert(state.id(), layout.into());
+        }
+        Self { states: map }
+    }
+}
+impl Default for UiState {
+    fn default() -> Self {
+        let mut map = HashMap::new();
+        map.insert(UiBase.id(), 1.0);
+        Self {
+            states: map,
+        }
+    }
+}
+
+pub trait UiStateTrait {
+    fn id(&self) -> TypeId;
+}
+
+pub struct UiBase;
+impl UiStateTrait for UiBase {
+    fn id(&self) -> TypeId {
+        TypeId::of::<Self>()
+    }
+}
+pub struct UiHover;
+impl UiStateTrait for UiHover {
+    fn id(&self) -> TypeId {
+        TypeId::of::<Self>()
+    }
+}
+pub struct UiSelected;
+impl UiStateTrait for UiSelected {
+    fn id(&self) -> TypeId {
+        TypeId::of::<Self>()
+    }
+}
+pub struct UiClicked;
+impl UiStateTrait for UiClicked {
+    fn id(&self) -> TypeId {
+        TypeId::of::<Self>()
+    }
+}
+pub struct UiIntro;
+impl UiStateTrait for UiIntro {
+    fn id(&self) -> TypeId {
+        TypeId::of::<Self>()
+    }
+}
+pub struct UiOutro;
+impl UiStateTrait for UiOutro {
+    fn id(&self) -> TypeId {
+        TypeId::of::<Self>()
+    }
+}
+
+
 /// **Ui Fetch From Camera** - Attaching this component to [`UiLayoutRoot`] will make the [`Dimension`]
 /// component pull data from a [`Camera`] with attached [`UiSourceCamera`] with the same index.
 #[derive(Component, Clone, PartialEq, Debug)]
@@ -150,6 +229,17 @@ pub struct UiSourceCamera<const INDEX: usize>;
 
 // #==============================#
 // #=== THE MAIN LUNEX SYSTEMS ===#
+
+/// System set for [`UiLunexPlugin`]
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum UiSystems {
+    /// Systems that modify data pre-computation
+    PreCompute,
+    /// The computation
+    Compute,
+    /// Systems that modify data post-computation
+    PostCompute,
+}
 
 /// This system takes [`Camera`] viewport data and pipes them into querried [`Dimension`] + [`UiLayoutRoot`] + [`UiFetchFromCamera`].
 pub fn fetch_dimension_from_camera<const INDEX: usize>(
@@ -183,6 +273,22 @@ pub fn touch_camera_if_fetch_added<const INDEX: usize>(
     }
 }
 
+
+#[derive(Event)]
+pub struct RecomputeUiLayout;
+
+/// This system listens for added [`UiFetchFromCamera`] components and if it finds one, mutable accesses all [`Camera`]s to trigger fetching systems.
+pub fn observer_touch_ui_layout_root(
+    _trigger: Trigger<RecomputeUiLayout>,
+    mut query: Query<&mut UiLayoutRoot>,
+){
+    for mut root in &mut query {
+        root.as_mut();
+    }
+}
+
+
+
 /// This system draws the outlines of [`UiLayout`] and [`UiLayoutRoot`] as gizmos.
 pub fn debug_draw_gizmo<G:GizmoConfigGroup>(
     query: Query<(&GlobalTransform, &Dimension), Or<(With<UiLayout>, With<UiLayoutRoot>)>>,
@@ -200,8 +306,8 @@ pub fn debug_draw_gizmo<G:GizmoConfigGroup>(
 
 /// This system traverses the hierarchy and computes all nodes.
 pub fn compute_children(
-    root_query: Query<(&UiLayoutRoot, &Transform, &Dimension, &Children), (Without<UiLayout>, Changed<Dimension>)>,
-    mut node_query: Query<(&UiLayout, &mut Transform, &mut Dimension, Option<&Children>), Without<UiLayoutRoot>>,
+    root_query: Query<(&UiLayoutRoot, &Transform, &Dimension, &Children), (Without<UiLayout>, Or<(Changed<UiLayoutRoot>, Changed<Dimension>)>)>,
+    mut node_query: Query<(&UiLayout, &UiState, &mut Transform, &mut Dimension, Option<&Children>), Without<UiLayoutRoot>>,
 ) {
     for (_, root_transform, root_dimension, root_children) in &root_query {
         // Size of the viewport
@@ -217,27 +323,37 @@ pub fn compute_children(
             .collect();
 
         while let Some((current_entity, parent_rectangle, depth)) = stack.pop() {
-            if let Ok((node_layout, mut node_transform, mut node_dimension, node_children_option)) = node_query.get_mut(current_entity) {
+            if let Ok((node_layout, node_state, mut node_transform, mut node_dimension, node_children_option)) = node_query.get_mut(current_entity) {
                 // Compute all layouts for the node
                 let mut computed_rectangles = Vec::with_capacity(node_layout.layouts.len());
-                for layout in &node_layout.layouts {
-                    computed_rectangles.push(layout.compute(&parent_rectangle, 1.0, root_rectangle.size, 16.0));
+                for (state, layout) in &node_layout.layouts {
+                    computed_rectangles.push((state, layout.compute(&parent_rectangle, 1.0, root_rectangle.size, 16.0)));
+                }
+
+                // Normalize the state weights
+                let mut total_weight = 0.0;
+                for (_, value) in &node_state.states {
+                    total_weight += value;
+                }
+
+                // Combine the state rectangles into one normilized
+                let mut node_rectangle = Rectangle2D::EMPTY;
+                for (state, rectangle) in computed_rectangles {
+                    if let Some(weight) = node_state.states.get(state) {
+                        node_rectangle.pos += rectangle.pos * (weight / total_weight);
+                        node_rectangle.size += rectangle.size * (weight / total_weight);
+                    }
                 }
 
                 // Save the computed layout
-                node_transform.translation.x = computed_rectangles[0].pos.x;
-                node_transform.translation.y = -computed_rectangles[0].pos.y;
+                node_transform.translation.x = node_rectangle.pos.x;
+                node_transform.translation.y = -node_rectangle.pos.y;
                 node_transform.translation.z = depth as f32;
-                **node_dimension = computed_rectangles[0].size;
+                **node_dimension = node_rectangle.size;
 
                 if let Some(node_children) = node_children_option {
-                    let child_parent_rectangle = Rectangle2D {
-                        pos: node_transform.translation.xy(),
-                        size: **node_dimension,
-                    };
-
                     // Add children to the stack
-                    stack.extend(node_children.iter().map(|&child| (child, child_parent_rectangle, depth + 1)));
+                    stack.extend(node_children.iter().map(|&child| (child, node_rectangle, depth + 1)));
                 }
             }
         }
@@ -255,9 +371,17 @@ pub fn pipe_sprite_size_from_dimension(
 
 /// This system takes [`TextLayoutInfo`] data and pipes them into querried [`Transform`] and [`Dimension`].
 pub fn pipe_text_size_from_dimension(
+    mut commands: Commands,
     mut query: Query<(&mut Transform, &Dimension, &TextLayoutInfo), Changed<Dimension>>,
 ) {
     for (mut transform, dimension, text_info) in &mut query {
+        // Avoid dividing by 0 if text is not loaded yet
+        if text_info.size.y == 0.0 {
+            commands.trigger(RecomputeUiLayout);
+            continue;
+        }
+        
+        // Scale the text
         let scale = **dimension / text_info.size;
         transform.scale.x = scale.x;
         transform.scale.y = scale.x;
@@ -266,11 +390,18 @@ pub fn pipe_text_size_from_dimension(
 
 /// This system takes updated [`TextLayoutInfo`] data and overwrites coresponding [`Layout`] data to match the text size.
 pub fn pipe_text_size_to_layout(
+    mut commands: Commands,
     mut query: Query<(&mut UiLayout, &TextLayoutInfo, &UiTextSize), Changed<TextLayoutInfo>>,
 ) {
     for (mut layout, text_info, text_size) in &mut query {
+        // Avoid dividing by 0 if text is not loaded yet and postpone layout
+        if text_info.size.y == 0.0 {
+            commands.trigger(RecomputeUiLayout);
+            continue;
+        }
 
-        match &mut layout.layouts[0] {
+        // Create the text layout
+        match layout.layouts.get_mut(&UiBase.id()).expect("UiBase state not found for Text") {
             UiLayoutType::Window(window) => {
                 window.set_height(**text_size);
                 window.set_width(**text_size * (text_info.size.x / text_info.size.y));
@@ -335,17 +466,25 @@ pub fn pipe_color(
 pub struct UiLunexPlugin;
 impl Plugin for UiLunexPlugin {
     fn build(&self, app: &mut App) {
+        
+        app.add_systems(Update, (
+            pipe_text_size_to_layout,
+        ).in_set(UiSystems::PreCompute));
 
         app.add_systems(Update, (
             compute_children,
+        ).in_set(UiSystems::Compute).after(UiSystems::PreCompute));
+
+        app.add_systems(Update, (
             pipe_sprite_size_from_dimension,
             pipe_text_size_from_dimension,
-            pipe_text_size_to_layout,
-        ));
+        ).in_set(UiSystems::PostCompute).after(UiSystems::Compute));
 
         app.add_systems(Update, (
             pipe_color,
         ));
+
+        app.add_observer(observer_touch_ui_layout_root);
 
         app.add_plugins((
             UiLunexIndexPlugin::<0>,
@@ -374,7 +513,7 @@ impl <const INDEX: usize> Plugin for UiLunexIndexPlugin<INDEX> {
         app.add_systems(Update, (
             fetch_dimension_from_camera::<INDEX>,
             touch_camera_if_fetch_added::<INDEX>,
-        ));
+        ).in_set(UiSystems::PreCompute).before(UiSystems::Compute));
     }
 }
 
@@ -819,6 +958,7 @@ impl UiLayoutTypeSolid {
 // #=========================#
 // #=== THE UI UNIT TYPES ===#
 
+use std::any::TypeId;
 use std::ops::Add;
 use std::ops::AddAssign;
 use std::ops::Neg;
