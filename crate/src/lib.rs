@@ -256,34 +256,46 @@ pub fn element_sprite_size_from_dimension(
 // #=============================#
 // #=== THE MAIN LUNEX PLUGIN ===#
 
+/// This plugin is used for the main logic.
 pub struct UiLunexPlugin;
 impl Plugin for UiLunexPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            fetch_dimension_from_camera::<0>,
-            fetch_dimension_from_camera::<1>,
-            fetch_dimension_from_camera::<2>,
-            fetch_dimension_from_camera::<3>,
-        ));
-
-        app.add_systems(Update, (
-            touch_camera_if_fetch_added::<0>,
-            touch_camera_if_fetch_added::<1>,
-            touch_camera_if_fetch_added::<2>,
-            touch_camera_if_fetch_added::<3>,
-        ));
-
-        app.add_systems(Update, (
-            debug_draw_gizmo::<DefaultGizmoConfigGroup>,
-        ));
 
         app.add_systems(Update, (
             compute_children,
             element_sprite_size_from_dimension,
         ));
+
+        app.add_plugins((
+            UiLunexIndexPlugin::<0>,
+            UiLunexIndexPlugin::<1>,
+            UiLunexIndexPlugin::<2>,
+            UiLunexIndexPlugin::<3>,
+        ));
     }
 }
 
+/// This plugin is used to enable debug functionality.
+pub struct UiLunexDebugPlugin;
+impl Plugin for UiLunexDebugPlugin {
+    fn build(&self, app: &mut App) {
+
+        app.add_systems(Update, (
+            debug_draw_gizmo::<DefaultGizmoConfigGroup>,
+        ));
+    }
+}
+
+/// This plugin is used to register index components.
+pub struct UiLunexIndexPlugin<const INDEX: usize>;
+impl <const INDEX: usize> Plugin for UiLunexIndexPlugin<INDEX> {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, (
+            fetch_dimension_from_camera::<INDEX>,
+            touch_camera_if_fetch_added::<INDEX>,
+        ));
+    }
+}
 
 // #============================#
 // #=== MULTIPURPOSE STRUCTS ===#
@@ -608,7 +620,7 @@ impl UiLayoutTypeWindow {
         let mut anchor = self.anchor.as_vec();
         anchor.y *= -1.0;
         Rectangle2D {
-            pos: pos - size * (anchor + 0.5),
+            pos: -parent.size / 2.0 + pos - size * (anchor),
             size,
         }
     }
