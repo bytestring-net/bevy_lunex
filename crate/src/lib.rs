@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
+use bevy::text::TextLayoutInfo;
 
 
 // #=================================#
@@ -244,13 +245,87 @@ pub fn compute_children(
 }
 
 /// This system takes [`Dimension`] data and pipes them into querried [`Sprite`].
-pub fn element_sprite_size_from_dimension(
+pub fn pipe_sprite_size_from_dimension(
     mut query: Query<(&mut Sprite, &Dimension), Changed<Dimension>>,
 ) {
     for (mut sprite, dimension) in &mut query {
         sprite.custom_size = Some(**dimension)
     }
 }
+
+/// This system takes [`TextLayoutInfo`] data and pipes them into querried [`Transform`] and [`Dimension`].
+pub fn pipe_text_size_from_dimension(
+    mut query: Query<(&mut Transform, &Dimension, &TextLayoutInfo), Changed<Dimension>>,
+) {
+    for (mut transform, dimension, text_info) in &mut query {
+        let scale = **dimension / text_info.size;
+        transform.scale.x = scale.x;
+        transform.scale.y = scale.x;
+    }
+}
+
+/// This system takes updated [`TextLayoutInfo`] data and overwrites coresponding [`Layout`] data to match the text size.
+pub fn pipe_text_size_to_layout(
+    mut query: Query<(&mut UiLayout, &TextLayoutInfo, &UiTextSize), Changed<TextLayoutInfo>>,
+) {
+    for (mut layout, text_info, text_size) in &mut query {
+
+        match &mut layout.layouts[0] {
+            UiLayoutType::Window(window) => {
+                window.set_height(**text_size);
+                window.set_width(**text_size * (text_info.size.x / text_info.size.y));
+            },
+            UiLayoutType::Solid(solid) => {
+                solid.set_size(Ab(text_info.size));
+            },
+            _ => {},
+        }
+    }
+}
+
+// #=====================================#
+// #=== THE COSMETIC LUNEX COMPONENTS ===#
+
+/// **Ui Color** - This component holds the different colors for each state
+#[derive(Component, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
+pub struct UiColor {
+    colors: Vec<Color>
+}
+impl <T: Into<Color>> From<T> for UiColor {
+    fn from(value: T) -> Self {
+        UiColor {
+            colors: vec![value.into()],
+        }
+    }
+}
+
+/// **Ui Text Size** - This component holds the height of the text
+#[derive(Component, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
+pub struct UiTextSize (pub UiValue<f32>);
+impl <T: Into<UiValue<f32>>> From<T> for UiTextSize {
+    fn from(value: T) -> Self {
+        UiTextSize(value.into())
+    }
+}
+
+// #==============================#
+// #=== THE COSMETIC LUNEX SYSTEMS ===#
+
+/// This system takes [`Dimension`] data and pipes them into querried [`Sprite`].
+pub fn pipe_color(
+    mut query: Query<(Option<&mut Sprite>, Option<&mut TextColor>, &UiColor), Changed<UiColor>>,
+) {
+    for (sprite_option, text_option, color) in &mut query {
+        if let Some(mut sprite) = sprite_option {
+            sprite.color = color.colors[0];
+        }
+        if let Some(mut text) = text_option {
+            **text = color.colors[0];
+        }
+    }
+}
+
+
 
 
 // #=============================#
@@ -263,7 +338,13 @@ impl Plugin for UiLunexPlugin {
 
         app.add_systems(Update, (
             compute_children,
-            element_sprite_size_from_dimension,
+            pipe_sprite_size_from_dimension,
+            pipe_text_size_from_dimension,
+            pipe_text_size_to_layout,
+        ));
+
+        app.add_systems(Update, (
+            pipe_color,
         ));
 
         app.add_plugins((
