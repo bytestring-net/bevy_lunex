@@ -5,11 +5,15 @@ pub(crate) use std::any::TypeId;
 pub(crate) use std::marker::PhantomData;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::sprite::Anchor;
+use bevy::sprite::SpriteSource;
 pub(crate) use bevy::text::TextLayoutInfo;
 pub(crate) use bevy::utils::HashMap;
 
 mod layouts;
 pub use layouts::*;
+
+mod picking;
+pub use picking::*;
 
 mod states;
 pub use states::*;
@@ -130,7 +134,7 @@ pub fn system_debug_draw_gizmo<G:GizmoConfigGroup>(
 /// # }
 /// ```
 #[derive(Component)]
-#[require(Visibility, Transform, Dimension, UiState)]
+#[require(Visibility, SpriteSource, Transform, Dimension, UiState)]
 pub struct UiLayout {
     /// Stored layout per state
     layouts: HashMap<TypeId, UiLayoutType>
@@ -706,6 +710,7 @@ impl Plugin for UiLunexPlugin {
         // Add index plugins
         app.add_plugins((
             UiLunexStatePlugin,
+            UiLunexPickingPlugin,
             UiLunexIndexPlugin::<0>,
             UiLunexIndexPlugin::<1>,
             UiLunexIndexPlugin::<2>,
