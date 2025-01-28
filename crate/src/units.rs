@@ -97,7 +97,7 @@ pub struct Vh<T>(pub T);
 
 
 /// Implement basic math and conversions for a type
-macro_rules! init_uiunit {
+macro_rules! init_unit {
     ($($unit:ident), *) => {
         $(
             // Implement negation of the same type
@@ -162,14 +162,142 @@ macro_rules! init_uiunit {
         )*
     };
 }
-init_uiunit!(Ab, Rl, Rw, Rh, Em, Vp, Vw, Vh);
+init_unit!(Ab, Rl, Rw, Rh, Em, Vp, Vw, Vh);
+
+/// Implement basic math and conversions for a type
+macro_rules! impl_unit_operations {
+    ($($unit:ident), *) => {
+        $(
+            impl From<$unit<(f32, f32)>> for UiValue<Vec2> {
+                fn from(val: $unit<(f32, f32)>) -> UiValue<Vec2> {
+                    $unit(Vec2::new(val.0.0, val.0.1)).into()
+                }
+            }
+            impl From<$unit<(f32, f32, f32)>> for UiValue<Vec3> {
+                fn from(val: $unit<(f32, f32, f32)>) -> UiValue<Vec3> {
+                    $unit(Vec3::new(val.0.0, val.0.1, val.0.2)).into()
+                }
+            }
+            impl From<$unit<(f32, f32, f32, f32)>> for UiValue<Vec4> {
+                fn from(val: $unit<(f32, f32, f32, f32)>) -> UiValue<Vec4> {
+                    $unit(Vec4::new(val.0.0, val.0.1, val.0.2, val.0.3)).into()
+                }
+            }
+
+            impl From<$unit<f32>> for UiValue<Vec2> {
+                fn from(val: $unit<f32>) -> UiValue<Vec2> {
+                    $unit(Vec2::new(val.0, val.0)).into()
+                }
+            }
+            impl From<$unit<f32>> for UiValue<Vec3> {
+                fn from(val: $unit<f32>) -> UiValue<Vec3> {
+                    $unit(Vec3::new(val.0, val.0, val.0)).into()
+                }
+            }
+            impl From<$unit<f32>> for UiValue<Vec4> {
+                fn from(val: $unit<f32>) -> UiValue<Vec4> {
+                    $unit(Vec4::new(val.0, val.0, val.0, val.0)).into()
+                }
+            }
+        )*
+    };
+}
+impl_unit_operations!(Ab, Rl, Rw, Rh, Em, Vp, Vw, Vh);
+
+/// Implement adding two types together
+macro_rules! impl_unit_cross_operations {
+    (($unit1:ident, $ufield1:ident), ($unit2:ident, $ufield2:ident)) => {
+        impl<T: Add<Output = T>> Add<$unit2<T>> for $unit1<T> {
+            type Output = UiValue<T>;
+            fn add(self, other: $unit2<T>) -> Self::Output {
+                let mut ret = UiValue::new();
+                ret.$ufield1 = Some(self.0);
+                ret.$ufield2 = Some(other.0);
+                ret
+            }
+        }
+        impl<T: Sub<Output = T>> Sub<$unit2<T>> for $unit1<T> where T: Neg<Output = T> {
+            type Output = UiValue<T>;
+            fn sub(self, other: $unit2<T>) -> Self::Output {
+                let mut ret = UiValue::new();
+                ret.$ufield1 = Some(self.0);
+                ret.$ufield2 = Some(-other.0);
+                ret
+            }
+        }
+    }
+}
+
+impl_unit_cross_operations!((Ab, ab), (Rl, rl));
+impl_unit_cross_operations!((Ab, ab), (Rw, rw));
+impl_unit_cross_operations!((Ab, ab), (Rh, rh));
+impl_unit_cross_operations!((Ab, ab), (Em, em));
+impl_unit_cross_operations!((Ab, ab), (Vp, vp));
+impl_unit_cross_operations!((Ab, ab), (Vw, vw));
+impl_unit_cross_operations!((Ab, ab), (Vh, vh));
+
+impl_unit_cross_operations!((Rl, rl), (Ab, ab));
+impl_unit_cross_operations!((Rl, rl), (Rw, rw));
+impl_unit_cross_operations!((Rl, rl), (Rh, rh));
+impl_unit_cross_operations!((Rl, rl), (Em, em));
+impl_unit_cross_operations!((Rl, rl), (Vp, vp));
+impl_unit_cross_operations!((Rl, rl), (Vw, vw));
+impl_unit_cross_operations!((Rl, rl), (Vh, vh));
+
+impl_unit_cross_operations!((Rw, rw), (Ab, ab));
+impl_unit_cross_operations!((Rw, rw), (Rl, rl));
+impl_unit_cross_operations!((Rw, rw), (Rh, rh));
+impl_unit_cross_operations!((Rw, rw), (Em, em));
+impl_unit_cross_operations!((Rw, rw), (Vp, vp));
+impl_unit_cross_operations!((Rw, rw), (Vw, vw));
+impl_unit_cross_operations!((Rw, rw), (Vh, vh));
+
+impl_unit_cross_operations!((Rh, rh), (Ab, ab));
+impl_unit_cross_operations!((Rh, rh), (Rl, rl));
+impl_unit_cross_operations!((Rh, rh), (Rw, rw));
+impl_unit_cross_operations!((Rh, rh), (Em, em));
+impl_unit_cross_operations!((Rh, rh), (Vp, vp));
+impl_unit_cross_operations!((Rh, rh), (Vw, vw));
+impl_unit_cross_operations!((Rh, rh), (Vh, vh));
+
+impl_unit_cross_operations!((Em, em), (Ab, ab));
+impl_unit_cross_operations!((Em, em), (Rl, rl));
+impl_unit_cross_operations!((Em, em), (Rw, rw));
+impl_unit_cross_operations!((Em, em), (Rh, rh));
+impl_unit_cross_operations!((Em, em), (Vp, vp));
+impl_unit_cross_operations!((Em, em), (Vw, vw));
+impl_unit_cross_operations!((Em, em), (Vh, vh));
+
+impl_unit_cross_operations!((Vp, vp), (Ab, ab));
+impl_unit_cross_operations!((Vp, vp), (Rl, rl));
+impl_unit_cross_operations!((Vp, vp), (Rw, rw));
+impl_unit_cross_operations!((Vp, vp), (Rh, rh));
+impl_unit_cross_operations!((Vp, vp), (Em, em));
+impl_unit_cross_operations!((Vp, vp), (Vw, vw));
+impl_unit_cross_operations!((Vp, vp), (Vh, vh));
+
+impl_unit_cross_operations!((Vw, vw), (Ab, ab));
+impl_unit_cross_operations!((Vw, vw), (Rl, rl));
+impl_unit_cross_operations!((Vw, vw), (Rw, rw));
+impl_unit_cross_operations!((Vw, vw), (Rh, rh));
+impl_unit_cross_operations!((Vw, vw), (Em, em));
+impl_unit_cross_operations!((Vw, vw), (Vp, vp));
+impl_unit_cross_operations!((Vw, vw), (Vh, vh));
+
+impl_unit_cross_operations!((Vh, vh), (Ab, ab));
+impl_unit_cross_operations!((Vh, vh), (Rl, rl));
+impl_unit_cross_operations!((Vh, vh), (Rw, rw));
+impl_unit_cross_operations!((Vh, vh), (Rh, rh));
+impl_unit_cross_operations!((Vh, vh), (Em, em));
+impl_unit_cross_operations!((Vh, vh), (Vp, vp));
+impl_unit_cross_operations!((Vh, vh), (Vw, vw));
 
 
-// #==================================#
-// #=== THE UIVALUE IMPLEMENTATION ===#
+// #================================#
+// #=== THE VALUE IMPLEMENTATION ===#
 
 /// Declare [`UiValue`] struct with these fields
-macro_rules! init_uivalue {
+macro_rules! init_value {
     ($($struct_field:ident), *) => {
         /// **Ui value** - A collection of different units used for UI.
         /// They are computed at runtime when layout is being calculated (context-aware).
@@ -294,10 +422,10 @@ macro_rules! init_uivalue {
         }
     }
 }
-init_uivalue!(ab, rl, rw, rh, em, vp, vw, vh);
+init_value!(ab, rl, rw, rh, em, vp, vw, vh);
 
 /// Bind these structs to appropriate [`UiValue`] fields and implement math operations
-macro_rules! bind_uivalue {
+macro_rules! bind_value {
     ($( ($unit:ident, $struct_field:ident) ),* ) => {
 
         $(
@@ -601,48 +729,7 @@ macro_rules! bind_uivalue {
         }
     }
 }
-bind_uivalue!((Ab, ab), (Rl, rl), (Rw, rw), (Rh, rh), (Em, em), (Vp, vp), (Vw, vw), (Vh, vh));
-
-/// Implement basic math and conversions for a type
-macro_rules! impl_uiunit {
-    ($($unit:ident), *) => {
-        $(
-            impl From<$unit<(f32, f32)>> for UiValue<Vec2> {
-                fn from(val: $unit<(f32, f32)>) -> UiValue<Vec2> {
-                    $unit(Vec2::new(val.0.0, val.0.1)).into()
-                }
-            }
-            impl From<$unit<(f32, f32, f32)>> for UiValue<Vec3> {
-                fn from(val: $unit<(f32, f32, f32)>) -> UiValue<Vec3> {
-                    $unit(Vec3::new(val.0.0, val.0.1, val.0.2)).into()
-                }
-            }
-            impl From<$unit<(f32, f32, f32, f32)>> for UiValue<Vec4> {
-                fn from(val: $unit<(f32, f32, f32, f32)>) -> UiValue<Vec4> {
-                    $unit(Vec4::new(val.0.0, val.0.1, val.0.2, val.0.3)).into()
-                }
-            }
-
-            impl From<$unit<f32>> for UiValue<Vec2> {
-                fn from(val: $unit<f32>) -> UiValue<Vec2> {
-                    $unit(Vec2::new(val.0, val.0)).into()
-                }
-            }
-            impl From<$unit<f32>> for UiValue<Vec3> {
-                fn from(val: $unit<f32>) -> UiValue<Vec3> {
-                    $unit(Vec3::new(val.0, val.0, val.0)).into()
-                }
-            }
-            impl From<$unit<f32>> for UiValue<Vec4> {
-                fn from(val: $unit<f32>) -> UiValue<Vec4> {
-                    $unit(Vec4::new(val.0, val.0, val.0, val.0)).into()
-                }
-            }
-        )*
-    };
-}
-impl_uiunit!(Ab, Rl, Rw, Rh, Em, Vp, Vw, Vh);
-
+bind_value!((Ab, ab), (Rl, rl), (Rw, rw), (Rh, rh), (Em, em), (Vp, vp), (Vw, vw), (Vh, vh));
 
 // # Impl (A, B) => UiValue(Vec2)
 impl <A, B> From<(A, B)> for UiValue<Vec2> where
