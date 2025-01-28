@@ -10,6 +10,8 @@ use crate::*;
 /// Then you can use the [`Self::id`] function to identify this state inside components
 /// that allow you to specify per state properties like [`Uilayout`].
 /// 
+/// For more information check the documentation on [`UiState`].
+/// 
 /// ```
 ///      UiLayout::new(vec![
 ///          (UiBase::id(), UiLayout::window().full()),
@@ -17,7 +19,8 @@ use crate::*;
 ///      ]),
 /// ```
 /// 
-/// For more information check the documentation on [`UiState`].
+/// To trigger the state we can either manually flip the [`UiHover::enable`] field or trigger the [`UiHoverSet`]
+/// helper event. To do this easily, there is a convinient observer [`hover_set`] provided for it.
 ///
 /// ## 🛠️ Example
 /// ```

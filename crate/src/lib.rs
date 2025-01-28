@@ -399,7 +399,7 @@ impl UiStateTrait for UiBase {
 // #====================#
 // #=== TEXT CONTROL ===#
 
-/// **Ui Text Size** - This component is used to control the size of text compared
+/// **Ui Text Size** - This component is used to control the size of a text compared
 /// to other Ui-Nodes. It works by overwritting the attached [`UiLayout`] window
 /// size parameter to match the text bounds. The value provided is used as a _scale_
 /// to adjust this size, specificaly it's height. It is recommended to use `non-relative`
@@ -490,7 +490,7 @@ pub fn system_text_size_to_layout(
 // #=== CAMERA FETCHING ===#
 
 /// **Ui Fetch From Camera** - Attaching this component to [`UiLayoutRoot`] will make the [`Dimension`]
-/// component pull data from a [`Camera`] with attached [`UiSourceCamera`] with the same index.
+/// component pull data from a [`Camera`] with attached [`UiSourceCamera`] that has the same index.
 #[derive(Component, Clone, PartialEq, Debug)]
 pub struct UiFetchFromCamera<const INDEX: usize>;
 
