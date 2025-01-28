@@ -242,10 +242,19 @@ pub fn system_layout_compute(
 
                 // Combine the state rectangles into one normalized
                 let mut node_rectangle = Rectangle2D::EMPTY;
-                for (state, rectangle) in computed_rectangles {
-                    if let Some(weight) = node_state.states.get(state) {
-                        node_rectangle.pos += rectangle.pos * (weight / total_weight);
-                        node_rectangle.size += rectangle.size * (weight / total_weight);
+
+                // Use base if no active state
+                if total_weight == 0.0 {
+                    node_rectangle.pos += computed_rectangles[0].1.pos;
+                    node_rectangle.size += computed_rectangles[0].1.size;
+                
+                // Combine the active states into one rectangle
+                } else {
+                    for (state, rectangle) in computed_rectangles {
+                        if let Some(weight) = node_state.states.get(state) {
+                            node_rectangle.pos += rectangle.pos * (weight / total_weight);
+                            node_rectangle.size += rectangle.size * (weight / total_weight);
+                        }
                     }
                 }
 
@@ -270,7 +279,8 @@ pub fn system_layout_compute(
 
 /// **Ui State** - This component aggrages state transition values for later reference
 /// by other components. You don't directly control or spawn this component, but use an abstraction
-/// instead. You can use the prebuilt state components or create a custom ones.
+/// instead. You can use the prebuilt state components or create a custom ones with a completely
+/// unique transition logic. You just have to provide transition value to this component later.
 /// - [`UiBase`] _(Type only, not a component)_
 /// - [`UiHover`]
 /// - [`UiSelected`]
@@ -304,16 +314,10 @@ pub fn system_layout_compute(
 ///               (UiHover::id(), Color::YELLOW.with_alpha(1.2))
 ///           ]),
 ///           // ... Sprite, Text, etc.
-///
-///       )).observe(|trigger: Trigger<Pointer<Over>>, mut query: Query<&mut UiHover>| {
-///           // Enable the hover state transition
-///           query.get_mut(trigger.entity()).unwrap().enable = true;
-///
-///       }).observe(|trigger: Trigger<Pointer<Out>>, mut query: Query<&mut UiHover>| {
-///           // Disable the hover state transition
-///           query.get_mut(trigger.entity()).unwrap().enable = false;
-///
-///       });
+///       
+///       // Add observers that enable/disable the hover state component
+///       )).observe(hover_set::<Pointer<Over>, true>)
+///         .observe(hover_set::<Pointer<Out>, false>);
 /// # });
 /// # }
 /// ```
@@ -444,10 +448,9 @@ pub fn system_text_size_from_dimension(
     mut query: Query<(&mut Transform, &Dimension, &TextLayoutInfo), Changed<Dimension>>,
 ) {
     for (mut transform, dimension, text_info) in &mut query {
-        // Avoid dividing by 0 if text is not loaded yet
+        // Wait for text to render
         if text_info.size.y == 0.0 {
             commands.trigger(RecomputeUiLayout);
-            continue;
         }
 
         // Scale the text
@@ -463,10 +466,9 @@ pub fn system_text_size_to_layout(
     mut query: Query<(&mut UiLayout, &TextLayoutInfo, &UiTextSize), Changed<TextLayoutInfo>>,
 ) {
     for (mut layout, text_info, text_size) in &mut query {
-        // Avoid dividing by 0 if text is not loaded yet and postpone layout
+        // Wait for text to render
         if text_info.size.y == 0.0 {
             commands.trigger(RecomputeUiLayout);
-            continue;
         }
 
         // Create the text layout
@@ -659,6 +661,7 @@ pub enum UiSystems {
 }
 
 /// This plugin is used for the main logic.
+#[derive(Debug, Default, Clone)]
 pub struct UiLunexPlugin;
 impl Plugin for UiLunexPlugin {
     fn build(&self, app: &mut App) {
@@ -676,13 +679,7 @@ impl Plugin for UiLunexPlugin {
         // PRE-COMPUTE SYSTEMS
         app.add_systems(Update, (
 
-            update_state,
             system_state_base_balancer,
-            system_state_pipe_into_manager::<UiHover>,
-            system_state_pipe_into_manager::<UiSelected>,
-            system_state_pipe_into_manager::<UiClicked>,
-            system_state_pipe_into_manager::<UiIntro>,
-            system_state_pipe_into_manager::<UiOutro>,
             system_text_size_to_layout,
 
         ).in_set(UiSystems::PreCompute));
@@ -708,6 +705,7 @@ impl Plugin for UiLunexPlugin {
 
         // Add index plugins
         app.add_plugins((
+            UiLunexStatePlugin,
             UiLunexIndexPlugin::<0>,
             UiLunexIndexPlugin::<1>,
             UiLunexIndexPlugin::<2>,
@@ -718,9 +716,10 @@ impl Plugin for UiLunexPlugin {
 
 
 /// This plugin is used to enable debug functionality.
-pub struct UiLunexDebugPlugin<G: GizmoConfigGroup = DefaultGizmoConfigGroup>(pub PhantomData<G>);
-impl <G: GizmoConfigGroup> UiLunexDebugPlugin<G> {
-    pub fn new() -> Self { Self(PhantomData) }
+#[derive(Debug, Default, Clone)]
+pub struct UiLunexDebugPlugin<G: GizmoConfigGroup = DefaultGizmoConfigGroup>(PhantomData<G>);
+impl UiLunexDebugPlugin<DefaultGizmoConfigGroup> {
+    pub fn new() -> Self { UiLunexDebugPlugin::<DefaultGizmoConfigGroup>(PhantomData) }
 }
 impl <G: GizmoConfigGroup> Plugin for UiLunexDebugPlugin<G> {
     fn build(&self, app: &mut App) {
@@ -731,6 +730,7 @@ impl <G: GizmoConfigGroup> Plugin for UiLunexDebugPlugin<G> {
 }
 
 /// This plugin is used to register index components.
+#[derive(Debug, Default, Clone)]
 pub struct UiLunexIndexPlugin<const INDEX: usize>;
 impl <const INDEX: usize> Plugin for UiLunexIndexPlugin<INDEX> {
     fn build(&self, app: &mut App) {
