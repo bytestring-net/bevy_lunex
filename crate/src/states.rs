@@ -13,10 +13,12 @@ use crate::*;
 /// For more information check the documentation on [`UiState`].
 /// 
 /// ```
+/// # use bevy::prelude::*;
+/// # use bevy_lunex::*;
 ///      UiLayout::new(vec![
 ///          (UiBase::id(), UiLayout::window().full()),
 ///          (UiHover::id(), UiLayout::window().x(Rl(10.0)).full())
-///      ]),
+///      ]);
 /// ```
 /// 
 /// To trigger the state we can either manually flip the [`UiHover::enable`] field or trigger the [`UiHoverSet`]
@@ -56,13 +58,7 @@ pub struct UiHover {
 impl UiHover {
     /// Create new instance
     pub fn new() -> Self {
-        Self {
-            value: 0.0,
-            enable: false,
-            curve: |v| {v},
-            forward_speed: 1.0,
-            backward_speed: 1.0,
-        }
+        Self::default()
     }
     /// Replaces the curve function.
     pub fn curve(mut self, curve: fn(f32) -> f32) -> Self {
@@ -80,6 +76,18 @@ impl UiHover {
         self
     }
 }
+/// Constructor
+impl Default for UiHover {
+    fn default() -> Self {
+        Self {
+            value: 0.0,
+            enable: false,
+            curve: |v| {v},
+            forward_speed: 1.0,
+            backward_speed: 1.0,
+        }
+    }
+}
 /// State implementation
 impl UiStateTrait for UiHover {
     fn value(&self) -> f32 {
@@ -93,10 +101,10 @@ pub fn system_state_hover_update(
     mut query: Query<&mut UiHover>,
 ) {
     for mut hover in &mut query {
-        if hover.enable == true && hover.value < 1.0 {
+        if hover.enable && hover.value < 1.0 {
             hover.value = (hover.value + hover.forward_speed * time.delta_secs()).min(1.0);
         }
-        if hover.enable == false && hover.value > 0.0 {
+        if !hover.enable && hover.value > 0.0 {
             hover.value = (hover.value - hover.backward_speed * time.delta_secs()).max(0.0);
         }
     }
@@ -182,7 +190,7 @@ impl UiStateTrait for UiOutro {
 /// This observer will listen for said event and duplicate it to it's children
 fn observer_event_duplicator<E: Event + Copy>(trigger: Trigger<E>, mut commands: Commands, mut query: Query<&Children>) {
     if let Ok(children) = query.get_mut(trigger.entity()) {
-        let targets: Vec<Entity> = children.into_iter().map(|e| *e).collect();
+        let targets: Vec<Entity> = children.iter().copied().collect();
         commands.trigger_targets(*trigger.event(), targets);
     }
 }

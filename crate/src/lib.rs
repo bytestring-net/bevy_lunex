@@ -4,8 +4,7 @@
 pub(crate) use std::any::TypeId;
 pub(crate) use std::marker::PhantomData;
 pub(crate) use bevy::prelude::*;
-pub(crate) use bevy::sprite::Anchor;
-use bevy::sprite::SpriteSource;
+pub(crate) use bevy::sprite::SpriteSource;
 pub(crate) use bevy::text::TextLayoutInfo;
 pub(crate) use bevy::utils::HashMap;
 
@@ -21,6 +20,7 @@ pub use states::*;
 mod units;
 pub use units::*;
 
+pub use bevy::sprite::Anchor;
 
 // #===============================#
 // #=== MULTIPURPOSE COMPONENTS ===#
@@ -146,7 +146,7 @@ impl UiLayout {
     /// ## 🛠️ Example
     /// ```
     /// # use bevy_lunex::{UiLayout, Rl};
-    /// let layout: UiLayout = UiLayout::Boundary().pos1(Rl(20.0)).pos2(Rl(80.0)).pack();
+    /// let layout: UiLayout = UiLayout::boundary().pos1(Rl(20.0)).pos2(Rl(80.0)).pack();
     /// ```
     pub fn boundary() -> UiLayoutTypeBoundary {
         UiLayoutTypeBoundary::new()
@@ -299,6 +299,7 @@ pub fn system_layout_compute(
 /// ## 🛠️ Example
 /// ```
 /// # use bevy::prelude::*;
+/// # use bevy::color::palettes::basic::*;
 /// # use bevy_lunex::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
@@ -314,8 +315,8 @@ pub fn system_layout_compute(
 ///           ]),
 ///           // You can define colors per state
 ///           UiColor::new(vec![
-///               (UiBase::id(), Color::RED.with_alpha(0.8)),
-///               (UiHover::id(), Color::YELLOW.with_alpha(1.2))
+///               (UiBase::id(), Color::Srgba(RED).with_alpha(0.8)),
+///               (UiHover::id(), Color::Srgba(YELLOW).with_alpha(1.2))
 ///           ]),
 ///           // ... Sprite, Text, etc.
 ///       
@@ -550,6 +551,7 @@ pub fn system_touch_camera_if_fetch_added<const INDEX: usize>(
 /// ## 🛠️ Example
 /// ```
 /// # use bevy::prelude::*;
+/// # use bevy::color::palettes::basic::*;
 /// # use bevy_lunex::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
@@ -558,7 +560,7 @@ pub fn system_touch_camera_if_fetch_added<const INDEX: usize>(
 ///       // Spawn as a single color
 ///       ui.spawn((
 ///           // ... Layout, etc.
-///           UiColor::from(Color::RED.with_alpha(0.8)),
+///           UiColor::from(Color::Srgba(RED).with_alpha(0.8)),
 ///           // ... Sprite, Text, etc.
 ///       ));
 ///
@@ -566,8 +568,8 @@ pub fn system_touch_camera_if_fetch_added<const INDEX: usize>(
 ///       ui.spawn((
 ///           // ... Layout, etc.
 ///           UiColor::new(vec![
-///               (UiBase::id(), Color::RED.with_alpha(0.8)),
-///               (UiHover::id(), Color::YELLOW.with_alpha(1.2))
+///               (UiBase::id(), Color::Srgba(RED).with_alpha(0.8)),
+///               (UiHover::id(), Color::Srgba(YELLOW).with_alpha(1.2))
 ///           ]),
 ///           // ... Sprite, Text, etc.
 ///       ));

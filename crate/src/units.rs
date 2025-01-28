@@ -15,7 +15,7 @@ use std::ops::MulAssign;
 /// **Absolute** - Represents non-changing unit. Scale can be modified but by default `1Ab = 1Px`.
 /// ## 🛠️ Example
 /// ```
-/// # use crate::Ab;
+/// # use bevy_lunex::*;
 /// let a: Ab<f32> = Ab(4.0) + Ab(6.0); // -> 10px
 /// let b: Ab<f32> = Ab(4.0) * 2.0;     // -> 8px
 /// ```
@@ -25,7 +25,7 @@ pub struct Ab<T>(pub T);
 /// **Relative** - Represents scalable unit `0% to 100%`. `120%` is allowed.
 /// ## 🛠️ Example
 /// ```
-/// # use crate::Rl;
+/// # use bevy_lunex::*;
 /// let a: Rl<f32> = Rl(25.0) + Rl(40.0); // -> 65%
 /// let b: Rl<f32> = Rl(25.0) * 3.0;      // -> 75%
 /// ```
@@ -36,7 +36,7 @@ pub struct Rl<T>(pub T);
 /// Proportional to a width measure even when used in a height field.
 /// ## 🛠️ Example
 /// ```
-/// # use crate::Rw;
+/// # use bevy_lunex::*;
 /// let a: Rw<f32> = Rw(25.0) + Rw(40.0); // -> 65%
 /// let b: Rw<f32> = Rw(25.0) * 3.0;      // -> 75%
 /// ```
@@ -47,7 +47,7 @@ pub struct Rw<T>(pub T);
 /// Proportional to a height measure even when used in a width field.
 /// ## 🛠️ Example
 /// ```
-/// # use crate::Rh;
+/// # use bevy_lunex::*;
 /// let a: Rh<f32> = Rh(25.0) + Rh(40.0); // -> 65%
 /// let b: Rh<f32> = Rh(25.0) * 3.0;      // -> 75%
 /// ```
@@ -57,7 +57,7 @@ pub struct Rh<T>(pub T);
 /// **Size of M** - Represents unit that is the size of the symbol `M`. Which is `16px` with `font size 16px` and so on.
 /// ## 🛠️ Example
 /// ```
-/// # use crate::Em;
+/// # use bevy_lunex::*;
 /// let a: Em<f32> = Em(1.0) + Em(2.0); // -> 3em == 48px with font size 16px
 /// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq, Deref, DerefMut, Reflect)]
@@ -66,7 +66,7 @@ pub struct Em<T>(pub T);
 /// **Viewport** - Represents scalable unit `0% to 100%` of the root container. `120%` is allowed.
 /// ## 🛠️ Example
 /// ```
-/// # use crate::Vp;
+/// # use bevy_lunex::*;
 /// let a: Vp<f32> = Vp(25.0) + Vp(40.0); // -> 65%
 /// let b: Vp<f32> = Vp(25.0) * 3.0;      // -> 75%
 /// ```
@@ -77,7 +77,7 @@ pub struct Vp<T>(pub T);
 /// Proportional to a width measure even when used in a height field.
 /// ## 🛠️ Example
 /// ```
-/// # use crate::Vw;
+/// # use bevy_lunex::*;
 /// let a: Vw<f32> = Vw(25.0) + Vw(40.0); // -> 65%
 /// let b: Vw<f32> = Vw(25.0) * 3.0;      // -> 75%
 /// ```
@@ -88,7 +88,7 @@ pub struct Vw<T>(pub T);
 /// Proportional to a height measure even when used in a width field.
 /// ## 🛠️ Example
 /// ```
-/// # use crate::Vh;
+/// # use bevy_lunex::*;
 /// let a: Vh<f32> = Vh(25.0) + Vh(40.0); // -> 65%
 /// let b: Vh<f32> = Vh(25.0) * 3.0;      // -> 75%
 /// ```
@@ -180,8 +180,8 @@ macro_rules! init_uivalue {
         /// * [`f32`] [`Vec2`] [`Vec3`] [`Vec4`]
         /// ## 🛠️ Example
         /// ```
-        /// # use lunex_engine::{UiValue, Ab, Em, Rl, Sp};
-        /// # use bevy::prelude::Vec2;
+        /// # use bevy_lunex::*;
+        /// # use bevy::prelude::*;
         /// let a: UiValue<f32> = Ab(4.0) + Em(1.0);  // -> 4px + 1em
         /// let b: UiValue<f32> = Ab(40.0) - Rl(5.0); // -> 40px - 5%
         /// let c: UiValue<Vec2> = (Ab(20.0), Em(2.0)).into(); // -> [20px, 2em]

@@ -60,7 +60,7 @@ impl Rectangle2D {
 /// **Align** - A type used to define alignment in a node layout.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_engine::Align;
+/// # use bevy_lunex::*;
 /// let align: Align = Align::START; // -> -1.0
 /// let align: Align = Align(-1.0);  // -> -1.0
 /// let align: Align = (-1.0).into();  // -> -1.0
@@ -86,7 +86,7 @@ impl From<f32> for Align {
 /// **Scaling** - A type used to define how should a Solid node layout scale relative to a parent.
 /// ## 🛠️ Example
 /// ```
-/// # use lunex_engine::Scaling;
+/// # use bevy_lunex::*;
 /// let scaling: Scaling = Scaling::HorFill; // -> always cover the horizontal axis
 /// let scaling: Scaling = Scaling::VerFill; // -> always cover the vertical axis
 /// let scaling: Scaling = Scaling::Fit;  // -> always fit inside
@@ -119,9 +119,9 @@ impl UiLayoutType {
     /// Computes the layout based on given parameters.
     pub(crate) fn compute(&self, parent: &Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
         match self {
-            UiLayoutType::Boundary(layout) => layout.compute(&parent, absolute_scale, viewport_size, font_size),
-            UiLayoutType::Window(layout) => layout.compute(&parent, absolute_scale, viewport_size, font_size),
-            UiLayoutType::Solid(layout) => layout.compute(&parent, absolute_scale, viewport_size, font_size),
+            UiLayoutType::Boundary(layout) => layout.compute(parent, absolute_scale, viewport_size, font_size),
+            UiLayoutType::Window(layout) => layout.compute(parent, absolute_scale, viewport_size, font_size),
+            UiLayoutType::Solid(layout) => layout.compute(parent, absolute_scale, viewport_size, font_size),
         }
     }
 }
