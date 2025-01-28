@@ -7,22 +7,35 @@ use bevy::text::TextLayoutInfo;
 use bevy::utils::HashMap;
 
 
-// #=================================#
-// #=== THE MAIN LUNEX COMPONENTS ===#
+// #===============================#
+// #=== MULTIPURPOSE COMPONENTS ===#
 
 /// **Dimension** - This component holds width and height used for different Ui components
 #[derive(Component, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
 pub struct Dimension(pub Vec2);
+/// Conversion implementations
 impl <T: Into<Vec2>> From<T> for Dimension {
     fn from(value: T) -> Self {
         Dimension(value.into())
     }
 }
 
+/// This system takes [`Dimension`] data and pipes them into querried [`Sprite`].
+pub fn system_pipe_sprite_size_from_dimension(
+    mut query: Query<(&mut Sprite, &Dimension), Changed<Dimension>>,
+) {
+    for (mut sprite, dimension) in &mut query {
+        sprite.custom_size = Some(**dimension)
+    }
+}
+
+
+// #===========================#
+// #=== LAYOUT ROOT CONTROL ===#
 
 /// **Ui Layout Root** - This component marks the start of a worldspace Ui-Tree. Spawn this standalone for worldspace 3D UI
 /// or spawn this as a child of camera for a HUD. For 2D UI, if your camera does not move you can spawn it standalone too.
-/// 
+///
 /// Important components:
 /// - [`Transform`] - Set the position of the Ui-Tree
 /// - [`Dimension`] - Set the size of the Ui-Tree
@@ -43,18 +56,50 @@ impl <T: Into<Vec2>> From<T> for Dimension {
 #[require(Visibility, Transform, Dimension)]
 pub struct UiLayoutRoot;
 
+/// Trigger this event to recompute all [`UiLayoutRoot`] entities.
+#[derive(Event)]
+pub struct RecomputeUiLayout;
+
+/// This observer will mutably touch [`UiLayoutRoot`] which will trigger [`system_layout_compute`].
+pub fn observer_touch_layout_root(
+    _trigger: Trigger<RecomputeUiLayout>,
+    mut query: Query<&mut UiLayoutRoot>,
+){
+    for mut root in &mut query {
+        root.as_mut();
+    }
+}
+
+/// This system draws the outlines of [`UiLayout`] and [`UiLayoutRoot`] as gizmos.
+pub fn system_debug_draw_gizmo<G:GizmoConfigGroup>(
+    query: Query<(&GlobalTransform, &Dimension), Or<(With<UiLayout>, With<UiLayoutRoot>)>>,
+    mut gizmos: Gizmos<G>
+) {
+    for (transform, dimension) in &query {
+        // Draw the gizmo outline
+        gizmos.rect(
+            Isometry3d::from(transform.translation()),
+            **dimension,
+            Color::linear_rgb(0.0, 1.0, 0.0),
+        );
+    }
+}
+
+
+// #======================#
+// #=== LAYOUT CONTROL ===#
 
 /// **Ui Layout** - This component specifies the layout of a Ui-Node, which must be spawned as a child
 /// of either [`UiLayoutRoot`] or [`UiLayout`] to work. Based on the provided layout other attached
 /// components on this entity are overwritten to match the computed structure.
-/// 
+///
 /// Direct output components:
 /// - [`Transform`] - The computed position of the Ui-Node _(Read-only)_
 /// - [`Dimension`] - The computed size of the Ui-Node _(Read-only)_
-/// 
+///
 /// Indirectly affected components:
 /// - [`Sprite`] - `custom_size` to match [`Dimension`]
-/// 
+///
 /// ## 🛠️ Example
 /// ```
 /// # use bevy::prelude::*;
@@ -62,7 +107,6 @@ pub struct UiLayoutRoot;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
 /// #     UiLayoutRoot,
-/// #     UiFetchFromCamera::<0>, // Pipe the size from Camera
 /// # )).with_children(|ui| {
 ///       // Must be spawned as a child
 ///       ui.spawn((
@@ -77,8 +121,10 @@ pub struct UiLayoutRoot;
 #[derive(Component)]
 #[require(Visibility, Transform, Dimension, UiState)]
 pub struct UiLayout {
+    /// Stored layout per state
     layouts: HashMap<TypeId, UiLayoutType>
 }
+/// Constructors
 impl UiLayout {
     /// **Boundary** - Declarative layout type that is defined by its top-left corner and bottom-right corner.
     /// Nodes with this layout are not included in the ui flow.
@@ -112,18 +158,19 @@ impl UiLayout {
         UiLayoutTypeSolid::new()
     }
     /// Create multiple layouts for a different states at once.
-    pub fn new_vec(value: Vec<(&dyn UiStateTrait, impl Into<UiLayoutType>)>) -> Self {
+    pub fn new(value: Vec<(TypeId, impl Into<UiLayoutType>)>) -> Self {
         let mut map = HashMap::new();
         for (state, layout) in value {
-            map.insert(state.id(), layout.into());
+            map.insert(state, layout.into());
         }
         Self { layouts: map }
     }
 }
+/// Conversion implementations
 impl From<UiLayoutType> for UiLayout {
     fn from(value: UiLayoutType) -> Self {
         let mut map = HashMap::new();
-        map.insert(UiBase.id(), value);
+        map.insert(UiBase::id(), value);
         Self {
             layouts: map,
         }
@@ -148,164 +195,8 @@ impl From<UiLayoutTypeSolid> for UiLayout {
     }
 }
 
-
-#[derive(Component)]
-pub struct UiState {
-    /// Create multiple layouts for a different states at once.
-    states: HashMap<TypeId, f32>,
-}
-impl UiState {
-    pub fn new_vec(value: Vec<(&dyn UiStateTrait, impl Into<f32>)>) -> Self {
-        let mut map = HashMap::new();
-        map.insert(UiBase.id(), 1.0);
-        for (state, layout) in value {
-            map.insert(state.id(), layout.into());
-        }
-        Self { states: map }
-    }
-}
-impl Default for UiState {
-    fn default() -> Self {
-        let mut map = HashMap::new();
-        map.insert(UiBase.id(), 1.0);
-        Self {
-            states: map,
-        }
-    }
-}
-
-pub trait UiStateTrait {
-    fn id(&self) -> TypeId;
-}
-
-pub struct UiBase;
-impl UiStateTrait for UiBase {
-    fn id(&self) -> TypeId {
-        TypeId::of::<Self>()
-    }
-}
-pub struct UiHover;
-impl UiStateTrait for UiHover {
-    fn id(&self) -> TypeId {
-        TypeId::of::<Self>()
-    }
-}
-pub struct UiSelected;
-impl UiStateTrait for UiSelected {
-    fn id(&self) -> TypeId {
-        TypeId::of::<Self>()
-    }
-}
-pub struct UiClicked;
-impl UiStateTrait for UiClicked {
-    fn id(&self) -> TypeId {
-        TypeId::of::<Self>()
-    }
-}
-pub struct UiIntro;
-impl UiStateTrait for UiIntro {
-    fn id(&self) -> TypeId {
-        TypeId::of::<Self>()
-    }
-}
-pub struct UiOutro;
-impl UiStateTrait for UiOutro {
-    fn id(&self) -> TypeId {
-        TypeId::of::<Self>()
-    }
-}
-
-
-/// **Ui Fetch From Camera** - Attaching this component to [`UiLayoutRoot`] will make the [`Dimension`]
-/// component pull data from a [`Camera`] with attached [`UiSourceCamera`] with the same index.
-#[derive(Component, Clone, PartialEq, Debug)]
-pub struct UiFetchFromCamera<const INDEX: usize>;
-
-/// **Ui Source Camera** - Marks a [`Camera`] as a source for [`UiLayoutRoot`] with [`UiFetchFromCamera`].
-/// They must have the same index and only one [`UiSourceCamera`] can exist for a single index.
-#[derive(Component, Clone, PartialEq, Debug)]
-pub struct UiSourceCamera<const INDEX: usize>;
-
-
-// #==============================#
-// #=== THE MAIN LUNEX SYSTEMS ===#
-
-/// System set for [`UiLunexPlugin`]
-#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub enum UiSystems {
-    /// Systems that modify data pre-computation
-    PreCompute,
-    /// The computation
-    Compute,
-    /// Systems that modify data post-computation
-    PostCompute,
-}
-
-/// This system takes [`Camera`] viewport data and pipes them into querried [`Dimension`] + [`UiLayoutRoot`] + [`UiFetchFromCamera`].
-pub fn fetch_dimension_from_camera<const INDEX: usize>(
-    src_query: Query<(&Camera, Option<&OrthographicProjection>), (With<UiSourceCamera<INDEX>>, Changed<Camera>)>,
-    mut dst_query: Query<&mut Dimension, (With<UiLayoutRoot>, With<UiFetchFromCamera<INDEX>>)>,
-) {
-    // Check if we have a camera dimension input
-    if src_query.is_empty() { return; }
-    let Ok((camera, projection_option)) = src_query.get_single() else {
-        warn_once!("Multiple UiSourceCamera<{INDEX}> exist at once! Ignoring all camera inputs to avoid unexpected behavior!");
-        return;
-    };
-
-    // Pipe the camera viewport size
-    if let Some(cam_size) = camera.physical_viewport_size() {
-        for mut size in &mut dst_query {
-            **size = Vec2::from((cam_size.x as f32, cam_size.y as f32)) * if let Some(p) = projection_option { p.scale } else { 1.0 };
-        }
-    }
-}
-
-/// This system listens for added [`UiFetchFromCamera`] components and if it finds one, mutable accesses all [`Camera`]s to trigger fetching systems.
-pub fn touch_camera_if_fetch_added<const INDEX: usize>(
-    query: Query<Entity, Added<UiFetchFromCamera<INDEX>>>,
-    mut cameras: Query<&mut Camera, With<UiSourceCamera<INDEX>>>,
-){
-    if !query.is_empty() {
-        for mut camera in &mut cameras {
-            camera.as_mut();
-        }
-    }
-}
-
-
-#[derive(Event)]
-pub struct RecomputeUiLayout;
-
-/// This system listens for added [`UiFetchFromCamera`] components and if it finds one, mutable accesses all [`Camera`]s to trigger fetching systems.
-pub fn observer_touch_ui_layout_root(
-    _trigger: Trigger<RecomputeUiLayout>,
-    mut query: Query<&mut UiLayoutRoot>,
-){
-    for mut root in &mut query {
-        root.as_mut();
-    }
-}
-
-
-
-/// This system draws the outlines of [`UiLayout`] and [`UiLayoutRoot`] as gizmos.
-pub fn debug_draw_gizmo<G:GizmoConfigGroup>(
-    query: Query<(&GlobalTransform, &Dimension), Or<(With<UiLayout>, With<UiLayoutRoot>)>>,
-    mut gizmos: Gizmos<G>
-) {
-    for (transform, dimension) in &query {
-        // Draw the gizmo outline
-        gizmos.rect(
-            Isometry3d::from(transform.translation()),
-            **dimension,
-            Color::linear_rgb(0.0, 1.0, 0.0),
-        );
-    }
-}
-
 /// This system traverses the hierarchy and computes all nodes.
-pub fn compute_children(
+pub fn system_layout_compute(
     root_query: Query<(&UiLayoutRoot, &Transform, &Dimension, &Children), (Without<UiLayout>, Or<(Changed<UiLayoutRoot>, Changed<Dimension>)>)>,
     mut node_query: Query<(&UiLayout, &UiState, &mut Transform, &mut Dimension, Option<&Children>), Without<UiLayoutRoot>>,
 ) {
@@ -330,13 +221,15 @@ pub fn compute_children(
                     computed_rectangles.push((state, layout.compute(&parent_rectangle, 1.0, root_rectangle.size, 16.0)));
                 }
 
-                // Normalize the state weights
+                // Normalize the active state weights
                 let mut total_weight = 0.0;
-                for (_, value) in &node_state.states {
-                    total_weight += value;
+                for (state, _) in &node_layout.layouts {
+                    if let Some(weight) = node_state.states.get(state) {
+                        total_weight += weight;
+                    }
                 }
 
-                // Combine the state rectangles into one normilized
+                // Combine the state rectangles into one normalized
                 let mut node_rectangle = Rectangle2D::EMPTY;
                 for (state, rectangle) in computed_rectangles {
                     if let Some(weight) = node_state.states.get(state) {
@@ -360,17 +253,161 @@ pub fn compute_children(
     }
 }
 
-/// This system takes [`Dimension`] data and pipes them into querried [`Sprite`].
-pub fn pipe_sprite_size_from_dimension(
-    mut query: Query<(&mut Sprite, &Dimension), Changed<Dimension>>,
+
+// #=====================#
+// #=== STATE CONTROL ===#
+
+/// **Ui State** - This component aggrages state transition values for later reference
+/// by other components. You don't directly control or spawn this component, but use an abstraction
+/// instead. You can use the prebuilt state components or create a custom ones.
+/// - [`UiBase`] _(Type only, not a component)_
+/// - [`UiHover`]
+/// - [`UiSelected`]
+/// - [`UiClicked`]
+/// - [`UiIntro`]
+/// - [`UiOutro`]
+///
+/// Dependant components:
+/// - [`UiLayout`]
+/// - [`UiColor`]
+///
+/// ## 🛠️ Example
+/// ```
+/// # use bevy::prelude::*;
+/// # use bevy_lunex::*;
+/// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+/// # commands.spawn((
+/// #     UiLayoutRoot,
+/// # )).with_children(|ui| {
+///       ui.spawn((
+///           // Like this you can enable a state
+///           UiHover::new().forward_speed(20.0).backward_speed(4.0),
+///           // You can define layouts per state
+///           UiLayout::new(vec![
+///               (UiBase::id(), UiLayout::window().full()),
+///               (UiHover::id(), UiLayout::window().x(Rl(10.0)).full())
+///           ]),
+///           // You can define colors per state
+///           UiColor::new(vec![
+///               (UiBase::id(), Color::RED.with_alpha(0.8)),
+///               (UiHover::id(), Color::YELLOW.with_alpha(1.2))
+///           ]),
+///           // ... Sprite, Text, etc.
+///
+///       )).observe(|trigger: Trigger<Pointer<Over>>, mut query: Query<&mut UiHover>| {
+///           // Enable the hover state transition
+///           query.get_mut(trigger.entity()).unwrap().enable = true;
+///
+///       }).observe(|trigger: Trigger<Pointer<Out>>, mut query: Query<&mut UiHover>| {
+///           // Disable the hover state transition
+///           query.get_mut(trigger.entity()).unwrap().enable = false;
+///
+///       });
+/// # });
+/// # }
+/// ```
+#[derive(Component)]
+pub struct UiState {
+    /// Stored transition per state
+    states: HashMap<TypeId, f32>,
+}
+/// Default constructor
+impl Default for UiState {
+    fn default() -> Self {
+        let mut map = HashMap::new();
+        map.insert(UiBase::id(), 1.0);
+        Self {
+            states: map,
+        }
+    }
+}
+
+/// This system controls the [`UiBase`] state. This state is decreased based on total sum of all other active states.
+pub fn system_state_base_balancer(
+    mut query: Query<&mut UiState, Changed<UiState>>,
 ) {
-    for (mut sprite, dimension) in &mut query {
-        sprite.custom_size = Some(**dimension)
+    for mut manager in &mut query {
+        // Normalize the active nobase state weights
+        let mut total_nonbase_weight = 0.0;
+        for (state, value) in &manager.states {
+            if *state == UiBase::id() { continue; }
+            total_nonbase_weight += value;
+        }
+
+        // Decrease base transition based on other states
+        if let Some(value) = manager.states.get_mut(&UiBase::id()) {
+            *value = (1.0 - total_nonbase_weight).clamp(0.0, 1.0);
+        }
+    }
+}
+/// This system pipes the attached state component data to the [`UiState`] component.
+pub fn system_state_pipe_into_manager<S: UiStateTrait + Component>(
+    mut commads: Commands,
+    mut query: Query<(&mut UiState, &S), Changed<S>>,
+) {
+    for (mut manager, state) in &mut query {
+        // Send the value to the manager
+        if let Some(value) = manager.states.get_mut(&S::id()) {
+            *value = state.value();
+
+        // Insert the value if it does not exist
+        } else {
+            manager.states.insert(S::id(), state.value());
+        }
+        // Recompute layout
+        commads.trigger(RecomputeUiLayout);
+    }
+}
+
+
+// #====================#
+// #=== TEXT CONTROL ===#
+
+/// **Ui Text Size** - This component is used to control the size of text compared
+/// to other Ui-Nodes. It works by overwritting the attached [`UiLayout`] window
+/// size parameter to match the text bounds. The value provided is used as a _scale_
+/// to adjust this size, specificaly it's height. It is recommended to use `non-relative`
+/// units such as [`Ab`], [`Rw`], [`Rh`], [`Vh`], [`Vw`] and [`Em`] for even values.
+///
+/// Affected components:
+/// - [`UiLayout`] - **MUST BE WINDOW TYPE** for this to work
+///
+/// ## 🛠️ Example
+/// ```
+/// # use bevy::prelude::*;
+/// # use bevy_lunex::*;
+/// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+/// # commands.spawn((
+/// #     UiLayoutRoot,
+/// # )).with_children(|ui| {
+///       ui.spawn((
+///           // Position the text using the window layout's position and anchor
+///           UiLayout::window().pos((Rh(40.0), Rl(50.0))).anchor(Anchor::CenterLeft).pack(),
+///           // This controls the height of the text, so 60% of the parent's node height
+///           UiTextSize::from(Rh(60.0)),
+///           // You can attach text like this
+///           Text2d::new("Button"),
+///           // Font size now works as "text resolution"
+///           TextFont {
+///               font: asset_server.load("fonts/Rajdhani.ttf"),
+///               font_size: 64.0,
+///               ..default()
+///           },
+///       ));
+/// # });
+/// # }
+/// ```
+#[derive(Component, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
+pub struct UiTextSize (pub UiValue<f32>);
+/// Constructors
+impl <T: Into<UiValue<f32>>> From<T> for UiTextSize {
+    fn from(value: T) -> Self {
+        UiTextSize(value.into())
     }
 }
 
 /// This system takes [`TextLayoutInfo`] data and pipes them into querried [`Transform`] and [`Dimension`].
-pub fn pipe_text_size_from_dimension(
+pub fn system_text_size_from_dimension(
     mut commands: Commands,
     mut query: Query<(&mut Transform, &Dimension, &TextLayoutInfo), Changed<Dimension>>,
 ) {
@@ -380,7 +417,7 @@ pub fn pipe_text_size_from_dimension(
             commands.trigger(RecomputeUiLayout);
             continue;
         }
-        
+
         // Scale the text
         let scale = **dimension / text_info.size;
         transform.scale.x = scale.x;
@@ -388,8 +425,8 @@ pub fn pipe_text_size_from_dimension(
     }
 }
 
-/// This system takes updated [`TextLayoutInfo`] data and overwrites coresponding [`Layout`] data to match the text size.
-pub fn pipe_text_size_to_layout(
+/// This system takes updated [`TextLayoutInfo`] data and overwrites coresponding [`UiLayout`] data to match the text size.
+pub fn system_text_size_to_layout(
     mut commands: Commands,
     mut query: Query<(&mut UiLayout, &TextLayoutInfo, &UiTextSize), Changed<TextLayoutInfo>>,
 ) {
@@ -401,7 +438,7 @@ pub fn pipe_text_size_to_layout(
         }
 
         // Create the text layout
-        match layout.layouts.get_mut(&UiBase.id()).expect("UiBase state not found for Text") {
+        match layout.layouts.get_mut(&UiBase::id()).expect("UiBase state not found for Text") {
             UiLayoutType::Window(window) => {
                 window.set_height(**text_size);
                 window.set_width(**text_size * (text_info.size.x / text_info.size.y));
@@ -414,44 +451,160 @@ pub fn pipe_text_size_to_layout(
     }
 }
 
-// #=====================================#
-// #=== THE COSMETIC LUNEX COMPONENTS ===#
 
-/// **Ui Color** - This component holds the different colors for each state
+// #=======================#
+// #=== CAMERA FETCHING ===#
+
+/// **Ui Fetch From Camera** - Attaching this component to [`UiLayoutRoot`] will make the [`Dimension`]
+/// component pull data from a [`Camera`] with attached [`UiSourceCamera`] with the same index.
+#[derive(Component, Clone, PartialEq, Debug)]
+pub struct UiFetchFromCamera<const INDEX: usize>;
+
+/// **Ui Source Camera** - Marks a [`Camera`] as a source for [`UiLayoutRoot`] with [`UiFetchFromCamera`].
+/// They must have the same index and only one [`UiSourceCamera`] can exist for a single index.
+#[derive(Component, Clone, PartialEq, Debug)]
+pub struct UiSourceCamera<const INDEX: usize>;
+
+/// This system takes [`Camera`] viewport data and pipes them into querried [`Dimension`] + [`UiLayoutRoot`] + [`UiFetchFromCamera`].
+pub fn system_fetch_dimension_from_camera<const INDEX: usize>(
+    src_query: Query<(&Camera, Option<&OrthographicProjection>), (With<UiSourceCamera<INDEX>>, Changed<Camera>)>,
+    mut dst_query: Query<&mut Dimension, (With<UiLayoutRoot>, With<UiFetchFromCamera<INDEX>>)>,
+) {
+    // Check if we have a camera dimension input
+    if src_query.is_empty() { return; }
+    let Ok((camera, projection_option)) = src_query.get_single() else {
+        warn_once!("Multiple UiSourceCamera<{INDEX}> exist at once! Ignoring all camera inputs to avoid unexpected behavior!");
+        return;
+    };
+
+    // Pipe the camera viewport size
+    if let Some(cam_size) = camera.physical_viewport_size() {
+        for mut size in &mut dst_query {
+            **size = Vec2::from((cam_size.x as f32, cam_size.y as f32)) * if let Some(p) = projection_option { p.scale } else { 1.0 };
+        }
+    }
+}
+
+/// This system listens for added [`UiFetchFromCamera`] components and if it finds one, mutable accesses all [`Camera`]s to trigger fetching systems.
+pub fn system_touch_camera_if_fetch_added<const INDEX: usize>(
+    query: Query<Entity, Added<UiFetchFromCamera<INDEX>>>,
+    mut cameras: Query<&mut Camera, With<UiSourceCamera<INDEX>>>,
+){
+    if !query.is_empty() {
+        for mut camera in &mut cameras {
+            camera.as_mut();
+        }
+    }
+}
+
+
+// #===================#
+// #=== STYLE COLOR ===#
+
+/// **Ui Color** - This component is used to control the color of the Ui-Node.
+/// It is synchronized with a state machine and allows for specifying unique
+/// colors for each state.
+///
+/// Affected components:
+/// - [`Sprite`]
+/// - [`TextColor`]
+///
+/// ## 🛠️ Example
+/// ```
+/// # use bevy::prelude::*;
+/// # use bevy_lunex::*;
+/// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+/// # commands.spawn((
+/// #     UiLayoutRoot,
+/// # )).with_children(|ui| {
+///       // Spawn as a single color
+///       ui.spawn((
+///           // ... Layout, etc.
+///           UiColor::from(Color::RED.with_alpha(0.8)),
+///           // ... Sprite, Text, etc.
+///       ));
+///
+///       // Spawn as a collection for different states
+///       ui.spawn((
+///           // ... Layout, etc.
+///           UiColor::new(vec![
+///               (UiBase::id(), Color::RED.with_alpha(0.8)),
+///               (UiHover::id(), Color::YELLOW.with_alpha(1.2))
+///           ]),
+///           // ... Sprite, Text, etc.
+///       ));
+/// # });
+/// # }
+/// ```
 #[derive(Component, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
 pub struct UiColor {
-    colors: Vec<Color>
+    colors: HashMap<TypeId, Color>
 }
+/// Constructors
+impl UiColor {
+    /// Define multiple states at once using a vec.
+    pub fn new(value: Vec<(TypeId, impl Into<Color>)>) -> Self {
+        let mut map = HashMap::new();
+        for (state, layout) in value {
+            map.insert(state, layout.into());
+        }
+        Self { colors: map }
+    }
+}
+/// Conversion implementations
 impl <T: Into<Color>> From<T> for UiColor {
     fn from(value: T) -> Self {
-        UiColor {
-            colors: vec![value.into()],
+        let mut map = HashMap::new();
+        map.insert(UiBase::id(), value.into());
+        Self {
+            colors: map,
         }
     }
 }
 
-/// **Ui Text Size** - This component holds the height of the text
-#[derive(Component, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
-pub struct UiTextSize (pub UiValue<f32>);
-impl <T: Into<UiValue<f32>>> From<T> for UiTextSize {
-    fn from(value: T) -> Self {
-        UiTextSize(value.into())
-    }
-}
-
-// #==============================#
-// #=== THE COSMETIC LUNEX SYSTEMS ===#
-
-/// This system takes [`Dimension`] data and pipes them into querried [`Sprite`].
-pub fn pipe_color(
-    mut query: Query<(Option<&mut Sprite>, Option<&mut TextColor>, &UiColor), Changed<UiColor>>,
+/// This system takes care of [`UiColor`] data and updates querried [`Sprite`] and [`TextColor`] components.
+pub fn system_color(
+    mut query: Query<(Option<&mut Sprite>, Option<&mut TextColor>, &UiColor, &UiState), Or<(Changed<UiColor>, Changed<UiState>)>>,
 ) {
-    for (sprite_option, text_option, color) in &mut query {
-        if let Some(mut sprite) = sprite_option {
-            sprite.color = color.colors[0];
+    for (node_sprite_option, node_text_option, node_color, node_state) in &mut query {
+
+        // Normalize the active state weights
+        let mut total_weight = 0.0;
+        for (state, _) in &node_color.colors {
+            if let Some(weight) = node_state.states.get(state) {
+                total_weight += weight;
+            }
         }
-        if let Some(mut text) = text_option {
-            **text = color.colors[0];
+
+        // Combine the color into one normalized
+        let mut blend_color = Hsla::new(0.0, 0.0, 0.0, 0.0);
+
+        // If no state active just try to use base color
+        if total_weight == 0.0 {
+            if let Some(color) = node_color.colors.get(&UiBase::id()) {
+                blend_color = (*color).into();
+            }
+
+        // Blend colors from active states
+        } else {
+            for (state, color) in &node_color.colors {
+                if let Some(weight) = node_state.states.get(state) {
+                    let converted: Hsla = (*color).into();
+
+                    blend_color.hue += converted.hue * (weight / total_weight);
+                    blend_color.saturation += converted.saturation * (weight / total_weight);
+                    blend_color.lightness += converted.lightness * (weight / total_weight);
+                    blend_color.alpha += converted.alpha * (weight / total_weight);
+                }
+            }
+        }
+
+        // Apply the color to attached components
+        if let Some(mut sprite) = node_sprite_option {
+            sprite.color = blend_color.into();
+        }
+        if let Some(mut text) = node_text_option {
+            **text = blend_color.into();
         }
     }
 }
@@ -459,33 +612,191 @@ pub fn pipe_color(
 
 
 
-// #=============================#
-// #=== THE MAIN LUNEX PLUGIN ===#
+
+
+
+
+
+
+pub trait UiStateTrait: Send + Sync + 'static {
+    fn id() -> TypeId {
+        TypeId::of::<Self>()
+    }
+    fn value(&self) -> f32;
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct UiBase;
+impl UiStateTrait for UiBase {
+    fn id() -> TypeId {
+        TypeId::of::<Self>()
+    }
+    fn value(&self) -> f32 {
+        1.0
+    }
+}
+
+#[derive(Component, Clone, PartialEq, Debug)]
+pub struct UiHover {
+    value: f32,
+    /// If the state is enabled
+    pub enable: bool,
+    /// The function to smooth the transition
+    pub curve: fn(f32) -> f32,
+    /// The speed of transition forwards
+    pub forward_speed: f32,
+    /// The speed of transition backwards
+    pub backward_speed: f32,
+}
+impl UiHover {
+    /// Create new instance
+    pub fn new() -> Self {
+        Self {
+            value: 0.0,
+            enable: false,
+            curve: |v| {v},
+            forward_speed: 1.0,
+            backward_speed: 1.0,
+        }
+    }
+    /// Replaces the curve function.
+    pub fn curve(mut self, curve: fn(f32) -> f32) -> Self {
+        self.curve = curve;
+        self
+    }
+    /// Replaces the speed with a new value.
+    pub fn forward_speed(mut self, forward_speed: f32) -> Self {
+        self.forward_speed = forward_speed;
+        self
+    }
+    /// Replaces the speed with a new value.
+    pub fn backward_speed(mut self, backward_speed: f32) -> Self {
+        self.backward_speed = backward_speed;
+        self
+    }
+}
+impl UiStateTrait for UiHover {
+    fn value(&self) -> f32 {
+        (self.curve)(self.value)
+    }
+}
+
+#[derive(Component, Deref, DerefMut, Clone, PartialEq, Debug)]
+pub struct UiSelected(pub f32);
+impl UiStateTrait for UiSelected {
+    fn value(&self) -> f32 {
+        self.0
+    }
+}
+
+#[derive(Component, Deref, DerefMut, Clone, PartialEq, Debug)]
+pub struct UiClicked(pub f32);
+impl UiStateTrait for UiClicked {
+    fn value(&self) -> f32 {
+        self.0
+    }
+}
+
+#[derive(Component, Deref, DerefMut, Clone, PartialEq, Debug)]
+pub struct UiIntro(pub f32);
+impl UiStateTrait for UiIntro {
+    fn value(&self) -> f32 {
+        self.0
+    }
+}
+
+#[derive(Component, Deref, DerefMut, Clone, PartialEq, Debug)]
+pub struct UiOutro(pub f32);
+impl UiStateTrait for UiOutro {
+    fn value(&self) -> f32 {
+        self.0
+    }
+}
+
+
+pub fn update_state(
+    time: Res<Time>,
+    mut query: Query<&mut UiHover>,
+) {
+    for mut hover in &mut query {
+        if hover.enable == true && hover.value < 1.0 {
+            hover.value = (hover.value + hover.forward_speed * time.delta_secs()).min(1.0);
+        }
+        if hover.enable == false && hover.value > 0.0 {
+            hover.value = (hover.value - hover.backward_speed * time.delta_secs()).max(0.0);
+        }
+    }
+}
+
+
+
+
+
+
+
+// #=========================#
+// #=== THE LUNEX PLUGINS ===#
+
+/// System set for [`UiLunexPlugin`]
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum UiSystems {
+    /// Systems that modify data pre-computation
+    PreCompute,
+    /// The computation
+    Compute,
+    /// Systems that modify data post-computation
+    PostCompute,
+}
 
 /// This plugin is used for the main logic.
 pub struct UiLunexPlugin;
 impl Plugin for UiLunexPlugin {
     fn build(&self, app: &mut App) {
-        
-        app.add_systems(Update, (
-            pipe_text_size_to_layout,
-        ).in_set(UiSystems::PreCompute));
 
-        app.add_systems(Update, (
-            compute_children,
-        ).in_set(UiSystems::Compute).after(UiSystems::PreCompute));
-
-        app.add_systems(Update, (
-            pipe_sprite_size_from_dimension,
-            pipe_text_size_from_dimension,
-        ).in_set(UiSystems::PostCompute).after(UiSystems::Compute));
-
-        app.add_systems(Update, (
-            pipe_color,
+        // Configure the system set
+        app.configure_sets(Update, (
+            UiSystems::PreCompute.before(UiSystems::Compute),
+            UiSystems::PostCompute.after(UiSystems::Compute),
         ));
 
-        app.add_observer(observer_touch_ui_layout_root);
+        // Add observers
+        app.add_observer(observer_touch_layout_root);
 
+
+        // PRE-COMPUTE SYSTEMS
+        app.add_systems(Update, (
+
+            update_state,
+            system_state_base_balancer,
+            system_state_pipe_into_manager::<UiHover>,
+            system_state_pipe_into_manager::<UiSelected>,
+            system_state_pipe_into_manager::<UiClicked>,
+            system_state_pipe_into_manager::<UiIntro>,
+            system_state_pipe_into_manager::<UiOutro>,
+            system_text_size_to_layout,
+
+        ).in_set(UiSystems::PreCompute));
+
+
+        // COMPUTE SYSTEMS
+        app.add_systems(Update, (
+
+            system_layout_compute,
+
+        ).in_set(UiSystems::Compute));
+
+
+        // POST-COMPUTE SYSTEMS
+        app.add_systems(Update, (
+
+            system_color,
+            system_pipe_sprite_size_from_dimension,
+            system_text_size_from_dimension,
+
+        ).in_set(UiSystems::PostCompute));
+
+
+        // Add index plugins
         app.add_plugins((
             UiLunexIndexPlugin::<0>,
             UiLunexIndexPlugin::<1>,
@@ -495,13 +806,16 @@ impl Plugin for UiLunexPlugin {
     }
 }
 
-/// This plugin is used to enable debug functionality.
-pub struct UiLunexDebugPlugin;
-impl Plugin for UiLunexDebugPlugin {
-    fn build(&self, app: &mut App) {
 
+/// This plugin is used to enable debug functionality.
+pub struct UiLunexDebugPlugin<G: GizmoConfigGroup = DefaultGizmoConfigGroup>(pub PhantomData<G>);
+impl <G: GizmoConfigGroup> UiLunexDebugPlugin<G> {
+    pub fn new() -> Self { Self(PhantomData) }
+}
+impl <G: GizmoConfigGroup> Plugin for UiLunexDebugPlugin<G> {
+    fn build(&self, app: &mut App) {
         app.add_systems(Update, (
-            debug_draw_gizmo::<DefaultGizmoConfigGroup>,
+            system_debug_draw_gizmo::<G>,
         ));
     }
 }
@@ -511,11 +825,12 @@ pub struct UiLunexIndexPlugin<const INDEX: usize>;
 impl <const INDEX: usize> Plugin for UiLunexIndexPlugin<INDEX> {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, (
-            fetch_dimension_from_camera::<INDEX>,
-            touch_camera_if_fetch_added::<INDEX>,
+            system_fetch_dimension_from_camera::<INDEX>,
+            system_touch_camera_if_fetch_added::<INDEX>,
         ).in_set(UiSystems::PreCompute).before(UiSystems::Compute));
     }
 }
+
 
 // #============================#
 // #=== MULTIPURPOSE STRUCTS ===#
@@ -535,7 +850,7 @@ impl Rectangle2D {
     }
 }
 impl Rectangle2D {
-    /// A new empty [`Rectangle2D`]. Has `0` size. 
+    /// A new empty [`Rectangle2D`]. Has `0` size.
     pub const EMPTY: Rectangle2D = Rectangle2D { pos : Vec2::ZERO, size: Vec2::ZERO };
     /// Creates new empty Window layout.
     pub const fn new() -> Self {
@@ -570,7 +885,7 @@ impl Rectangle2D {
     pub fn with_height(mut self, height: f32) -> Self {
         self.size.y = height;
         self
-    }    
+    }
 }
 
 /// **Align** - A type used to define alignment in a node layout.
@@ -928,7 +1243,7 @@ impl UiLayoutTypeSolid {
     }
     /// Computes the layout based on given parameters.
     pub(crate) fn compute(&self, parent: &Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
-        
+
         let size = self.size.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size));
 
         let scale = match self.scaling {
@@ -959,6 +1274,7 @@ impl UiLayoutTypeSolid {
 // #=== THE UI UNIT TYPES ===#
 
 use std::any::TypeId;
+use std::marker::PhantomData;
 use std::ops::Add;
 use std::ops::AddAssign;
 use std::ops::Neg;
@@ -1062,7 +1378,7 @@ macro_rules! init_uiunit {
                     $unit(-self.0)
                 }
             }
-            
+
             // Implement addition of the same type
             impl <T: Add<Output = T>> Add for $unit<T> {
                 type Output = Self;
@@ -1075,7 +1391,7 @@ macro_rules! init_uiunit {
                     self.0 += rhs.0
                 }
             }
-            
+
             // Implement subtraction of the same type
             impl <T: Sub<Output = T>> Sub for $unit<T> {
                 type Output = Self;
@@ -1088,7 +1404,7 @@ macro_rules! init_uiunit {
                     self.0 -= rhs.0
                 }
             }
-            
+
             // Implement multiplication of the same type
             impl <T: Mul<Output = T>> Mul for $unit<T> {
                 type Output = Self;
@@ -1101,7 +1417,7 @@ macro_rules! init_uiunit {
                     self.0 *= rhs.0
                 }
             }
-            
+
             // Implement multiplication with the f32 type
             impl <T: Mul<f32, Output = T>> Mul<f32> for $unit<T> {
                 type Output = $unit<T>;
@@ -1157,7 +1473,7 @@ macro_rules! init_uivalue {
                 }
             }
         }
-        
+
         // Implement negation of the same type
         impl <T: Neg<Output = T>> Neg for UiValue<T> {
             type Output = Self;
@@ -1169,7 +1485,7 @@ macro_rules! init_uivalue {
                 }
             }
         }
-        
+
         // Implement addition of the same type
         impl <T: Add<Output = T> + Add> Add for UiValue<T> {
             type Output = Self;
@@ -1227,8 +1543,8 @@ macro_rules! init_uivalue {
             fn mul_assign(&mut self, rhs: Self) {
                 *self = *self * rhs
             }
-        }    
-        
+        }
+
         // Implement multiplication with the f32 type
         impl <T: Mul<f32, Output = T>> Mul<f32> for UiValue<T> {
             type Output = Self;
@@ -1264,7 +1580,7 @@ macro_rules! bind_uivalue {
                     ret
                 }
             }
-            
+
             // Bind addition of the type to the field
             impl <T: Add<Output = T> + Add> Add<$unit<T>> for UiValue<T> {
                 type Output = Self;
@@ -1289,7 +1605,7 @@ macro_rules! bind_uivalue {
                     }
                 }
             }
-            
+
             // Bind subtraction of the type to the field
             impl <T: Sub<Output = T> + Sub> Sub<$unit<T>> for UiValue<T> {
                 type Output = Self;
@@ -1314,7 +1630,7 @@ macro_rules! bind_uivalue {
                     }
                 }
             }
-            
+
             // Bind multiplication of the type to the field
             impl <T: Mul<Output = T> + Mul> Mul<$unit<T>> for UiValue<T> {
                 type Output = Self;
@@ -1524,7 +1840,7 @@ macro_rules! bind_uivalue {
                 )*
                 self
             }
-            
+
             /// Sets the X value of appropriate units with the new value.
             pub fn set_x(&mut self, other: impl Into<UiValue<f32>>) {
                 let other = other.into();
@@ -1600,8 +1916,8 @@ impl_uiunit!(Ab, Rl, Rw, Rh, Em, Vp, Vw, Vh);
 
 
 // # Impl (A, B) => UiValue(Vec2)
-impl <A, B> From<(A, B)> for UiValue<Vec2> where 
-    A: Into<UiValue<f32>>, 
+impl <A, B> From<(A, B)> for UiValue<Vec2> where
+    A: Into<UiValue<f32>>,
     B: Into<UiValue<f32>>
 {
     fn from(val: (A, B)) -> Self {
@@ -1610,8 +1926,8 @@ impl <A, B> From<(A, B)> for UiValue<Vec2> where
 }
 
 // # Impl (A, B, C) => UiValue(Vec3)
-impl <A, B, C> From<(A, B, C)> for UiValue<Vec3> where 
-    A: Into<UiValue<f32>>, 
+impl <A, B, C> From<(A, B, C)> for UiValue<Vec3> where
+    A: Into<UiValue<f32>>,
     B: Into<UiValue<f32>>,
     C: Into<UiValue<f32>>
 {
@@ -1621,8 +1937,8 @@ impl <A, B, C> From<(A, B, C)> for UiValue<Vec3> where
 }
 
 // # Impl (A, B, C, D) => UiValue(Vec4)
-impl <A, B, C, D> From<(A, B, C, D)> for UiValue<Vec4> where 
-    A: Into<UiValue<f32>>, 
+impl <A, B, C, D> From<(A, B, C, D)> for UiValue<Vec4> where
+    A: Into<UiValue<f32>>,
     B: Into<UiValue<f32>>,
     C: Into<UiValue<f32>>,
     D: Into<UiValue<f32>>
