@@ -1,12 +1,19 @@
 #![feature(const_type_id)]
 #![allow(clippy::type_complexity)]
 
+// Crate import only
 pub(crate) use std::any::TypeId;
 pub(crate) use std::marker::PhantomData;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::sprite::SpriteSource;
 pub(crate) use bevy::text::TextLayoutInfo;
 pub(crate) use bevy::utils::HashMap;
+
+// Re-export
+pub use bevy::sprite::Anchor;
+
+mod cursor;
+pub use cursor::*;
 
 mod layouts;
 pub use layouts::*;
@@ -20,7 +27,6 @@ pub use states::*;
 mod units;
 pub use units::*;
 
-pub use bevy::sprite::Anchor;
 
 // #===============================#
 // #=== MULTIPURPOSE COMPONENTS ===#
@@ -97,6 +103,40 @@ pub fn system_debug_draw_gizmo<G:GizmoConfigGroup>(
             **dimension,
             Color::linear_rgb(0.0, 1.0, 0.0),
         );
+    }
+}
+
+/// This system traverses the hierarchy and computes all nodes.
+pub fn system_debug_print_data(
+    root_query: Query<(&UiLayoutRoot, NameOrEntity, &Children), (Without<UiLayout>, Or<(Changed<UiLayoutRoot>, Changed<Dimension>)>)>,
+    node_query: Query<(&UiLayout, &UiState, NameOrEntity, Option<&Children>), Without<UiLayoutRoot>>,
+) {
+    for (_, root_name, root_children) in &root_query {
+
+        let mut output_string = String::new();
+
+        output_string += &format!("> {root_name}\n");
+
+        // Stack-based traversal
+        let mut stack: Vec<(Entity, usize)> = root_children
+            .iter()
+            .map(|&child| (child, 1))
+            .collect();
+
+        while let Some((current_entity, depth)) = stack.pop() {
+            if let Ok((_node_layout, _node_state, node_name, node_children_option)) = node_query.get(current_entity) {
+
+                output_string += &"  |".repeat(depth);                
+
+                output_string += &format!("- {node_name}\n");
+                
+                if let Some(node_children) = node_children_option {
+                    // Add children to the stack
+                    stack.extend(node_children.iter().map(|&child| (child, depth + 1)));
+                }
+            }
+        }
+        info!("Ui-Tree changed:\n{}", output_string);
     }
 }
 
@@ -711,6 +751,7 @@ impl Plugin for UiLunexPlugin {
 
         // Add index plugins
         app.add_plugins((
+            CursorPlugin,
             UiLunexStatePlugin,
             UiLunexPickingPlugin,
             UiLunexIndexPlugin::<0>,
@@ -731,8 +772,13 @@ impl UiLunexDebugPlugin<DefaultGizmoConfigGroup> {
 impl <G: GizmoConfigGroup> Plugin for UiLunexDebugPlugin<G> {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, (
+            system_debug_print_data,
             system_debug_draw_gizmo::<G>,
         ));
+
+        app.add_systems(Update, (
+            system_debug_print_data,
+        ).in_set(UiSystems::PostCompute));
     }
 }
 
