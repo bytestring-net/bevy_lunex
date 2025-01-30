@@ -7,7 +7,7 @@ use bevy::{input::{mouse::MouseButtonInput, ButtonState}, picking::{pointer::{Lo
 
 /// Component for easy cursor control.
 /// Read more about it in the [docs](https://bytestring-net.github.io/bevy_lunex/advanced/3_cursor.html)
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 #[require(PointerId, PickingBehavior(|| PickingBehavior::IGNORE))]
 pub struct Cursor2d {
     /// Indicates which cursor is being requested.
@@ -62,7 +62,7 @@ impl Default for Cursor2d {
 }
 
 /// This will make the [`Cursor2d`] controllable by a gamepad.
-#[derive(Component, Debug, Clone, PartialEq)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct GamepadCursor {
     /// This struct defines how should the cursor movement behave.
     pub mode: GamepadCursorMode,
@@ -83,7 +83,7 @@ impl Default for GamepadCursor {
 
 
 /// This struct defines how should the cursor movement behave.
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, Reflect)]
 pub enum GamepadCursorMode {
     /// Cursor will freely move on input.
     #[default]
@@ -100,7 +100,7 @@ pub enum GamepadCursorMode {
 /// This component is used for Cursor-Gamepad relation.
 /// - It is added to a Gamepad if he has a virtual cursor assigned.
 /// - It is added to a Cursor if he is assigned to an existing gamepad.
-#[derive(Component, Debug, Clone, PartialEq)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct GamepadAttachedCursor(pub Entity);
 
 
@@ -403,7 +403,7 @@ fn cursor_update_texture(
 
 
 /// Requests cursor icon on hover
-#[derive(Component, Debug, Clone, PartialEq)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct OnHoverSetCursor {
     /// Cursor type to request on hover
     pub cursor: SystemCursorIcon,

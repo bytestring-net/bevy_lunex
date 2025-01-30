@@ -8,6 +8,7 @@ pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::sprite::SpriteSource;
 pub(crate) use bevy::text::TextLayoutInfo;
 pub(crate) use bevy::utils::HashMap;
+pub(crate) use colored::Colorize;
 
 // Re-export
 pub use bevy::sprite::Anchor;
@@ -32,7 +33,7 @@ pub use units::*;
 // #=== MULTIPURPOSE COMPONENTS ===#
 
 /// **Dimension** - This component holds width and height used for different Ui components
-#[derive(Component, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
+#[derive(Component, Reflect, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
 pub struct Dimension(pub Vec2);
 /// Conversion implementations
 impl <T: Into<Vec2>> From<T> for Dimension {
@@ -106,36 +107,54 @@ pub fn system_debug_draw_gizmo<G:GizmoConfigGroup>(
     }
 }
 
-/// This system traverses the hierarchy and computes all nodes.
+/// This system traverses the hierarchy and prints the debug information.
 pub fn system_debug_print_data(
     root_query: Query<(&UiLayoutRoot, NameOrEntity, &Children), (Without<UiLayout>, Or<(Changed<UiLayoutRoot>, Changed<Dimension>)>)>,
     node_query: Query<(&UiLayout, &UiState, NameOrEntity, Option<&Children>), Without<UiLayoutRoot>>,
 ) {
     for (_, root_name, root_children) in &root_query {
-
-        let mut output_string = String::new();
-
-        output_string += &format!("> {root_name}\n");
+        // Create output string
+        let mut output_string = format!("▶ {}\n", format!("{root_name}").bold().underline().magenta());
 
         // Stack-based traversal
-        let mut stack: Vec<(Entity, usize)> = root_children
+        let mut stack: Vec<(Entity, usize, bool)> = root_children
             .iter()
-            .map(|&child| (child, 1))
+            .enumerate()
+            .map(|(i, &child)| (child, 1, i == root_children.len() - 1)) // Track last-child flag
+            .rev()
             .collect();
 
-        while let Some((current_entity, depth)) = stack.pop() {
+        // Tracks whether previous levels had last children (for vertical bars)
+        let mut last_child_levels: Vec<bool> = Vec::new();
+
+        while let Some((current_entity, depth, is_last)) = stack.pop() {
             if let Ok((_node_layout, _node_state, node_name, node_children_option)) = node_query.get(current_entity) {
 
-                output_string += &"  |".repeat(depth);                
+                // Adjust last_child_levels size
+                if last_child_levels.len() < depth {
+                    last_child_levels.push(is_last);
+                } else {
+                    last_child_levels[depth - 1] = is_last;
+                }
 
-                output_string += &format!("- {node_name}\n");
-                
+                // Create the tab level offset
+                for &last in &last_child_levels[..depth - 1] {
+                    output_string += &if last { format!("{}", "  ┆".black()) } else { "  │".to_string() };
+                }
+
+                output_string += if is_last { "  └" } else { "  ├" };
+                output_string += &format!("─ {}\n", format!("{node_name}").bold().yellow());
+
                 if let Some(node_children) = node_children_option {
-                    // Add children to the stack
-                    stack.extend(node_children.iter().map(|&child| (child, depth + 1)));
+                    let child_count = node_children.len();
+                    for (i, &child) in node_children.iter().enumerate().rev() {
+                        stack.push((child, depth + 1, i == child_count - 1));
+                    }
                 }
             }
         }
+
+        // Print to console
         info!("Ui-Tree changed:\n{}", output_string);
     }
 }
@@ -173,7 +192,7 @@ pub fn system_debug_print_data(
 /// # });
 /// # }
 /// ```
-#[derive(Component)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 #[require(Visibility, SpriteSource, Transform, Dimension, UiState)]
 pub struct UiLayout {
     /// Stored layout per state
@@ -366,7 +385,7 @@ pub fn system_layout_compute(
 /// # });
 /// # }
 /// ```
-#[derive(Component)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiState {
     /// Stored transition per state
     states: HashMap<TypeId, f32>,
@@ -478,7 +497,7 @@ impl UiStateTrait for UiBase {
 /// # });
 /// # }
 /// ```
-#[derive(Component, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
+#[derive(Component, Reflect, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
 pub struct UiTextSize (pub UiValue<f32>);
 /// Constructors
 impl <T: Into<UiValue<f32>>> From<T> for UiTextSize {
@@ -536,12 +555,12 @@ pub fn system_text_size_to_layout(
 
 /// **Ui Fetch From Camera** - Attaching this component to [`UiLayoutRoot`] will make the [`Dimension`]
 /// component pull data from a [`Camera`] with attached [`UiSourceCamera`] that has the same index.
-#[derive(Component, Clone, PartialEq, Debug)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiFetchFromCamera<const INDEX: usize>;
 
 /// **Ui Source Camera** - Marks a [`Camera`] as a source for [`UiLayoutRoot`] with [`UiFetchFromCamera`].
 /// They must have the same index and only one [`UiSourceCamera`] can exist for a single index.
-#[derive(Component, Clone, PartialEq, Debug)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiSourceCamera<const INDEX: usize>;
 
 /// This system takes [`Camera`] viewport data and pipes them into querried [`Dimension`] + [`UiLayoutRoot`] + [`UiFetchFromCamera`].
@@ -616,7 +635,7 @@ pub fn system_touch_camera_if_fetch_added<const INDEX: usize>(
 /// # });
 /// # }
 /// ```
-#[derive(Component, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
+#[derive(Component, Reflect, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
 pub struct UiColor {
     colors: HashMap<TypeId, Color>
 }

@@ -1,5 +1,6 @@
 use crate::*;
 
+pub fn default_linear_curve() -> fn(f32) -> f32 { |v| {v} }
 
 // #=======================#
 // #=== THE HOVER STATE ===#
@@ -42,12 +43,13 @@ use crate::*;
 /// # });
 /// # }
 /// ```
-#[derive(Component, Clone, PartialEq, Debug)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiHover {
     value: f32,
     /// If the state is enabled
     pub enable: bool,
     /// The function to smooth the transition
+    #[reflect(ignore, default = "default_linear_curve")]
     pub curve: fn(f32) -> f32,
     /// The speed of transition forwards
     pub forward_speed: f32,
@@ -129,43 +131,12 @@ pub fn hover_set<E: Event, const BOOL: bool>(trigger: Trigger<E>, mut commands: 
     commands.trigger_targets(UiHoverSet(BOOL), trigger.entity());
 }
 
-/* /// Utility observer that triggers the [`UiHoverSet`] event on triggered event.
-pub fn hover_set<E: Event, const BOOL: bool>(
-    trigger: Trigger<E>,
-    mut commands: Commands,
-    mut query: Query<&mut PointerEventCounter<UiHover>>
-) {
-    //commands.trigger_targets(UiHoverSet(BOOL), trigger.entity());
-    if let Ok(mut counter) = query.get_mut(trigger.entity()) {
-        counter.number += if BOOL { 1 } else { -1 };
-        info!("COUNTER {}", counter.number);
-        if counter.number >= 0 {
-            commands.trigger_targets(UiHoverSet(BOOL), trigger.entity());
-        }
-    }
-} */
-
-/* pub fn hover_set_enable(trigger: Trigger<Pointer<Over>>, mut commands: Commands, mut query: Query<&mut PointerEventCounter<UiHover>>) {
-    if let Ok(mut counter) = query.get_mut(trigger.entity()) {
-        counter.number += -1_i32.pow(!BOOL as u32) as isize;
-        if counter.number != 0 {
-            commands.trigger_targets(UiHoverSet(BOOL), trigger.entity());
-        }
-    }
-} */
-
-#[derive(Component, Default, PartialEq, Debug)]
-pub struct PointerEventCounter<S: Component> {
-    pub number: isize,
-    _phantom: PhantomData<S>,
-}
-
 
 // #==========================#
 // #=== THE SELECTED STATE ===#
 
 /// # WORK IN PROGRESS
-#[derive(Component, Deref, DerefMut, Clone, PartialEq, Debug)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiSelected(pub f32);
 impl UiStateTrait for UiSelected {
     fn value(&self) -> f32 {
@@ -178,7 +149,7 @@ impl UiStateTrait for UiSelected {
 // #=== THE CLICKED STATE ===#
 
 /// # WORK IN PROGRESS
-#[derive(Component, Deref, DerefMut, Clone, PartialEq, Debug)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiClicked(pub f32);
 impl UiStateTrait for UiClicked {
     fn value(&self) -> f32 {
@@ -191,7 +162,7 @@ impl UiStateTrait for UiClicked {
 // #=== THE INTRO STATE ===#
 
 /// # WORK IN PROGRESS
-#[derive(Component, Deref, DerefMut, Clone, PartialEq, Debug)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiIntro(pub f32);
 impl UiStateTrait for UiIntro {
     fn value(&self) -> f32 {
@@ -204,7 +175,7 @@ impl UiStateTrait for UiIntro {
 // #=== THE OUTRO STATE ===#
 
 /// # WORK IN PROGRESS
-#[derive(Component, Deref, DerefMut, Clone, PartialEq, Debug)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiOutro(pub f32);
 impl UiStateTrait for UiOutro {
     fn value(&self) -> f32 {

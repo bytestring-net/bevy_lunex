@@ -24,3 +24,4 @@
 
   # RUST MISCELLANEOUS
   radsort = { workspace = true }
+  colored = { workspace = true }

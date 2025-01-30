@@ -5,7 +5,7 @@ use crate::*;
 // #=== MULTIPURPOSE STRUCTS ===#
 
 /// **Rectangle 2D** - Contains computed values from node layout.
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Reflect)]
 pub struct Rectangle2D {
     pub pos : Vec2,
     pub size: Vec2,
