@@ -109,12 +109,17 @@ pub fn system_debug_draw_gizmo<G:GizmoConfigGroup>(
 
 /// This system traverses the hierarchy and prints the debug information.
 pub fn system_debug_print_data(
-    root_query: Query<(&UiLayoutRoot, NameOrEntity, &Children), (Without<UiLayout>, Or<(Changed<UiLayoutRoot>, Changed<Dimension>)>)>,
-    node_query: Query<(&UiLayout, &UiState, NameOrEntity, Option<&Children>), Without<UiLayoutRoot>>,
+    root_query: Query<(&UiLayoutRoot, NameOrEntity, &Dimension, &Children), (Without<UiLayout>, Or<(Changed<UiLayoutRoot>, Changed<Dimension>)>)>,
+    node_query: Query<(&UiLayout, &UiState, NameOrEntity, &Dimension, Option<&Children>), Without<UiLayoutRoot>>,
 ) {
-    for (_, root_name, root_children) in &root_query {
+    for (_, root_name, root_dimension, root_children) in &root_query {
         // Create output string
-        let mut output_string = format!("▶ {}\n", format!("{root_name}").bold().underline().magenta());
+        let mut output_string = format!("▶ {}", format!("{root_name}").bold().underline().magenta());
+
+        output_string += " ⇒ ";
+        output_string += &format!("[w: {}, h: {}]", format!("{:.00}", root_dimension.x).green(), format!("{:.00}", root_dimension.y).green());
+
+        output_string += "\n";
 
         // Stack-based traversal
         let mut stack: Vec<(Entity, usize, bool)> = root_children
@@ -128,7 +133,7 @@ pub fn system_debug_print_data(
         let mut last_child_levels: Vec<bool> = Vec::new();
 
         while let Some((current_entity, depth, is_last)) = stack.pop() {
-            if let Ok((_node_layout, _node_state, node_name, node_children_option)) = node_query.get(current_entity) {
+            if let Ok((_node_layout, _node_state, node_name, node_dimension, node_children_option)) = node_query.get(current_entity) {
 
                 // Adjust last_child_levels size
                 if last_child_levels.len() < depth {
@@ -142,9 +147,20 @@ pub fn system_debug_print_data(
                     output_string += &if last { format!("{}", "  ┆".black()) } else { "  │".to_string() };
                 }
 
+                // Add the name
                 output_string += if is_last { "  └" } else { "  ├" };
-                output_string += &format!("─ {}\n", format!("{node_name}").bold().yellow());
+                if node_name.name.is_some() {
+                    output_string += &format!("─ {}", format!("{node_name}").bold().yellow());
+                } else {
+                    output_string += &format!("─ {}", format!("{node_name}").yellow());
+                }
 
+                output_string += " ⇒ ";
+
+                output_string += &format!("[w: {}, h: {}]", format!("{:.00}", node_dimension.x).green(), format!("{:.00}", node_dimension.y).green());
+
+                output_string += "\n";
+    
                 if let Some(node_children) = node_children_option {
                     let child_count = node_children.len();
                     for (i, &child) in node_children.iter().enumerate().rev() {
@@ -155,7 +171,7 @@ pub fn system_debug_print_data(
         }
 
         // Print to console
-        info!("Ui-Tree changed:\n{}", output_string);
+        info!("UiLayout change detected:\n{}", output_string);
     }
 }
 
