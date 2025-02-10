@@ -110,7 +110,7 @@ pub fn system_debug_draw_gizmo<G:GizmoConfigGroup>(
 /// This system traverses the hierarchy and prints the debug information.
 pub fn system_debug_print_data(
     root_query: Query<(&UiLayoutRoot, NameOrEntity, &Dimension, &Children), (Without<UiLayout>, Or<(Changed<UiLayoutRoot>, Changed<Dimension>)>)>,
-    node_query: Query<(&UiLayout, &UiState, NameOrEntity, &Dimension, Option<&Children>), Without<UiLayoutRoot>>,
+    node_query: Query<(&UiLayout, &UiState, NameOrEntity, &Dimension, &Transform, Option<&Children>), Without<UiLayoutRoot>>,
 ) {
     for (_, root_name, root_dimension, root_children) in &root_query {
         // Create output string
@@ -133,7 +133,7 @@ pub fn system_debug_print_data(
         let mut last_child_levels: Vec<bool> = Vec::new();
 
         while let Some((current_entity, depth, is_last)) = stack.pop() {
-            if let Ok((_node_layout, _node_state, node_name, node_dimension, node_children_option)) = node_query.get(current_entity) {
+            if let Ok((node_layout, _node_state, node_name, node_dimension, node_transform, node_children_option)) = node_query.get(current_entity) {
 
                 // Adjust last_child_levels size
                 if last_child_levels.len() < depth {
@@ -157,7 +157,44 @@ pub fn system_debug_print_data(
 
                 output_string += " ⇒ ";
 
-                output_string += &format!("[w: {}, h: {}]", format!("{:.00}", node_dimension.x).green(), format!("{:.00}", node_dimension.y).green());
+                output_string += &format!("[w: {}, h: {}, d: {}]",
+                    format!("{:.00}", node_dimension.x).green(),
+                    format!("{:.00}", node_dimension.y).green(),
+                    format!("{:.00}", node_transform.translation.z).green(),
+                );
+
+                match node_layout.layouts.get(&UiBase::id()).unwrap() {
+                    UiLayoutType::Boundary(boundary) => {
+                        output_string += &format!(" ➜ {} {} p1: {}, p2: {} {}",
+                            "Boundary".bold(),
+                            "{",
+                            format!("{}", boundary.pos1.to_nicestr()),
+                            format!("{}", boundary.pos2.to_nicestr()),
+                            "}",
+                        );
+                    },
+                    UiLayoutType::Window(window) => {
+                        output_string += &format!(" ➜ {} {} p: {}, s: {}, a: {} {}",
+                            "Window".bold(),
+                            "{",
+                            format!("{}", window.pos.to_nicestr()),
+                            format!("{}", window.size.to_nicestr()),
+                            format!("{}", window.anchor.to_nicestr()),
+                            "}",
+                        );
+                    },
+                    UiLayoutType::Solid(solid) => {
+                        output_string += &format!(" ➜ {} {} s: {}, ax: {}, ay: {}, scl: {} {}",
+                            "Solid".bold(),
+                            "{",
+                            format!("{}", solid.size.to_nicestr()),
+                            format!("{:.02}", solid.align_x.0).green(),
+                            format!("{:.02}", solid.align_y.0).green(),
+                            format!("{:?}", solid.scaling).green(),
+                            "}",
+                        );
+                    },
+                }
 
                 output_string += "\n";
     
@@ -706,7 +743,13 @@ pub fn system_color(
                 if let Some(weight) = node_state.states.get(state) {
                     let converted: Hsla = (*color).into();
 
-                    blend_color.hue += converted.hue * (weight / total_weight);
+                    if blend_color.alpha == 0.0 { 
+                        blend_color.hue = converted.hue;
+                    } else {
+                        blend_color.hue = lerp_hue(blend_color.hue, converted.hue, weight / total_weight);
+                    }
+
+                    //blend_color.hue += converted.hue * (weight / total_weight);
                     blend_color.saturation += converted.saturation * (weight / total_weight);
                     blend_color.lightness += converted.lightness * (weight / total_weight);
                     blend_color.alpha += converted.alpha * (weight / total_weight);
@@ -723,7 +766,10 @@ pub fn system_color(
         }
     }
 }
-
+fn lerp_hue(h1: f32, h2: f32, t: f32) -> f32 {
+    let diff = (h2 - h1 + 540.0) % 360.0 - 180.0; // Ensure shortest direction
+    (h1 + diff * t + 360.0) % 360.0
+}
 
 
 
