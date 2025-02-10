@@ -216,13 +216,18 @@ impl UiLayoutTypeBoundary {
     pub fn pack(self) -> UiLayout {
         UiLayout::from(self)
     }
+    /// Wrap the layout type into UiLayout
+    pub fn wrap(self) -> UiLayoutType {
+        UiLayoutType::from(self)
+    }
     /// Computes the layout based on given parameters.
     pub(crate) fn compute(&self, parent: &Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
         let pos1 = self.pos1.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size));
         let pos2 = self.pos2.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size));
+        let size = pos2 - pos1;
         Rectangle2D {
-            pos: pos1,
-            size: pos2 - pos1,
+            pos: -parent.size / 2.0 + pos1 + size/2.0,
+            size,
         }
     }
 }
@@ -317,6 +322,10 @@ impl UiLayoutTypeWindow {
     pub fn pack(self) -> UiLayout {
         UiLayout::from(self)
     }
+    /// Wrap the layout type into UiLayout
+    pub fn wrap(self) -> UiLayoutType {
+        UiLayoutType::from(self)
+    }
     /// Computes the layout based on given parameters.
     pub(crate) fn compute(&self, parent: &Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {
         let pos = self.pos.evaluate(Vec2::splat(absolute_scale), parent.size, viewport_size, Vec2::splat(font_size));
@@ -409,6 +418,10 @@ impl UiLayoutTypeSolid {
     /// Pack the layout type into UiLayout
     pub fn pack(self) -> UiLayout {
         UiLayout::from(self)
+    }
+    /// Wrap the layout type into UiLayout
+    pub fn wrap(self) -> UiLayoutType {
+        UiLayoutType::from(self)
     }
     /// Computes the layout based on given parameters.
     pub(crate) fn compute(&self, parent: &Rectangle2D, absolute_scale: f32, viewport_size: Vec2, font_size: f32) -> Rectangle2D {

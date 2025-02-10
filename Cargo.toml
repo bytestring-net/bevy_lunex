@@ -46,7 +46,7 @@
   #=== GAME ENGINE SOURCE === #
 
   # GAME ENGINE
-  bevy = { version = "^0.15.1", default-features = false, features = [
+  bevy = { version = "^0.15", default-features = false, features = [
     "bevy_pbr",
     "bevy_sprite",
     "bevy_text",

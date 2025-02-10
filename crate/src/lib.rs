@@ -52,6 +52,74 @@ pub fn system_pipe_sprite_size_from_dimension(
 }
 
 
+// #=========================#
+// #=== TEXTURE EMBEDDING ===#
+
+/// **Ui Embedding** - Use this component to mark entities that their texture handles are embeddings instead of regular assets.
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
+pub struct UiEmbedding;
+
+/// This system takes [`Dimension`] data and pipes them into querried [`Handle<Image>`] data to fit.
+/// This will resize the original image texture.
+pub fn system_embedd_resize(
+    query: Query<(&Sprite, &Dimension), (With<UiEmbedding>, Changed<Dimension>)>,
+    mut images: ResMut<Assets<Image>>,
+) {
+    for (sprite, dimension) in &query {
+        if let Some(image) = images.get_mut(&sprite.image) {
+            if **dimension != Vec2::ZERO {
+                image.resize(bevy::render::render_resource::Extent3d { width: dimension.x as u32, height: dimension.y as u32, ..default() });
+            }
+        }
+    }
+}
+
+/// Provides utility constructor methods for [`Image`]
+pub trait ImageTextureConstructor {
+    /// Just a utility constructor hiding the necessary texture initialization
+    fn clear_render_texture() -> Image {
+        use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
+        use bevy::asset::RenderAssetUsages;
+        
+        let mut image = Image::new_fill(
+            Extent3d {
+                width: 512,
+                height: 512,
+                ..default()
+            },
+            TextureDimension::D2,
+            &[0, 0, 0, 0],
+            TextureFormat::Bgra8UnormSrgb,
+            RenderAssetUsages::default(),
+        );
+        image.texture_descriptor.usage = TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST | TextureUsages::RENDER_ATTACHMENT;
+        image
+    }
+}
+impl ImageTextureConstructor for Image {}
+
+/// Provides utility costructor methods for [`Camera`]
+pub trait CameraTextureRenderConstructor {
+    /// Just a utility constructor for camera that renders to a transparent texture
+    fn clear_render_to(handle: Handle<Image>) -> Camera {
+        use bevy::render::camera::RenderTarget;
+        Camera {
+            target: RenderTarget::Image(handle),
+            clear_color: ClearColorConfig::Custom(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+            ..default()
+        }
+    }
+    /// Modify the camera render order
+    fn with_order(self, order: isize) -> Self;
+}
+impl CameraTextureRenderConstructor for Camera {
+    fn with_order(mut self, order: isize) -> Self {
+        self.order = order;
+        self
+    }
+}
+
+
 // #===========================#
 // #=== LAYOUT ROOT CONTROL ===#
 
@@ -74,7 +142,7 @@ pub fn system_pipe_sprite_size_from_dimension(
 ///     });
 /// # }
 /// ```
-#[derive(Component)]
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
 #[require(Visibility, Transform, Dimension)]
 pub struct UiLayoutRoot;
 
@@ -246,7 +314,7 @@ pub fn system_debug_print_data(
 /// # }
 /// ```
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
-#[require(Visibility, SpriteSource, Transform, Dimension, UiState)]
+#[require(Visibility, SpriteSource, Transform, Dimension, UiState, UiDepth)]
 pub struct UiLayout {
     /// Stored layout per state
     layouts: HashMap<TypeId, UiLayoutType>
@@ -322,10 +390,22 @@ impl From<UiLayoutTypeSolid> for UiLayout {
     }
 }
 
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
+pub enum UiDepth {
+    Add(f32),
+    Set(f32),
+}
+impl Default for UiDepth {
+    fn default() -> Self {
+        UiDepth::Add(1.0)
+    }
+}
+
+
 /// This system traverses the hierarchy and computes all nodes.
 pub fn system_layout_compute(
     root_query: Query<(&UiLayoutRoot, &Transform, &Dimension, &Children), (Without<UiLayout>, Or<(Changed<UiLayoutRoot>, Changed<Dimension>)>)>,
-    mut node_query: Query<(&UiLayout, &UiState, &mut Transform, &mut Dimension, Option<&Children>), Without<UiLayoutRoot>>,
+    mut node_query: Query<(&UiLayout, &UiDepth, &UiState, &mut Transform, &mut Dimension, Option<&Children>), Without<UiLayoutRoot>>,
 ) {
     for (_, root_transform, root_dimension, root_children) in &root_query {
         // Size of the viewport
@@ -335,13 +415,14 @@ pub fn system_layout_compute(
         };
 
         // Stack-based traversal
-        let mut stack: Vec<(Entity, Rectangle2D, usize)> = root_children
+        let mut stack: Vec<(Entity, Rectangle2D, f32)> = root_children
             .iter()
-            .map(|&child| (child, root_rectangle, 1))
+            .map(|&child| (child, root_rectangle, 0.0))
+            .rev()
             .collect();
 
         while let Some((current_entity, parent_rectangle, depth)) = stack.pop() {
-            if let Ok((node_layout, node_state, mut node_transform, mut node_dimension, node_children_option)) = node_query.get_mut(current_entity) {
+            if let Ok((node_layout, node_depth, node_state, mut node_transform, mut node_dimension, node_children_option)) = node_query.get_mut(current_entity) {
                 // Compute all layouts for the node
                 let mut computed_rectangles = Vec::with_capacity(node_layout.layouts.len());
                 for (state, layout) in &node_layout.layouts {
@@ -377,12 +458,16 @@ pub fn system_layout_compute(
                 // Save the computed layout
                 node_transform.translation.x = node_rectangle.pos.x;
                 node_transform.translation.y = -node_rectangle.pos.y;
-                node_transform.translation.z = depth as f32;
+                let depth = match node_depth {
+                    UiDepth::Add(v) => {depth as f32 + v},
+                    UiDepth::Set(v) => {*v},
+                };
+                node_transform.translation.z = depth;
                 **node_dimension = node_rectangle.size;
 
                 if let Some(node_children) = node_children_option {
                     // Add children to the stack
-                    stack.extend(node_children.iter().map(|&child| (child, node_rectangle, depth + 1)));
+                    stack.extend(node_children.iter().map(|&child| (child, node_rectangle, depth)));
                 }
             }
         }
@@ -826,6 +911,7 @@ impl Plugin for UiLunexPlugin {
             system_color,
             system_pipe_sprite_size_from_dimension,
             system_text_size_from_dimension,
+            system_embedd_resize,
 
         ).in_set(UiSystems::PostCompute));
 
