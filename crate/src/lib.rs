@@ -144,7 +144,17 @@ impl CameraTextureRenderConstructor for Camera {
 /// ```
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
 #[require(Visibility, Transform, Dimension)]
-pub struct UiLayoutRoot;
+pub struct UiLayoutRoot {
+    abs_scale: f32,
+}
+impl UiLayoutRoot {
+    pub fn new_2d() -> Self {
+        Self { abs_scale: 1.0 }
+    }
+    pub fn new_3d() -> Self {
+        Self { abs_scale: 0.001 }
+    }
+}
 
 /// Trigger this event to recompute all [`UiLayoutRoot`] entities.
 #[derive(Event)]
@@ -407,7 +417,7 @@ pub fn system_layout_compute(
     root_query: Query<(&UiLayoutRoot, &Transform, &Dimension, &Children), (Without<UiLayout>, Or<(Changed<UiLayoutRoot>, Changed<Dimension>)>)>,
     mut node_query: Query<(&UiLayout, &UiDepth, &UiState, &mut Transform, &mut Dimension, Option<&Children>), Without<UiLayoutRoot>>,
 ) {
-    for (_, root_transform, root_dimension, root_children) in &root_query {
+    for (root, root_transform, root_dimension, root_children) in &root_query {
         // Size of the viewport
         let root_rectangle = Rectangle2D {
             pos: root_transform.translation.xy(),
@@ -426,7 +436,7 @@ pub fn system_layout_compute(
                 // Compute all layouts for the node
                 let mut computed_rectangles = Vec::with_capacity(node_layout.layouts.len());
                 for (state, layout) in &node_layout.layouts {
-                    computed_rectangles.push((state, layout.compute(&parent_rectangle, 1.0, root_rectangle.size, 16.0)));
+                    computed_rectangles.push((state, layout.compute(&parent_rectangle, root.abs_scale, root_rectangle.size, 16.0)));
                 }
 
                 // Normalize the active state weights
@@ -644,7 +654,7 @@ impl <T: Into<UiValue<f32>>> From<T> for UiTextSize {
     }
 }
 
-/// This system takes [`TextLayoutInfo`] data and pipes them into querried [`Transform`] and [`Dimension`].
+/// This system takes [`TextLayoutInfo`] data and pipes them into querried [`Transform`] scale.
 pub fn system_text_size_from_dimension(
     mut commands: Commands,
     mut query: Query<(&mut Transform, &Dimension, &TextLayoutInfo), Changed<Dimension>>,
@@ -879,7 +889,7 @@ impl Plugin for UiLunexPlugin {
     fn build(&self, app: &mut App) {
 
         // Configure the system set
-        app.configure_sets(Update, (
+        app.configure_sets(PostUpdate, (
             UiSystems::PreCompute.before(UiSystems::Compute),
             UiSystems::PostCompute.after(UiSystems::Compute),
         ));
@@ -887,18 +897,17 @@ impl Plugin for UiLunexPlugin {
         // Add observers
         app.add_observer(observer_touch_layout_root);
 
-
         // PRE-COMPUTE SYSTEMS
-        app.add_systems(Update, (
+        app.add_systems(PostUpdate, (
 
             system_state_base_balancer,
-            system_text_size_to_layout,
+            system_text_size_to_layout.after(bevy::text::update_text2d_layout),
 
         ).in_set(UiSystems::PreCompute));
 
 
         // COMPUTE SYSTEMS
-        app.add_systems(Update, (
+        app.add_systems(PostUpdate, (
 
             system_layout_compute,
 
@@ -906,7 +915,7 @@ impl Plugin for UiLunexPlugin {
 
 
         // POST-COMPUTE SYSTEMS
-        app.add_systems(Update, (
+        app.add_systems(PostUpdate, (
 
             system_color,
             system_pipe_sprite_size_from_dimension,
