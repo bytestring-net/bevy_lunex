@@ -1,15 +1,146 @@
 use crate::*;
-use bevy::{input::{mouse::MouseButtonInput, ButtonState}, picking::{pointer::{Location, PointerAction, PointerId, PointerInput, PointerLocation, PressDirection}, PickSet}, render::camera::RenderTarget, utils::HashMap, window::{PrimaryWindow, SystemCursorIcon, WindowRef}};
+use bevy::{input::{gamepad::GamepadButtonChangedEvent, mouse::MouseButtonInput, ButtonState}, picking::{pointer::{Location, PointerAction, PointerId, PointerInput, PointerLocation, PressDirection}, PickSet}, render::camera::{NormalizedRenderTarget, RenderTarget}, utils::HashMap, window::{PrimaryWindow, SystemCursorIcon, WindowRef}, winit::cursor::CursorIcon};
 
 
-// #===================#
-// #=== CURSOR TYPE ===#
+// #=========================#
+// #=== CURSOR ICON QUEUE ===#
 
-/// Component for easy cursor control.
-/// Read more about it in the [docs](https://bytestring-net.github.io/bevy_lunex/advanced/3_cursor.html)
+#[derive(Resource, Reflect, Clone, PartialEq, Debug, Default)]
+pub struct CursorIconQueue {
+    pointers: HashMap<PointerId, CursorQueueData>
+}
+impl CursorIconQueue {
+    /// A method to request a new cursor icon. Works only if priority is higher than already set priority this tick.
+    pub fn request_cursor(&mut self, pointer: PointerId, window: Entity, requestee: Entity, request: SystemCursorIcon, priority: usize) {
+        if let Some(data) = self.pointers.get_mut(&pointer) {
+            data.window = window;
+            data.queue.insert(requestee, (request, priority));
+        } else {
+            let mut queue = HashMap::new();
+            queue.insert(requestee, (request, priority));
+            self.pointers.insert(pointer, CursorQueueData { window, queue });
+        }
+    }
+    /// A method to cancel existing cursor in the queue stack
+    pub fn cancel_cursor(&mut self, pointer: PointerId, requestee: &Entity) {
+        if let Some(data) = self.pointers.get_mut(&pointer) {
+            data.queue.remove(requestee);
+        }
+    }
+}
+
+#[derive(Reflect, Clone, PartialEq, Debug)]
+struct CursorQueueData {
+    window: Entity,
+    queue: HashMap<Entity, (SystemCursorIcon, usize)>
+}
+
+/// This system will apply cursor changes to the windows it has in the resource.
+fn system_cursor_icon_queue_apply(
+    queue: Res<CursorIconQueue>,
+    mut windows: Query<(&Window, Option<&mut CursorIcon>)>,
+    mut commands: Commands,
+) {
+    if !queue.is_changed() { return; }
+    for (_, data) in &queue.pointers {
+        if let Ok((_window, window_cursor_option)) = windows.get_mut(data.window) {
+
+            let mut top_priority = 0;
+            let mut top_request = SystemCursorIcon::Default;
+
+            // Look for highest priority to use
+            for (_, (icon, priority)) in &data.queue {
+                if *priority > top_priority {
+                    top_priority = *priority;
+                    top_request = *icon;
+                }
+            }
+
+            // Apply the cursor icon somehow
+            if let Some(mut window_cursor) = window_cursor_option {
+                match window_cursor.as_mut() {
+                    CursorIcon::System(ref mut previous) => {
+                        if *previous != top_request {
+                            *previous = top_request;
+                        }
+                    },
+                    _ => {},
+                }
+
+            } else {
+                commands.entity(data.window).insert(CursorIcon::System(top_request));
+            }
+        }
+    }
+}
+
+
+
+// #========================#
+// #=== CURSOR ADDITIONS ===#
+
+/// Requests cursor icon on hover
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
+pub struct OnHoverSetCursor {
+    /// Cursor type to request on hover
+    pub cursor: SystemCursorIcon,
+    /// Is hovered or not
+    hover: bool,
+}
+impl OnHoverSetCursor {
+    /// Creates new struct
+    pub fn new(cursor: SystemCursorIcon) -> Self {
+        OnHoverSetCursor {
+            cursor,
+            hover: false,
+        }
+    }
+}
+
+fn observer_cursor_request_cursor_icon(trigger: Trigger<Pointer<Over>>, mut pointers: Query<(&PointerId, &PointerLocation)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
+    // Find the pointer location that triggered this observer
+    for (pointer, location) in pointers.iter_mut().filter(|(p_id, _)| trigger.pointer_id == **p_id) {
+
+        // Check if the pointer is attached to a window
+        if let Some(location) = &location.location {
+            if let NormalizedRenderTarget::Window(window) = location.target {
+
+                // Request a cursor change
+                if let Ok(requestee) = query.get(trigger.target) {
+                    queue.request_cursor(*pointer, window.entity(), trigger.target, requestee.cursor, 1);
+                }
+            }
+        }
+    }
+}
+
+fn observer_cursor_cancel_cursor_icon(trigger: Trigger<Pointer<Out>>, mut pointers: Query<(&PointerId, &PointerLocation)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
+    // Find the pointer location that triggered this observer
+    for (pointer, location) in pointers.iter_mut().filter(|(p_id, _)| trigger.pointer_id == **p_id) {
+
+        // Check if the pointer is attached to a window
+        if let Some(location) = &location.location {
+            if matches!(location.target, NormalizedRenderTarget::Window(_)) {
+
+                // Cancel existing cursor icon request if applicable
+                if query.get(trigger.target).is_ok() {
+                    queue.cancel_cursor(*pointer, &trigger.target);
+                }
+            }
+        }
+    }
+}
+
+
+
+
+// #=======================#
+// #=== SOFTWARE CURSOR ===#
+
+/// Component for creating software mouse.
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
 #[require(PointerId, PickingBehavior(|| PickingBehavior::IGNORE))]
-pub struct Cursor2d {
+pub struct Cursor {
     /// Indicates which cursor is being requested.
     cursor_request: SystemCursorIcon,
     /// Indicates the priority of the requested cursor.
@@ -18,15 +149,15 @@ pub struct Cursor2d {
     cursor_atlas_map: HashMap<SystemCursorIcon, (usize, Vec2)>,
     /// Location of the cursor (same as [`Transform`] without sprite offset).
     pub location: Vec2,
-    /// If the cursor is allowed to leave window. Does nothing is cursor is controlled by gamepad.
+    /// If the cursor is allowed to leave window. Does nothing if cursor is controlled by gamepad.
     pub confined: bool,
     /// A toggle if the cursor should be visible
     pub visible: bool,
 }
-impl Cursor2d {
-    /// Creates new default Cursor2d.
-    pub fn new() -> Cursor2d {
-        Cursor2d {
+impl Cursor {
+    /// Creates new default Cursor.
+    pub fn new() -> Cursor {
+        Cursor {
             cursor_request: SystemCursorIcon::Default,
             cursor_request_priority: 0.0,
             cursor_atlas_map: HashMap::new(),
@@ -48,7 +179,7 @@ impl Cursor2d {
         self
     }
 }
-impl Default for Cursor2d {
+impl Default for Cursor {
     fn default() -> Self {
         Self {
             cursor_request: Default::default(),
@@ -61,7 +192,7 @@ impl Default for Cursor2d {
     }
 }
 
-/// This will make the [`Cursor2d`] controllable by a gamepad.
+/// This will make the [`Cursor`] controllable by a gamepad.
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct GamepadCursor {
     /// This struct defines how should the cursor movement behave.
@@ -81,7 +212,6 @@ impl Default for GamepadCursor {
     }
 }
 
-
 /// This struct defines how should the cursor movement behave.
 #[derive(Debug, Clone, Default, PartialEq, Reflect)]
 pub enum GamepadCursorMode {
@@ -93,10 +223,6 @@ pub enum GamepadCursorMode {
     Snap,
 }
 
-
-
-
-
 /// This component is used for Cursor-Gamepad relation.
 /// - It is added to a Gamepad if he has a virtual cursor assigned.
 /// - It is added to a Cursor if he is assigned to an existing gamepad.
@@ -105,106 +231,15 @@ pub struct GamepadAttachedCursor(pub Entity);
 
 
 
-
 // #========================#
 // #=== CURSOR FUNCTIONS ===#
 
-/* /// This function controls the visibility of the cursor
-fn cursor_set_visibility(
-    mut windows: Query<&mut Window, With<PrimaryWindow>>,
-    mut query: Query<(&Cursor2d, Option<&mut Visibility>, Has<GamepadCursor>, Has<Handle<Image>>)>
-) {
-    if let Ok(mut window) = windows.get_single_mut() {
-        for (cursor, optional_visibility, has_gamepad, has_image) in &mut query {
-            // If we have visibility then change it
-            if let Some(mut visibility) = optional_visibility {
-                *visibility = if cursor.visible { Visibility::Visible } else { Visibility::Hidden };
-                if window.cursor_position().is_none() && !has_gamepad { *visibility = Visibility::Hidden }
-            }
-
-            // If it is not a gamepad
-            if !has_gamepad {
-                // Set native cursor to invisible if image is attached to the cursor
-                window.cursor.visible = if has_image { false } else { cursor.visible };
-            }
-        }
-    }
-}
-
-/// This function controls the native mouse cursor settings
-fn cursor_change_native(
-    mut windows: Query<&mut Window, With<PrimaryWindow>>,
-    mut query: Query<&Cursor2d, Without<GamepadCursor>>
-) {
-    if let Ok(mut window) = windows.get_single_mut() {
-        for cursor in &mut query {
-            // Change native cursor
-            if window.cursor.visible { window.cursor.icon = cursor.cursor_request; }
-
-            // Change grab mode
-            window.cursor.grab_mode = if cursor.confined { CursorGrabMode::Confined } else { CursorGrabMode::None }
-        }
-    }
-}
-
-
-/// This function controls the location of the cursor based on gamepad input
-fn gamepad_move_cursor(
-    axis: Res<Axis<GamepadAxis>>,
-    time: Res<Time>,
-    windows: Query<&Window, With<PrimaryWindow>>,
-    mut query: Query<(&mut Cursor2d, &GamepadCursor)>,
-) {
-    if let Ok(window) = windows.get_single() {
-        for (mut cursor, gamepad) in query.iter_mut() {
-            // Pull axis values
-            let x = axis.get(GamepadAxis { gamepad: Gamepad::new(gamepad.id), axis_type: GamepadAxisType::LeftStickX });
-            let y = axis.get(GamepadAxis { gamepad: Gamepad::new(gamepad.id), axis_type: GamepadAxisType::LeftStickY });
-
-            if let (Some(x), Some(y)) = (x, y) {
-                // Move the cursor
-                cursor.location.x += x * time.delta_seconds() * 500.0 * gamepad.speed;
-                cursor.location.y += y * time.delta_seconds() * 500.0 * gamepad.speed;
-
-                // Clamp the cursor within window
-                let w = window.width()/2.0;
-                let h = window.height()/2.0;
-                cursor.location.x = cursor.location.x.clamp(-w, w);
-                cursor.location.y = cursor.location.y.clamp(-h, h);
-            }
-        }
-    }
-} */
-
-/// This system will 
-fn system_cursor_gamepad_move(
-    time: Res<Time>,
-    gamepads: Query<&Gamepad, With<GamepadAttachedCursor>>,
-    mut cursors: Query<(&mut Cursor2d, &GamepadCursor, &GamepadAttachedCursor), Without<Gamepad>>,
-) {
-    for (mut cursor, gamepad_settings, attached_gamepad) in &mut cursors {
-        if let Ok(gamepad) = gamepads.get(attached_gamepad.0) {
-
-            let mut input = Vec2::new(
-                gamepad.get(GamepadAxis::LeftStickX).unwrap_or(0.0),
-                gamepad.get(GamepadAxis::LeftStickY).unwrap_or(0.0),
-            );
-
-            // Clamp as a whole
-            if input.length_squared() < 0.1 { input *= 0.0; }
-
-            cursor.location.x += input.x * gamepad_settings.speed * time.delta_secs() * 500.0;
-            cursor.location.y += input.y * gamepad_settings.speed * time.delta_secs() * 500.0;
-        }
-    }
-}
-
-/// This system will attach any free cursor to the first gamepad that is found free.
+/// This system will attach any free cursor to the first gamepad it can find.
 fn system_cursor_gamepad_assign(
     mut commands: Commands,
-    cursors: Query<(Entity, &Cursor2d, &GamepadCursor), Without<GamepadAttachedCursor>>,
+    cursors: Query<(Entity, &Cursor, &GamepadCursor), Without<GamepadAttachedCursor>>,
     gamepads: Query<(Entity, &Gamepad), Without<GamepadAttachedCursor>>,
-) { 
+) {
     let mut gamepads = gamepads.iter();
     if let Some((cursor, _, _)) = cursors.iter().next() {
         if let Some((gamepad, _)) = gamepads.next() {
@@ -217,11 +252,40 @@ fn system_cursor_gamepad_assign(
 
 
 
-/// This function controls the location of the cursor based on mouse input
-fn mouse_move_cursor(
+/// This system will move the gamepad cursor.
+fn system_cursor_gamepad_move(
+    time: Res<Time>,
+    gamepads: Query<&Gamepad, With<GamepadAttachedCursor>>,
+    mut cursors: Query<(&mut Cursor, &GamepadCursor, &GamepadAttachedCursor), Without<Gamepad>>,
+) {
+    for (mut cursor, gamepad_settings, attached_gamepad) in &mut cursors {
+        if let Ok(gamepad) = gamepads.get(attached_gamepad.0) {
+
+            // Get the gamepad input
+            let mut input = Vec2::new(
+                gamepad.get(GamepadAxis::LeftStickX).unwrap_or(0.0),
+                gamepad.get(GamepadAxis::LeftStickY).unwrap_or(0.0),
+            );
+
+            // Clamp the deadzone as a vector
+            if input.length_squared() < 0.1 { input *= 0.0; }
+
+            // Compute the cursor position change
+            let x = input.x * gamepad_settings.speed * time.delta_secs() * 500.0;
+            let y = input.y * gamepad_settings.speed * time.delta_secs() * 500.0;
+
+            // Move the cursor if it changed
+            if x != 0.0 { cursor.location.x += x; }
+            if y != 0.0 { cursor.location.y += y; }
+        }
+    }
+}
+
+/// This system will move the mouse cursor.
+fn system_cursor_mouse_move(
     windows: Query<&Window, With<PrimaryWindow>>,
     cameras: Query<&OrthographicProjection>,
-    mut query: Query<(&mut Cursor2d, Option<&Parent>), Without<GamepadCursor>>
+    mut query: Query<(&mut Cursor, Option<&Parent>), Without<GamepadCursor>>
 ) {
     if let Ok(window) = windows.get_single() {
         for (mut cursor, parent_option) in &mut query {
@@ -230,19 +294,24 @@ fn mouse_move_cursor(
                 let scale = if let Some(parent) = parent_option {
                     if let Ok(projection) = cameras.get(**parent) { projection.scale } else { 1.0 }
                 } else { 1.0 };
-                
 
-                // Move the cursor
-                cursor.location.x = (position.x - window.width()*0.5) * scale;
-                cursor.location.y = -((position.y - window.height()*0.5) * scale);
+                // Compute the cursor position
+                let x = (position.x - window.width()*0.5) * scale;
+                let y = -((position.y - window.height()*0.5) * scale);
+
+                // Move the cursor if it changed
+                if x != cursor.location.x { cursor.location.x = (position.x - window.width()*0.5) * scale; }
+                if y != cursor.location.y { cursor.location.y = -((position.y - window.height()*0.5) * scale); }
             }
         }
     }
 }
 
-/// This function updates the transform component with the modified location and sprite offsets
-fn cursor_update_transform(
-    mut query: Query<(&Cursor2d, &mut Transform)>
+
+
+/// This system will update the transform component to reflect the sprite offset.
+fn system_cursor_update_tranform(
+    mut query: Query<(&Cursor, &mut Transform)>
 ) {
     for (cursor, mut transform) in &mut query {
         let sprite_offset = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).1;
@@ -251,10 +320,10 @@ fn cursor_update_transform(
     }
 }
 
-/// This function controls virtual pointer attached to the cursor
-fn cursor_move_virtual_pointer(
+/// This system will move the virtual pointer location.
+fn system_cursor_move_pointer(
     windows: Query<(Entity, &Window), With<PrimaryWindow>>,
-    mut query: Query<(&mut PointerLocation, &Cursor2d)>,
+    mut query: Query<(&mut PointerLocation, &Cursor)>,
 ) {
     if let Ok((win_entity, window)) = windows.get_single() {
         for (mut pointer, cursor) in query.iter_mut() {
@@ -272,13 +341,10 @@ fn cursor_move_virtual_pointer(
 
 
 
-/// This function sends mouse pointer events to be processed by the mod picking core plugin
-fn cursor_mouse_pick_events(
-    // Input
-    mut mouse_inputs: EventReader<MouseButtonInput>,
+/// This system will send out pointer move events if they changed position
+fn system_cursor_send_move_events(
     mut cursor_last: Local<HashMap<PointerId, Vec2>>,
-    pointers: Query<(&PointerId, &PointerLocation), (With<Cursor2d>, Without<GamepadCursor>)>,
-    // Output
+    pointers: Query<(&PointerId, &PointerLocation), With<Cursor>>,
     mut pointer_output: EventWriter<PointerInput>,
 ) {
     // Send mouse movement events
@@ -298,21 +364,38 @@ fn cursor_mouse_pick_events(
                 },
             ));
             cursor_last.insert(*pointer, location.position);
+        }
+    }
+}
+
+/// This system will send out mouse pick events
+fn system_cursor_mouse_send_pick_events(
+    pointers: Query<&PointerLocation, (With<Cursor>, Without<GamepadCursor>)>,
+    mut mouse_inputs: EventReader<MouseButtonInput>,
+    mut pointer_output: EventWriter<PointerInput>,
+) {
+    // Send mouse movement events
+    for location in &pointers {
+        if let Some(location) = &location.location {
 
             // Send mouse click events
             for input in mouse_inputs.read() {
 
+                // Which button trigger
                 let button = match input.button {
                     MouseButton::Left => PointerButton::Primary,
                     MouseButton::Right => PointerButton::Secondary,
                     MouseButton::Middle => PointerButton::Middle,
                     MouseButton::Other(_) | MouseButton::Back | MouseButton::Forward => continue,
                 };
+
+                // Which state to change
                 let direction = match input.state {
                     ButtonState::Pressed => PressDirection::Down,
                     ButtonState::Released => PressDirection::Up,
                 };
 
+                // Send out the event
                 pointer_output.send(PointerInput::new(
                     PointerId::Mouse,
                     Location {
@@ -326,105 +409,47 @@ fn cursor_mouse_pick_events(
     }
 }
 
-// This function sends mouse pointer events to be processed by the mod picking core plugin
-/* fn cursor_gamepad_pick_events(
-    // Input
-    mut gamepad_inputs: EventReader<GamepadButtonChangedEvent>,
-    mut cursor_last: Local<HashMap<PointerId, Vec2>>,
-    pointers: Query<(&PointerId, &PointerLocation, &GamepadCursor), With<Cursor2d>>,
-    // Output
-    mut pointer_move: EventWriter<InputMove>,
-    mut pointer_presses: EventWriter<InputPress>,
+/// This system will send out gamepad pick events
+fn system_cursor_gamepad_send_pick_events(
+    pointers: Query<&PointerLocation, (With<Cursor>, Without<GamepadCursor>)>,
+    mut mouse_inputs: EventReader<GamepadButtonChangedEvent>,
+    mut pointer_output: EventWriter<PointerInput>,
 ) {
     // Send mouse movement events
-    for (pointer, location, _) in &pointers {
+    for location in &pointers {
         if let Some(location) = &location.location {
-            let last = cursor_last.get(pointer).unwrap_or(&Vec2::ZERO);
-            if *last == location.position { continue; }
 
-            pointer_move.send(InputMove::new(
-                *pointer,
-                Location {
-                    target: location.target.clone(),
-                    position: location.position,
-                },
-                location.position - *last,
-            ));
-            cursor_last.insert(*pointer, location.position);
-        }
-    }
+            // Send mouse click events
+            for input in mouse_inputs.read() {
 
-    // Send mouse click events
-    for input in gamepad_inputs.read() {
-        let button = match input.button_type {
-            GamepadButtonType::South => PointerButton::Primary,
-            GamepadButtonType::East => PointerButton::Secondary,
-            GamepadButtonType::West => PointerButton::Middle,
-            _ => continue,
-        };
+                // Which button trigger
+                let button = match input.button {
+                    GamepadButton::South => PointerButton::Primary,
+                    GamepadButton::East => PointerButton::Secondary,
+                    GamepadButton::West => PointerButton::Middle,
+                    _ => continue,
+                };
 
-        match input.value {
-            1.0 => {
-                for (pointer, _, gamepad) in &pointers {
-                    if gamepad.id != input.gamepad.id { continue; }
-                    pointer_presses.send(InputPress::new_down(*pointer, button));
-                }
-            }
-            0.0 => {
-                for (pointer, _, gamepad) in &pointers {
-                    if gamepad.id != input.gamepad.id { continue; }
-                    pointer_presses.send(InputPress::new_up(*pointer, button));
-                }
-            },
-            _ => {}
-        }
-    }
-} */
+                // Which state to change
+                let direction = match input.state {
+                    ButtonState::Pressed => PressDirection::Down,
+                    ButtonState::Released => PressDirection::Up,
+                };
 
-
-/// This function resets the requested cursor back to default every tick
-fn cursor_reset_icon(
-    mut query: Query<&mut Cursor2d>
-) {
-    for mut cursor in &mut query {
-        cursor.cursor_request = SystemCursorIcon::Default;
-        cursor.cursor_request_priority = 0.0;
-    }
-}
-
-/* /// This function updates the atlas index texture based on requested cursor icon
-fn cursor_update_texture(
-    mut query: Query<(&Cursor2d, &mut TextureAtlas)>
-) {
-    for (cursor, mut atlas) in &mut query {
-        atlas.index = cursor.cursor_atlas_map.get(&cursor.cursor_request).unwrap_or(&(0, Vec2::ZERO)).0;
-    }
-} */
-
-
-/// Requests cursor icon on hover
-#[derive(Component, Reflect, Clone, PartialEq, Debug)]
-pub struct OnHoverSetCursor {
-    /// Cursor type to request on hover
-    pub cursor: SystemCursorIcon,
-}
-impl OnHoverSetCursor {
-    /// Creates new struct
-    pub fn new(cursor: SystemCursorIcon) -> Self {
-        OnHoverSetCursor {
-            cursor
-        }
-    }
-}
-fn on_hover_set_cursor(query: Query<(&UiHover, &OnHoverSetCursor)>, mut cursor: Query<&mut Cursor2d>) {
-    for (hover, hover_cursor) in &query {
-        if hover.enable {
-            if let Ok(mut cursor) = cursor.get_single_mut(){
-                cursor.request_cursor(hover_cursor.cursor, 1.0);
+                // Send out the event
+                pointer_output.send(PointerInput::new(
+                    PointerId::Mouse,
+                    Location {
+                        target: location.target.clone(),
+                        position: location.position,
+                    },
+                    PointerAction::Pressed { direction, button },
+                ));
             }
         }
     }
 }
+
 
 
 // #==============#
@@ -434,18 +459,34 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app
+            // Add Cursor Icon Queue resource to the app
+            .insert_resource(CursorIconQueue::default())
+            .add_systems(PostUpdate, system_cursor_icon_queue_apply)
 
-            // Add systems for mod picking event emitters
-            .add_systems(First, (cursor_mouse_pick_events, /* cursor_gamepad_pick_events, */ apply_deferred).chain().in_set(PickSet::Input))
+            // OnHoverSetCursor observers
+            .add_observer(observer_cursor_request_cursor_icon)
+            .add_observer(observer_cursor_cancel_cursor_icon)
 
-            // Add core systems 
-            .add_systems(PreUpdate, cursor_reset_icon)
-            .add_systems(PreUpdate, (system_cursor_gamepad_move, mouse_move_cursor, cursor_update_transform, cursor_move_virtual_pointer).chain())
-            //.add_systems(PostUpdate, cursor_set_visibility)
-            //.add_systems(PostUpdate, cursor_change_native)
-            //.add_systems(PostUpdate, cursor_update_texture)
+
+            // #=== SOFTWARE CURSOR ===#
+
+            // Add systems for emulating picking events
+            .add_systems(First, (
+                system_cursor_send_move_events,
+                system_cursor_mouse_send_pick_events,
+                system_cursor_gamepad_send_pick_events,
+                apply_deferred
+            ).chain().in_set(PickSet::Input))
+
+            // Add core systems
+            .add_systems(PreUpdate, (
+                system_cursor_gamepad_move,
+                system_cursor_mouse_move,
+                system_cursor_update_tranform,
+                system_cursor_move_pointer,
+            ).chain())
 
             // Other stuff
-            .add_systems(Update, (on_hover_set_cursor, system_cursor_gamepad_assign));
+            .add_systems(Update, system_cursor_gamepad_assign);
     }
 }

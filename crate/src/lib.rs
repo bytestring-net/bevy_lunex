@@ -459,7 +459,7 @@ pub fn system_layout_compute(
                 node_transform.translation.x = node_rectangle.pos.x;
                 node_transform.translation.y = -node_rectangle.pos.y;
                 let depth = match node_depth {
-                    UiDepth::Add(v) => {depth as f32 + v},
+                    UiDepth::Add(v) => {depth + v},
                     UiDepth::Set(v) => {*v},
                 };
                 node_transform.translation.z = depth;
