@@ -891,7 +891,7 @@ impl Plugin for UiLunexPlugin {
         // Configure the system set
         app.configure_sets(PostUpdate, (
             UiSystems::PreCompute.before(UiSystems::Compute),
-            UiSystems::PostCompute.after(UiSystems::Compute),
+            UiSystems::PostCompute.after(UiSystems::Compute).before(bevy::transform::TransformSystem::TransformPropagate),
         ));
 
         // Add observers
@@ -918,7 +918,7 @@ impl Plugin for UiLunexPlugin {
         app.add_systems(PostUpdate, (
 
             system_color,
-            system_pipe_sprite_size_from_dimension,
+            system_pipe_sprite_size_from_dimension.before(bevy::sprite::SpriteSystem::ComputeSlices),
             system_text_size_from_dimension,
             system_embedd_resize,
 
