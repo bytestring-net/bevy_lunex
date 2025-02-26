@@ -74,6 +74,39 @@ fn system_cursor_icon_queue_apply(
     }
 }
 
+/// This system will cleanup the queue if any invalid data is found.
+fn system_cursor_icon_queue_purge(
+    mut queue: ResMut<CursorIconQueue>,
+    mut windows: Query<&Window>,
+    entities: Query<Entity>,
+) {
+    let mut to_remove = Vec::new();
+    for (pointer, data) in &mut queue.pointers {
+
+        // Remove invalid pointers
+        if windows.get_mut(data.window).is_err() {
+            to_remove.push(*pointer);
+        }
+
+        // Remove despawned entities
+        let mut to_remove = Vec::new();
+        for (entity, _) in &data.queue {
+            if entities.get(*entity).is_err() {
+                to_remove.push(*entity);
+            }
+        }
+
+        // Cleanup
+        for entity in to_remove {
+            data.queue.remove(&entity);
+        }
+    }
+
+    // Cleanup
+    for pointer in to_remove {
+        queue.pointers.remove(&pointer);
+    }
+}
 
 
 // #========================#
@@ -481,7 +514,10 @@ impl Plugin for CursorPlugin {
         app
             // Add SoftwareCursor Icon Queue resource to the app
             .insert_resource(CursorIconQueue::default())
-            .add_systems(PostUpdate, system_cursor_icon_queue_apply)
+            .add_systems(PostUpdate, (
+                system_cursor_icon_queue_purge,
+                system_cursor_icon_queue_apply,
+            ))
 
             // OnHoverSetCursor observers
             .add_observer(observer_cursor_request_cursor_icon)

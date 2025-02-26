@@ -55,6 +55,8 @@ pub struct UiHover {
     pub forward_speed: f32,
     /// The speed of transition backwards
     pub backward_speed: f32,
+    /// Enable to have instant state transition
+    pub instant: bool,
 }
 /// Method implementations
 impl UiHover {
@@ -77,6 +79,11 @@ impl UiHover {
         self.backward_speed = backward_speed;
         self
     }
+    /// Replaces the instant property with a new value.
+    pub fn instant(mut self, instant: bool) -> Self {
+        self.instant = instant;
+        self
+    }
 }
 /// Constructor
 impl Default for UiHover {
@@ -87,6 +94,7 @@ impl Default for UiHover {
             curve: |v| {v},
             forward_speed: 1.0,
             backward_speed: 1.0,
+            instant: false,
         }
     }
 }
@@ -104,9 +112,11 @@ pub fn system_state_hover_update(
 ) {
     for mut hover in &mut query {
         if hover.enable && hover.value < 1.0 {
+            if hover.instant { hover.value = 1.0; continue; }
             hover.value = (hover.value + hover.forward_speed * time.delta_secs()).min(1.0);
         }
         if !hover.enable && hover.value > 0.0 {
+            if hover.instant { hover.value = 0.0; continue; }
             hover.value = (hover.value - hover.backward_speed * time.delta_secs()).max(0.0);
         }
     }
