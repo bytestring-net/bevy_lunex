@@ -3,11 +3,11 @@
 
 // Crate import only
 pub(crate) use std::any::TypeId;
-pub(crate) use std::marker::PhantomData;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::sprite::SpriteSource;
 pub(crate) use bevy::text::TextLayoutInfo;
 pub(crate) use bevy::utils::HashMap;
+pub(crate) use bevy::render::view::RenderLayers;
 pub(crate) use colored::Colorize;
 
 // Re-export
@@ -156,6 +156,49 @@ impl UiLayoutRoot {
     }
 }
 
+
+/// Marker component for all entities that you can use to check if it is used for 3D UI.
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
+pub struct UiRoot3d;
+
+/// This system traverses the hierarchy and adds [`UiRoot3d`] component to children.
+pub fn system_mark_3d(
+    root_query: Query<(Has<UiRoot3d>, &Children), (With<UiLayoutRoot>, Without<UiLayout>, Changed<UiLayoutRoot>)>,
+    node_query: Query<(Entity, Has<UiRoot3d>, Option<&Children>), (With<UiLayout>, Without<UiLayoutRoot>)>,
+    mut commands: Commands,
+) {
+    for (is_root_3d, root_children) in &root_query {
+
+        // Stack-based traversal
+        let mut stack: Vec<(Entity, usize)> = root_children.iter().enumerate().map(|(_, &child)| (child, 1)).rev().collect();
+
+        // Loop over the stack
+        while let Some((current_entity, depth)) = stack.pop() {
+            if let Ok((node, is_node_3d, node_children_option)) = node_query.get(current_entity) {
+
+
+                if is_root_3d != is_node_3d {
+                    if is_root_3d {
+                        commands.entity(node).insert(UiRoot3d);
+                    } else {
+                        commands.entity(node).remove::<UiRoot3d>();
+                    }
+                }
+
+                
+                // Push children to the stack
+                if let Some(node_children) = node_children_option {
+                    for &child in node_children.iter().rev() {
+                        stack.push((child, depth + 1));
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
 /// Trigger this event to recompute all [`UiLayoutRoot`] entities.
 #[derive(Event)]
 pub struct RecomputeUiLayout;
@@ -171,9 +214,24 @@ pub fn observer_touch_layout_root(
 }
 
 /// This system draws the outlines of [`UiLayout`] and [`UiLayoutRoot`] as gizmos.
-pub fn system_debug_draw_gizmo<G:GizmoConfigGroup>(
-    query: Query<(&GlobalTransform, &Dimension), Or<(With<UiLayout>, With<UiLayoutRoot>)>>,
-    mut gizmos: Gizmos<G>
+pub fn system_debug_draw_gizmo_2d(
+    query: Query<(&GlobalTransform, &Dimension), (Or<(With<UiLayout>, With<UiLayoutRoot>)>, Without<UiRoot3d>)>,
+    mut gizmos: Gizmos<LunexGizmoGroup2d>
+) {
+    for (transform, dimension) in &query {
+        // Draw the gizmo outline
+        gizmos.rect(
+            Isometry3d::from(transform.translation()),
+            **dimension,
+            Color::linear_rgb(0.0, 1.0, 0.0),
+        );
+    }
+}
+
+/// This system draws the outlines of [`UiLayout`] and [`UiLayoutRoot`] as gizmos.
+pub fn system_debug_draw_gizmo_3d(
+    query: Query<(&GlobalTransform, &Dimension), (Or<(With<UiLayout>, With<UiLayoutRoot>)>, With<UiRoot3d>)>,
+    mut gizmos: Gizmos<LunexGizmoGroup3d>
 ) {
     for (transform, dimension) in &query {
         // Draw the gizmo outline
@@ -425,11 +483,7 @@ pub fn system_layout_compute(
         };
 
         // Stack-based traversal
-        let mut stack: Vec<(Entity, Rectangle2D, f32)> = root_children
-            .iter()
-            .map(|&child| (child, root_rectangle, 0.0))
-            .rev()
-            .collect();
+        let mut stack: Vec<(Entity, Rectangle2D, f32)> = root_children.iter().map(|&child| (child, root_rectangle, 0.0)).rev().collect();
 
         while let Some((current_entity, parent_rectangle, depth)) = stack.pop() {
             if let Ok((node_layout, node_depth, node_state, mut node_transform, mut node_dimension, node_children_option)) = node_query.get_mut(current_entity) {
@@ -472,7 +526,7 @@ pub fn system_layout_compute(
                     UiDepth::Add(v) => {depth + v},
                     UiDepth::Set(v) => {*v},
                 };
-                node_transform.translation.z = depth;
+                node_transform.translation.z = depth * root.abs_scale;
                 **node_dimension = node_rectangle.size;
 
                 if let Some(node_children) = node_children_option {
@@ -882,6 +936,7 @@ pub enum UiSystems {
     PostCompute,
 }
 
+
 /// This plugin is used for the main logic.
 #[derive(Debug, Default, Clone)]
 pub struct UiLunexPlugin;
@@ -918,6 +973,7 @@ impl Plugin for UiLunexPlugin {
         app.add_systems(PostUpdate, (
 
             system_color,
+            system_mark_3d,
             system_pipe_sprite_size_from_dimension.before(bevy::sprite::SpriteSystem::ComputeSlices),
             system_text_size_from_dimension,
             system_embedd_resize,
@@ -941,31 +997,52 @@ impl Plugin for UiLunexPlugin {
 
 /// This plugin is used to enable debug functionality.
 #[derive(Debug, Default, Clone)]
-pub struct UiLunexDebugPlugin<G: GizmoConfigGroup = DefaultGizmoConfigGroup>(PhantomData<G>);
-impl UiLunexDebugPlugin<DefaultGizmoConfigGroup> {
-    pub fn new() -> Self { UiLunexDebugPlugin::<DefaultGizmoConfigGroup>(PhantomData) }
-}
-impl <G: GizmoConfigGroup> Plugin for UiLunexDebugPlugin<G> {
+pub struct UiLunexDebugPlugin<const GIZMO_2D_LAYER: usize = 0, const GIZMO_3D_LAYER: usize = 0>;
+impl <const GIZMO_2D_LAYER: usize, const GIZMO_3D_LAYER: usize> Plugin for UiLunexDebugPlugin<GIZMO_2D_LAYER, GIZMO_3D_LAYER> {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            system_debug_print_data,
-            system_debug_draw_gizmo::<G>,
+        
+        // Configure the Gizmo render groups
+        app .init_gizmo_group::<LunexGizmoGroup2d>()
+            .init_gizmo_group::<LunexGizmoGroup3d>()
+            .add_systems(Startup, |mut config_store: ResMut<GizmoConfigStore>| {
+                let (my_config, _) = config_store.config_mut::<LunexGizmoGroup2d>();
+                my_config.render_layers = RenderLayers::layer(GIZMO_2D_LAYER);
+
+                let (my_config, _) = config_store.config_mut::<LunexGizmoGroup3d>();
+                my_config.render_layers = RenderLayers::layer(GIZMO_3D_LAYER);
+            });
+        
+        // Add the 2d and 3d gizmo outlines
+        app.add_systems(PostUpdate, (
+            system_debug_draw_gizmo_2d,
+            system_debug_draw_gizmo_3d,
         ));
 
-        app.add_systems(Update, (
+        // Add the debug tree printing
+        app.add_systems(PostUpdate, (
             system_debug_print_data,
         ).in_set(UiSystems::PostCompute));
     }
 }
+
 
 /// This plugin is used to register index components.
 #[derive(Debug, Default, Clone)]
 pub struct UiLunexIndexPlugin<const INDEX: usize>;
 impl <const INDEX: usize> Plugin for UiLunexIndexPlugin<INDEX> {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
+        app.add_systems(PostUpdate, (
             system_fetch_dimension_from_camera::<INDEX>,
             system_touch_camera_if_fetch_added::<INDEX>,
-        ).in_set(UiSystems::PreCompute).before(UiSystems::Compute));
+        ).in_set(UiSystems::PreCompute));
     }
 }
+
+
+/// Gizmo group for UI 2D node debug outlines
+#[derive(GizmoConfigGroup, Default, Reflect, Clone, Debug)]
+pub struct LunexGizmoGroup2d;
+
+/// Gizmo group for UI 3D node debug outlines
+#[derive(GizmoConfigGroup, Default, Reflect, Clone, Debug)]
+pub struct LunexGizmoGroup3d;
