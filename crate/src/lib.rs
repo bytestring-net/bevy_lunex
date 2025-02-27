@@ -170,7 +170,7 @@ pub fn system_mark_3d(
     for (is_root_3d, root_children) in &root_query {
 
         // Stack-based traversal
-        let mut stack: Vec<(Entity, usize)> = root_children.iter().enumerate().map(|(_, &child)| (child, 1)).rev().collect();
+        let mut stack: Vec<(Entity, usize)> = root_children.iter().map(|&child| (child, 1)).rev().collect();
 
         // Loop over the stack
         while let Some((current_entity, depth)) = stack.pop() {
@@ -752,6 +752,27 @@ pub fn system_text_size_to_layout(
 }
 
 
+// #=====================#
+// #=== STATE CONTROL ===#
+
+/// **Ui Mesh Plane** - This component is used to mark mesh entities that can be freely replaced with quad mesh on demand.
+#[derive(Component, Reflect, Default, Clone, PartialEq, Debug)]
+#[require(Mesh3d)]
+pub struct UiMeshPlane;
+
+/// This system takes [`Dimension`] data and constructs a plane mesh.
+pub fn system_mesh_reconstruct_from_dimension(
+    mut query: Query<(&Dimension, &mut Mesh3d), (With<UiMeshPlane>, Changed<Dimension>)>,
+    mut meshes: ResMut<Assets<Mesh>>,
+) {
+    for (dimension, mut mesh) in &mut query {
+        let plane_mesh = meshes.add(Rectangle::new(dimension.x, dimension.y));
+        mesh.0 = plane_mesh;
+    }
+}
+
+
+
 // #=======================#
 // #=== CAMERA FETCHING ===#
 
@@ -921,9 +942,8 @@ fn lerp_hue(h1: f32, h2: f32, t: f32) -> f32 {
 }
 
 
-
-// #=========================#
-// #=== THE LUNEX PLUGINS ===#
+// #===============================#
+// #=== THE LUNEX SETS & GROUPS ===#
 
 /// System set for [`UiLunexPlugin`]
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
@@ -936,6 +956,17 @@ pub enum UiSystems {
     PostCompute,
 }
 
+/// Gizmo group for UI 2D node debug outlines
+#[derive(GizmoConfigGroup, Default, Reflect, Clone, Debug)]
+pub struct LunexGizmoGroup2d;
+
+/// Gizmo group for UI 3D node debug outlines
+#[derive(GizmoConfigGroup, Default, Reflect, Clone, Debug)]
+pub struct LunexGizmoGroup3d;
+
+
+// #=========================#
+// #=== THE LUNEX PLUGINS ===#
 
 /// This plugin is used for the main logic.
 #[derive(Debug, Default, Clone)]
@@ -976,6 +1007,7 @@ impl Plugin for UiLunexPlugin {
             system_mark_3d,
             system_pipe_sprite_size_from_dimension.before(bevy::sprite::SpriteSystem::ComputeSlices),
             system_text_size_from_dimension,
+            system_mesh_reconstruct_from_dimension,
             system_embedd_resize,
 
         ).in_set(UiSystems::PostCompute));
@@ -1037,12 +1069,3 @@ impl <const INDEX: usize> Plugin for UiLunexIndexPlugin<INDEX> {
         ).in_set(UiSystems::PreCompute));
     }
 }
-
-
-/// Gizmo group for UI 2D node debug outlines
-#[derive(GizmoConfigGroup, Default, Reflect, Clone, Debug)]
-pub struct LunexGizmoGroup2d;
-
-/// Gizmo group for UI 3D node debug outlines
-#[derive(GizmoConfigGroup, Default, Reflect, Clone, Debug)]
-pub struct LunexGizmoGroup3d;
