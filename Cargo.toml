@@ -1,45 +1,74 @@
+#======================#
+#=== WORKSPACE INFO ===#
+
 [workspace]
   resolver = "2"
-  members = [
-    "crates/*",
-    "examples/*",
-  ]
-  exclude = [
-    "promo/*",
-    "examples/*",
-    "docs/*",
-    ".gitignore",
-    ".vscode",
-  ]
-
-[profile.dev]
-  opt-level = 1
+  members  = ["crate", "examples/*"]
+  exclude  = [".github", ".vscode", "docs/*", "promo/*", ".gitattributes", ".gitignore"]
 
 [workspace.package]
-  authors     = ["IDEDARY"]
-  version     = "0.2.3"
-  edition     = "2021"
-  license     = "MIT OR Apache-2.0"
-  repository  = "https://github.com/bytestring-net/bevy-lunex"
-  keywords    = ["ui", "layout", "bevy", "lunex", "bevy-lunex"]
-  categories  = ["gui", "mathematics", "game-development"]
+  authors    = ["IDEDARY"]
+  version    = "0.3.0"
+  edition    = "2021"
+  license    = "MIT OR Apache-2.0"
+  repository = "https://github.com/bytestring-net/bevy-lunex"
+  keywords   = ["ui", "layout", "bevy", "lunex", "bevy-lunex"]
+  categories = ["gui", "mathematics", "game-development"]
+
+#========================#
+#=== PROFILE SETTINGS ===#
+
+[profile.dev]
+  debug = 0
+  strip = "debuginfo"
+  opt-level = 1
+
+[profile.dev.package."*"]
+  opt-level = 3
+
+[profile.release]
+  opt-level = 3
+  panic = 'abort'
+  debug = 0
+  strip = true
+  lto = "thin"
+  codegen-units = 1
+
+#===============================#
+#=== DEPENDENCIES & FEATURES ===#
 
 [workspace.dependencies]
 
-  bevy_lunex   = { path = "crates/bevy_lunex", version = "0.2.3" }
-  lunex_engine = { path = "crates/lunex_engine", version = "0.2.3" }
+  # LIBRARY CRATES
+  bevy_lunex = { path = "crate" }
 
-  colored            = { version = "^2.1" }
-  indexmap           = { version = "^2.1" }
-  thiserror          = { version = "^1.0" }
+  #===========================#
+  #=== GAME ENGINE SOURCE === #
 
-  bevy = { version = "^0.14", default-features = false, features = [
+  # GAME ENGINE
+  bevy = { version = "^0.15", default-features = false, features = [
     "bevy_pbr",
     "bevy_sprite",
     "bevy_text",
-    "multi_threaded",
     "bevy_gizmos",
+    "bevy_picking",
+    "bevy_ui",
+    "bevy_window",
+    "bevy_winit",
+    "custom_cursor",
+
+    # Required for doctests
+    "x11",
   ] }
 
-  bevy_kira_audio = { version = "^0.20" }
-  bevy_mod_picking = { version = "^0.20", default-features = false, features = ["selection", "backend_raycast"] }
+  #===============================#
+  #=== GAME ENGINE EXTENSIONS === #
+
+  # AUDIO
+  # bevy_kira_audio  = { version = "^0.22.0" }
+
+  #===========================#
+  #=== RUST MISCELLANEOUS === #
+  
+  radsort   = { version = "^0.1.1" }
+  colored   = { version = "^3.0.0" }

@@ -6,28 +6,33 @@
 
 # Getting started
 
-- [Installation](installation.md)
-- [Quick start](quick_start.md)
-- [Debug](debug.md)
+- [Installation & Setup](getting-started/installation.md)
+- [Debug Tooling](getting-started/debug.md)
+- [Quick start](getting-started/quick-start.md)
 
 ---
 
-# Advanced
-- [Linking](advanced/linking.md)
-- [Layouts](advanced/layouts.md)
-- [Units](advanced/units.md)
-- [Cursor](advanced/cursor.md)
-- [Text](advanced/text.md)
-- [Abstraction](advanced/abstraction.md)
-    - [Components](advanced/abstraction/components.md)
-    - [Routes](advanced/abstraction/routes.md)
-- [Interactivity](advanced/interactivity.md)
-- [Animation](advanced/animation.md)
-- [2D & 3D](advanced/2d_and_3d.md)
-- [Worldspace UI](advanced/worldspace_ui.md)
-- [Custom rendering]()
+# Chapters
 
------------
+- [Base Units](chapters/base-units.md)
+- [Interactivity]()(chapters/interactivity.md)
+- [State Machine]()(chapters/state-machine.md)
+- [Cursor Icons]()(chapters/cursor-icons.md)
+
+- [2D Usage]()(chapters/2d/README.md)
+    - [Layouts](chapters/2d/layouts.md)
+    - [Text]()(chapters/2d/text.md)
+
+- [3D Usage]()(chapters/3d/README.md)
+    - [Layouts]()(chapters/3d/layouts.md)
+    - [Meshes]()(chapters/3d/meshes.md)
+
+- [Embedding]()(chapters/embedding/README.md)
+    - [Camera]()(chapters/embedding/camera.md)
+    - [Bevy UI]()(chapters/embedding/bevy-ui.md)
+
+
+---
 
 [Contributors](contributors.md)
 [Help](help.md)

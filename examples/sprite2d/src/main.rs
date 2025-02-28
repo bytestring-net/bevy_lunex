@@ -10,7 +10,7 @@ fn main() -> AppExit {
 
 fn setup(
     mut commands: Commands,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    asset_server: Res<AssetServer>
 ) {
     // Spawn camera
     commands.spawn((
@@ -48,13 +48,11 @@ fn setup(
 
             // Spawn a color filled node
             ui.spawn((
-                Name::new("My Mesh"),
+                Name::new("My Sprite"),
                 // Give it some solid aspect ratio
                 UiLayout::solid().size((Ab(1920.0), Ab(1080.0))).pack(),
-                // Mark this as UI plane mesh
-                UiMeshPlane2d,
                 // Give it some material
-                MeshMaterial2d(materials.add(Color::srgb(1.0, 0.5, 0.5))),
+                Sprite::from_image(asset_server.load("background.png")),
                 // On hover change the cursor to this
                 OnHoverSetCursor::new(SystemCursorIcon::Pointer),
             ));

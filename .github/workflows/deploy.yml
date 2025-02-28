@@ -8,9 +8,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # To push a branch 
-      pages: write  # To push to a GitHub Pages site
-      id-token: write # To update the deployment status
+      contents: write
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,6 +22,14 @@ jobs:
           mkdir mdbook
           curl -sSL $url | tar -xz --directory=./mdbook
           echo `pwd`/mdbook >> $GITHUB_PATH
+      - name: Install mdbook-alerts plugin
+        run: |
+          tag=$(curl 'https://github.com/lambdalisue/rs-mdbook-alerts/releases/latest' | jq -r '.tag_name')
+          url="https://github.com/lambdalisue/rs-mdbook-alerts/releases/download/${tag}/mdbook-alerts-x86_64-unknown-linux-gnu"
+          mkdir -p mdbook-alerts
+          curl -sSL $url -o mdbook-alerts/mdbook-alerts
+          chmod +x mdbook-alerts/mdbook-alerts
+          echo `pwd`/mdbook-alerts >> $GITHUB_PATH
       - name: Build Book
         run: |
           cd docs
@@ -31,7 +39,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
           path: 'docs/book'
       - name: Deploy to GitHub Pages
         id: deployment

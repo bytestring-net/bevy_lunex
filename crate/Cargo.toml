@@ -1,0 +1,27 @@
+#====================#
+#=== PACKAGE INFO ===#
+
+[package]
+  name = "bevy_lunex"
+  authors.workspace = true
+  version.workspace = true
+  edition.workspace = true
+  license.workspace = true
+  repository.workspace = true
+  keywords.workspace = true
+  categories.workspace = true
+
+#===============================#
+#=== DEPENDENCIES & FEATURES ===#
+
+[dependencies]
+
+  # GAME ENGINE
+  bevy = { workspace = true }
+
+  # AUDIO
+  # bevy_kira_audio = { workspace = true }
+
+  # RUST MISCELLANEOUS
+  radsort = { workspace = true }
+  colored = { workspace = true }
