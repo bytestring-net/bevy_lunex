@@ -2,7 +2,7 @@
 
 <div align="center">
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
-  <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.14.2-white.svg?label=bevy&color=bb86a5"></a>
+  <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.15.X-white.svg?label=bevy&color=bb86a5"></a>
   <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-Apache/MIT-white.svg?label=license&color=9fcec4"></a>
   <a href="https://deps.rs/crate/bevy_lunex"><img src="https://img.shields.io/badge/check-white.svg?label=deps&color=a0f6b9"></a>
   <a href="https://docs.rs/bevy_lunex"><img src="https://img.shields.io/docsrs/bevy_lunex/latest?color=8df7cb"></a>
@@ -10,7 +10,7 @@
 
 #
 
-Blazingly fast ***path based*** retained ***layout engine*** for Bevy entities, built around vanilla **Bevy ECS**. It gives you the ability to make ***your own custom UI*** using regular ECS like every other part of your app.
+Blazingly fast retained ***layout engine*** for Bevy entities, built around vanilla **Bevy ECS**. It gives you the ability to make ***your own custom UI*** using regular ECS like every other part of your app.
 
 * **Any aspect ratio:** Lunex is designed to support ALL window sizes out of the box without deforming. The built in layout types react nicely and intuitively to aspect ratio changes.
 
@@ -20,82 +20,103 @@ Blazingly fast ***path based*** retained ***layout engine*** for Bevy entities, 
 
 * **Worldspace UI:** One of the features of Bevy_Lunex is its support for both 2D and 3D UI elements, leveraging Bevy's `Transform` component. This opens up a wide range of possibilities for developers looking to integrate UI elements seamlessly into both flat and spatial environments. Diegetic UI is no problem.
 
-* **Custom cursor:** You can style your cursor with any image you want! Lunex also provides easy drop-in components for mouse interactivity.
-
 ##
 
 ![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/bevypunk_1.png?raw=true)
 
-![image](https://github.com/bytestring-net/bevy_lunex/blob/main/promo/bevypunk_3.jpeg?raw=true)
-
-> *Try out the live WASM demo on [`Itch.io`](https://idedary.itch.io/bevypunk) or [`GitHub Pages`](https://idedary.github.io/Bevypunk/) (Limited performance & stutter due to running on a single thread). For best experience compile the project natively. You can find [source code here](https://github.com/IDEDARY/Bevypunk).*
+> *Try out the live WASM demo on [`Itch.io`](https://idedary.itch.io/bevypunk) (Limited performance & stutter due to running on a single thread). For best experience compile the project natively.*
 
 ## Syntax Example
 
-This is an example of a clickable Button created from scratch using predefined components.
-As you can see, ECS modularity is the focus here. The library will also greatly benefit from upcoming
-BSN (Bevy Scene Notation) addition that Cart is working on.
+This is an example of a clickable Button created from scratch using provided components.
+Thanks to ECS, the syntax is highly modular with strong emphasis on components-per-functionality.
+As you can see, it is no different from vanilla Bevy ECS.
 
 ```rust
+// Create UI
 commands.spawn((
+	// Initialize the UI root for 2D
+	UiLayoutRoot::new_2d(),
+	// Make the UI synchronized with camera viewport size
+	UiFetchFromCamera::<0>,
+)).with_children(|ui| {
 
-	// #=== UI DEFINITION ===#
+	// Spawn a button in the middle of the screen
+	ui.spawn((
+		Name::new("My Button"),
+		// Specify the position and size of the button
+		UiLayout::window().pos(Rl((50.0, 50.0))).size((200.0, 50.0)).pack(),
+		// When hovered, it will request the cursor icon to be changed
+		OnHoverSetCursor::new(SystemCursorIcon::Pointer),
+	)).with_children(|ui| {
+		
+		// Spawn a child node but with a background
+		ui.spawn((
+			// You can define layouts for multiple states
+			UiLayout::new(vec![
+				// The default state, just fill the parent
+				(UiBase::id(), UiLayout::window().full()),
+				// The hover state, grow to 105% of the parent from center
+				(UiHover::id(), UiLayout::window().anchor(Anchor::Center).size(Rl(105.0)))
+			]),
+			// Enable the hover state and give it some properties
+			UiHover::new().forward_speed(20.0).backward_speed(4.0),
+			// You can specify colors for multiple states
+			UiColor::new(vec![
+				(UiBase::id(), Color::BEVYPUNK_RED.with_alpha(0.15)),
+				(UiHover::id(), Color::BEVYPUNK_YELLOW.with_alpha(1.2))
+			]),
+			// You can attach any form of rendering to the node, be it sprite, mesh or something custom
+			Sprite {
+				image: asset_server.load("images/button.png"),
+				// Here we enable sprite slicing
+				image_mode: SpriteImageMode::Sliced(TextureSlicer { border: BorderRect::square(32.0), ..default() }),
+				..default()
+			},
+			// Make sure it does not cover the bounding zone of parent
+			PickingBehavior::IGNORE,
+		)).with_children(|ui| {
 
-	// This specifies the name and hierarchy of the node
-	UiLink::<MainUi>::path("Menu/Button"),
-
-	// Here you can define the layout using the provided units (per state like Base, Hover, Selected, etc.)
-	UiLayout::window().pos(Rl((50.0, 50.0))).size((Rh(45.0), Rl(60.0))).pack::<Base>(),
-
-
-	// #=== CUSTOMIZATION ===#
-
-	// Give it a background image
-	UiImage2dBundle { texture: assets.load("images/button.png"), ..default() },
-
-	// Make the background image resizable
-	ImageScaleMode::Sliced(TextureSlicer { border: BorderRect::square(32.0), ..default() }),
-
-	// This is required to control our hover animation
-	UiAnimator::<Hover>::new().forward_speed(5.0).backward_speed(1.0),
-
-	// This will set the base color to red
-	UiColor<Base>::new(Color::RED),
-
-	// This will set hover color to yellow
-	UiColor<Hover>::new(Color::YELLOW),
-
-
-	// #=== INTERACTIVITY ===#
-
-	// This is required for hit detection (make it clickable)
-	PickableBundle::default(),
-
-	// This will change cursor icon on mouse hover
-	OnHoverSetCursor::new(CursorIcon::Pointer),
-
-	// If we click on this, it will emmit UiClick event we can listen to
-	UiClickEmitter::SELF,
-));
+			// Spawn a text child node
+			ui.spawn((
+				// For text we always use window layout to position it. The size is computed at runtime from text bounds
+				UiLayout::window().pos((Rh(40.0), Rl(50.0))).anchor(Anchor::CenterLeft).pack(),
+				UiColor::new(vec![
+					(UiBase::id(), Color::BEVYPUNK_RED),
+					(UiHover::id(), Color::BEVYPUNK_YELLOW.with_alpha(1.2))
+				]),
+				UiHover::new().forward_speed(20.0).backward_speed(4.0),
+				// Here we specify the text height proportional to the parent node
+				UiTextSize::from(Rh(60.0)),
+				// You can attach text like this
+				Text2d::new("Click me!"),
+				TextFont {
+					font: asset_server.load("fonts/semibold.ttf"),
+					font_size: 64.0,
+					..default()
+				},
+				// Make sure it does not cover the bounding zone of parent
+				PickingBehavior::IGNORE,
+			));
+		});
+	})
+	// Utility observers that enable the hover state on trigger
+	.observe(hover_set::<Pointer<Over>, true>)
+	.observe(hover_set::<Pointer<Out>, false>)
+	// Interactivity is done through observers, you can query anything here
+	.observe(|_: Trigger<Pointer<Click>>| {
+		// ... Do something on click
+	});
+});
 ```
 
 ## Documentation
 
-There is a Lunex book for detailed explanations about the concepts used in Lunex. You can find it here: [`Bevy Lunex book`](https://bytestring-net.github.io/bevy_lunex/).
+- The Lunex Book: [`Bevy Lunex book`](https://bytestring-net.github.io/bevy_lunex/).
 
-For production ready example/template check out [`Bevypunk source code`](https://github.com/IDEDARY/Bevypunk).
+- Highly documented source code on Docs.rs: [`Docs.rs`](https://docs.rs/bevy_lunex/latest/bevy_lunex/).
 
-## Versions
-
-|  Bevy  |    Bevy Lunex   |
-|--------|-----------------|
-| ^ 0.14 | 0.2.0 - 0.2.4   |
-| 0.13.2 |      0.1.0      |
-| 0.12.1 | 0.0.10 - 0.0.11 |
-| 0.12.0 | 0.0.7 - 0.0.9   |
-| 0.11.2 | 0.0.1 - 0.0.6   |
-
-> ***Any version below 0.0.X is EXPERIMENTAL and is not intended for practical use***
+- Highly documented production-ready example: [`Bevypunk example`](https://github.com/IDEDARY/Bevypunk).
 
 ## Contributing
 
