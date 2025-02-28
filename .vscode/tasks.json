@@ -4,7 +4,7 @@
 		{
 			"type": "cargo",
 			"command": "run",
-			"args": ["--bin", "minimal"],
+			"args": ["--bin", "sprite2d"],
 			"problemMatcher": [
 				"$rustc"
 			],
@@ -14,22 +14,22 @@
 		{
 			"type": "cargo",
 			"command": "run",
-			"args": ["--bin", "worldspace"],
+			"args": ["--bin", "sprite3d"],
 			"problemMatcher": [
 				"$rustc"
 			],
 			"group": "build",
-			"label": "Run 1"
+			"label": "Run 2"
 		},
 		{
 			"type": "cargo",
 			"command": "run",
-			"args": ["--bin", "worldspace_text"],
+			"args": ["--bin", "mesh2d"],
 			"problemMatcher": [
 				"$rustc"
 			],
 			"group": "build",
-			"label": "Run 1"
+			"label": "Run 3"
 		}
 	]
 }

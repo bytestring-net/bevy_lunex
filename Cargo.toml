@@ -3,8 +3,8 @@
 
 [workspace]
   resolver = "2"
-  members  = ["crate"]
-  exclude  = [".github", ".vscode", "docs/*", "examples/*", "promo/*", ".gitignore", "examples/*"]
+  members  = ["crate", "examples/*"]
+  exclude  = [".github", ".vscode", "docs/*", "promo/*", ".gitattributes", ".gitignore"]
 
 [workspace.package]
   authors    = ["IDEDARY"]

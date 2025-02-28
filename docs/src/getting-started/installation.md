@@ -22,12 +22,10 @@ You have to add the `UiLunexPlugin` to your application.
 
 ```rust, noplayground
 fn main() -> AppExit {
-    let mut app = App::new();
-    
-    // Add necessary plugins
-    app.add_plugins((DefaultPlugins, UiLunexPlugin));
-    
-    app.run()
+    App::new()
+        // Add necessary plugins
+        .add_plugins((DefaultPlugins, UiLunexPlugin))
+        .run()
 }
 ```
 

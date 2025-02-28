@@ -2,7 +2,7 @@
 #=== EXAMPLE INFO ===#
 
 [package]
-  name = "mesh2d"
+  name = "sprite3d"
   authors.workspace = true
   version.workspace = true
   edition.workspace = true

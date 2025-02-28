@@ -58,6 +58,7 @@ fn system_cursor_icon_queue_apply(
 
             // Apply the cursor icon somehow
             if let Some(mut window_cursor) = window_cursor_option {
+                #[allow(clippy::single_match)]
                 match window_cursor.as_mut() {
                     CursorIcon::System(ref mut previous) => {
                         if *previous != top_request {
@@ -117,22 +118,20 @@ fn system_cursor_icon_queue_purge(
 pub struct OnHoverSetCursor {
     /// SoftwareCursor type to request on hover
     pub cursor: SystemCursorIcon,
-    /// Is hovered or not
-    hover: bool,
 }
 impl OnHoverSetCursor {
     /// Creates new struct
     pub fn new(cursor: SystemCursorIcon) -> Self {
         OnHoverSetCursor {
             cursor,
-            hover: false,
         }
     }
 }
 
-fn observer_cursor_request_cursor_icon(trigger: Trigger<Pointer<Over>>, mut pointers: Query<(&PointerId, &PointerLocation)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
+fn observer_cursor_request_cursor_icon(mut trigger: Trigger<Pointer<Over>>, mut pointers: Query<(&PointerId, &PointerLocation)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
     // Find the pointer location that triggered this observer
-    for (pointer, location) in pointers.iter_mut().filter(|(p_id, _)| trigger.pointer_id == **p_id) {
+    let id = trigger.pointer_id;
+    for (pointer, location) in pointers.iter_mut().filter(|(p_id, _)| id == **p_id) {
 
         // Check if the pointer is attached to a window
         if let Some(location) = &location.location {
@@ -140,6 +139,7 @@ fn observer_cursor_request_cursor_icon(trigger: Trigger<Pointer<Over>>, mut poin
 
                 // Request a cursor change
                 if let Ok(requestee) = query.get(trigger.target) {
+                    trigger.propagate(false);
                     queue.request_cursor(*pointer, window.entity(), trigger.target, requestee.cursor, 1);
                 }
             }
@@ -147,9 +147,10 @@ fn observer_cursor_request_cursor_icon(trigger: Trigger<Pointer<Over>>, mut poin
     }
 }
 
-fn observer_cursor_cancel_cursor_icon(trigger: Trigger<Pointer<Out>>, mut pointers: Query<(&PointerId, &PointerLocation)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
+fn observer_cursor_cancel_cursor_icon(mut trigger: Trigger<Pointer<Out>>, mut pointers: Query<(&PointerId, &PointerLocation)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
     // Find the pointer location that triggered this observer
-    for (pointer, location) in pointers.iter_mut().filter(|(p_id, _)| trigger.pointer_id == **p_id) {
+    let id = trigger.pointer_id;
+    for (pointer, location) in pointers.iter_mut().filter(|(p_id, _)| id == **p_id) {
 
         // Check if the pointer is attached to a window
         if let Some(location) = &location.location {
@@ -157,6 +158,7 @@ fn observer_cursor_cancel_cursor_icon(trigger: Trigger<Pointer<Out>>, mut pointe
 
                 // Cancel existing cursor icon request if applicable
                 if query.get(trigger.target).is_ok() {
+                    trigger.propagate(false);
                     queue.cancel_cursor(*pointer, &trigger.target);
                 }
             }
@@ -274,6 +276,7 @@ fn system_cursor_software_change_icon(
             if let NormalizedRenderTarget::Window(window) = location.target {
                 if let Ok(cursor_icon) = windows.get(window.entity()) {
                     if let Some(atlas) = &mut sprite.texture_atlas {
+                        #[allow(clippy::single_match)]
                         match *cursor_icon {
                             CursorIcon::System(icon) => {
                                 atlas.index = software_cursor.cursor_atlas_map.get(&icon).unwrap_or(&(0, Vec2::ZERO)).0;
