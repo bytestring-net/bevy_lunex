@@ -19,7 +19,6 @@ jobs:
       
       - name: Install Git LFS
         run: |
-          git lfs install
           git lfs pull
       
       - name: Install latest mdbook
