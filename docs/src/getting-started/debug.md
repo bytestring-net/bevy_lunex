@@ -32,7 +32,7 @@ if you want to see these outlines.
 
 This will draw gizmo outlines around all UI nodes, allowing you to see their positions and sizes.
 
-![Debug overlay](../assets/debug1.png)
+![Debug overlay](/assets/debug1.png)
 
 Additionally, it will print the layouts to the terminal whenever a change is detected.
 
