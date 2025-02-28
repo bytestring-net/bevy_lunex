@@ -20,7 +20,7 @@
   bevy = { workspace = true }
 
   # AUDIO
-  bevy_kira_audio = { workspace = true }
+  # bevy_kira_audio = { workspace = true }
 
   # RUST MISCELLANEOUS
   radsort = { workspace = true }

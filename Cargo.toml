@@ -65,12 +65,10 @@
   #=== GAME ENGINE EXTENSIONS === #
 
   # AUDIO
-  bevy_kira_audio  = { version = "^0.22.0" }
+  # bevy_kira_audio  = { version = "^0.22.0" }
 
   #===========================#
   #=== RUST MISCELLANEOUS === #
   
   radsort   = { version = "^0.1.1" }
   colored   = { version = "^3.0.0" }
-  indexmap  = { version = "^2.7.1" }
-  thiserror = { version = "^2.0.11" }
