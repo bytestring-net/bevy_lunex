@@ -3,6 +3,7 @@
 
 [package]
   name = "bevy_lunex"
+  description = "Blazingly fast retained UI layout engine for Bevy ECS"
   authors.workspace = true
   version.workspace = true
   edition.workspace = true
