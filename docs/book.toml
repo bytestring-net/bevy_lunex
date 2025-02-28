@@ -1,6 +1,25 @@
+#=================#
+#=== BOOK INFO ===#
+
 [book]
-authors = ["IDEDARY"]
-language = "en"
-multilingual = false
-src = "src"
-title = "Bevy Lunex Documentation"
+  authors = ["IDEDARY"]
+  language = "en"
+  multilingual = false
+  src = "src"
+  title = "Bevy Lunex Documentation"
+
+#============#
+#=== HTML ===#
+
+[output.html]
+  additional-css = [
+    "./theme/css/catppuccin.css",
+    "./theme/css/catppuccin-alerts.css",
+  ]
+  default-theme = "frappe"
+  preferred-dark-theme = "mocha"
+
+#===============#
+#=== PLUGINS ===#
+
+[preprocessor.alerts]
