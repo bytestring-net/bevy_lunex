@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -12,9 +11,17 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository (with LFS)
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          lfs: true
+      
+      - name: Install Git LFS
+        run: |
+          git lfs install
+          git lfs pull
+      
       - name: Install latest mdbook
         run: |
           tag=$(curl 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' | jq -r '.tag_name')
@@ -22,22 +29,27 @@ jobs:
           mkdir mdbook
           curl -sSL $url | tar -xz --directory=./mdbook
           echo `pwd`/mdbook >> $GITHUB_PATH
+      
       - name: Install mdbook-alerts plugin
         run: |
           mkdir -p mdbook-alerts
           curl -sSL https://github.com/lambdalisue/rs-mdbook-alerts/releases/download/v0.7.0/mdbook-alerts-x86_64-unknown-linux-gnu -o mdbook-alerts/mdbook-alerts
           chmod +x mdbook-alerts/mdbook-alerts
           echo `pwd`/mdbook-alerts >> $GITHUB_PATH
+      
       - name: Build Book
         run: |
           cd docs
           mdbook build
+      
       - name: Setup Pages
         uses: actions/configure-pages@v4
+      
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: 'docs/book'
+      
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
