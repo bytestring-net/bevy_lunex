@@ -302,7 +302,7 @@ macro_rules! init_value {
         /// **Ui value** - A collection of different units used for UI.
         /// They are computed at runtime when layout is being calculated (context-aware).
         /// The supported units that implement `Into<UiValue>` are:
-        /// * [`Ab`] [`Rl`] [`Rw`] [`Rh`] [`Em`] [`Sp`] [`Vw`] [`Vh`]
+        /// * [`Ab`] [`Rl`] [`Rw`] [`Rh`] [`Em`] [`Vw`] [`Vh`]
         /// ## 📦 Types
         /// First class implementations for `(T)` are:
         /// * [`f32`] [`Vec2`] [`Vec3`] [`Vec4`]
