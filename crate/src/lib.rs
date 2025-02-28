@@ -1,5 +1,4 @@
 #![doc = include_str!("../README.md")]
-#![feature(const_type_id)]
 #![allow(clippy::type_complexity)]
 
 // Crate import only
