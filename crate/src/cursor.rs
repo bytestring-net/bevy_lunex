@@ -11,14 +11,14 @@ pub struct CursorIconQueue {
 }
 impl CursorIconQueue {
     /// A method to request a new cursor icon. Works only if priority is higher than already set priority this tick.
-    pub fn request_cursor(&mut self, pointer: PointerId, window: Entity, requestee: Entity, request: SystemCursorIcon, priority: usize) {
+    pub fn request_cursor(&mut self, pointer: PointerId, window: Option<Entity>, requestee: Entity, request: SystemCursorIcon, priority: usize) {
         if let Some(data) = self.pointers.get_mut(&pointer) {
             data.window = window;
             data.queue.insert(requestee, (request, priority));
         } else {
             let mut queue = HashMap::new();
             queue.insert(requestee, (request, priority));
-            self.pointers.insert(pointer, CursorQueueData { window, queue });
+            self.pointers.insert(pointer, CursorQueueData { window, queue, top_priority: 0, top_request: Default::default() });
         }
     }
     /// A method to cancel existing cursor in the queue stack
@@ -31,45 +31,53 @@ impl CursorIconQueue {
 
 #[derive(Reflect, Clone, PartialEq, Debug)]
 struct CursorQueueData {
-    window: Entity,
+    window: Option<Entity>,
+    top_priority: usize,
+    top_request: SystemCursorIcon,
     queue: HashMap<Entity, (SystemCursorIcon, usize)>
 }
 
 /// This system will apply cursor changes to the windows it has in the resource.
 fn system_cursor_icon_queue_apply(
-    queue: Res<CursorIconQueue>,
-    mut windows: Query<(&Window, Option<&mut CursorIcon>)>,
+    mut queue: ResMut<CursorIconQueue>,
+    mut windows: Query<Option<&mut CursorIcon>, With<Window>>,
     mut commands: Commands,
 ) {
     if !queue.is_changed() { return; }
-    for (_, data) in &queue.pointers {
-        if let Ok((_window, window_cursor_option)) = windows.get_mut(data.window) {
+    for (_, data) in &mut queue.pointers {
 
-            let mut top_priority = 0;
-            let mut top_request = SystemCursorIcon::Default;
+        let mut top_priority = 0;
+        let mut top_request = SystemCursorIcon::Default;
 
-            // Look for highest priority to use
-            for (_, (icon, priority)) in &data.queue {
-                if *priority > top_priority {
-                    top_priority = *priority;
-                    top_request = *icon;
-                }
+        // Look for highest priority to use
+        for (_, (icon, priority)) in &data.queue {
+            if *priority > top_priority {
+                top_priority = *priority;
+                top_request = *icon;
             }
+        }
 
-            // Apply the cursor icon somehow
-            if let Some(mut window_cursor) = window_cursor_option {
-                #[allow(clippy::single_match)]
-                match window_cursor.as_mut() {
-                    CursorIcon::System(ref mut previous) => {
-                        if *previous != top_request {
-                            *previous = top_request;
-                        }
-                    },
-                    _ => {},
+        data.top_priority = top_priority;
+        data.top_request = top_request;
+
+        if let Some(window) = data.window {
+            if let Ok(window_cursor_option) = windows.get_mut(window) {
+
+                // Apply the cursor icon somehow
+                if let Some(mut window_cursor) = window_cursor_option {
+                    #[allow(clippy::single_match)]
+                    match window_cursor.as_mut() {
+                        CursorIcon::System(ref mut previous) => {
+                            if *previous != data.top_request {
+                                *previous = data.top_request;
+                            }
+                        },
+                        _ => {},
+                    }
+
+                } else {
+                    commands.entity(window).insert(CursorIcon::System(data.top_request));
                 }
-
-            } else {
-                commands.entity(data.window).insert(CursorIcon::System(top_request));
             }
         }
     }
@@ -85,8 +93,10 @@ fn system_cursor_icon_queue_purge(
     for (pointer, data) in &mut queue.pointers {
 
         // Remove invalid pointers
-        if windows.get_mut(data.window).is_err() {
-            to_remove.push(*pointer);
+        if let Some(window) = data.window {
+            if windows.get_mut(window).is_err() {
+                to_remove.push(*pointer);
+            }
         }
 
         // Remove despawned entities
@@ -128,10 +138,10 @@ impl OnHoverSetCursor {
     }
 }
 
-fn observer_cursor_request_cursor_icon(mut trigger: Trigger<Pointer<Over>>, mut pointers: Query<(&PointerId, &PointerLocation)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
+fn observer_cursor_request_cursor_icon(mut trigger: Trigger<Pointer<Over>>, mut pointers: Query<(&PointerId, &PointerLocation, Has<GamepadCursor>)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
     // Find the pointer location that triggered this observer
     let id = trigger.pointer_id;
-    for (pointer, location) in pointers.iter_mut().filter(|(p_id, _)| id == **p_id) {
+    for (pointer, location, is_gamepad) in pointers.iter_mut().filter(|(p_id, _, _)| id == **p_id) {
 
         // Check if the pointer is attached to a window
         if let Some(location) = &location.location {
@@ -140,7 +150,7 @@ fn observer_cursor_request_cursor_icon(mut trigger: Trigger<Pointer<Over>>, mut 
                 // Request a cursor change
                 if let Ok(requestee) = query.get(trigger.target) {
                     trigger.propagate(false);
-                    queue.request_cursor(*pointer, window.entity(), trigger.target, requestee.cursor, 1);
+                    queue.request_cursor(*pointer, if is_gamepad { None } else { Some(window.entity()) }, trigger.target, requestee.cursor, 1);
                 }
             }
         }
@@ -268,23 +278,13 @@ fn system_cursor_hide_native(
 
 /// This system will hide the native cursor.
 fn system_cursor_software_change_icon(
-    windows: Query<&CursorIcon, With<Window>>,
-    mut query: Query<(&PointerLocation, &SoftwareCursor, &mut Sprite), With<SoftwareCursor>>
+    icons: Res<CursorIconQueue>,
+    mut query: Query<(&PointerId, &SoftwareCursor, &mut Sprite)>
 ) {
-    for (pointer_location, software_cursor, mut sprite) in &mut query {
-        if let Some(location) = &pointer_location.location {
-            if let NormalizedRenderTarget::Window(window) = location.target {
-                if let Ok(cursor_icon) = windows.get(window.entity()) {
-                    if let Some(atlas) = &mut sprite.texture_atlas {
-                        #[allow(clippy::single_match)]
-                        match *cursor_icon {
-                            CursorIcon::System(icon) => {
-                                atlas.index = software_cursor.cursor_atlas_map.get(&icon).unwrap_or(&(0, Vec2::ZERO)).0;
-                            },
-                            _ => {},
-                        }  
-                    }                  
-                }
+    for (pointer_id, software_cursor, mut sprite) in &mut query {
+        if let Some(atlas) = &mut sprite.texture_atlas {
+            if let Some(icon_data) = icons.pointers.get(pointer_id) {
+                atlas.index = software_cursor.cursor_atlas_map.get(&icon_data.top_request).unwrap_or(&(0, Vec2::ZERO)).0;
             }
         }
     }
@@ -467,7 +467,7 @@ fn system_cursor_mouse_send_pick_events(
 
 /// This system will send out gamepad pick events
 fn system_cursor_gamepad_send_pick_events(
-    pointers: Query<&PointerLocation, (With<SoftwareCursor>, Without<GamepadCursor>)>,
+    pointers: Query<&PointerLocation, (With<SoftwareCursor>, With<GamepadCursor>)>,
     mut mouse_inputs: EventReader<GamepadButtonChangedEvent>,
     mut pointer_output: EventWriter<PointerInput>,
 ) {

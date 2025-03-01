@@ -1,0 +1,17 @@
+#====================#
+#=== EXAMPLE INFO ===#
+
+[package]
+  name = "text3d"
+  authors.workspace = true
+  version.workspace = true
+  edition.workspace = true
+  publish = false
+
+#===============================#
+#=== DEPENDENCIES & FEATURES ===#
+
+[dependencies]
+  bevy = { version = "^0.15", default-features = true }
+  bevy_lunex = { workspace = true }
+  bevy_rich_text3d = { git = "https://github.com/mintlu8/bevy_rich_text3d" }
