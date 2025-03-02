@@ -80,7 +80,7 @@ pub trait ImageTextureConstructor {
     fn clear_render_texture() -> Image {
         use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
         use bevy::asset::RenderAssetUsages;
-        
+
         let mut image = Image::new_fill(
             Extent3d {
                 width: 512,
@@ -185,7 +185,7 @@ pub fn system_mark_3d(
                     }
                 }
 
-                
+
                 // Push children to the stack
                 if let Some(node_children) = node_children_option {
                     for &child in node_children.iter().rev() {
@@ -253,7 +253,7 @@ pub fn system_debug_print_data(
         let mut output_string = format!("▶ {}", format!("{root_name}").bold().underline().magenta());
 
         output_string += " ⇒ ";
-        output_string += &format!("[w: {}, h: {}]", format!("{:.00}", root_dimension.x).green(), format!("{:.00}", root_dimension.y).green());
+        output_string += &format!("[w: {}, h: {}]", format!("{:.02}", root_dimension.x).green(), format!("{:.02}", root_dimension.y).green());
 
         output_string += "\n";
 
@@ -294,8 +294,8 @@ pub fn system_debug_print_data(
                 output_string += " ⇒ ";
 
                 output_string += &format!("[w: {}, h: {}, d: {}]",
-                    format!("{:.00}", node_dimension.x).green(),
-                    format!("{:.00}", node_dimension.y).green(),
+                    format!("{:.02}", node_dimension.x).green(),
+                    format!("{:.02}", node_dimension.y).green(),
                     format!("{:.00}", node_transform.translation.z).green(),
                 );
 
@@ -333,7 +333,7 @@ pub fn system_debug_print_data(
                 }
 
                 output_string += "\n";
-    
+
                 if let Some(node_children) = node_children_option {
                     let child_count = node_children.len();
                     for (i, &child) in node_children.iter().enumerate().rev() {
@@ -385,7 +385,7 @@ pub fn system_debug_print_data(
 #[require(Visibility, SpriteSource, Transform, Dimension, UiState, UiDepth)]
 pub struct UiLayout {
     /// Stored layout per state
-    layouts: HashMap<TypeId, UiLayoutType>
+    pub layouts: HashMap<TypeId, UiLayoutType>
 }
 /// Constructors
 impl UiLayout {
@@ -508,7 +508,7 @@ pub fn system_layout_compute(
                 if total_weight == 0.0 {
                     node_rectangle.pos += computed_rectangles[0].1.pos;
                     node_rectangle.size += computed_rectangles[0].1.size;
-                
+
                 // Combine the active states into one rectangle
                 } else {
                     for (state, rectangle) in computed_rectangles {
@@ -580,7 +580,7 @@ pub fn system_layout_compute(
 ///               (UiHover::id(), Color::Srgba(YELLOW).with_alpha(1.2))
 ///           ]),
 ///           // ... Sprite, Text, etc.
-///       
+///
 ///       // Add observers that enable/disable the hover state component
 ///       )).observe(hover_set::<Pointer<Over>, true>)
 ///         .observe(hover_set::<Pointer<Out>, false>);
@@ -929,7 +929,7 @@ pub fn system_color(
                 if let Some(weight) = node_state.states.get(state) {
                     let converted: Hsla = (*color).into();
 
-                    if blend_color.alpha == 0.0 { 
+                    if blend_color.alpha == 0.0 {
                         blend_color.hue = converted.hue;
                     } else {
                         blend_color.hue = lerp_hue(blend_color.hue, converted.hue, weight / total_weight);
@@ -1049,7 +1049,7 @@ impl Plugin for UiLunexPlugin {
 pub struct UiLunexDebugPlugin<const GIZMO_2D_LAYER: usize = 0, const GIZMO_3D_LAYER: usize = 0>;
 impl <const GIZMO_2D_LAYER: usize, const GIZMO_3D_LAYER: usize> Plugin for UiLunexDebugPlugin<GIZMO_2D_LAYER, GIZMO_3D_LAYER> {
     fn build(&self, app: &mut App) {
-        
+
         // Configure the Gizmo render groups
         app .init_gizmo_group::<LunexGizmoGroup2d>()
             .init_gizmo_group::<LunexGizmoGroup3d>()
@@ -1060,7 +1060,7 @@ impl <const GIZMO_2D_LAYER: usize, const GIZMO_3D_LAYER: usize> Plugin for UiLun
                 let (my_config, _) = config_store.config_mut::<LunexGizmoGroup3d>();
                 my_config.render_layers = RenderLayers::layer(GIZMO_3D_LAYER);
             });
-        
+
         // Add the 2d and 3d gizmo outlines
         app.add_systems(PostUpdate, (
             system_debug_draw_gizmo_2d,

@@ -10,15 +10,12 @@ fn main() {
         .add_plugins((DefaultPlugins, UiLunexPlugin, UiLunexDebugPlugin::<0, 0>))
         .add_systems(Startup, setup)
 
+        // Add plugin implementing 3rd-party hooks for Lunex
+        .add_plugins(UiLunexText3dPlugin)
+
         // This is required for the showcase, not necessary UI
         .add_plugins(MeshPickingPlugin)
         .add_systems(Update, (ShowcaseCamera::rotate, ShowcaseCamera::zoom))
-
-        .add_plugins(Text3dPlugin {
-            load_system_fonts: true,
-            load_font_directories: vec!["assets/fonts".to_owned()],
-            ..Default::default()
-        })
 
         .run();
 }
@@ -26,7 +23,6 @@ fn main() {
 fn setup(
     mut commands: Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
 ) {
     // Spawn camera
     commands.spawn((
@@ -50,30 +46,16 @@ fn setup(
             Transform::from_translation(Vec3::Z * (0.3 * x as f32)),
         )).with_children(|ui| {
 
-            /* // Spawn the panel
-            ui.spawn((
-                Name::new("Panel"),
-                // Set the layout of this mesh
-                UiLayout::window().full().pack(),
-                // Provide a material to this mesh
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color_texture: Some(asset_server.load("panel.png")),
-                    alpha_mode: AlphaMode::Blend,
-                    unlit: true,
-                    ..default()
-                })),
-                // This component will tell Lunex to reconstruct this mesh as plane on demand
-                UiMeshPlane3d,
-                // On hover change the cursor to this
-                OnHoverSetCursor::new(SystemCursorIcon::Pointer),
-            )); */
-
             // Spawn the panel
             ui.spawn((
                 Name::new("Panel"),
                 // Set the layout of this mesh
-                UiLayout::window().full().pack(),
-                Text3d::new("Hello, World!"),
+                UiLayout::window().pos(Rl(50.0)).anchor(Anchor::Center).pack(),
+                // This controls the height of the text, so 10% of the parent's node height
+                UiTextSize::from(Rh(10.0)),
+                // Set the text value
+                Text3d::new("Hello UI!"),
+                // Style the 3D text
                 Text3dStyling {
                     size: 64.0,
                     color: Srgba::new(1., 1., 1., 1.),
@@ -83,11 +65,13 @@ fn setup(
                 // Provide a material to this mesh
                 MeshMaterial3d(materials.add(
                     StandardMaterial {
-                        base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
+                        base_color_texture: Some(TextAtlas::DEFAULT_IMAGE),
                         alpha_mode: AlphaMode::Blend,
+                        unlit: true,
                         ..Default::default()
                     }
                 )),
+                // Requires an empty mesh
                 Mesh3d::default(),
                 // On hover change the cursor to this
                 OnHoverSetCursor::new(SystemCursorIcon::Pointer),
@@ -95,24 +79,80 @@ fn setup(
         });
 
     }
+}
 
-/*     commands.spawn((
-        
-        Text3d::new("Hello, World!"),
-        Text3dStyling {
-            size: 64.0,
-            color: Srgba::new(1., 1., 1., 1.),
-            align: TextAlign::Center,
+
+/// The 3D Text plugin is not officially implemented in Lunex yet.
+/// So we need to add support to in manually.
+///
+/// This showcases how to hook 3rd-party libraries to Lunex calculation process.
+pub struct UiLunexText3dPlugin;
+impl Plugin for UiLunexText3dPlugin {
+    fn build(&self, app: &mut App) {
+
+        // Register the 3rd party plugin
+        app.add_plugins(Text3dPlugin {
+            load_system_fonts: true,
+            load_font_directories: vec!["assets/fonts".to_owned()],
             ..Default::default()
-        },
-        // Mesh2d also works
-        Mesh3d::default(),
-        MeshMaterial3d(materials.add(
-            StandardMaterial {
-                base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
-                alpha_mode: AlphaMode::Blend,
-                ..Default::default()
-            }
-        ))
-    )); */
+        });
+
+        // Add system converting text size to layout
+        app.add_systems(PostUpdate,
+            system_text_3d_size_to_layout
+                .after(bevy_rich_text3d::Text3dSet)
+                .in_set(UiSystems::PreCompute)
+        );
+
+        // Add system scaling the transform based on dimension after calculation
+        app.add_systems(PostUpdate,
+            system_text_3d_size_from_dimension
+                .in_set(UiSystems::PostCompute)
+        );
+    }
+}
+
+/// This system takes updated [`Text3dDimensionOut`] data and overwrites coresponding [`UiLayout`] data to match the text size.
+pub fn system_text_3d_size_to_layout(
+    mut commands: Commands,
+    mut query: Query<(&mut UiLayout, &Text3dDimensionOut, &UiTextSize), Changed<Text3dDimensionOut>>,
+) {
+    for (mut layout, text_info, text_size) in &mut query {
+        // Wait for text to render
+        if text_info.dimension.y == 0.0 {
+            commands.trigger(RecomputeUiLayout);
+            continue;
+        }
+
+        // Create the text layout
+        match layout.layouts.get_mut(&UiBase::id()).expect("UiBase state not found for Text") {
+            UiLayoutType::Window(window) => {
+                window.set_height(**text_size);
+                window.set_width(**text_size * (text_info.dimension.x / text_info.dimension.y));
+            },
+            UiLayoutType::Solid(solid) => {
+                solid.set_size(Ab(text_info.dimension));
+            },
+            _ => {},
+        }
+    }
+}
+
+/// This system takes [`Text3dDimensionOut`] data and pipes them into querried [`Transform`] scale.
+pub fn system_text_3d_size_from_dimension(
+    mut commands: Commands,
+    mut query: Query<(&mut Transform, &Dimension, &Text3dDimensionOut), Changed<Dimension>>,
+) {
+    for (mut transform, dimension, text_info) in &mut query {
+        // Wait for text to render
+        if text_info.dimension.y == 0.0 {
+            commands.trigger(RecomputeUiLayout);
+            continue;
+        }
+
+        // Scale the text
+        let scale = dimension.x / text_info.dimension.x;
+        transform.scale.x = scale;
+        transform.scale.y = scale;
+    }
 }
