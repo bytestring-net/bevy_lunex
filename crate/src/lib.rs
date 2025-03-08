@@ -815,7 +815,7 @@ pub fn system_fetch_dimension_from_camera<const INDEX: usize>(
     };
 
     // Pipe the camera viewport size
-    if let Some(cam_size) = camera.physical_viewport_size() {
+    if let Some(cam_size) = camera.logical_viewport_size() {
         for mut size in &mut dst_query {
             **size = Vec2::from((cam_size.x as f32, cam_size.y as f32)) * if let Some(p) = projection_option { p.scale } else { 1.0 };
         }
