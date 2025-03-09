@@ -1,4 +1,6 @@
-use bevy::{prelude::*, window::SystemCursorIcon};
+use std::sync::Arc;
+
+use bevy::{prelude::*, text::cosmic_text::Weight, window::SystemCursorIcon};
 use bevy_lunex::*;
 use bevy_rich_text3d::*;
 
@@ -54,12 +56,14 @@ fn setup(
                 // This controls the height of the text, so 10% of the parent's node height
                 UiTextSize::from(Rh(10.0)),
                 // Set the text value
-                Text3d::new("Hello UI!"),
+                Text3d::new("Hello 3D UI!"),
                 // Style the 3D text
                 Text3dStyling {
                     size: 64.0,
                     color: Srgba::new(1., 1., 1., 1.),
                     align: TextAlign::Center,
+                    font: Arc::from("Rajdhani"),
+                    weight: Weight::BOLD,
                     ..Default::default()
                 },
                 // Provide a material to this mesh
