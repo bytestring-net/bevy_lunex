@@ -6,10 +6,10 @@ use boilerplate::*;
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, UiLunexPlugin, UiLunexDebugPlugin::<0, 0>))
+        .add_plugins((DefaultPlugins, UiLunexPlugins, UiLunexDebugPlugin::<0, 0>))
         .add_systems(Startup, setup)
 
-        // This is required for the showcase, not necessary UI
+        // This is required for the showcase, not necessary for UI
         .add_plugins(MeshPickingPlugin)
         .add_systems(Update, (ShowcaseCamera::rotate, ShowcaseCamera::zoom))
 

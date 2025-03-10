@@ -19,10 +19,16 @@
 
   # GAME ENGINE
   bevy = { workspace = true }
-
-  # AUDIO
-  # bevy_kira_audio = { workspace = true }
+  bevy_rich_text3d = { workspace = true, optional = true }
 
   # RUST MISCELLANEOUS
   radsort = { workspace = true }
   colored = { workspace = true }
+
+[features]
+
+  default = [
+    "text3d"
+  ]
+
+  text3d = ["dep:bevy_rich_text3d"]

@@ -31,7 +31,7 @@ pub fn default_linear_curve() -> fn(f32) -> f32 { |v| {v} }
 /// # use bevy_lunex::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
-/// #     UiLayoutRoot,
+/// #     UiLayoutRoot::new_2d(),
 /// # )).with_children(|ui| {
 ///       ui.spawn((
 ///           // ... Layout, Color, etc.
