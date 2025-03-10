@@ -18,13 +18,13 @@ Alternatively, you can use the latest bleeding edge version from the Git reposit
 
 ## Project Setup
 
-You have to add the `UiLunexPlugin` to your application.
+You have to add the `UiLunexPlugins` to your application.
 
 ```rust, noplayground
 fn main() -> AppExit {
     App::new()
         // Add necessary plugins
-        .add_plugins((DefaultPlugins, UiLunexPlugin))
+        .add_plugins((DefaultPlugins, UiLunexPlugins))
         .run()
 }
 ```

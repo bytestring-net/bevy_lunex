@@ -8,7 +8,7 @@
 
 [workspace.package]
   authors    = ["IDEDARY"]
-  version    = "0.3.1"
+  version    = "0.3.2"
   edition    = "2021"
   license    = "MIT OR Apache-2.0"
   repository = "https://github.com/bytestring-net/bevy-lunex"
@@ -64,8 +64,7 @@
   #===============================#
   #=== GAME ENGINE EXTENSIONS === #
 
-  # AUDIO
-  # bevy_kira_audio  = { version = "^0.22.0" }
+  bevy_rich_text3d  = { version = "^0.2" }
 
   #===========================#
   #=== RUST MISCELLANEOUS === #

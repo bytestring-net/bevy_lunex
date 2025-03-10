@@ -3,6 +3,7 @@
 
 // Crate import only
 pub(crate) use std::any::TypeId;
+use bevy::app::PluginGroupBuilder;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::sprite::SpriteSource;
 pub(crate) use bevy::text::TextLayoutInfo;
@@ -12,6 +13,10 @@ pub(crate) use colored::Colorize;
 
 // Re-export
 pub use bevy::sprite::Anchor;
+#[cfg(feature = "text3d")]
+pub use bevy_rich_text3d::*;
+#[cfg(feature = "text3d")]
+pub use bevy::text::cosmic_text::Weight;
 
 mod cursor;
 pub use cursor::*;
@@ -135,7 +140,7 @@ impl CameraTextureRenderConstructor for Camera {
 /// # use bevy_lunex::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 ///     commands.spawn((
-///         UiLayoutRoot,
+///         UiLayoutRoot::new_2d(),
 ///         UiFetchFromCamera::<0>, // Pipe the size from Camera
 ///     )).with_children(|ui| {
 ///         // ... spawn your Ui Here
@@ -369,7 +374,7 @@ pub fn system_debug_print_data(
 /// # use bevy_lunex::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
-/// #     UiLayoutRoot,
+/// #     UiLayoutRoot::new_2d(),
 /// # )).with_children(|ui| {
 ///       // Must be spawned as a child
 ///       ui.spawn((
@@ -564,7 +569,7 @@ pub fn system_layout_compute(
 /// # use bevy_lunex::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
-/// #     UiLayoutRoot,
+/// #     UiLayoutRoot::new_2d(),
 /// # )).with_children(|ui| {
 ///       ui.spawn((
 ///           // Like this you can enable a state
@@ -680,7 +685,7 @@ impl UiStateTrait for UiBase {
 /// # use bevy_lunex::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
-/// #     UiLayoutRoot,
+/// #     UiLayoutRoot::new_2d(),
 /// # )).with_children(|ui| {
 ///       ui.spawn((
 ///           // Position the text using the window layout's position and anchor
@@ -748,6 +753,55 @@ pub fn system_text_size_to_layout(
             },
             _ => {},
         }
+    }
+}
+
+// # TEXT 3D
+
+/// This system takes updated [`Text3dDimensionOut`] data and overwrites coresponding [`UiLayout`] data to match the text size.
+#[cfg(feature = "text3d")]
+pub fn system_text_3d_size_to_layout(
+    mut commands: Commands,
+    mut query: Query<(&mut UiLayout, &Text3dDimensionOut, &UiTextSize), Changed<Text3dDimensionOut>>,
+) {
+    for (mut layout, text_info, text_size) in &mut query {
+        // Wait for text to render
+        if text_info.dimension.y == 0.0 {
+            commands.trigger(RecomputeUiLayout);
+            continue;
+        }
+
+        // Create the text layout
+        match layout.layouts.get_mut(&UiBase::id()).expect("UiBase state not found for Text") {
+            UiLayoutType::Window(window) => {
+                window.set_height(**text_size);
+                window.set_width(**text_size * (text_info.dimension.x / text_info.dimension.y));
+            },
+            UiLayoutType::Solid(solid) => {
+                solid.set_size(Ab(text_info.dimension));
+            },
+            _ => {},
+        }
+    }
+}
+
+/// This system takes [`Text3dDimensionOut`] data and pipes them into querried [`Transform`] scale.
+#[cfg(feature = "text3d")]
+pub fn system_text_3d_size_from_dimension(
+    mut commands: Commands,
+    mut query: Query<(&mut Transform, &Dimension, &Text3dDimensionOut), Changed<Dimension>>,
+) {
+    for (mut transform, dimension, text_info) in &mut query {
+        // Wait for text to render
+        if text_info.dimension.y == 0.0 {
+            commands.trigger(RecomputeUiLayout);
+            continue;
+        }
+
+        // Scale the text
+        let scale = dimension.x / text_info.dimension.x;
+        transform.scale.x = scale;
+        transform.scale.y = scale;
     }
 }
 
@@ -853,7 +907,7 @@ pub fn system_touch_camera_if_fetch_added<const INDEX: usize>(
 /// # use bevy_lunex::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
-/// #     UiLayoutRoot,
+/// #     UiLayoutRoot::new_2d(),
 /// # )).with_children(|ui| {
 ///       // Spawn as a single color
 ///       ui.spawn((
@@ -961,7 +1015,7 @@ fn lerp_hue(h1: f32, h2: f32, t: f32) -> f32 {
 // #===============================#
 // #=== THE LUNEX SETS & GROUPS ===#
 
-/// System set for [`UiLunexPlugin`]
+/// System set for [`UiLunexPlugins`]
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum UiSystems {
     /// Systems that modify data pre-computation
@@ -1007,6 +1061,13 @@ impl Plugin for UiLunexPlugin {
 
         ).in_set(UiSystems::PreCompute));
 
+        #[cfg(feature = "text3d")]
+        app.add_systems(PostUpdate,
+            system_text_3d_size_to_layout
+                .after(bevy_rich_text3d::Text3dSet)
+                .in_set(UiSystems::PreCompute)
+        );
+
 
         // COMPUTE SYSTEMS
         app.add_systems(PostUpdate, (
@@ -1028,6 +1089,12 @@ impl Plugin for UiLunexPlugin {
             system_embedd_resize,
 
         ).in_set(UiSystems::PostCompute));
+
+        #[cfg(feature = "text3d")]
+        app.add_systems(PostUpdate,
+            system_text_3d_size_from_dimension
+                .in_set(UiSystems::PostCompute)
+        );
 
 
         // Add index plugins
@@ -1084,5 +1151,28 @@ impl <const INDEX: usize> Plugin for UiLunexIndexPlugin<INDEX> {
             system_fetch_dimension_from_camera::<INDEX>,
             system_touch_camera_if_fetch_added::<INDEX>,
         ).in_set(UiSystems::PreCompute));
+    }
+}
+
+
+/// Plugin group adding all necessary plugins for Lunex
+pub struct UiLunexPlugins;
+impl PluginGroup for UiLunexPlugins {
+    fn build(self) -> PluginGroupBuilder {
+        let mut builder = PluginGroupBuilder::start::<Self>();
+
+        // Add text 3d plugin
+        #[cfg(feature = "text3d")] {
+            builder = builder.add(Text3dPlugin {
+                load_system_fonts: true,
+                ..Default::default()
+            });
+        }
+
+        // Add Lunex plugin
+        builder = builder.add(UiLunexPlugin);
+
+        // Return the plugin group
+        builder
     }
 }
