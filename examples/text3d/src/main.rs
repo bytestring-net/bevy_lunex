@@ -1,14 +1,23 @@
 use std::sync::Arc;
 
 use bevy::{prelude::*, window::SystemCursorIcon};
-use bevy_lunex::*;
+use bevy_lunex::prelude::*;
 
 mod boilerplate;
 use boilerplate::*;
 
 fn main() -> AppExit {
     App::new()
-        .add_plugins((DefaultPlugins, UiLunexPlugins, UiLunexDebugPlugin::<0, 0>))
+        .add_plugins((
+            DefaultPlugins,
+            UiLunexPlugins.set(Text3dPlugin {
+                // If we use custom fonts we need to load them here.
+                load_font_directories: vec!["assets/fonts".to_owned()],
+                load_system_fonts: true,
+                ..default()
+            }),
+            UiLunexDebugPlugin::<0, 0>,
+        ))
         .add_systems(Startup, setup)
 
         // This is required for the showcase, not necessary for UI

@@ -15,17 +15,18 @@
 # Chapters
 
 - [Base Units](chapters/base-units.md)
-- [Interactivity]()(chapters/interactivity.md)
+- [Interactivity](chapters/interactivity.md)
 - [State Machine]()(chapters/state-machine.md)
 - [Cursor Icons]()(chapters/cursor-icons.md)
 
 - [2D Usage]()(chapters/2d/README.md)
     - [Layouts](chapters/2d/layouts.md)
-    - [Text]()(chapters/2d/text.md)
+    - [Text](chapters/2d/text.md)
 
 - [3D Usage]()(chapters/3d/README.md)
     - [Layouts]()(chapters/3d/layouts.md)
     - [Meshes]()(chapters/3d/meshes.md)
+    - [Text](chapters/3d/text.md)
 
 - [Embedding]()(chapters/embedding/README.md)
     - [Camera]()(chapters/embedding/camera.md)

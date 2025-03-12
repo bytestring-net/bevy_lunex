@@ -1,6 +1,19 @@
 use crate::*;
 use bevy::{input::{gamepad::GamepadButtonChangedEvent, mouse::MouseButtonInput, ButtonState}, picking::{pointer::{Location, PointerAction, PointerId, PointerInput, PointerLocation, PressDirection}, PickSet}, render::camera::{NormalizedRenderTarget, RenderTarget}, utils::HashMap, window::{PrimaryWindow, SystemCursorIcon, WindowRef}, winit::cursor::CursorIcon};
 
+// Exported prelude
+pub mod prelude {
+    // All standard exports
+    pub use super::{
+        SoftwareCursor,
+        GamepadCursor,
+        GamepadCursorMode,
+        OnHoverSetCursor,
+    };
+
+    // Export stuff from other crates
+    pub use bevy::window::SystemCursorIcon;
+}
 
 // #=========================#
 // #=== CURSOR ICON QUEUE ===#

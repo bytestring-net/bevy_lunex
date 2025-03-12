@@ -1,5 +1,13 @@
 use crate::*;
 
+// Exported prelude
+pub mod prelude {
+    // All standard exports
+    pub use super::{
+        Align,
+        Scaling,
+    };
+}
 
 // #============================#
 // #=== MULTIPURPOSE STRUCTS ===#
