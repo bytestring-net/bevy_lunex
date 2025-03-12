@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use bevy::{prelude::*, window::SystemCursorIcon};
-use bevy_lunex::*;
+use bevy_lunex::prelude::*;
 
 mod boilerplate;
 use boilerplate::*;

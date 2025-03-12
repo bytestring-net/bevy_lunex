@@ -1,35 +1,71 @@
 #![doc = include_str!("../README.md")]
 #![allow(clippy::type_complexity)]
 
-// Crate import only
+// Imports for this crate
 pub(crate) use std::any::TypeId;
-use bevy::app::PluginGroupBuilder;
 pub(crate) use bevy::prelude::*;
-pub(crate) use bevy::sprite::SpriteSource;
+pub(crate) use bevy::app::PluginGroupBuilder;
+pub(crate) use bevy::sprite::{SpriteSource, Anchor};
 pub(crate) use bevy::text::TextLayoutInfo;
 pub(crate) use bevy::utils::HashMap;
 pub(crate) use bevy::render::view::RenderLayers;
 pub(crate) use colored::Colorize;
-
-// Re-export
-pub use bevy::sprite::Anchor;
 #[cfg(feature = "text3d")]
-pub use bevy_rich_text3d::*;
-#[cfg(feature = "text3d")]
-pub use bevy::text::cosmic_text::Weight;
+pub(crate) use bevy_rich_text3d::*;
 
+// Imports from this crate
+pub mod prelude {
+    // Default plugins and system sets
+    pub use crate::{UiLunexPlugins, UiSystems};
+    // Debug plugins
+    pub use crate::UiLunexDebugPlugin;
+
+    // All standard components
+    pub use crate::{
+        Dimension,
+
+        UiFetchFromCamera,
+        UiSourceCamera,
+
+        UiEmbedding,
+        UiMeshPlane2d,
+        UiMeshPlane3d,
+
+        UiRoot3d,
+
+        UiLayoutRoot,
+        UiLayout,
+        UiDepth,
+        UiColor,
+
+        UiTextSize,
+
+        UiBase,
+    };
+
+    // Import other file preludes
+    pub use crate::cursor::prelude::*;
+    pub use crate::layouts::prelude::*;
+    pub use crate::states::prelude::*;
+    pub use crate::units::*;
+
+    // Export stuff from other crates
+    pub use bevy::sprite::Anchor;
+    #[cfg(feature = "text3d")]
+    pub use bevy_rich_text3d::*;
+    #[cfg(feature = "text3d")]
+    pub use bevy::text::cosmic_text::Weight;
+}
+
+// Link files
 mod cursor;
 pub use cursor::*;
-
 mod layouts;
 pub use layouts::*;
-
 mod picking;
 pub use picking::*;
-
 mod states;
 pub use states::*;
-
 mod units;
 pub use units::*;
 
@@ -60,7 +96,8 @@ pub fn system_pipe_sprite_size_from_dimension(
 // #=========================#
 // #=== TEXTURE EMBEDDING ===#
 
-/// **Ui Embedding** - Use this component to mark entities that their texture handles are embeddings instead of regular assets.
+/// **Ui Embedding** - Use this component to mark entities whose texture handles are embeddings instead of regular assets.
+/// This means Lunex will resize the actual texture source when [`Dimension`] has changed.
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiEmbedding;
 
@@ -162,7 +199,8 @@ impl UiLayoutRoot {
 }
 
 
-/// Marker component for all entities that you can use to check if it is used for 3D UI.
+/// **Ui Root 3d** - This is a marker component for all entities which fall under a 3D UI. You can check through this component
+/// if a specific node is 2D or 3D without looking for its root.
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiRoot3d;
 
@@ -365,9 +403,6 @@ pub fn system_debug_print_data(
 /// - [`Transform`] - The computed position of the Ui-Node _(Read-only)_
 /// - [`Dimension`] - The computed size of the Ui-Node _(Read-only)_
 ///
-/// Indirectly affected components:
-/// - [`Sprite`] - `custom_size` to match [`Dimension`]
-///
 /// ## 🛠️ Example
 /// ```
 /// # use bevy::prelude::*;
@@ -463,9 +498,14 @@ impl From<UiLayoutTypeSolid> for UiLayout {
     }
 }
 
+/// **Ui Depth** - This component overrides the default Z axis (depth) stacking order.
+/// This is useful when fixing Z order flickering. Another use can be offseting an background
+/// image for example.
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub enum UiDepth {
+    /// Add to existing depth
     Add(f32),
+    /// Override existing depth
     Set(f32),
 }
 impl Default for UiDepth {
@@ -1006,6 +1046,7 @@ pub fn system_color(
         }
     }
 }
+
 fn lerp_hue(h1: f32, h2: f32, t: f32) -> f32 {
     let diff = (h2 - h1 + 540.0) % 360.0 - 180.0; // Ensure shortest direction
     (h1 + diff * t + 360.0) % 360.0

@@ -1,6 +1,13 @@
 use crate::*;
 
-pub fn default_linear_curve() -> fn(f32) -> f32 { |v| {v} }
+// Exported prelude
+pub mod prelude {
+    // All standard exports
+    pub use super::{
+        UiHover,
+        hover_set,
+    };
+}
 
 // #=======================#
 // #=== THE HOVER STATE ===#
@@ -198,6 +205,9 @@ impl UiStateTrait for UiOutro {
 
 // #========================#
 // #=== THE STATE PLUGIN ===#
+
+/// Default linear curve used for reflection defaults
+pub fn default_linear_curve() -> fn(f32) -> f32 { |v| {v} }
 
 /// This observer will listen for said event and duplicate it to it's children
 fn observer_event_duplicator<E: Event + Copy>(trigger: Trigger<E>, mut commands: Commands, mut query: Query<&Children>) {
