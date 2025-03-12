@@ -6,7 +6,7 @@ use bevy_lunex::*;
 mod boilerplate;
 use boilerplate::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, UiLunexPlugins, UiLunexDebugPlugin::<0, 0>))
         .add_systems(Startup, setup)
@@ -15,7 +15,7 @@ fn main() {
         .add_plugins(MeshPickingPlugin)
         .add_systems(Update, (ShowcaseCamera::rotate, ShowcaseCamera::zoom))
 
-        .run();
+        .run()
 }
 
 fn setup(
