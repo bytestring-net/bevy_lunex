@@ -1,4 +1,4 @@
-# Layouts
+# Layouts 2D
 
 There are multiple layouts that you can utilize to achieve the structure you are aiming for.
 
