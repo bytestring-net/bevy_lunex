@@ -16,7 +16,7 @@ pub mod prelude {
 /// This state first **needs to be enabled** for the entity by adding it as a component.
 /// 
 /// Then you can use the [`Self::id`] function to identify this state inside components
-/// that allow you to specify per state properties like [`Uilayout`].
+/// that allow you to specify per state properties like [`UiLayout`].
 /// 
 /// For more information check the documentation on [`UiState`].
 /// 
