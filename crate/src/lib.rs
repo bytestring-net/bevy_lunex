@@ -999,13 +999,18 @@ impl <T: Into<Color>> From<T> for UiColor {
 /// This system takes care of [`UiColor`] data and updates querried [`Sprite`] and [`TextColor`] components.
 /// and updates [`ColorMaterial`] and [`StandardMaterial`]
 pub fn system_color(
-    mut query: Query<(Entity, Option<&mut Sprite>, Option<&mut TextColor>, &UiColor, &UiState), Or<(Changed<UiColor>, Changed<UiState>)>>,
-    mat2d_ids: Query<&MeshMaterial2d<ColorMaterial>>,
-    mat3d_ids: Query<&MeshMaterial3d<StandardMaterial>>,
+    mut query: Query<(
+        Option<&mut Sprite>,
+        Option<&mut TextColor>,
+        Option<&MeshMaterial2d<ColorMaterial>>,
+        Option<&MeshMaterial3d<StandardMaterial>>,
+        &UiColor,
+        &UiState,
+    ), Or<(Changed<UiColor>, Changed<UiState>)>>,
     mut materials2d: ResMut<Assets<ColorMaterial>>,
     mut materials3d: ResMut<Assets<StandardMaterial>>,
 ) {
-    for (e, node_sprite_option, node_text_option, node_color, node_state) in &mut query {
+    for (node_sprite_option, node_text_option, mat2d, mat3d, node_color, node_state) in &mut query {
 
         // Normalize the active state weights
         let mut total_weight = 0.0;
@@ -1051,11 +1056,11 @@ pub fn system_color(
         if let Some(mut text) = node_text_option {
             **text = blend_color.into();
         }
-        if let Ok(id) = mat2d_ids.get(e) {
+        if let Some(id) = mat2d {
             if let Some(mat) = materials2d.get_mut(id) {
                 mat.color = blend_color.into();
             }
-        } else if let Ok(id) = mat3d_ids.get(e) {
+        } else if let Some(id) = mat3d {
             if let Some(mat) = materials3d.get_mut(id) {
                 mat.base_color = blend_color.into();
             }
