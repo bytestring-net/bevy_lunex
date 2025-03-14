@@ -264,7 +264,7 @@ pub fn system_debug_draw_gizmo_2d(
     for (transform, dimension) in &query {
         // Draw the gizmo outline
         gizmos.rect(
-            Isometry3d::from(transform.translation()),
+            Isometry3d::new(transform.translation(), transform.rotation()),
             **dimension,
             Color::linear_rgb(0.0, 1.0, 0.0),
         );
@@ -279,7 +279,7 @@ pub fn system_debug_draw_gizmo_3d(
     for (transform, dimension) in &query {
         // Draw the gizmo outline
         gizmos.rect(
-            Isometry3d::from(transform.translation()),
+            Isometry3d::new(transform.translation(), transform.rotation()),
             **dimension,
             Color::linear_rgb(0.0, 1.0, 0.0),
         );
