@@ -38,6 +38,7 @@ pub mod prelude {
         UiDepth,
         UiColor,
 
+        UiImageSize,
         UiTextSize,
 
         UiBase,
