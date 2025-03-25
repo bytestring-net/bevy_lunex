@@ -99,6 +99,14 @@ pub struct Vh<T>(pub T);
 /// Implement basic math and conversions for a type
 macro_rules! init_unit {
     ($($unit:ident), *) => {
+        
+        /* #[derive(Debug, Clone, Copy, PartialEq, Reflect)]
+        pub enum UiValueType {
+            $(
+                $unit,
+            )*
+        } */
+
         $(
             // Implement negation of the same type
             impl <T: Neg<Output = T>> Neg for $unit<T> {

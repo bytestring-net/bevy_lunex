@@ -57,7 +57,7 @@ ui.spawn((
 ```
 
 > [!WARNING]
-> `Text3d` component can ONLY be rendered with `Camera3d`. 3D text is a separate matter.
+> `Text3d` component can ONLY be rendered with `Camera3d`. 2D text is a separate matter.
 
 > [!NOTE]
 > `bevy_rich_text3d` works a bit differently than `bevy_text`. When styling a text, you don't provide a font handle.

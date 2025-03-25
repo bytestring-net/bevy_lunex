@@ -39,6 +39,7 @@ pub mod prelude {
         UiDepth,
         UiColor,
 
+        UiImageSize,
         UiTextSize,
 
         UiBase,
@@ -81,15 +82,6 @@ pub struct Dimension(pub Vec2);
 impl <T: Into<Vec2>> From<T> for Dimension {
     fn from(value: T) -> Self {
         Dimension(value.into())
-    }
-}
-
-/// This system takes [`Dimension`] data and pipes them into querried [`Sprite`].
-pub fn system_pipe_sprite_size_from_dimension(
-    mut query: Query<(&mut Sprite, &Dimension), Changed<Dimension>>,
-) {
-    for (mut sprite, dimension) in &mut query {
-        sprite.custom_size = Some(**dimension)
     }
 }
 
@@ -499,6 +491,10 @@ impl From<UiLayoutTypeSolid> for UiLayout {
     }
 }
 
+pub fn system_recompute_on_change <C: Component>(query: Query<Entity, Changed<C>>, mut commands: Commands){
+    if !query.is_empty() { commands.trigger(RecomputeUiLayout); }
+}
+
 /// **Ui Depth** - This component overrides the default Z axis (depth) stacking order.
 /// This is useful when fixing Z order flickering. Another use can be offseting an background
 /// image for example.
@@ -704,6 +700,54 @@ pub struct UiBase;
 impl UiStateTrait for UiBase {
     fn value(&self) -> f32 {
         1.0
+    }
+}
+
+
+// #=====================#
+// #=== IMAGE CONTROL ===#
+
+/// **Ui Image Size** - This component makes image size the authority instead.
+#[derive(Component, Reflect, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
+pub struct UiImageSize (pub UiValue<Vec2>);
+/// Constructors
+impl <T: Into<UiValue<Vec2>>> From<T> for UiImageSize {
+    fn from(value: T) -> Self {
+        UiImageSize(value.into())
+    }
+}
+
+/// This system takes [`Dimension`] data and pipes them into querried [`Sprite`].
+pub fn system_pipe_sprite_size_from_dimension(
+    mut query: Query<(&mut Sprite, &Dimension), Changed<Dimension>>,
+) {
+    for (mut sprite, dimension) in &mut query {
+        sprite.custom_size = Some(**dimension)
+    }
+}
+
+/// This system takes updated [`Handle<Image>`] data and overwrites coresponding [`UiLayout`] data to match the text size.
+pub fn system_image_size_to_layout(
+    images: Res<Assets<Image>>,
+    mut query: Query<(&mut UiLayout, &Sprite, &UiImageSize)>,
+) {
+    for (mut layout, sprite, image_size) in &mut query {
+        if let Some(image) = images.get(&sprite.image) {
+            let x = image_size.get_x() * image.width() as f32;
+            let y = image_size.get_y() * image.height() as f32;
+
+            if match layout.layouts.get(&UiBase::id()).unwrap() {
+                UiLayoutType::Window(window) => window.size.get_x() != x || window.size.get_y() != y,
+                UiLayoutType::Solid(solid) => solid.size.get_x() != x || solid.size.get_y() != y,
+                _ => false,
+            } {
+                match layout.layouts.get_mut(&UiBase::id()).unwrap() {
+                    UiLayoutType::Window(window) => { window.set_width(x); window.set_height(y); },
+                    UiLayoutType::Solid(solid) => { solid.set_width(x); solid.set_height(y); },
+                    _ => {},
+                }
+            }
+        }
     }
 }
 
@@ -1131,8 +1175,10 @@ impl Plugin for UiLunexPlugin {
 
             system_state_base_balancer,
             system_text_size_to_layout.after(bevy::text::update_text2d_layout),
+            system_image_size_to_layout,
+            system_recompute_on_change::<UiLayout>,
 
-        ).in_set(UiSystems::PreCompute));
+        ).chain().in_set(UiSystems::PreCompute));
 
         #[cfg(feature = "text3d")]
         app.add_systems(PostUpdate,
