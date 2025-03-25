@@ -490,6 +490,10 @@ impl From<UiLayoutTypeSolid> for UiLayout {
     }
 }
 
+pub fn system_recompute_on_change <C: Component>(query: Query<Entity, Changed<C>>, mut commands: Commands){
+    if !query.is_empty() { commands.trigger(RecomputeUiLayout); }
+}
+
 /// **Ui Depth** - This component overrides the default Z axis (depth) stacking order.
 /// This is useful when fixing Z order flickering. Another use can be offseting an background
 /// image for example.
@@ -714,7 +718,7 @@ impl <T: Into<UiValue<Vec2>>> From<T> for UiImageSize {
 
 /// This system takes [`Dimension`] data and pipes them into querried [`Sprite`].
 pub fn system_pipe_sprite_size_from_dimension(
-    mut query: Query<(&mut Sprite, &Dimension), (Changed<Dimension>, Without<UiImageSize>)>,
+    mut query: Query<(&mut Sprite, &Dimension), Changed<Dimension>>,
 ) {
     for (mut sprite, dimension) in &mut query {
         sprite.custom_size = Some(**dimension)
@@ -1140,8 +1144,9 @@ impl Plugin for UiLunexPlugin {
             system_state_base_balancer,
             system_text_size_to_layout.after(bevy::text::update_text2d_layout),
             system_image_size_to_layout,
+            system_recompute_on_change::<UiLayout>,
 
-        ).in_set(UiSystems::PreCompute));
+        ).chain().in_set(UiSystems::PreCompute));
 
         #[cfg(feature = "text3d")]
         app.add_systems(PostUpdate,
