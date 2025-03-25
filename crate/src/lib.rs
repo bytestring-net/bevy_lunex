@@ -12,6 +12,7 @@ pub(crate) use bevy::render::view::RenderLayers;
 pub(crate) use colored::Colorize;
 #[cfg(feature = "text3d")]
 pub(crate) use bevy_rich_text3d::*;
+pub(crate) use bevy::render::{primitives::Aabb, mesh::MeshAabb};
 
 // Imports from this crate
 pub mod prelude {
@@ -861,23 +862,33 @@ pub struct UiMeshPlane2d;
 
 /// This system takes [`Dimension`] data and constructs a plane mesh.
 pub fn system_mesh_3d_reconstruct_from_dimension(
-    mut query: Query<(&Dimension, &mut Mesh3d), (With<UiMeshPlane3d>, Changed<Dimension>)>,
+    mut query: Query<(&Dimension, &mut Mesh3d, Option<&mut Aabb>), (With<UiMeshPlane3d>, Changed<Dimension>)>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
-    for (dimension, mut mesh) in &mut query {
-        let plane_mesh = meshes.add(Rectangle::new(dimension.x, dimension.y));
-        mesh.0 = plane_mesh;
+    for (dimension, mut mesh, aabb_option) in &mut query {
+        let plane_mesh = Mesh::from(Rectangle::new(dimension.x, dimension.y));
+        if let Some(a) = plane_mesh.compute_aabb() {
+            if let Some(mut aabb) = aabb_option {
+                *aabb = a;
+            }
+        }
+        mesh.0 = meshes.add(plane_mesh);
     }
 }
 
 /// This system takes [`Dimension`] data and constructs a plane mesh.
 pub fn system_mesh_2d_reconstruct_from_dimension(
-    mut query: Query<(&Dimension, &mut Mesh2d), (With<UiMeshPlane2d>, Changed<Dimension>)>,
+    mut query: Query<(&Dimension, &mut Mesh2d, Option<&mut Aabb>), (With<UiMeshPlane2d>, Changed<Dimension>)>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
-    for (dimension, mut mesh) in &mut query {
-        let plane_mesh = meshes.add(Rectangle::new(dimension.x, dimension.y));
-        mesh.0 = plane_mesh;
+    for (dimension, mut mesh, aabb_option) in &mut query {
+        let plane_mesh = Mesh::from(Rectangle::new(dimension.x, dimension.y));
+        if let Some(a) = plane_mesh.compute_aabb() {
+            if let Some(mut aabb) = aabb_option {
+                *aabb = a;
+            }
+        }
+        mesh.0 = meshes.add(plane_mesh);
     }
 }
 
