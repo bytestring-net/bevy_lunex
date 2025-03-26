@@ -2,7 +2,6 @@
 #![allow(clippy::type_complexity)]
 
 // Imports for this crate
-pub(crate) use std::any::TypeId;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::app::PluginGroupBuilder;
 pub(crate) use bevy::sprite::{SpriteSource, Anchor};
@@ -41,14 +40,12 @@ pub mod prelude {
 
         UiImageSize,
         UiTextSize,
-
-        UiBase,
     };
 
     // Import other file preludes
     pub use crate::cursor::prelude::*;
     pub use crate::layouts::prelude::*;
-    pub use crate::states::prelude::*;
+    //pub use crate::states::prelude::*;
     pub use crate::units::*;
 
     // Export stuff from other crates
@@ -66,8 +63,6 @@ mod layouts;
 pub use layouts::*;
 mod picking;
 pub use picking::*;
-mod states;
-pub use states::*;
 mod units;
 pub use units::*;
 
@@ -335,7 +330,7 @@ pub fn system_debug_print_data(
                     format!("{:.00}", node_transform.translation.z).green(),
                 );
 
-                match node_layout.layouts.get(&UiBase::id()).unwrap() {
+                match node_layout.layouts.get(&0).unwrap() {
                     UiLayoutType::Boundary(boundary) => {
                         output_string += &format!(" ➜ {} {} p1: {}, p2: {} {}",
                             "Boundary".bold(),
@@ -418,7 +413,7 @@ pub fn system_debug_print_data(
 #[require(Visibility, SpriteSource, Transform, Dimension, UiState, UiDepth)]
 pub struct UiLayout {
     /// Stored layout per state
-    pub layouts: HashMap<TypeId, UiLayoutType>
+    pub layouts: HashMap<usize, UiLayoutType>
 }
 /// Constructors
 impl UiLayout {
@@ -454,7 +449,7 @@ impl UiLayout {
         UiLayoutTypeSolid::new()
     }
     /// Create multiple layouts for a different states at once.
-    pub fn new(value: Vec<(TypeId, impl Into<UiLayoutType>)>) -> Self {
+    pub fn new(value: Vec<(usize, impl Into<UiLayoutType>)>) -> Self {
         let mut map = HashMap::new();
         for (state, layout) in value {
             map.insert(state, layout.into());
@@ -466,7 +461,7 @@ impl UiLayout {
 impl From<UiLayoutType> for UiLayout {
     fn from(value: UiLayoutType) -> Self {
         let mut map = HashMap::new();
-        map.insert(UiBase::id(), value);
+        map.insert(0, value);
         Self {
             layouts: map,
         }
@@ -538,7 +533,7 @@ pub fn system_layout_compute(
                 // Normalize the active state weights
                 let mut total_weight = 0.0;
                 for (state, _) in &node_layout.layouts {
-                    if let Some(weight) = node_state.states.get(state) {
+                    if let Some(weight) = node_state.get(state) {
                         total_weight += weight;
                     }
                 }
@@ -554,7 +549,7 @@ pub fn system_layout_compute(
                 // Combine the active states into one rectangle
                 } else {
                     for (state, rectangle) in computed_rectangles {
-                        if let Some(weight) = node_state.states.get(state) {
+                        if let Some(weight) = node_state.get(state) {
                             node_rectangle.pos += rectangle.pos * (weight / total_weight);
                             node_rectangle.size += rectangle.size * (weight / total_weight);
                         }
@@ -629,80 +624,123 @@ pub fn system_layout_compute(
 /// # });
 /// # }
 /// ```
-#[derive(Component, Reflect, Clone, PartialEq, Debug)]
-pub struct UiState {
-    /// Stored transition per state
-    states: HashMap<TypeId, f32>,
+#[derive(Component, Reflect, Clone, PartialEq, Debug, Deref, DerefMut)]
+pub struct UiState(pub HashMap<usize, f32>);
+
+impl UiState {
+    pub fn new(value: Vec<(usize, f32)>) -> Self {
+        let mut map = HashMap::new();
+        for (state, f) in value {
+            map.insert(state, f);
+        }
+        UiState(map)
+    }
 }
+
 /// Default constructor
 impl Default for UiState {
     fn default() -> Self {
         let mut map = HashMap::new();
-        map.insert(UiBase::id(), 1.0);
-        Self {
-            states: map,
-        }
+        map.insert(0, 1.0);
+        UiState(map)
     }
 }
 
 /// This system controls the [`UiBase`] state. This state is decreased based on total sum of all other active states.
 pub fn system_state_base_balancer(
     mut query: Query<&mut UiState, Changed<UiState>>,
+    mut commands: Commands,
 ) {
-    for mut manager in &mut query {
+    let mut should_recompute = false;
+
+    for mut states in &mut query {
         // Normalize the active nobase state weights
         let mut total_nonbase_weight = 0.0;
-        for (state, value) in &manager.states {
-            if *state == UiBase::id() { continue; }
+        for (state, value) in states.iter() {
+            if *state == 0 { continue; }
             total_nonbase_weight += value;
         }
 
         // Decrease base transition based on other states
-        if let Some(value) = manager.states.get_mut(&UiBase::id()) {
+        if let Some(value) = states.get_mut(&0) {
             *value = (1.0 - total_nonbase_weight).clamp(0.0, 1.0);
         }
+
+        should_recompute = true;
+    }
+
+    if should_recompute {
+        commands.trigger(RecomputeUiLayout);
     }
 }
-/// This system pipes the attached state component data to the [`UiState`] component.
-pub fn system_state_pipe_into_manager<S: UiStateTrait + Component>(
-    mut commads: Commands,
-    mut query: Query<(&mut UiState, &S), Changed<S>>,
-) {
-    for (mut manager, state) in &mut query {
-        // Send the value to the manager
-        if let Some(value) = manager.states.get_mut(&S::id()) {
-            *value = state.value();
 
-        // Insert the value if it does not exist
-        } else {
-            manager.states.insert(S::id(), state.value());
+#[derive(Component, Clone, Default, Deref, DerefMut)]
+pub struct UiStateAnimation(pub HashMap<usize, Anim>);
+
+impl UiStateAnimation {
+    pub fn new(value: Vec<(usize, Anim)>) -> Self {
+        let mut map = HashMap::new();
+        for (state, anim) in value {
+            map.insert(state, anim);
         }
-        // Recompute layout
-        commads.trigger(RecomputeUiLayout);
+        UiStateAnimation(map)
     }
 }
 
-/// Trait that all states must implement before being integrated into the state machine.
-pub trait UiStateTrait: Send + Sync + 'static {
-    /// This is used as a key to identify a Ui-Node state.
-    fn id() -> TypeId {
-        TypeId::of::<Self>()
-    }
-    /// This must return a value between `0.0 - 1.0`. It is used as transition value
-    /// for a state, with `0.0` being off and `1.0` being on. Any smoothing should happen
-    /// inside this function.
-    fn value(&self) -> f32;
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum Movement {
+    Glide(f32, f32), //(target, duration)
+    GlideCurved(f32, f32, fn(f32) -> f32),
+    Hold(f32), //duration
 }
 
-/// **Ui Base** - The default state for a Ui-Node, used only for the [`UiBase::id`] key. It is not a component that you can control.
-#[derive(Clone, PartialEq, Debug)]
-pub struct UiBase;
-impl UiStateTrait for UiBase {
-    fn value(&self) -> f32 {
-        1.0
+/// value that can be animated
+#[derive(Default, Clone, Debug, PartialEq)]
+pub struct Anim {
+    pub movement: Vec<Movement>,
+    // might add looping field?
+}
+
+impl Anim {
+    pub fn fade_in(duration: f32) -> Self {
+        Self {
+            movement: vec![Movement::Glide(1., duration)],
+        }
+    }
+    pub fn fade_out(duration: f32) -> Self {
+        Self {
+            movement: vec![Movement::Glide(0., duration)],
+        }
     }
 }
 
+pub fn system_animate_transition(
+    mut query: Query<(&mut UiState, &mut UiStateAnimation)>,
+    time: Res<Time<Virtual>>,
+) {
+    for (mut states, mut animations) in &mut query {
+        for (state, anim) in animations.iter_mut() {
+            if let Some(movement) = anim.movement.first() {
+                match movement {
+                    Movement::Glide(target, duration) => {
+                        // TODO(amy): maybe insert when they don't exist
+                        if let Some(weight) = states.get_mut(state) {
+                            // assuming target is in 0..=1
+                            if *weight == *target {
+                                anim.movement.remove(0);
+                            } else if *weight > *target {
+                                *weight = (*weight - time.delta_secs() / duration).max(0.);
+                            } else {
+                                *weight = (*weight + time.delta_secs() / duration).min(1.);
+                            }
+                        }
+                    }
+                    _ => todo!(),
+                }
+            }
+        }
+    }
+}
 
 // #=====================#
 // #=== IMAGE CONTROL ===#
@@ -736,12 +774,12 @@ pub fn system_image_size_to_layout(
             let x = image_size.get_x() * image.width() as f32;
             let y = image_size.get_y() * image.height() as f32;
 
-            if match layout.layouts.get(&UiBase::id()).unwrap() {
+            if match layout.layouts.get(&0).unwrap() {
                 UiLayoutType::Window(window) => window.size.get_x() != x || window.size.get_y() != y,
                 UiLayoutType::Solid(solid) => solid.size.get_x() != x || solid.size.get_y() != y,
                 _ => false,
             } {
-                match layout.layouts.get_mut(&UiBase::id()).unwrap() {
+                match layout.layouts.get_mut(&0).unwrap() {
                     UiLayoutType::Window(window) => { window.set_width(x); window.set_height(y); },
                     UiLayoutType::Solid(solid) => { solid.set_width(x); solid.set_height(y); },
                     _ => {},
@@ -828,7 +866,7 @@ pub fn system_text_size_to_layout(
         }
 
         // Create the text layout
-        match layout.layouts.get_mut(&UiBase::id()).expect("UiBase state not found for Text") {
+        match layout.layouts.get_mut(&0).expect("UiBase state not found for Text") {
             UiLayoutType::Window(window) => {
                 window.set_height(**text_size);
                 window.set_width(**text_size * (text_info.size.x / text_info.size.y));
@@ -857,7 +895,7 @@ pub fn system_text_3d_size_to_layout(
         }
 
         // Create the text layout
-        match layout.layouts.get_mut(&UiBase::id()).expect("UiBase state not found for Text") {
+        match layout.layouts.get_mut(&0).expect("UiBase state not found for Text") {
             UiLayoutType::Window(window) => {
                 window.set_height(**text_size);
                 window.set_width(**text_size * (text_info.dimension.x / text_info.dimension.y));
@@ -1027,12 +1065,12 @@ pub fn system_touch_camera_if_fetch_added<const INDEX: usize>(
 /// ```
 #[derive(Component, Reflect, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
 pub struct UiColor {
-    colors: HashMap<TypeId, Color>
+    colors: HashMap<usize, Color>
 }
 /// Constructors
 impl UiColor {
     /// Define multiple states at once using a vec.
-    pub fn new(value: Vec<(TypeId, impl Into<Color>)>) -> Self {
+    pub fn new(value: Vec<(usize, impl Into<Color>)>) -> Self {
         let mut map = HashMap::new();
         for (state, layout) in value {
             map.insert(state, layout.into());
@@ -1044,7 +1082,7 @@ impl UiColor {
 impl <T: Into<Color>> From<T> for UiColor {
     fn from(value: T) -> Self {
         let mut map = HashMap::new();
-        map.insert(UiBase::id(), value.into());
+        map.insert(0, value.into());
         Self {
             colors: map,
         }
@@ -1070,7 +1108,7 @@ pub fn system_color(
         // Normalize the active state weights
         let mut total_weight = 0.0;
         for (state, _) in &node_color.colors {
-            if let Some(weight) = node_state.states.get(state) {
+            if let Some(weight) = node_state.get(state) {
                 total_weight += weight;
             }
         }
@@ -1080,14 +1118,14 @@ pub fn system_color(
 
         // If no state active just try to use base color
         if total_weight == 0.0 {
-            if let Some(color) = node_color.colors.get(&UiBase::id()) {
+            if let Some(color) = node_color.colors.get(&0) {
                 blend_color = (*color).into();
             }
 
         // Blend colors from active states
         } else {
             for (state, color) in &node_color.colors {
-                if let Some(weight) = node_state.states.get(state) {
+                if let Some(weight) = node_state.get(state) {
                     let converted: Hsla = (*color).into();
 
                     if blend_color.alpha == 0.0 {
@@ -1173,6 +1211,7 @@ impl Plugin for UiLunexPlugin {
         // PRE-COMPUTE SYSTEMS
         app.add_systems(PostUpdate, (
 
+            system_animate_transition,
             system_state_base_balancer,
             system_text_size_to_layout.after(bevy::text::update_text2d_layout),
             system_image_size_to_layout,
@@ -1219,7 +1258,6 @@ impl Plugin for UiLunexPlugin {
         // Add index plugins
         app.add_plugins((
             CursorPlugin,
-            UiLunexStatePlugin,
             UiLunexPickingPlugin,
             UiLunexIndexPlugin::<0>,
             UiLunexIndexPlugin::<1>,
