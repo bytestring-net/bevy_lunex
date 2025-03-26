@@ -681,47 +681,51 @@ impl UiStateAnimation {
     }
 }
 
+/// a segment or a stage within an animation
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub enum Movement {
-    Glide(f32, f32), //(target, duration)
+pub enum Seg {
+    /// (target, duration)
+    Glide(f32, f32),
+    /// (target, duration, curve function)
     GlideCurved(f32, f32, fn(f32) -> f32),
-    Hold(f32), //duration
+    /// hold for a duration
+    Hold(f32),
 }
 
-/// value that can be animated
+/// an animation
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct Anim {
     value: f32,
-    pub movement: Vec<Movement>,
+    pub segs: Vec<Seg>,
     // might add looping field?
 }
 
 impl Anim {
-    pub fn movements(movement: Vec<Movement>) -> Self {
-        Self { movement, ..default() }
+    pub fn segs(segs: Vec<Seg>) -> Self {
+        Self { segs, ..default() }
     }
     pub fn fade_in(duration: f32) -> Self {
         Self {
             value: 0.0,
-            movement: vec![Movement::Glide(1., duration)],
+            segs: vec![Seg::Glide(1., duration)],
         }
     }
     pub fn fade_out(duration: f32) -> Self {
         Self {
             value: 1.0,
-            movement: vec![Movement::Glide(0., duration)],
+            segs: vec![Seg::Glide(0., duration)],
         }
     }
     pub fn fade_in_curved(duration: f32, f: fn(f32) -> f32) -> Self {
         Self {
             value: 0.0,
-            movement: vec![Movement::GlideCurved(1., duration, f)],
+            segs: vec![Seg::GlideCurved(1., duration, f)],
         }
     }
     pub fn fade_out_curved(duration: f32, f: fn(f32) -> f32) -> Self {
         Self {
             value: 1.0,
-            movement: vec![Movement::GlideCurved(0., duration, f)],
+            segs: vec![Seg::GlideCurved(0., duration, f)],
         }
     }
 }
@@ -732,22 +736,22 @@ pub fn system_animate_transition(
 ) {
     for (mut manager, mut animations) in &mut query {
         for (state, anim) in animations.iter_mut() {
-            if let Some(movement) = anim.movement.first_mut() {
+            if let Some(seg) = anim.segs.first_mut() {
                 if let Some(weight) = manager.states.get_mut(state) {
-                    match movement {
-                        Movement::Glide(target, duration) => {
+                    match seg {
+                        Seg::Glide(target, duration) => {
                             // assuming target is in 0..=1
                             if *weight == *target {
-                                anim.movement.remove(0);
+                                anim.segs.remove(0);
                             } else if *weight > *target {
                                 *weight = (*weight - time.delta_secs() / *duration).max(0.);
                             } else {
                                 *weight = (*weight + time.delta_secs() / *duration).min(1.);
                             }
                         }
-                        Movement::GlideCurved(target, duration, f) => {
+                        Seg::GlideCurved(target, duration, f) => {
                             if anim.value == *target {
-                                anim.movement.remove(0);
+                                anim.segs.remove(0);
                             } else if anim.value > *target {
                                 anim.value = (anim.value - time.delta_secs() / *duration).max(0.);
                                 *weight = f(anim.value);
@@ -756,9 +760,9 @@ pub fn system_animate_transition(
                                 *weight = f(anim.value);
                             }
                         }
-                        Movement::Hold(duration) => {
+                        Seg::Hold(duration) => {
                             if *duration <= 0.0 {
-                                anim.movement.remove(0);
+                                anim.segs.remove(0);
                             } else {
                                 *duration = *duration - time.delta_secs();
                             }
