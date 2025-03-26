@@ -691,19 +691,37 @@ pub enum Movement {
 /// value that can be animated
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct Anim {
+    value: f32,
     pub movement: Vec<Movement>,
     // might add looping field?
 }
 
 impl Anim {
+    pub fn movements(movement: Vec<Movement>) -> Self {
+        Self { movement, ..default() }
+    }
     pub fn fade_in(duration: f32) -> Self {
         Self {
+            value: 0.0,
             movement: vec![Movement::Glide(1., duration)],
         }
     }
     pub fn fade_out(duration: f32) -> Self {
         Self {
+            value: 1.0,
             movement: vec![Movement::Glide(0., duration)],
+        }
+    }
+    pub fn fade_in_curved(duration: f32, f: fn(f32) -> f32) -> Self {
+        Self {
+            value: 0.0,
+            movement: vec![Movement::GlideCurved(1., duration, f)],
+        }
+    }
+    pub fn fade_out_curved(duration: f32, f: fn(f32) -> f32) -> Self {
+        Self {
+            value: 1.0,
+            movement: vec![Movement::GlideCurved(0., duration, f)],
         }
     }
 }
@@ -715,9 +733,9 @@ pub fn system_animate_transition(
     for (mut states, mut animations) in &mut query {
         for (state, anim) in animations.iter_mut() {
             if let Some(movement) = anim.movement.first() {
-                match movement {
-                    Movement::Glide(target, duration) => {
-                        if let Some(weight) = states.states.get_mut(state) {
+                if let Some(weight) = states.states.get_mut(state) {
+                    match movement {
+                        Movement::Glide(target, duration) => {
                             // assuming target is in 0..=1
                             if *weight == *target {
                                 anim.movement.remove(0);
@@ -726,11 +744,22 @@ pub fn system_animate_transition(
                             } else {
                                 *weight = (*weight + time.delta_secs() / duration).min(1.);
                             }
-                        } else {
-                            states.states.insert(*state, 0.);
                         }
+                        Movement::GlideCurved(target, duration, f) => {
+                            if anim.value == *target {
+                                anim.movement.remove(0);
+                            } else if anim.value > *target {
+                                anim.value = (anim.value - time.delta_secs() / duration).max(0.);
+                                *weight = f(anim.value);
+                            } else {
+                                anim.value = (anim.value + time.delta_secs() / duration).min(1.);
+                                *weight = f(anim.value);
+                            }
+                        }
+                        _ => todo!(),
                     }
-                    _ => todo!(),
+                } else {
+                    states.states.insert(*state, 0.);
                 }
             }
         }
