@@ -45,7 +45,6 @@ pub mod prelude {
     // Import other file preludes
     pub use crate::cursor::prelude::*;
     pub use crate::layouts::prelude::*;
-    //pub use crate::states::prelude::*;
     pub use crate::units::*;
 
     // Export stuff from other crates
@@ -533,7 +532,7 @@ pub fn system_layout_compute(
                 // Normalize the active state weights
                 let mut total_weight = 0.0;
                 for (state, _) in &node_layout.layouts {
-                    if let Some(weight) = node_state.get(state) {
+                    if let Some(weight) = node_state.states.get(state) {
                         total_weight += weight;
                     }
                 }
@@ -549,7 +548,7 @@ pub fn system_layout_compute(
                 // Combine the active states into one rectangle
                 } else {
                     for (state, rectangle) in computed_rectangles {
-                        if let Some(weight) = node_state.get(state) {
+                        if let Some(weight) = node_state.states.get(state) {
                             node_rectangle.pos += rectangle.pos * (weight / total_weight);
                             node_rectangle.size += rectangle.size * (weight / total_weight);
                         }
@@ -624,17 +623,10 @@ pub fn system_layout_compute(
 /// # });
 /// # }
 /// ```
-#[derive(Component, Reflect, Clone, PartialEq, Debug, Deref, DerefMut)]
-pub struct UiState(pub HashMap<usize, f32>);
-
-impl UiState {
-    pub fn new(value: Vec<(usize, f32)>) -> Self {
-        let mut map = HashMap::new();
-        for (state, f) in value {
-            map.insert(state, f);
-        }
-        UiState(map)
-    }
+#[derive(Component, Reflect, Clone, PartialEq, Debug)]
+pub struct UiState {
+    /// Stored transition per state
+    states: HashMap<usize, f32>,
 }
 
 /// Default constructor
@@ -642,7 +634,9 @@ impl Default for UiState {
     fn default() -> Self {
         let mut map = HashMap::new();
         map.insert(0, 1.0);
-        UiState(map)
+        Self {
+            states: map,
+        }
     }
 }
 
@@ -653,16 +647,16 @@ pub fn system_state_base_balancer(
 ) {
     let mut should_recompute = false;
 
-    for mut states in &mut query {
+    for mut manager in &mut query {
         // Normalize the active nobase state weights
         let mut total_nonbase_weight = 0.0;
-        for (state, value) in states.iter() {
+        for (state, value) in &manager.states {
             if *state == 0 { continue; }
             total_nonbase_weight += value;
         }
 
         // Decrease base transition based on other states
-        if let Some(value) = states.get_mut(&0) {
+        if let Some(value) = manager.states.get_mut(&0) {
             *value = (1.0 - total_nonbase_weight).clamp(0.0, 1.0);
         }
 
@@ -723,8 +717,7 @@ pub fn system_animate_transition(
             if let Some(movement) = anim.movement.first() {
                 match movement {
                     Movement::Glide(target, duration) => {
-                        // TODO(amy): maybe insert when they don't exist
-                        if let Some(weight) = states.get_mut(state) {
+                        if let Some(weight) = states.states.get_mut(state) {
                             // assuming target is in 0..=1
                             if *weight == *target {
                                 anim.movement.remove(0);
@@ -733,6 +726,8 @@ pub fn system_animate_transition(
                             } else {
                                 *weight = (*weight + time.delta_secs() / duration).min(1.);
                             }
+                        } else {
+                            states.states.insert(*state, 0.);
                         }
                     }
                     _ => todo!(),
@@ -1108,7 +1103,7 @@ pub fn system_color(
         // Normalize the active state weights
         let mut total_weight = 0.0;
         for (state, _) in &node_color.colors {
-            if let Some(weight) = node_state.get(state) {
+            if let Some(weight) = node_state.states.get(state) {
                 total_weight += weight;
             }
         }
@@ -1125,7 +1120,7 @@ pub fn system_color(
         // Blend colors from active states
         } else {
             for (state, color) in &node_color.colors {
-                if let Some(weight) = node_state.get(state) {
+                if let Some(weight) = node_state.states.get(state) {
                     let converted: Hsla = (*color).into();
 
                     if blend_color.alpha == 0.0 {
