@@ -730,36 +730,42 @@ pub fn system_animate_transition(
     mut query: Query<(&mut UiState, &mut UiStateAnimation)>,
     time: Res<Time<Virtual>>,
 ) {
-    for (mut states, mut animations) in &mut query {
+    for (mut manager, mut animations) in &mut query {
         for (state, anim) in animations.iter_mut() {
-            if let Some(movement) = anim.movement.first() {
-                if let Some(weight) = states.states.get_mut(state) {
+            if let Some(movement) = anim.movement.first_mut() {
+                if let Some(weight) = manager.states.get_mut(state) {
                     match movement {
                         Movement::Glide(target, duration) => {
                             // assuming target is in 0..=1
                             if *weight == *target {
                                 anim.movement.remove(0);
                             } else if *weight > *target {
-                                *weight = (*weight - time.delta_secs() / duration).max(0.);
+                                *weight = (*weight - time.delta_secs() / *duration).max(0.);
                             } else {
-                                *weight = (*weight + time.delta_secs() / duration).min(1.);
+                                *weight = (*weight + time.delta_secs() / *duration).min(1.);
                             }
                         }
                         Movement::GlideCurved(target, duration, f) => {
                             if anim.value == *target {
                                 anim.movement.remove(0);
                             } else if anim.value > *target {
-                                anim.value = (anim.value - time.delta_secs() / duration).max(0.);
+                                anim.value = (anim.value - time.delta_secs() / *duration).max(0.);
                                 *weight = f(anim.value);
                             } else {
-                                anim.value = (anim.value + time.delta_secs() / duration).min(1.);
+                                anim.value = (anim.value + time.delta_secs() / *duration).min(1.);
                                 *weight = f(anim.value);
                             }
                         }
-                        _ => todo!(),
+                        Movement::Hold(duration) => {
+                            if *duration <= 0.0 {
+                                anim.movement.remove(0);
+                            } else {
+                                *duration = *duration - time.delta_secs();
+                            }
+                        }
                     }
                 } else {
-                    states.states.insert(*state, 0.);
+                    manager.states.insert(*state, 0.);
                 }
             }
         }
