@@ -40,6 +40,10 @@ pub mod prelude {
 
         UiImageSize,
         UiTextSize,
+
+        UiStateAnimation,
+        Anim,
+        Seg,
     };
 
     // Import other file preludes
