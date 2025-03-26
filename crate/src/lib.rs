@@ -748,19 +748,19 @@ pub fn system_animate_transition(
                             if *weight == *target {
                                 anim.segs.remove(0);
                             } else if *weight > *target {
-                                *weight = (*weight - time.delta_secs() / *duration).max(0.);
+                                *weight = (*weight - time.delta_secs() / *duration).max(*target);
                             } else {
-                                *weight = (*weight + time.delta_secs() / *duration).min(1.);
+                                *weight = (*weight + time.delta_secs() / *duration).min(*target);
                             }
                         }
                         Seg::GlideCurved(target, duration, f) => {
                             if anim.value == *target {
                                 anim.segs.remove(0);
                             } else if anim.value > *target {
-                                anim.value = (anim.value - time.delta_secs() / *duration).max(0.);
+                                anim.value = (anim.value - time.delta_secs() / *duration).max(*target);
                                 *weight = f(anim.value);
                             } else {
-                                anim.value = (anim.value + time.delta_secs() / *duration).min(1.);
+                                anim.value = (anim.value + time.delta_secs() / *duration).min(*target);
                                 *weight = f(anim.value);
                             }
                         }
