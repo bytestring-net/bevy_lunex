@@ -741,10 +741,9 @@ pub fn system_animate_transition(
     for (mut manager, mut animations) in &mut query {
         for (state, anim) in animations.iter_mut() {
             if let Some(seg) = anim.segs.first_mut() {
-                if let Some(weight) = manager.states.get_mut(state) {
-                    match seg {
-                        Seg::Glide(target, duration) => {
-                            // assuming target is in 0..=1
+                match seg {
+                    Seg::Glide(target, duration) => {
+                        if let Some(weight) = manager.states.get_mut(state) {
                             if *weight == *target {
                                 anim.segs.remove(0);
                             } else if *weight > *target {
@@ -752,8 +751,12 @@ pub fn system_animate_transition(
                             } else {
                                 *weight = (*weight + time.delta_secs() / *duration).min(*target);
                             }
+                        } else {
+                            manager.states.insert(*state, 0.);
                         }
-                        Seg::GlideCurved(target, duration, f) => {
+                    }
+                    Seg::GlideCurved(target, duration, f) => {
+                        if let Some(weight) = manager.states.get_mut(state) {
                             if anim.value == *target {
                                 anim.segs.remove(0);
                             } else if anim.value > *target {
@@ -763,17 +766,17 @@ pub fn system_animate_transition(
                                 anim.value = (anim.value + time.delta_secs() / *duration).min(*target);
                                 *weight = f(anim.value);
                             }
-                        }
-                        Seg::Hold(duration) => {
-                            if *duration <= 0.0 {
-                                anim.segs.remove(0);
-                            } else {
-                                *duration = *duration - time.delta_secs();
-                            }
+                        } else {
+                            manager.states.insert(*state, 0.);
                         }
                     }
-                } else {
-                    manager.states.insert(*state, 0.);
+                    Seg::Hold(duration) => {
+                        if *duration <= 0.0 {
+                            anim.segs.remove(0);
+                        } else {
+                            *duration = *duration - time.delta_secs();
+                        }
+                    }
                 }
             }
         }
