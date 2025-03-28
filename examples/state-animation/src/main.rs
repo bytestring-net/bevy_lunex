@@ -31,18 +31,19 @@ fn setup(
         )).with_children(|ui| {
             ui.spawn((
                 Name::new("Mesh"),
-                // it can be used to add spawn time animations, but i'm thinking
-                // about making it required by something? but not sure
-                UiStateAnimation::default(),
+                // spawn time animation (in this case fading out of state 3)
+                UiStateAnimation::new(vec![(3, Anim::line(1., 0., 1.))]),
                 UiLayout::new(vec![
                     (0, UiLayout::window().pos(Rl(50.)).size(Rh(25.))),
                     (1, UiLayout::window().pos(Rl(50.)).size(Rh((80., 25.)))),
                     (2, UiLayout::window().pos(Rl(50.)).size(Rh((80., 10.)))),
+                    (3, UiLayout::window().pos(Rl(0.)).size(Rh(0.))),
                 ]),
                 UiColor::new(vec![
                     (0, Color::hsla(0., 0., 0., 0.5)),
                     (1, Color::hsla(200., 1., 0.5, 1.0)),
                     (2, Color::hsla(330., 1., 0.5, 1.0)),
+                    (3, Color::hsla(330., 1., 2.5, 1.0)),
                 ]),
                 UiMeshPlane2d,
                 MeshMaterial2d::<ColorMaterial>::default(),
@@ -57,7 +58,9 @@ fn over(
     mut query: Query<&mut UiStateAnimation>,
 ) {
     if let Ok(mut animations) = query.get_mut(trig.entity()) {
-        animations.insert(1, Anim::fade_in(0.3));
+        // insert an animation for state 1 (in this case a single linear segment going from 0 to 1
+        // in 0.3 secs)
+        animations.insert(1, Anim::line(0., 1., 0.3));
     }
 }
 
@@ -66,7 +69,9 @@ fn out(
     mut query: Query<&mut UiStateAnimation>,
 ) {
     if let Ok(mut animations) = query.get_mut(trig.entity()) {
-        animations.insert(1, Anim::fade_out_curved(0.8, uparc));
+        // continue continues from the current weight, so if you hover out while the state isn't
+        // fully active, you start fading out from the current point
+        animations.insert(1, Anim::continue_to(0., 0.8));
     }
 }
 
@@ -75,7 +80,17 @@ fn down(
     mut query: Query<&mut UiStateAnimation>,
 ) {
     if let Ok(mut animations) = query.get_mut(trig.entity()) {
-        animations.insert(2, Anim::fade_in_curved(0.8, downarc));
+        // you can insert multiple stage animations
+        animations.insert(
+            // doing this for state 2
+            2,
+            // (delay for 0.2 secs) then fade out (go to weight 0 in 0.5 sec)
+            Anim::segs(vec![Seg::Hold(0.2), Seg::To(0., 0.5)])
+                // starting with a weight of 1
+                .with_init(1.)
+                // make it a looping animation
+                .looping(true)
+        );
     }
 }
 
@@ -84,8 +99,14 @@ fn up(
     mut query: Query<&mut UiStateAnimation>,
 ) {
     if let Ok(mut animations) = query.get_mut(trig.entity()) {
-        // you can insert multiple stage animations
-        animations.insert(2, Anim::segs(vec![Seg::Hold(1.), Seg::Glide(0., 1.)]));
+        animations.insert(
+            2,
+            Anim::segs(vec![
+                Seg::Continue(0., 1.),
+                Seg::Curved(1., 0.3, downarc),
+                Seg::Curved(0., 0.3, uparc),
+            ]),
+        );
     }
 }
 

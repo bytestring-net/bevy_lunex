@@ -689,9 +689,12 @@ impl UiStateAnimation {
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Seg {
     /// (target, duration)
-    Glide(f32, f32),
+    To(f32, f32),
     /// (target, duration, curve function)
-    GlideCurved(f32, f32, fn(f32) -> f32),
+    Curved(f32, f32, fn(f32) -> f32),
+    /// same as To but starts from the current weight (rather than the value field)
+    /// can be useful for fading out of a state regardless of its current weight
+    Continue(f32, f32),
     /// hold for a duration
     Hold(f32),
 }
@@ -699,38 +702,56 @@ pub enum Seg {
 /// an animation
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct Anim {
-    value: f32,
-    pub segs: Vec<Seg>,
-    // might add looping field?
+    pub value: f32,
+    pub segments: Vec<Seg>,
+    pub looping: bool,
+    init: f32,
+    current_seg: usize,
+    // used for hold segments
+    elapsed_duration: f32,
 }
 
 impl Anim {
-    pub fn segs(segs: Vec<Seg>) -> Self {
-        Self { segs, ..default() }
+    /// make a new animation with initial point 0 and given `segments`
+    /// ```
+    /// Anim::segs(vec![Seg::Hold(1.0), Seg::To(1.0, 1.0)]);
+    /// ```
+    pub fn segs(segments: Vec<Seg>) -> Self {
+        Self { segments, ..default() }
     }
-    pub fn fade_in(duration: f32) -> Self {
+    /// a single linear segment animation that goes from `start` to `end` in `duration`
+    pub fn line(start: f32, end: f32, duration: f32) -> Self {
         Self {
-            value: 0.0,
-            segs: vec![Seg::Glide(1., duration)],
+            segments: vec![Seg::To(end, duration)],
+            init: start,
+            value: start,
+            ..default()
         }
     }
-    pub fn fade_out(duration: f32) -> Self {
+    /// a single curved segment animation from `start` to `end` in `duration` with `f` curve function
+    pub fn curve(start: f32, end: f32, duration: f32, f: fn(f32) -> f32) -> Self {
         Self {
-            value: 1.0,
-            segs: vec![Seg::Glide(0., duration)],
+            segments: vec![Seg::Curved(end, duration, f)],
+            init: start,
+            value: start,
+            ..default()
         }
     }
-    pub fn fade_in_curved(duration: f32, f: fn(f32) -> f32) -> Self {
-        Self {
-            value: 0.0,
-            segs: vec![Seg::GlideCurved(1., duration, f)],
-        }
+    /// an animation with a linear segment that moves the weight from its current value to the
+    /// `target` in `duration`
+    pub fn continue_to(target: f32, duration: f32) -> Self {
+        Self { segments: vec![Seg::Continue(target, duration)], ..default() }
     }
-    pub fn fade_out_curved(duration: f32, f: fn(f32) -> f32) -> Self {
-        Self {
-            value: 1.0,
-            segs: vec![Seg::GlideCurved(0., duration, f)],
-        }
+    /// return this animation with the given `looping` status
+    pub fn looping(mut self, looping: bool) -> Self {
+        self.looping = looping;
+        self
+    }
+    /// return this animation with the given `initial` value
+    pub fn with_init(mut self, initial: f32) -> Self {
+        self.init = initial;
+        self.value = initial;
+        self
     }
 }
 
@@ -740,29 +761,39 @@ pub fn system_animate_transition(
 ) {
     for (mut manager, mut animations) in &mut query {
         for (state, anim) in animations.iter_mut() {
-            if let Some(seg) = anim.segs.first_mut() {
+            if let Some(seg) = anim.segments.get(anim.current_seg) {
                 match seg {
-                    Seg::Glide(target, duration) => {
-                        if !manager.states.contains_key(state) {
-                            manager.states.insert(*state, 0.);
-                        }
-                        if let Some(weight) = manager.states.get_mut(state) {
-                            if *weight == *target {
-                                anim.segs.remove(0);
-                            } else if *weight > *target {
-                                *weight = (*weight - time.delta_secs() / *duration).max(*target);
-                            } else {
-                                *weight = (*weight + time.delta_secs() / *duration).min(*target);
-                            }
-                        }
-                    }
-                    Seg::GlideCurved(target, duration, f) => {
+                    Seg::To(target, duration) => {
                         if !manager.states.contains_key(state) {
                             manager.states.insert(*state, 0.);
                         }
                         if let Some(weight) = manager.states.get_mut(state) {
                             if anim.value == *target {
-                                anim.segs.remove(0);
+                                anim.current_seg += 1;
+                                if anim.looping && anim.current_seg == anim.segments.len() {
+                                    anim.current_seg = 0;
+                                    anim.value = anim.init;
+                                }
+                            } else if anim.value > *target {
+                                anim.value = (anim.value - time.delta_secs() / *duration).max(*target);
+                                *weight = anim.value;
+                            } else {
+                                anim.value = (anim.value + time.delta_secs() / *duration).min(*target);
+                                *weight = anim.value;
+                            }
+                        }
+                    }
+                    Seg::Curved(target, duration, f) => {
+                        if !manager.states.contains_key(state) {
+                            manager.states.insert(*state, 0.);
+                        }
+                        if let Some(weight) = manager.states.get_mut(state) {
+                            if anim.value == *target {
+                                anim.current_seg += 1;
+                                if anim.looping && anim.current_seg == anim.segments.len() {
+                                    anim.current_seg = 0;
+                                    anim.value = anim.init;
+                                }
                             } else if anim.value > *target {
                                 anim.value = (anim.value - time.delta_secs() / *duration).max(*target);
                                 *weight = f(anim.value);
@@ -772,11 +803,33 @@ pub fn system_animate_transition(
                             }
                         }
                     }
+                    Seg::Continue(target, duration) => {
+                        if !manager.states.contains_key(state) {
+                            manager.states.insert(*state, 0.);
+                        }
+                        if let Some(weight) = manager.states.get_mut(state) {
+                            if *weight == *target {
+                                anim.current_seg += 1;
+                                if anim.looping && anim.current_seg == anim.segments.len() {
+                                    anim.current_seg = 0;
+                                    anim.value = anim.init;
+                                }
+                            } else if *weight > *target {
+                                *weight = (*weight - time.delta_secs() / *duration).max(*target);
+                            } else {
+                                *weight = (*weight + time.delta_secs() / *duration).min(*target);
+                            }
+                        }
+                    }
                     Seg::Hold(duration) => {
-                        if *duration <= 0.0 {
-                            anim.segs.remove(0);
+                        if *duration <= anim.elapsed_duration {
+                            anim.elapsed_duration = 0.;
+                            anim.current_seg += 1;
+                            if anim.looping && anim.current_seg == anim.segments.len() {
+                                anim.current_seg = 0;
+                            }
                         } else {
-                            *duration -= time.delta_secs();
+                            anim.elapsed_duration += time.delta_secs();
                         }
                     }
                 }
