@@ -333,7 +333,7 @@ pub fn system_debug_print_data(
                     format!("{:.00}", node_transform.translation.z).green(),
                 );
 
-                match node_layout.layouts.get(&0).unwrap() {
+                match node_layout.layouts.get("base").unwrap() {
                     UiLayoutType::Boundary(boundary) => {
                         output_string += &format!(" ➜ {} {} p1: {}, p2: {} {}",
                             "Boundary".bold(),
@@ -416,7 +416,7 @@ pub fn system_debug_print_data(
 #[require(Visibility, SpriteSource, Transform, Dimension, UiState, UiDepth)]
 pub struct UiLayout {
     /// Stored layout per state
-    pub layouts: HashMap<usize, UiLayoutType>
+    pub layouts: HashMap<&'static str, UiLayoutType>
 }
 /// Constructors
 impl UiLayout {
@@ -452,7 +452,7 @@ impl UiLayout {
         UiLayoutTypeSolid::new()
     }
     /// Create multiple layouts for a different states at once.
-    pub fn new(value: Vec<(usize, impl Into<UiLayoutType>)>) -> Self {
+    pub fn new(value: Vec<(&'static str, impl Into<UiLayoutType>)>) -> Self {
         let mut map = HashMap::new();
         for (state, layout) in value {
             map.insert(state, layout.into());
@@ -464,7 +464,7 @@ impl UiLayout {
 impl From<UiLayoutType> for UiLayout {
     fn from(value: UiLayoutType) -> Self {
         let mut map = HashMap::new();
-        map.insert(0, value);
+        map.insert("base", value);
         Self {
             layouts: map,
         }
@@ -630,14 +630,14 @@ pub fn system_layout_compute(
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiState {
     /// Stored transition per state
-    states: HashMap<usize, f32>,
+    states: HashMap<&'static str, f32>,
 }
 
 /// Default constructor
 impl Default for UiState {
     fn default() -> Self {
         let mut map = HashMap::new();
-        map.insert(0, 1.0);
+        map.insert("base", 1.0);
         Self {
             states: map,
         }
@@ -655,12 +655,12 @@ pub fn system_state_base_balancer(
         // Normalize the active nobase state weights
         let mut total_nonbase_weight = 0.0;
         for (state, value) in &manager.states {
-            if *state == 0 { continue; }
+            if *state == "base" { continue; }
             total_nonbase_weight += value;
         }
 
         // Decrease base transition based on other states
-        if let Some(value) = manager.states.get_mut(&0) {
+        if let Some(value) = manager.states.get_mut("base") {
             *value = (1.0 - total_nonbase_weight).clamp(0.0, 1.0);
         }
 
@@ -673,10 +673,10 @@ pub fn system_state_base_balancer(
 }
 
 #[derive(Component, Clone, Default, Deref, DerefMut)]
-pub struct UiStateAnimation(pub HashMap<usize, Anim>);
+pub struct UiStateAnimation(pub HashMap<&'static str, Anim>);
 
 impl UiStateAnimation {
-    pub fn new(value: Vec<(usize, Anim)>) -> Self {
+    pub fn new(value: Vec<(&'static str, Anim)>) -> Self {
         let mut map = HashMap::new();
         for (state, anim) in value {
             map.insert(state, anim);
@@ -870,12 +870,12 @@ pub fn system_image_size_to_layout(
             let x = image_size.get_x() * image.width() as f32;
             let y = image_size.get_y() * image.height() as f32;
 
-            if match layout.layouts.get(&0).unwrap() {
+            if match layout.layouts.get("base").unwrap() {
                 UiLayoutType::Window(window) => window.size.get_x() != x || window.size.get_y() != y,
                 UiLayoutType::Solid(solid) => solid.size.get_x() != x || solid.size.get_y() != y,
                 _ => false,
             } {
-                match layout.layouts.get_mut(&0).unwrap() {
+                match layout.layouts.get_mut("base").unwrap() {
                     UiLayoutType::Window(window) => { window.set_width(x); window.set_height(y); },
                     UiLayoutType::Solid(solid) => { solid.set_width(x); solid.set_height(y); },
                     _ => {},
@@ -962,7 +962,7 @@ pub fn system_text_size_to_layout(
         }
 
         // Create the text layout
-        match layout.layouts.get_mut(&0).expect("UiBase state not found for Text") {
+        match layout.layouts.get_mut("base").expect("'base' state not found for Text") {
             UiLayoutType::Window(window) => {
                 window.set_height(**text_size);
                 window.set_width(**text_size * (text_info.size.x / text_info.size.y));
@@ -991,7 +991,7 @@ pub fn system_text_3d_size_to_layout(
         }
 
         // Create the text layout
-        match layout.layouts.get_mut(&0).expect("UiBase state not found for Text") {
+        match layout.layouts.get_mut("base").expect("'base' state not found for Text") {
             UiLayoutType::Window(window) => {
                 window.set_height(**text_size);
                 window.set_width(**text_size * (text_info.dimension.x / text_info.dimension.y));
@@ -1161,12 +1161,12 @@ pub fn system_touch_camera_if_fetch_added<const INDEX: usize>(
 /// ```
 #[derive(Component, Reflect, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
 pub struct UiColor {
-    colors: HashMap<usize, Color>
+    colors: HashMap<&'static str, Color>
 }
 /// Constructors
 impl UiColor {
     /// Define multiple states at once using a vec.
-    pub fn new(value: Vec<(usize, impl Into<Color>)>) -> Self {
+    pub fn new(value: Vec<(&'static str, impl Into<Color>)>) -> Self {
         let mut map = HashMap::new();
         for (state, layout) in value {
             map.insert(state, layout.into());
@@ -1178,7 +1178,7 @@ impl UiColor {
 impl <T: Into<Color>> From<T> for UiColor {
     fn from(value: T) -> Self {
         let mut map = HashMap::new();
-        map.insert(0, value.into());
+        map.insert("base", value.into());
         Self {
             colors: map,
         }
@@ -1214,7 +1214,7 @@ pub fn system_color(
 
         // If no state active just try to use base color
         if total_weight == 0.0 {
-            if let Some(color) = node_color.colors.get(&0) {
+            if let Some(color) = node_color.colors.get("base") {
                 blend_color = (*color).into();
             }
 
