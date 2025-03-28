@@ -743,6 +743,9 @@ pub fn system_animate_transition(
             if let Some(seg) = anim.segs.first_mut() {
                 match seg {
                     Seg::Glide(target, duration) => {
+                        if !manager.states.contains_key(state) {
+                            manager.states.insert(*state, 0.);
+                        }
                         if let Some(weight) = manager.states.get_mut(state) {
                             if *weight == *target {
                                 anim.segs.remove(0);
@@ -751,11 +754,12 @@ pub fn system_animate_transition(
                             } else {
                                 *weight = (*weight + time.delta_secs() / *duration).min(*target);
                             }
-                        } else {
-                            manager.states.insert(*state, 0.);
                         }
                     }
                     Seg::GlideCurved(target, duration, f) => {
+                        if !manager.states.contains_key(state) {
+                            manager.states.insert(*state, 0.);
+                        }
                         if let Some(weight) = manager.states.get_mut(state) {
                             if anim.value == *target {
                                 anim.segs.remove(0);
@@ -766,15 +770,13 @@ pub fn system_animate_transition(
                                 anim.value = (anim.value + time.delta_secs() / *duration).min(*target);
                                 *weight = f(anim.value);
                             }
-                        } else {
-                            manager.states.insert(*state, 0.);
                         }
                     }
                     Seg::Hold(duration) => {
                         if *duration <= 0.0 {
                             anim.segs.remove(0);
                         } else {
-                            *duration = *duration - time.delta_secs();
+                            *duration -= time.delta_secs();
                         }
                     }
                 }
