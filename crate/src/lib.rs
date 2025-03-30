@@ -722,13 +722,6 @@ impl Anim {
             self.value = self.init;
         }
     }
-    fn step_from_hold(&mut self) {
-        self.elapsed_duration = 0.;
-        self.current_seg += 1;
-        if self.looping && self.current_seg == self.segments.len() {
-            self.current_seg = 0;
-        }
-    }
 }
 
 /// triggered whenever a Trig segment is reached within an animation
@@ -848,7 +841,8 @@ pub fn system_animate_transition(
                     }
                     Seg::Hold(duration) => {
                         if *duration <= anim.elapsed_duration {
-                            anim.step_from_hold();
+                            anim.elapsed_duration = 0.;
+                            anim.step();
                         } else {
                             anim.elapsed_duration += time.delta_secs();
                         }
