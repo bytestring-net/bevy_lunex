@@ -797,46 +797,43 @@ pub fn system_animate_transition(
                         if !manager.states.contains_key(state) {
                             manager.states.insert(*state, 0.);
                         }
-                        if let Some(weight) = manager.states.get_mut(state) {
-                            if anim.value == *target {
-                                anim.step();
-                            } else if anim.value > *target {
-                                anim.value = (anim.value - time.delta_secs() / *duration).max(*target);
-                                *weight = anim.value;
-                            } else {
-                                anim.value = (anim.value + time.delta_secs() / *duration).min(*target);
-                                *weight = anim.value;
-                            }
+                        let weight = manager.states.get_mut(state).unwrap();
+                        if anim.value == *target {
+                            anim.step();
+                        } else if anim.value > *target {
+                            anim.value = (anim.value - time.delta_secs() / *duration).max(*target);
+                            *weight = anim.value;
+                        } else {
+                            anim.value = (anim.value + time.delta_secs() / *duration).min(*target);
+                            *weight = anim.value;
                         }
                     }
                     Seg::Curved(target, duration, f) => {
                         if !manager.states.contains_key(state) {
                             manager.states.insert(*state, 0.);
                         }
-                        if let Some(weight) = manager.states.get_mut(state) {
-                            if anim.value == *target {
-                                anim.step();
-                            } else if anim.value > *target {
-                                anim.value = (anim.value - time.delta_secs() / *duration).max(*target);
-                                *weight = f(anim.value);
-                            } else {
-                                anim.value = (anim.value + time.delta_secs() / *duration).min(*target);
-                                *weight = f(anim.value);
-                            }
+                        let weight = manager.states.get_mut(state).unwrap();
+                        if anim.value == *target {
+                            anim.step();
+                        } else if anim.value > *target {
+                            anim.value = (anim.value - time.delta_secs() / *duration).max(*target);
+                            *weight = f(anim.value);
+                        } else {
+                            anim.value = (anim.value + time.delta_secs() / *duration).min(*target);
+                            *weight = f(anim.value);
                         }
                     }
                     Seg::Continue(target, duration) => {
                         if !manager.states.contains_key(state) {
                             manager.states.insert(*state, 0.);
                         }
-                        if let Some(weight) = manager.states.get_mut(state) {
-                            if *weight == *target {
-                                anim.step();
-                            } else if *weight > *target {
-                                *weight = (*weight - time.delta_secs() / *duration).max(*target);
-                            } else {
-                                *weight = (*weight + time.delta_secs() / *duration).min(*target);
-                            }
+                        let weight = manager.states.get_mut(state).unwrap();
+                        if *weight == *target {
+                            anim.step();
+                        } else if *weight > *target {
+                            *weight = (*weight - time.delta_secs() / *duration).max(*target);
+                        } else {
+                            *weight = (*weight + time.delta_secs() / *duration).min(*target);
                         }
                     }
                     Seg::Hold(duration) => {
