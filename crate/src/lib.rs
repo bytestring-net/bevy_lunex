@@ -44,6 +44,7 @@ pub mod prelude {
         UiStateAnimation,
         Anim,
         Seg,
+        AnimTrig,
     };
 
     // Import other file preludes
@@ -697,6 +698,8 @@ pub enum Seg {
     Continue(f32, f32),
     /// hold for a duration
     Hold(f32),
+    /// trigger an event
+    Trig,
 }
 
 /// an animation
@@ -710,6 +713,11 @@ pub struct Anim {
     // used for hold segments
     elapsed_duration: f32,
 }
+
+/// triggered whenever a Trig segment is reached within an animation
+/// it targets the entity with the animation and contains the state being animated
+#[derive(Event, Clone)]
+pub struct AnimTrig(pub &'static str);
 
 impl Anim {
     /// make a new animation with initial point 0 and given `segments`
@@ -753,14 +761,30 @@ impl Anim {
         self.value = initial;
         self
     }
+    /// return this animation with a trigger at the end
+    pub fn with_end_trig(mut self) -> Self {
+        self.segments.push(Seg::Trig);
+        self
+    }
 }
 
 pub fn system_animate_transition(
-    mut query: Query<(&mut UiState, &mut UiStateAnimation)>,
+    mut query: Query<(Entity, &mut UiState, &mut UiStateAnimation)>,
     time: Res<Time<Virtual>>,
+    mut commands: Commands,
 ) {
-    for (mut manager, mut animations) in &mut query {
+    for (entity, mut manager, mut animations) in &mut query {
         for (state, anim) in animations.iter_mut() {
+            // we want to check if we reached a trig separately so we can trigger it
+            // and resume animation without skipping a frame
+            if let Some(Seg::Trig) = anim.segments.get(anim.current_seg) {
+                commands.trigger_targets(AnimTrig(state), entity);
+                anim.current_seg += 1;
+                if anim.looping && anim.current_seg == anim.segments.len() {
+                    anim.current_seg = 0;
+                    anim.value = anim.init;
+                }
+            }
             if let Some(seg) = anim.segments.get(anim.current_seg) {
                 match seg {
                     Seg::To(target, duration) => {
@@ -832,6 +856,7 @@ pub fn system_animate_transition(
                             anim.elapsed_duration += time.delta_secs();
                         }
                     }
+                    Seg::Trig => {}
                 }
             }
         }
