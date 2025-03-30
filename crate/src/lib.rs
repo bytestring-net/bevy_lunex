@@ -714,6 +714,23 @@ pub struct Anim {
     elapsed_duration: f32,
 }
 
+impl Anim {
+    fn step(&mut self) {
+        self.current_seg += 1;
+        if self.looping && self.current_seg == self.segments.len() {
+            self.current_seg = 0;
+            self.value = self.init;
+        }
+    }
+    fn step_from_hold(&mut self) {
+        self.elapsed_duration = 0.;
+        self.current_seg += 1;
+        if self.looping && self.current_seg == self.segments.len() {
+            self.current_seg = 0;
+        }
+    }
+}
+
 /// triggered whenever a Trig segment is reached within an animation
 /// it targets the entity with the animation and contains the state being animated
 #[derive(Event, Clone)]
@@ -779,11 +796,7 @@ pub fn system_animate_transition(
             // and resume animation without skipping a frame
             if let Some(Seg::Trig) = anim.segments.get(anim.current_seg) {
                 commands.trigger_targets(AnimTrig(state), entity);
-                anim.current_seg += 1;
-                if anim.looping && anim.current_seg == anim.segments.len() {
-                    anim.current_seg = 0;
-                    anim.value = anim.init;
-                }
+                anim.step();
             }
             if let Some(seg) = anim.segments.get(anim.current_seg) {
                 match seg {
@@ -793,11 +806,7 @@ pub fn system_animate_transition(
                         }
                         if let Some(weight) = manager.states.get_mut(state) {
                             if anim.value == *target {
-                                anim.current_seg += 1;
-                                if anim.looping && anim.current_seg == anim.segments.len() {
-                                    anim.current_seg = 0;
-                                    anim.value = anim.init;
-                                }
+                                anim.step();
                             } else if anim.value > *target {
                                 anim.value = (anim.value - time.delta_secs() / *duration).max(*target);
                                 *weight = anim.value;
@@ -813,11 +822,7 @@ pub fn system_animate_transition(
                         }
                         if let Some(weight) = manager.states.get_mut(state) {
                             if anim.value == *target {
-                                anim.current_seg += 1;
-                                if anim.looping && anim.current_seg == anim.segments.len() {
-                                    anim.current_seg = 0;
-                                    anim.value = anim.init;
-                                }
+                                anim.step();
                             } else if anim.value > *target {
                                 anim.value = (anim.value - time.delta_secs() / *duration).max(*target);
                                 *weight = f(anim.value);
@@ -833,11 +838,7 @@ pub fn system_animate_transition(
                         }
                         if let Some(weight) = manager.states.get_mut(state) {
                             if *weight == *target {
-                                anim.current_seg += 1;
-                                if anim.looping && anim.current_seg == anim.segments.len() {
-                                    anim.current_seg = 0;
-                                    anim.value = anim.init;
-                                }
+                                anim.step();
                             } else if *weight > *target {
                                 *weight = (*weight - time.delta_secs() / *duration).max(*target);
                             } else {
@@ -847,11 +848,7 @@ pub fn system_animate_transition(
                     }
                     Seg::Hold(duration) => {
                         if *duration <= anim.elapsed_duration {
-                            anim.elapsed_duration = 0.;
-                            anim.current_seg += 1;
-                            if anim.looping && anim.current_seg == anim.segments.len() {
-                                anim.current_seg = 0;
-                            }
+                            anim.step_from_hold();
                         } else {
                             anim.elapsed_duration += time.delta_secs();
                         }
