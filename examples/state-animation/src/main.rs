@@ -48,13 +48,41 @@ fn setup(
             UiMeshPlane2d,
             MeshMaterial2d(materials.add(ColorMaterial::default())),
             OnHoverSetCursor::new(SystemCursorIcon::Pointer),
-        )).observe(over).observe(out).observe(up).observe(down).observe(print).observe(spawn_after_hover)
+        ))
+         // on Pointer<Over> events, insert an animation for 'hover' state
+         // (a single linear segment going from 0 to 1 in 0.3 secs with a trigger at the end)
+        .observe(animate!(Pointer<Over>, "hover", Anim::line(0., 1., 0.3).with_end_trig()))
+        // continue to 0 (in 0.8 secs) from the current weight, so if you hover out while
+        // the state isn't fully active, you start fading out from the current point
+        .observe(animate!(Pointer<Out>, "hover", Anim::continue_to(0., 0.8)))
+        .observe(animate!(Pointer<Down>, "click",
+            // you can insert multiple stage animations
+            // go to weight 0 in 1 sec, then back to weight 1 in 0.5 sec
+            // starting with a weight of 1
+            Anim::segs(vec![Seg::To(0.,1.), Seg::To(1.,0.5)]).with_init(1.).looping(true)
+        ))
+        .observe(animate!(Pointer<Up>, "click",
+            Anim::segs(vec![
+                // in 1 sec, go to weight 0 from wherever it was when we unclicked
+                Seg::Continue(0., 1.),
+                // delay for 0.2 seconds
+                Seg::Hold(0.2),
+                // then go to 1 in 0.3 with this curve function
+                Seg::Curved(1., 0.3, downarc),
+                // and back to 0
+                Seg::Curved(0., 0.3, uparc),
+                // send a trigger
+                Seg::Trig
+            ])
+        ))
+        .observe(print)
+        .observe(spawn_after_hover)
         .with_children(|ui| {
             ui.spawn((
                 Name::new("text"),
                 PickingBehavior::IGNORE,
                 UiLayout::window().size(Rl(100.)).pack(),
-                Text2d::new("hover"),
+                Text2d::new("hover me!"),
                 TextFont::from_font_size(100.),
             ));
         });
@@ -84,72 +112,6 @@ fn despawn_after_click(
         commands.entity(trig.entity()).despawn_recursive();
     }
 }
-
-fn over(
-    trig: Trigger<Pointer<Over>>,
-    mut query: Query<&mut UiStateAnimation>,
-) {
-    if let Ok(mut animations) = query.get_mut(trig.entity()) {
-        // insert an animation for 'hover' state (in this case a single linear segment going from 0 to 1
-        // in 0.3 secs with a trigger at the end)
-        animations.insert("hover", Anim::line(0., 1., 0.3).with_end_trig());
-    }
-}
-
-fn out(
-    trig: Trigger<Pointer<Out>>,
-    mut query: Query<&mut UiStateAnimation>,
-) {
-    if let Ok(mut animations) = query.get_mut(trig.entity()) {
-        // continue continues from the current weight, so if you hover out while the state isn't
-        // fully active, you start fading out from the current point
-        animations.insert("hover", Anim::continue_to(0., 0.8));
-    }
-}
-
-fn down(
-    trig: Trigger<Pointer<Down>>,
-    mut query: Query<&mut UiStateAnimation>,
-) {
-    if let Ok(mut animations) = query.get_mut(trig.entity()) {
-        // you can insert multiple stage animations
-        animations.insert(
-            // doing this for the "click" state
-            "click",
-            // go to weight 0 in 1 sec, then back to weight 1 in 0.5 sec
-            Anim::segs(vec![Seg::To(0., 1.), Seg::To(1., 0.5)])
-                // starting with a weight of 1
-                .with_init(1.)
-                // make it a looping animation
-                .looping(true)
-        );
-    }
-}
-
-fn up(
-    trig: Trigger<Pointer<Up>>,
-    mut query: Query<&mut UiStateAnimation>,
-) {
-    if let Ok(mut animations) = query.get_mut(trig.entity()) {
-        animations.insert(
-            // take the weight of the click state..
-            "click",
-            Anim::segs(vec![
-                // .. to 0 from wherever it was when we unclicked in 1 second
-                Seg::Continue(0., 1.),
-                // delay for 0.2 seconds
-                Seg::Hold(0.2),
-                // then go to 1 in 0.3 with this curve function
-                Seg::Curved(1., 0.3, downarc),
-                // and back to 0
-                Seg::Curved(0., 0.3, uparc),
-                // send a trigger
-                Seg::Trig
-            ]),
-        );
-    }
-}
-
 
 // test curve functions (stolen from fundsp)
 fn uparc(x: f32) -> f32 {
@@ -194,14 +156,32 @@ fn spawn(
             UiMeshPlane2d,
             MeshMaterial2d(materials.add(ColorMaterial::default())),
         ))
-        .observe(over).observe(out).observe(up).observe(down).observe(print).observe(despawn_after_click)
+
+        .observe(animate!(Pointer<Over>, "hover", Anim::line(0., 1., 0.3).with_end_trig()))
+        .observe(animate!(Pointer<Out>, "hover", Anim::continue_to(0., 0.8)))
+        .observe(animate!(Pointer<Down>, "click",
+            Anim::segs(vec![Seg::To(0.,1.), Seg::To(1.,0.5)]).with_init(1.).looping(true)
+        ))
+        .observe(animate!(Pointer<Up>, "click",
+            Anim::segs(vec![
+                Seg::Continue(0., 1.),
+                Seg::Hold(0.2),
+                Seg::Curved(1., 0.3, downarc),
+                Seg::Curved(0., 0.3, uparc),
+                Seg::Trig
+            ])
+        ))
+        .observe(print)
+        .observe(despawn_after_click)
+
         .set_parent(query.single())
+
         .with_children(|ui| {
             ui.spawn((
                 Name::new("text"),
                 PickingBehavior::IGNORE,
                 UiLayout::window().size(Rl(100.)).pack(),
-                Text2d::new("click"),
+                Text2d::new("click me!"),
                 TextFont::from_font_size(100.),
             ));
         });

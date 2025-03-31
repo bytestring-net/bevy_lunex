@@ -45,6 +45,7 @@ pub mod prelude {
         Anim,
         Seg,
         AnimTrig,
+        animate,
     };
 
     // Import other file preludes
@@ -780,7 +781,7 @@ impl Anim {
 
 pub fn system_animate_transition(
     mut query: Query<(Entity, &mut UiState, &mut UiStateAnimation)>,
-    time: Res<Time<Virtual>>,
+    time: Res<Time<Real>>,
     mut commands: Commands,
 ) {
     for (entity, mut manager, mut animations) in &mut query {
@@ -850,6 +851,34 @@ pub fn system_animate_transition(
         }
     }
 }
+
+/// set animation for state on triggered event
+///
+/// this:
+/// ```
+/// animate!(Pointer<Over>, "hover", Anim::line(0., 1., 0.3).with_end_trig())
+/// ```
+/// is equivalent to this:
+/// ```
+/// |trig: Trigger<Pointer<Over>>, mut query: Query<&mut UiStateAnimation>| {
+///     if let Ok(mut animations) = query.get_mut(trig.entity()) {
+///         animations.insert("hover", Anim::line(0., 1., 0.3).with_end_trig());
+///     }
+/// }
+/// ```
+#[macro_export]
+macro_rules! animate {
+    ( $event:ty, $state:literal, $anim:expr ) => {
+        {
+            |t: Trigger<$event>, mut q: Query<&mut UiStateAnimation>| {
+                if let Ok(mut anims) = q.get_mut(t.entity()) {
+                    anims.insert($state, $anim);
+                }
+            }
+        }
+    };
+}
+
 
 // #=====================#
 // #=== IMAGE CONTROL ===#
