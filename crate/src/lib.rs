@@ -715,16 +715,6 @@ pub struct Anim {
     elapsed_duration: f32,
 }
 
-impl Anim {
-    fn step(&mut self) {
-        self.current_seg += 1;
-        if self.looping && self.current_seg == self.segments.len() {
-            self.current_seg = 0;
-            self.value = self.init;
-        }
-    }
-}
-
 /// triggered whenever a Trig segment is reached within an animation
 /// it targets the entity with the animation and contains the state being animated
 #[derive(Event, Clone)]
@@ -777,6 +767,18 @@ impl Anim {
         self.segments.push(Seg::Trig);
         self
     }
+    /// move to next stage
+    fn step(&mut self) {
+        self.current_seg += 1;
+        if self.looping && self.current_seg == self.segments.len() {
+            self.current_seg = 0;
+            self.value = self.init;
+        }
+    }
+    /// whether or not the animation is in a Trig stage
+    pub fn in_trig(&self) -> bool {
+        self.segments.get(self.current_seg) == Some(&Seg::Trig)
+    }
 }
 
 pub fn system_animate_transition(
@@ -788,7 +790,7 @@ pub fn system_animate_transition(
         for (state, anim) in animations.iter_mut() {
             // we want to check if we reached a trig separately so we can trigger it
             // and resume animation without skipping a frame
-            if let Some(Seg::Trig) = anim.segments.get(anim.current_seg) {
+            if anim.in_trig() {
                 commands.trigger_targets(AnimTrig(state), entity);
                 anim.step();
             }
