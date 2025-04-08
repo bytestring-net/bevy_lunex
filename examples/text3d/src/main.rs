@@ -10,7 +10,7 @@ fn main() -> AppExit {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            UiLunexPlugins.set(Text3dPlugin {
+            UiLunexPlugins::<0>.set(Text3dPlugin {
                 // If we use custom fonts we need to load them here.
                 load_font_directories: vec!["assets/fonts".to_owned()],
                 load_system_fonts: true,

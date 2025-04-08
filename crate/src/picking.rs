@@ -13,17 +13,17 @@ use crate::*;
 
 /// Adds picking support for Lunex.
 #[derive(Clone)]
-pub struct UiLunexPickingPlugin;
-impl Plugin for UiLunexPickingPlugin {
+pub struct UiLunexPickingPlugin<const INDEX: usize>;
+impl<const INDEX: usize> Plugin for UiLunexPickingPlugin<INDEX> {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreUpdate, lunex_picking.in_set(PickSet::Backend));
+        app.add_systems(PreUpdate, lunex_picking::<INDEX>.in_set(PickSet::Backend));
     }
 }
 
 /// Checks if any Dimension entities are under a pointer.
-pub fn lunex_picking(
+pub fn lunex_picking<const INDEX: usize>(
     pointers: Query<(&PointerId, &PointerLocation)>,
-    cameras: Query<(Entity, &Camera, &GlobalTransform, &OrthographicProjection)>,
+    cameras: Query<(Entity, &Camera, &GlobalTransform, &OrthographicProjection), With<UiSourceCamera<INDEX>>>,
     primary_window: Query<Entity, With<PrimaryWindow>>,
     sprite_query: Query<(
         Entity,
