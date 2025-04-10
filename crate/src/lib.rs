@@ -580,6 +580,158 @@ pub fn system_layout_compute(
     }
 }
 
+// #=====================#
+// #===== ANIMATION =====#
+
+/// a segment within an animation
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum Seg {
+    /// (target, duration)
+    To(f32, f32),
+    /// (target, duration, curve function)
+    Curved(f32, f32, fn(f32) -> f32),
+    /// same as To but starts from the current animated value (rather than the value field)
+    /// can be useful for fading out of a state regardless of its current weight
+    Continue(f32, f32),
+    /// hold for a duration
+    Hold(f32),
+    /// trigger an event
+    Trig,
+}
+
+/// an animation
+#[derive(Default, Clone, Debug, PartialEq)]
+pub struct Anim {
+    pub value: f32,
+    pub segments: Vec<Seg>,
+    pub looping: bool,
+    pub init: f32,
+    pub current_seg: usize,
+    /// elapsed duration of the current segment
+    pub elapsed_duration: f32,
+}
+
+/// triggered whenever a Trig segment is reached within an animation
+/// it targets the entity with the animation and contains the state being animated
+#[derive(Event, Clone)]
+pub struct AnimTrig(pub &'static str);
+
+impl Anim {
+    /// make a new animation with initial point 0 and given `segments`
+    /// ```
+    /// Anim::segs(vec![Seg::Hold(1.0), Seg::To(1.0, 1.0)]);
+    /// ```
+    pub fn segs(segments: Vec<Seg>) -> Self {
+        Self { segments, ..default() }
+    }
+    /// a single linear segment animation that goes from `start` to `end` in `duration`
+    pub fn line(start: f32, end: f32, duration: f32) -> Self {
+        Self {
+            segments: vec![Seg::To(end, duration)],
+            init: start,
+            value: start,
+            ..default()
+        }
+    }
+    /// a single curved segment animation from `start` to `end` in `duration` with `f` curve function
+    pub fn curve(start: f32, end: f32, duration: f32, f: fn(f32) -> f32) -> Self {
+        Self {
+            segments: vec![Seg::Curved(end, duration, f)],
+            init: start,
+            value: start,
+            ..default()
+        }
+    }
+    /// an animation with a linear segment that moves the animated value from its current
+    /// value to `target` in `duration`
+    pub fn continue_to(target: f32, duration: f32) -> Self {
+        Self { segments: vec![Seg::Continue(target, duration)], ..default() }
+    }
+    /// return this animation with the given `looping` status
+    pub fn looping(mut self, looping: bool) -> Self {
+        self.looping = looping;
+        self
+    }
+    /// return this animation with the given `initial` value
+    pub fn with_init(mut self, initial: f32) -> Self {
+        self.init = initial;
+        self.value = initial;
+        self
+    }
+    /// return this animation with a trigger at the end
+    pub fn with_end_trig(mut self) -> Self {
+        self.segments.push(Seg::Trig);
+        self
+    }
+    /// move to next stage
+    pub fn step(&mut self) {
+        self.current_seg += 1;
+        if self.looping && self.current_seg == self.segments.len() {
+            self.current_seg = 0;
+            self.value = self.init;
+        }
+        self.elapsed_duration = 0.;
+    }
+    /// whether or not the animation is in a Trig stage
+    pub fn in_trig(&self) -> bool {
+        self.segments.get(self.current_seg) == Some(&Seg::Trig)
+    }
+    /// whether the animation has reached its end
+    pub fn ended(&self) -> bool {
+        self.current_seg >= self.segments.len()
+    }
+    /// move by `t` time and update the value of `animated`
+    pub fn tick(&mut self, animated: &mut f32, t: f32) {
+        if let Some(seg) = self.segments.get(self.current_seg) {
+            self.elapsed_duration += t;
+            match seg {
+                Seg::To(target, duration) => {
+                    if self.value > *target {
+                        self.value = (self.value - t / *duration).max(*target);
+                        *animated = self.value;
+                    } else {
+                        self.value = (self.value + t / *duration).min(*target);
+                        *animated = self.value;
+                    }
+                    if self.elapsed_duration >= *duration {
+                        self.step();
+                    }
+                }
+                Seg::Curved(target, duration, f) => {
+                    if self.value > *target {
+                        self.value = (self.value - t / *duration).max(*target);
+                        *animated = f(self.value);
+                    } else {
+                        self.value = (self.value + t / *duration).min(*target);
+                        *animated = f(self.value);
+                    }
+                    if self.elapsed_duration >= *duration {
+                        self.step();
+                    }
+                }
+                Seg::Continue(target, duration) => {
+                    if *animated > *target {
+                        *animated = (*animated - t / *duration).max(*target);
+                        self.value = *animated;
+                    } else {
+                        *animated = (*animated + t / *duration).min(*target);
+                        self.value = *animated;
+                    }
+                    if self.elapsed_duration >= *duration {
+                        self.step();
+                    }
+                }
+                Seg::Hold(duration) => {
+                    if self.elapsed_duration >= *duration {
+                        self.step();
+                    }
+                }
+                Seg::Trig => {}
+            }
+        }
+    }
+}
+
 
 // #=====================#
 // #=== STATE CONTROL ===#
@@ -687,168 +839,23 @@ impl UiStateAnimation {
     }
 }
 
-/// a segment or a stage within an animation
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum Seg {
-    /// (target, duration)
-    To(f32, f32),
-    /// (target, duration, curve function)
-    Curved(f32, f32, fn(f32) -> f32),
-    /// same as To but starts from the current weight (rather than the value field)
-    /// can be useful for fading out of a state regardless of its current weight
-    Continue(f32, f32),
-    /// hold for a duration
-    Hold(f32),
-    /// trigger an event
-    Trig,
-}
-
-/// an animation
-#[derive(Default, Clone, Debug, PartialEq)]
-pub struct Anim {
-    pub value: f32,
-    pub segments: Vec<Seg>,
-    pub looping: bool,
-    init: f32,
-    current_seg: usize,
-    // used for hold segments
-    elapsed_duration: f32,
-}
-
-/// triggered whenever a Trig segment is reached within an animation
-/// it targets the entity with the animation and contains the state being animated
-#[derive(Event, Clone)]
-pub struct AnimTrig(pub &'static str);
-
-impl Anim {
-    /// make a new animation with initial point 0 and given `segments`
-    /// ```
-    /// Anim::segs(vec![Seg::Hold(1.0), Seg::To(1.0, 1.0)]);
-    /// ```
-    pub fn segs(segments: Vec<Seg>) -> Self {
-        Self { segments, ..default() }
-    }
-    /// a single linear segment animation that goes from `start` to `end` in `duration`
-    pub fn line(start: f32, end: f32, duration: f32) -> Self {
-        Self {
-            segments: vec![Seg::To(end, duration)],
-            init: start,
-            value: start,
-            ..default()
-        }
-    }
-    /// a single curved segment animation from `start` to `end` in `duration` with `f` curve function
-    pub fn curve(start: f32, end: f32, duration: f32, f: fn(f32) -> f32) -> Self {
-        Self {
-            segments: vec![Seg::Curved(end, duration, f)],
-            init: start,
-            value: start,
-            ..default()
-        }
-    }
-    /// an animation with a linear segment that moves the weight from its current value to the
-    /// `target` in `duration`
-    pub fn continue_to(target: f32, duration: f32) -> Self {
-        Self { segments: vec![Seg::Continue(target, duration)], ..default() }
-    }
-    /// return this animation with the given `looping` status
-    pub fn looping(mut self, looping: bool) -> Self {
-        self.looping = looping;
-        self
-    }
-    /// return this animation with the given `initial` value
-    pub fn with_init(mut self, initial: f32) -> Self {
-        self.init = initial;
-        self.value = initial;
-        self
-    }
-    /// return this animation with a trigger at the end
-    pub fn with_end_trig(mut self) -> Self {
-        self.segments.push(Seg::Trig);
-        self
-    }
-    /// move to next stage
-    fn step(&mut self) {
-        self.current_seg += 1;
-        if self.looping && self.current_seg == self.segments.len() {
-            self.current_seg = 0;
-            self.value = self.init;
-        }
-    }
-    /// whether or not the animation is in a Trig stage
-    pub fn in_trig(&self) -> bool {
-        self.segments.get(self.current_seg) == Some(&Seg::Trig)
-    }
-}
-
-pub fn system_animate_transition(
+pub fn system_state_animate_transition(
     mut query: Query<(Entity, &mut UiState, &mut UiStateAnimation)>,
     time: Res<Time<Real>>,
     mut commands: Commands,
 ) {
     for (entity, mut manager, mut animations) in &mut query {
         for (state, anim) in animations.iter_mut() {
-            // we want to check if we reached a trig separately so we can trigger it
-            // and resume animation without skipping a frame
+            if anim.ended() { continue; }
             if anim.in_trig() {
                 commands.trigger_targets(AnimTrig(state), entity);
                 anim.step();
             }
-            if let Some(seg) = anim.segments.get(anim.current_seg) {
-                match seg {
-                    Seg::To(target, duration) => {
-                        if !manager.states.contains_key(state) {
-                            manager.states.insert(*state, 0.);
-                        }
-                        let weight = manager.states.get_mut(state).unwrap();
-                        if anim.value == *target {
-                            anim.step();
-                        } else if anim.value > *target {
-                            anim.value = (anim.value - time.delta_secs() / *duration).max(*target);
-                            *weight = anim.value;
-                        } else {
-                            anim.value = (anim.value + time.delta_secs() / *duration).min(*target);
-                            *weight = anim.value;
-                        }
-                    }
-                    Seg::Curved(target, duration, f) => {
-                        if !manager.states.contains_key(state) {
-                            manager.states.insert(*state, 0.);
-                        }
-                        let weight = manager.states.get_mut(state).unwrap();
-                        if anim.value == *target {
-                            anim.step();
-                        } else if anim.value > *target {
-                            anim.value = (anim.value - time.delta_secs() / *duration).max(*target);
-                            *weight = f(anim.value);
-                        } else {
-                            anim.value = (anim.value + time.delta_secs() / *duration).min(*target);
-                            *weight = f(anim.value);
-                        }
-                    }
-                    Seg::Continue(target, duration) => {
-                        if !manager.states.contains_key(state) {
-                            manager.states.insert(*state, 0.);
-                        }
-                        let weight = manager.states.get_mut(state).unwrap();
-                        if *weight == *target {
-                            anim.step();
-                        } else if *weight > *target {
-                            *weight = (*weight - time.delta_secs() / *duration).max(*target);
-                        } else {
-                            *weight = (*weight + time.delta_secs() / *duration).min(*target);
-                        }
-                    }
-                    Seg::Hold(duration) => {
-                        if *duration <= anim.elapsed_duration {
-                            anim.elapsed_duration = 0.;
-                            anim.step();
-                        } else {
-                            anim.elapsed_duration += time.delta_secs();
-                        }
-                    }
-                    Seg::Trig => {}
-                }
+            if !manager.states.contains_key(state) {
+                manager.states.insert(*state, 0.);
+            }
+            if let Some(weight) = manager.states.get_mut(state) {
+                anim.tick(weight, time.delta_secs());
             }
         }
     }
@@ -1351,7 +1358,7 @@ impl Plugin for UiLunexPlugin {
         // PRE-COMPUTE SYSTEMS
         app.add_systems(PostUpdate, (
 
-            system_animate_transition,
+            system_state_animate_transition,
             system_state_base_balancer,
             system_text_size_to_layout.after(bevy::text::update_text2d_layout),
             system_image_size_to_layout,
