@@ -45,7 +45,8 @@ pub mod prelude {
         Anim,
         Seg,
         AnimTrig,
-        animate,
+        replacing,
+        morphing,
     };
 
     // Import other file preludes
@@ -590,9 +591,6 @@ pub enum Seg {
     To(f32, f32),
     /// (target, duration, curve function)
     Curved(f32, f32, fn(f32) -> f32),
-    /// same as To but starts from the current animated value (rather than the value field)
-    /// can be useful for fading out of a state regardless of its current weight
-    Continue(f32, f32),
     /// hold for a duration
     Hold(f32),
     /// trigger an event
@@ -642,11 +640,6 @@ impl Anim {
             ..default()
         }
     }
-    /// an animation with a linear segment that moves the animated value from its current
-    /// value to `target` in `duration`
-    pub fn continue_to(target: f32, duration: f32) -> Self {
-        Self { segments: vec![Seg::Continue(target, duration)], ..default() }
-    }
     /// return this animation with the given `looping` status
     pub fn looping(mut self, looping: bool) -> Self {
         self.looping = looping;
@@ -670,7 +663,6 @@ impl Anim {
             self.current_seg = 0;
             self.value = self.init;
         }
-        self.elapsed_duration = 0.;
     }
     /// whether or not the animation is in a Trig stage
     pub fn in_trig(&self) -> bool {
@@ -680,55 +672,43 @@ impl Anim {
     pub fn ended(&self) -> bool {
         self.current_seg >= self.segments.len()
     }
-    /// move by `t` time and update the value of `animated`
-    pub fn tick(&mut self, animated: &mut f32, t: f32) {
+    /// move by `t` time and return the new value
+    pub fn tick(&mut self, t: f32) -> Option<f32> {
         if let Some(seg) = self.segments.get(self.current_seg) {
-            self.elapsed_duration += t;
             match seg {
                 Seg::To(target, duration) => {
-                    if self.value > *target {
+                    if self.value == *target {
+                        self.step();
+                    } else if self.value > *target {
                         self.value = (self.value - t / *duration).max(*target);
-                        *animated = self.value;
+                        return Some(self.value);
                     } else {
                         self.value = (self.value + t / *duration).min(*target);
-                        *animated = self.value;
-                    }
-                    if self.elapsed_duration >= *duration {
-                        self.step();
+                        return Some(self.value);
                     }
                 }
                 Seg::Curved(target, duration, f) => {
-                    if self.value > *target {
+                    if self.value == *target {
+                        self.step();
+                    } else if self.value > *target {
                         self.value = (self.value - t / *duration).max(*target);
-                        *animated = f(self.value);
+                        return Some(f(self.value));
                     } else {
                         self.value = (self.value + t / *duration).min(*target);
-                        *animated = f(self.value);
-                    }
-                    if self.elapsed_duration >= *duration {
-                        self.step();
-                    }
-                }
-                Seg::Continue(target, duration) => {
-                    if *animated > *target {
-                        *animated = (*animated - t / *duration).max(*target);
-                        self.value = *animated;
-                    } else {
-                        *animated = (*animated + t / *duration).min(*target);
-                        self.value = *animated;
-                    }
-                    if self.elapsed_duration >= *duration {
-                        self.step();
+                        return Some(f(self.value));
                     }
                 }
                 Seg::Hold(duration) => {
+                    self.elapsed_duration += t;
                     if self.elapsed_duration >= *duration {
                         self.step();
+                        self.elapsed_duration = 0.;
                     }
                 }
                 Seg::Trig => {}
             }
         }
+        None
     }
 }
 
@@ -854,34 +834,41 @@ pub fn system_state_animate_transition(
             if !manager.states.contains_key(state) {
                 manager.states.insert(*state, 0.);
             }
-            if let Some(weight) = manager.states.get_mut(state) {
-                anim.tick(weight, time.delta_secs());
+            if let Some(v) = anim.tick(time.delta_secs()) {
+                *manager.states.get_mut(state).unwrap() = v;
             }
         }
     }
 }
 
-/// set animation for state on triggered event
-///
-/// this:
-/// ```
-/// animate!(Pointer<Over>, "hover", Anim::line(0., 1., 0.3).with_end_trig())
-/// ```
-/// is equivalent to this:
-/// ```
-/// |trig: Trigger<Pointer<Over>>, mut query: Query<&mut UiStateAnimation>| {
-///     if let Ok(mut animations) = query.get_mut(trig.entity()) {
-///         animations.insert("hover", Anim::line(0., 1., 0.3).with_end_trig());
-///     }
-/// }
-/// ```
+/// set animation for state on triggered event, replacing any existing one
 #[macro_export]
-macro_rules! animate {
+macro_rules! replacing {
     ( $event:ty, $state:literal, $anim:expr ) => {
         {
             |t: Trigger<$event>, mut q: Query<&mut UiStateAnimation>| {
                 if let Ok(mut anims) = q.get_mut(t.entity()) {
                     anims.insert($state, $anim);
+                }
+            }
+        }
+    };
+}
+
+/// replace the segments of an animation leaving everything else as is
+/// inserts if the animation doesn't exist
+#[macro_export]
+macro_rules! morphing {
+    ( $event:ty, $state:literal, $new_anim:expr ) => {
+        {
+            |t: Trigger<$event>, mut q: Query<&mut UiStateAnimation>| {
+                if let Ok(mut anims) = q.get_mut(t.entity()) {
+                    if let Some(anim) = anims.get_mut($state) {
+                        anim.segments = $new_anim.segments;
+                        anim.current_seg = 0;
+                    } else {
+                        anims.insert($state, $new_anim);
+                    }
                 }
             }
         }
