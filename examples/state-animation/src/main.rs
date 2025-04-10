@@ -54,7 +54,8 @@ fn setup(
         .observe(morphing!(Pointer<Over>, "hover", Anim::line(0., 1., 0.3).with_end_trig()))
         // this will continue to 0 (in 0.8 secs) from the current weight
         .observe(morphing!(Pointer<Out>, "hover", Anim::line(1., 0., 0.8)))
-        .observe(morphing!(Pointer<Down>, "click",
+        // replacing, because we always want to jump to 1 when clicked
+        .observe(replacing!(Pointer<Down>, "click",
             // you can insert multiple stage animations
             // go to weight 0 in 1 sec, then back to weight 1 in 0.5 sec
             // starting with a weight of 1
@@ -62,10 +63,10 @@ fn setup(
         ))
         .observe(morphing!(Pointer<Up>, "click",
             Anim::segs(vec![
-                // in 1 sec, go to weight 0 from wherever it was when we unclicked
+                // in 1 sec, go to weight 0
                 Seg::To(0., 1.),
                 // delay for 0.2 seconds
-                Seg::Hold(1.2),
+                Seg::Hold(0.2),
                 // then go to 1 in 0.3 with this curve function
                 Seg::Curved(1., 0.3, downarc),
                 // and back to 0
@@ -158,7 +159,7 @@ fn spawn(
 
         .observe(morphing!(Pointer<Over>, "hover", Anim::line(0., 1., 0.3).with_end_trig()))
         .observe(morphing!(Pointer<Out>, "hover", Anim::line(1., 0., 0.8)))
-        .observe(morphing!(Pointer<Down>, "click",
+        .observe(replacing!(Pointer<Down>, "click",
             Anim::segs(vec![Seg::To(0.,1.), Seg::To(1.,0.5)]).with_init(1.).looping(true)
         ))
         .observe(morphing!(Pointer<Up>, "click",

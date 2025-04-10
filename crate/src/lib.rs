@@ -605,7 +605,7 @@ pub struct Anim {
     pub looping: bool,
     pub init: f32,
     pub current_seg: usize,
-    /// elapsed duration of the current segment
+    /// used for hold segments
     pub elapsed_duration: f32,
 }
 
@@ -855,8 +855,8 @@ macro_rules! replacing {
     };
 }
 
-/// replace the segments of an animation leaving everything else as is
-/// inserts if the animation doesn't exist
+/// set animation for state on triggered event,
+/// but keep the current value of the existing animation if any
 #[macro_export]
 macro_rules! morphing {
     ( $event:ty, $state:literal, $new_anim:expr ) => {
@@ -865,7 +865,9 @@ macro_rules! morphing {
                 if let Ok(mut anims) = q.get_mut(t.entity()) {
                     if let Some(anim) = anims.get_mut($state) {
                         anim.segments = $new_anim.segments;
-                        anim.current_seg = 0;
+                        anim.init = $new_anim.init;
+                        anim.current_seg = $new_anim.current_seg;
+                        anim.looping = $new_anim.looping;
                     } else {
                         anims.insert($state, $new_anim);
                     }
