@@ -587,9 +587,9 @@ pub fn system_layout_compute(
 /// a segment within an animation
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Seg {
-    /// (target, duration)
+    /// (target, speed)
     To(f32, f32),
-    /// (target, duration, curve function)
+    /// (target, speed, curve function)
     Curved(f32, f32, fn(f32) -> f32),
     /// hold for a duration
     Hold(f32),
@@ -622,19 +622,19 @@ impl Anim {
     pub fn segs(segments: Vec<Seg>) -> Self {
         Self { segments, ..default() }
     }
-    /// a single linear segment animation that goes from `start` to `end` in `duration`
-    pub fn line(start: f32, end: f32, duration: f32) -> Self {
+    /// a single linear segment animation that goes from `start` to `end` at `speed`
+    pub fn line(start: f32, end: f32, speed: f32) -> Self {
         Self {
-            segments: vec![Seg::To(end, duration)],
+            segments: vec![Seg::To(end, speed)],
             init: start,
             value: start,
             ..default()
         }
     }
-    /// a single curved segment animation from `start` to `end` in `duration` with `f` curve function
-    pub fn curve(start: f32, end: f32, duration: f32, f: fn(f32) -> f32) -> Self {
+    /// a single curved segment animation from `start` to `end` at `speed` with `f` curve function
+    pub fn curve(start: f32, end: f32, speed: f32, f: fn(f32) -> f32) -> Self {
         Self {
-            segments: vec![Seg::Curved(end, duration, f)],
+            segments: vec![Seg::Curved(end, speed, f)],
             init: start,
             value: start,
             ..default()
@@ -676,25 +676,25 @@ impl Anim {
     pub fn tick(&mut self, t: f32) -> Option<f32> {
         if let Some(seg) = self.segments.get(self.current_seg) {
             match seg {
-                Seg::To(target, duration) => {
+                Seg::To(target, speed) => {
                     if self.value == *target {
                         self.step();
                     } else if self.value > *target {
-                        self.value = (self.value - t / *duration).max(*target);
+                        self.value = (self.value - t * *speed).max(*target);
                         return Some(self.value);
                     } else {
-                        self.value = (self.value + t / *duration).min(*target);
+                        self.value = (self.value + t * *speed).min(*target);
                         return Some(self.value);
                     }
                 }
-                Seg::Curved(target, duration, f) => {
+                Seg::Curved(target, speed, f) => {
                     if self.value == *target {
                         self.step();
                     } else if self.value > *target {
-                        self.value = (self.value - t / *duration).max(*target);
+                        self.value = (self.value - t * *speed).max(*target);
                         return Some(f(self.value));
                     } else {
-                        self.value = (self.value + t / *duration).min(*target);
+                        self.value = (self.value + t * *speed).min(*target);
                         return Some(f(self.value));
                     }
                 }

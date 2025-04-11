@@ -50,16 +50,16 @@ fn setup(
             OnHoverSetCursor::new(SystemCursorIcon::Pointer),
         ))
          // on Pointer<Over> events, insert an animation for 'hover' state
-         // (a single linear segment going from 0 to 1 in 0.3 secs with a trigger at the end)
-        .observe(morphing!(Pointer<Over>, "hover", Anim::line(0., 1., 0.3).with_end_trig()))
-        // this will continue to 0 (in 0.8 secs) from the current weight
-        .observe(morphing!(Pointer<Out>, "hover", Anim::line(1., 0., 0.8)))
+         // a single linear segment from 0 to 1 with a speed of 2 units/sec (in 0.5 secs) with a trigger at the end
+        .observe(morphing!(Pointer<Over>, "hover", Anim::line(0., 1., 2.).with_end_trig()))
+        // this will continue to 0 from the current weight (at a speed of 0.5 unit/sec) (1 unit in 2 seconds)
+        .observe(morphing!(Pointer<Out>, "hover", Anim::line(1., 0., 1.0/2.0)))
         // replacing, because we always want to jump to 1 when clicked
         .observe(replacing!(Pointer<Down>, "click",
             // you can insert multiple stage animations
             // go to weight 0 in 1 sec, then back to weight 1 in 0.5 sec
             // starting with a weight of 1
-            Anim::segs(vec![Seg::To(0.,1.), Seg::To(1.,0.5)]).with_init(1.).looping(true)
+            Anim::segs(vec![Seg::To(0., 1.), Seg::To(1.,2.)]).with_init(1.).looping(true)
         ))
         .observe(morphing!(Pointer<Up>, "click",
             Anim::segs(vec![
@@ -68,9 +68,9 @@ fn setup(
                 // delay for 0.2 seconds
                 Seg::Hold(0.2),
                 // then go to 1 in 0.3 with this curve function
-                Seg::Curved(1., 0.3, downarc),
+                Seg::Curved(1., 1.0/0.3, downarc),
                 // and back to 0
-                Seg::Curved(0., 0.3, uparc),
+                Seg::Curved(0., 1.0/0.3, uparc),
                 // send a trigger
                 Seg::Trig
             ])
@@ -157,17 +157,17 @@ fn spawn(
             MeshMaterial2d(materials.add(ColorMaterial::default())),
         ))
 
-        .observe(morphing!(Pointer<Over>, "hover", Anim::line(0., 1., 0.3).with_end_trig()))
-        .observe(morphing!(Pointer<Out>, "hover", Anim::line(1., 0., 0.8)))
+        .observe(morphing!(Pointer<Over>, "hover", Anim::line(0., 1., 1.0/0.3).with_end_trig()))
+        .observe(morphing!(Pointer<Out>, "hover", Anim::line(1., 0., 1.0/0.8)))
         .observe(replacing!(Pointer<Down>, "click",
-            Anim::segs(vec![Seg::To(0.,1.), Seg::To(1.,0.5)]).with_init(1.).looping(true)
+            Anim::segs(vec![Seg::To(0.,1.), Seg::To(1.,2.)]).with_init(1.).looping(true)
         ))
         .observe(morphing!(Pointer<Up>, "click",
             Anim::segs(vec![
                 Seg::To(0., 1.),
                 Seg::Hold(0.2),
-                Seg::Curved(1., 0.3, downarc),
-                Seg::Curved(0., 0.3, uparc),
+                Seg::Curved(1., 1.0/0.3, downarc),
+                Seg::Curved(0., 1.0/0.3, uparc),
                 Seg::Trig
             ])
         ))
