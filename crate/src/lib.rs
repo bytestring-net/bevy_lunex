@@ -640,9 +640,9 @@ impl Anim {
             ..default()
         }
     }
-    /// return this animation with the given `looping` status
-    pub fn looping(mut self, looping: bool) -> Self {
-        self.looping = looping;
+    /// return this animation with looping set to true
+    pub fn looping(mut self) -> Self {
+        self.looping = true;
         self
     }
     /// return this animation with the given `initial` value

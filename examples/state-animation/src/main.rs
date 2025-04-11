@@ -59,7 +59,7 @@ fn setup(
             // you can insert multiple stage animations
             // go to weight 0 in 1 sec, then back to weight 1 in 0.5 sec
             // starting with a weight of 1
-            Anim::segs(vec![Seg::To(0., 1.), Seg::To(1.,2.)]).with_init(1.).looping(true)
+            Anim::segs(vec![Seg::To(0., 1.), Seg::To(1.,2.)]).with_init(1.).looping()
         ))
         .observe(morphing!(Pointer<Up>, "click",
             Anim::segs(vec![
@@ -160,7 +160,7 @@ fn spawn(
         .observe(morphing!(Pointer<Over>, "hover", Anim::line(0., 1., 1.0/0.3).with_end_trig()))
         .observe(morphing!(Pointer<Out>, "hover", Anim::line(1., 0., 1.0/0.8)))
         .observe(replacing!(Pointer<Down>, "click",
-            Anim::segs(vec![Seg::To(0.,1.), Seg::To(1.,2.)]).with_init(1.).looping(true)
+            Anim::segs(vec![Seg::To(0.,1.), Seg::To(1.,2.)]).with_init(1.).looping()
         ))
         .observe(morphing!(Pointer<Up>, "click",
             Anim::segs(vec![
