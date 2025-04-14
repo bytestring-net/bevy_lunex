@@ -35,6 +35,7 @@ pub mod prelude {
 
         UiLayoutRoot,
         UiLayout,
+        UiLayoutType,
         UiDepth,
         UiColor,
 
