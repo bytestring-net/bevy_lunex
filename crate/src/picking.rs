@@ -1,9 +1,7 @@
-use std::cmp::Reverse;
-
-use bevy::math::{FloatExt, FloatOrd};
+use bevy::math::FloatExt;
 use bevy::window::PrimaryWindow;
 use bevy::picking::backend::prelude::*;
-use bevy::picking::{backend::PointerHits, PickingBehavior};
+use bevy::picking::{backend::PointerHits, Pickable};
 
 use crate::*;
 
@@ -20,16 +18,16 @@ impl Plugin for UiLunexPickingPlugin {
     }
 }
 
-/// Checks if any Dimension entities are under a pointer.
-pub fn lunex_picking(
+// Checks if any Dimension entities are under a pointer.
+/* pub fn lunex_picking(
     pointers: Query<(&PointerId, &PointerLocation)>,
-    cameras: Query<(Entity, &Camera, &GlobalTransform, &OrthographicProjection)>,
+    cameras: Query<(Entity, &Camera, &GlobalTransform, &Projection)>,
     primary_window: Query<Entity, With<PrimaryWindow>>,
     sprite_query: Query<(
         Entity,
         &Dimension,
         &GlobalTransform,
-        Option<&PickingBehavior>,
+        Option<&Pickable>,
         &ViewVisibility,
     )>,
     mut output: EventWriter<PointerHits>,
@@ -44,7 +42,7 @@ pub fn lunex_picking(
 
     sorted_sprites.sort_by_key(|x| Reverse(FloatOrd(x.2.translation().z)));
 
-    let primary_window = primary_window.get_single().ok();
+    let primary_window = primary_window.single().ok();
 
     for (pointer, location) in pointers.iter().filter_map(|(pointer, pointer_location)| {
         pointer_location.location().map(|loc| (pointer, loc))
@@ -145,9 +143,9 @@ pub fn lunex_picking(
         let order = camera.order as f32;
         output.send(PointerHits::new(*pointer, picks, order));
     }
-}
+} */
 
-/* /// Checks if any Dimension entities are under a pointer
+/// Checks if any Dimension entities are under a pointer
 fn lunex_picking(
     pointers: Query<(&PointerId, &PointerLocation)>,
     cameras: Query<(Entity, &Camera, &GlobalTransform, &Projection)>,
@@ -156,7 +154,7 @@ fn lunex_picking(
         Entity,
         &Dimension,
         &GlobalTransform,
-        Option<&PickingBehavior>,
+        Option<&Pickable>,
         &ViewVisibility,
     )>,
     mut output: EventWriter<PointerHits>,
@@ -174,7 +172,7 @@ fn lunex_picking(
         -transform.translation().z
     });
 
-    let primary_window = primary_window.get_single().ok();
+    let primary_window = primary_window.single().ok();
 
     for (pointer, location) in pointers.iter().filter_map(|(pointer, pointer_location)| {
         pointer_location.location().map(|loc| (pointer, loc))
@@ -255,6 +253,6 @@ fn lunex_picking(
             .collect();
 
         let order = camera.order as f32;
-        output.send(PointerHits::new(*pointer, picks, order));
+        output.write(PointerHits::new(*pointer, picks, order));
     }
-} */
+}
