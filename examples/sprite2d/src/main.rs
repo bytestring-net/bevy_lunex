@@ -3,7 +3,7 @@ use bevy_lunex::prelude::*;
 
 fn main() -> AppExit {
     App::new()
-        .add_plugins((DefaultPlugins, UiLunexPlugins, UiLunexDebugPlugin::<0, 0>))
+        .add_plugins((DefaultPlugins, UiLunexPlugins::<0>, UiLunexDebugPlugin::<0, 0>))
         .add_systems(Startup, setup)
         .run()
 }

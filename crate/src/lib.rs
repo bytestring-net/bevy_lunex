@@ -1157,8 +1157,8 @@ pub struct LunexGizmoGroup3d;
 
 /// This plugin is used for the main logic.
 #[derive(Debug, Default, Clone)]
-pub struct UiLunexPlugin;
-impl Plugin for UiLunexPlugin {
+pub struct UiLunexPlugin<const INDEX: usize>;
+impl<const INDEX: usize> Plugin for UiLunexPlugin<INDEX> {
     fn build(&self, app: &mut App) {
 
         // Configure the system set
@@ -1220,7 +1220,7 @@ impl Plugin for UiLunexPlugin {
         app.add_plugins((
             CursorPlugin,
             UiLunexStatePlugin,
-            UiLunexPickingPlugin,
+            UiLunexPickingPlugin::<INDEX>,
             UiLunexIndexPlugin::<0>,
             UiLunexIndexPlugin::<1>,
             UiLunexIndexPlugin::<2>,
@@ -1264,7 +1264,7 @@ impl <const GIZMO_2D_LAYER: usize, const GIZMO_3D_LAYER: usize> Plugin for UiLun
 /// This plugin is used to register index components.
 #[derive(Debug, Default, Clone)]
 pub struct UiLunexIndexPlugin<const INDEX: usize>;
-impl <const INDEX: usize> Plugin for UiLunexIndexPlugin<INDEX> {
+impl<const INDEX: usize> Plugin for UiLunexIndexPlugin<INDEX> {
     fn build(&self, app: &mut App) {
         app.add_systems(PostUpdate, (
             system_fetch_dimension_from_camera::<INDEX>,
@@ -1275,8 +1275,8 @@ impl <const INDEX: usize> Plugin for UiLunexIndexPlugin<INDEX> {
 
 
 /// Plugin group adding all necessary plugins for Lunex
-pub struct UiLunexPlugins;
-impl PluginGroup for UiLunexPlugins {
+pub struct UiLunexPlugins<const INDEX: usize>;
+impl<const INDEX: usize> PluginGroup for UiLunexPlugins<INDEX> {
     fn build(self) -> PluginGroupBuilder {
         let mut builder = PluginGroupBuilder::start::<Self>();
 
@@ -1289,7 +1289,7 @@ impl PluginGroup for UiLunexPlugins {
         }
 
         // Add Lunex plugin
-        builder = builder.add(UiLunexPlugin);
+        builder = builder.add(UiLunexPlugin::<INDEX>);
 
         // Return the plugin group
         builder
