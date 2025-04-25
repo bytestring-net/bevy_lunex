@@ -451,30 +451,6 @@ fn system_cursor_mouse_send_pick_events(
             // Send mouse click events
             for input in mouse_inputs.read() {
 
-                /* // Which button trigger
-                let button = match input.button {
-                    MouseButton::Left => PointerButton::Primary,
-                    MouseButton::Right => PointerButton::Secondary,
-                    MouseButton::Middle => PointerButton::Middle,
-                    MouseButton::Other(_) | MouseButton::Back | MouseButton::Forward => continue,
-                };
-
-                // Which state to change
-                let direction = match input.state {
-                    ButtonState::Pressed => PressDirection::Down,
-                    ButtonState::Released => PressDirection::Up,
-                };
-
-                // Send out the event
-                pointer_output.write(PointerInput::new(
-                    PointerId::Mouse,
-                    Location {
-                        target: location.target.clone(),
-                        position: location.position,
-                    },
-                    PointerAction::Pressed { direction, button },
-                )); */
-
                 // Which state to change
                 match input.state {
                     ButtonState::Pressed => {
