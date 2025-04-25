@@ -844,6 +844,7 @@ impl UiValueEvaluate<f32> for UiValue<f32> {
         if let Some(v) = self.rh { out += (v/100.0) * parent_size }
         if let Some(v) = self.em { out += v * font_size }
         if let Some(v) = self.vp { out += (v/100.0) * viewport_size }
+        if let Some(v) = self.vw { out += (v/100.0) * viewport_size }
         if let Some(v) = self.vh { out += (v/100.0) * viewport_size }
         out
     }
@@ -856,7 +857,8 @@ impl UiValueEvaluate<Vec2> for UiValue<Vec2> {
         if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
         if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
         if let Some(v) = self.em { out += v * font_size }
-        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size }
+        if let Some(v) = self.vw { out += (v/100.0) * viewport_size.x }
         if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
         out
     }
@@ -869,7 +871,8 @@ impl UiValueEvaluate<Vec3> for UiValue<Vec3> {
         if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
         if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
         if let Some(v) = self.em { out += v * font_size }
-        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size }
+        if let Some(v) = self.vw { out += (v/100.0) * viewport_size.x }
         if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
         out
     }
@@ -882,7 +885,8 @@ impl UiValueEvaluate<Vec4> for UiValue<Vec4> {
         if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
         if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
         if let Some(v) = self.em { out += v * font_size }
-        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size }
+        if let Some(v) = self.vw { out += (v/100.0) * viewport_size.x }
         if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
         out
     }
