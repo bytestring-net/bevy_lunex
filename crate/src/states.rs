@@ -138,14 +138,14 @@ fn observer_state_hover_set(
     trigger: Trigger<UiHoverSet>,
     mut query: Query<&mut UiHover>,
 ) {
-    if let Ok(mut hover) = query.get_mut(trigger.entity()) {
+    if let Ok(mut hover) = query.get_mut(trigger.target()) {
         hover.enable = trigger.0;
     }
 }
 
 /// Utility observer that triggers the [`UiHoverSet`] event on triggered event.
 pub fn hover_set<E: Event, const BOOL: bool>(trigger: Trigger<E>, mut commands: Commands) {
-    commands.trigger_targets(UiHoverSet(BOOL), trigger.entity());
+    commands.trigger_targets(UiHoverSet(BOOL), trigger.target());
 }
 
 
@@ -211,8 +211,8 @@ pub fn default_linear_curve() -> fn(f32) -> f32 { |v| {v} }
 
 /// This observer will listen for said event and duplicate it to it's children
 fn observer_event_duplicator<E: Event + Copy>(trigger: Trigger<E>, mut commands: Commands, mut query: Query<&Children>) {
-    if let Ok(children) = query.get_mut(trigger.entity()) {
-        let targets: Vec<Entity> = children.iter().copied().collect();
+    if let Ok(children) = query.get_mut(trigger.target()) {
+        let targets: Vec<Entity> = children.iter().collect();
         commands.trigger_targets(*trigger.event(), targets);
     }
 }

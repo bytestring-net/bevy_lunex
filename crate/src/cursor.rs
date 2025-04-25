@@ -1,5 +1,5 @@
 use crate::*;
-use bevy::{input::{gamepad::GamepadButtonChangedEvent, mouse::MouseButtonInput, ButtonState}, picking::{pointer::{Location, PointerAction, PointerId, PointerInput, PointerLocation, PressDirection}, PickSet}, render::camera::{NormalizedRenderTarget, RenderTarget}, utils::HashMap, window::{PrimaryWindow, SystemCursorIcon, WindowRef}, winit::cursor::CursorIcon};
+use bevy::{input::{gamepad::GamepadButtonChangedEvent, mouse::MouseButtonInput, ButtonState}, picking::{pointer::{Location, PointerAction, PointerId, PointerInput, PointerLocation}, PickSet}, render::camera::{NormalizedRenderTarget, RenderTarget}, platform::collections::HashMap, window::{PrimaryWindow, SystemCursorIcon, WindowRef}, winit::cursor::CursorIcon};
 
 // Exported prelude
 pub mod prelude {
@@ -80,7 +80,7 @@ fn system_cursor_icon_queue_apply(
                 if let Some(mut window_cursor) = window_cursor_option {
                     #[allow(clippy::single_match)]
                     match window_cursor.as_mut() {
-                        CursorIcon::System(ref mut previous) => {
+                        CursorIcon::System(previous) => {
                             if *previous != data.top_request {
                                 *previous = data.top_request;
                             }
@@ -138,6 +138,7 @@ fn system_cursor_icon_queue_purge(
 
 /// Requests cursor icon on hover
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
+#[require(Pickable::default())]
 pub struct OnHoverSetCursor {
     /// SoftwareCursor type to request on hover
     pub cursor: SystemCursorIcon,
@@ -196,7 +197,7 @@ fn observer_cursor_cancel_cursor_icon(mut trigger: Trigger<Pointer<Out>>, mut po
 
 /// Component for creating software mouse.
 #[derive(Component, Reflect, Clone, PartialEq, Debug, Default)]
-#[require(PointerId, PickingBehavior(|| PickingBehavior::IGNORE))]
+#[require(PointerId, Pickable = Pickable::IGNORE)]
 pub struct SoftwareCursor {
     /// Indicates which cursor is being requested.
     cursor_request: SystemCursorIcon,
@@ -353,15 +354,15 @@ fn system_cursor_gamepad_move(
 /// This system will move the mouse cursor.
 fn system_cursor_mouse_move(
     windows: Query<&Window, With<PrimaryWindow>>,
-    cameras: Query<&OrthographicProjection>,
-    mut query: Query<(&mut SoftwareCursor, Option<&Parent>), Without<GamepadCursor>>
+    cameras: Query<&Projection>,
+    mut query: Query<(&mut SoftwareCursor, Option<&ChildOf>), Without<GamepadCursor>>
 ) {
-    if let Ok(window) = windows.get_single() {
+    if let Ok(window) = windows.single() {
         for (mut cursor, parent_option) in &mut query {
             if let Some(position) = window.cursor_position() {
                 // Get projection scale to account for zoomed cameras
                 let scale = if let Some(parent) = parent_option {
-                    if let Ok(projection) = cameras.get(**parent) { projection.scale } else { 1.0 }
+                    if let Ok(Projection::Orthographic(projection)) = cameras.get(parent.parent()) { projection.scale } else { 1.0 }
                 } else { 1.0 };
 
                 // Compute the cursor position
@@ -394,7 +395,7 @@ fn system_cursor_move_pointer(
     windows: Query<(Entity, &Window), With<PrimaryWindow>>,
     mut query: Query<(&mut PointerLocation, &SoftwareCursor)>,
 ) {
-    if let Ok((win_entity, window)) = windows.get_single() {
+    if let Ok((win_entity, window)) = windows.single() {
         for (mut pointer, cursor) in query.iter_mut() {
             // Change the pointer location
             pointer.location = Some(Location {
@@ -422,13 +423,13 @@ fn system_cursor_send_move_events(
             let last = cursor_last.get(pointer).unwrap_or(&Vec2::ZERO);
             if *last == location.position { continue; }
 
-            pointer_output.send(PointerInput::new(
+            pointer_output.write(PointerInput::new(
                 *pointer,
                 Location {
                     target: location.target.clone(),
                     position: location.position,
                 },
-                PointerAction::Moved {
+                PointerAction::Move {
                     delta: location.position - *last,
                 },
             ));
@@ -450,29 +451,41 @@ fn system_cursor_mouse_send_pick_events(
             // Send mouse click events
             for input in mouse_inputs.read() {
 
-                // Which button trigger
-                let button = match input.button {
-                    MouseButton::Left => PointerButton::Primary,
-                    MouseButton::Right => PointerButton::Secondary,
-                    MouseButton::Middle => PointerButton::Middle,
-                    MouseButton::Other(_) | MouseButton::Back | MouseButton::Forward => continue,
-                };
-
                 // Which state to change
-                let direction = match input.state {
-                    ButtonState::Pressed => PressDirection::Down,
-                    ButtonState::Released => PressDirection::Up,
-                };
-
-                // Send out the event
-                pointer_output.send(PointerInput::new(
-                    PointerId::Mouse,
-                    Location {
-                        target: location.target.clone(),
-                        position: location.position,
+                match input.state {
+                    ButtonState::Pressed => {
+                        // Send out the event
+                        pointer_output.write(PointerInput::new(
+                            PointerId::Mouse,
+                            Location {
+                                target: location.target.clone(),
+                                position: location.position,
+                            },
+                            PointerAction::Press(match input.button {
+                                MouseButton::Left => PointerButton::Primary,
+                                MouseButton::Right => PointerButton::Secondary,
+                                MouseButton::Middle => PointerButton::Middle,
+                                MouseButton::Other(_) | MouseButton::Back | MouseButton::Forward => continue,
+                            }),
+                        ));
                     },
-                    PointerAction::Pressed { direction, button },
-                ));
+                    ButtonState::Released => {
+                        // Send out the event
+                        pointer_output.write(PointerInput::new(
+                            PointerId::Mouse,
+                            Location {
+                                target: location.target.clone(),
+                                position: location.position,
+                            },
+                            PointerAction::Release(match input.button {
+                                MouseButton::Left => PointerButton::Primary,
+                                MouseButton::Right => PointerButton::Secondary,
+                                MouseButton::Middle => PointerButton::Middle,
+                                MouseButton::Other(_) | MouseButton::Back | MouseButton::Forward => continue,
+                            }),
+                        ));
+                    },
+                };
             }
         }
     }
@@ -491,29 +504,42 @@ fn system_cursor_gamepad_send_pick_events(
             // Send mouse click events
             for input in mouse_inputs.read() {
 
-                // Which button trigger
-                let button = match input.button {
-                    GamepadButton::South => PointerButton::Primary,
-                    GamepadButton::East => PointerButton::Secondary,
-                    GamepadButton::West => PointerButton::Middle,
-                    _ => continue,
-                };
 
                 // Which state to change
-                let direction = match input.state {
-                    ButtonState::Pressed => PressDirection::Down,
-                    ButtonState::Released => PressDirection::Up,
-                };
-
-                // Send out the event
-                pointer_output.send(PointerInput::new(
-                    PointerId::Mouse,
-                    Location {
-                        target: location.target.clone(),
-                        position: location.position,
+                match input.state {
+                    ButtonState::Pressed => {
+                        // Send out the event
+                        pointer_output.write(PointerInput::new(
+                            PointerId::Mouse,
+                            Location {
+                                target: location.target.clone(),
+                                position: location.position,
+                            },
+                            PointerAction::Press(match input.button {
+                                GamepadButton::South => PointerButton::Primary,
+                                GamepadButton::East => PointerButton::Secondary,
+                                GamepadButton::West => PointerButton::Middle,
+                                _ => continue,
+                            }),
+                        ));
                     },
-                    PointerAction::Pressed { direction, button },
-                ));
+                    ButtonState::Released => {
+                        // Send out the event
+                        pointer_output.write(PointerInput::new(
+                            PointerId::Mouse,
+                            Location {
+                                target: location.target.clone(),
+                                position: location.position,
+                            },
+                            PointerAction::Release(match input.button {
+                                GamepadButton::South => PointerButton::Primary,
+                                GamepadButton::East => PointerButton::Secondary,
+                                GamepadButton::West => PointerButton::Middle,
+                                _ => continue,
+                            }),
+                        ));
+                    },
+                };
             }
         }
     }
@@ -547,7 +573,7 @@ impl Plugin for CursorPlugin {
                 system_cursor_send_move_events,
                 system_cursor_mouse_send_pick_events,
                 system_cursor_gamepad_send_pick_events,
-                apply_deferred
+                ApplyDeferred
             ).chain().in_set(PickSet::Input))
 
             // Add core systems
