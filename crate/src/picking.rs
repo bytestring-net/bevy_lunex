@@ -33,7 +33,7 @@ fn lunex_2d_picking(
         Entity,
         &Dimension,
         &GlobalTransform,
-        &Pickable,
+        Option<&Pickable>,
         &ViewVisibility,
     )>,
     mut output: EventWriter<PointerHits>,
@@ -126,7 +126,8 @@ fn lunex_2d_picking(
                 let rect = Rect::from_center_size(Vec2::ZERO, **dimension);
                 let is_cursor_in_sprite = rect.contains(cursor_pos_sprite);
                 
-                blocked = is_cursor_in_sprite && pickable.should_block_lower;
+                blocked =
+                    is_cursor_in_sprite && pickable.map(|p| p.should_block_lower).unwrap_or(true);
 
                 is_cursor_in_sprite.then(|| {
                     let hit_pos_world =
