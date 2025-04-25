@@ -53,6 +53,8 @@ fn setup(
                 UiLayout::solid().size((Ab(1920.0), Ab(1080.0))).pack(),
                 // Give it some material
                 Sprite::from_image(asset_server.load("background.png")),
+                // Make this pickable
+                Pickable::default(),
                 // On hover change the cursor to this
                 OnHoverSetCursor::new(SystemCursorIcon::Pointer),
             ));
