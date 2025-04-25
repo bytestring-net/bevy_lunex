@@ -138,6 +138,7 @@ fn system_cursor_icon_queue_purge(
 
 /// Requests cursor icon on hover
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
+#[require(Pickable::default())]
 pub struct OnHoverSetCursor {
     /// SoftwareCursor type to request on hover
     pub cursor: SystemCursorIcon,

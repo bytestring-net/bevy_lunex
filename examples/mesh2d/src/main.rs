@@ -55,8 +55,6 @@ fn setup(
                 UiMeshPlane2d,
                 // Give it some material
                 MeshMaterial2d(materials.add(Color::srgb(1.0, 0.5, 0.5))),
-                // Make this pickable
-                Pickable::default(),
                 // On hover change the cursor to this
                 OnHoverSetCursor::new(SystemCursorIcon::Pointer),
             ));
