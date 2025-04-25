@@ -61,14 +61,11 @@ ui.spawn((
 
 > [!NOTE]
 > `bevy_rich_text3d` works a bit differently than `bevy_text`. When styling a text, you don't provide a font handle.
-> Instead, the font must be loaded inside a `Text3dPlugin` when creating the plugin.
+> Instead, the font must be loaded into a `fontdb` through a resource and then you can reference it by using the font name.
 > 
 > ```rust, noplayground
-> UiLunexPlugins.set(Text3dPlugin {
->     // If we use custom fonts we need to load them here.
->     load_font_directories: vec!["assets/fonts".to_owned()],
->     // Load system fonts.
->     load_system_fonts: true,
+> .insert_resource(LoadFonts {
+>     font_directories: vec!["assets/fonts".to_owned()],
 >     ..default()
 > })
 > ```
