@@ -3,7 +3,7 @@
 Blazingly fast retained ***layout engine*** for Bevy entities, built around vanilla **Bevy ECS**. It gives you the ability to make ***your own custom UI*** using regular ECS like every other part of your app.
 
 > [!IMPORTANT]
-> This book is made for version `0.3.X` of `Bevy_Lunex`
+> This book is made for version `^0.4` of `Bevy_Lunex`
 
 > [!NOTE]
 > This crate is being maintained by a university student. Don't expect updates during the semester.
