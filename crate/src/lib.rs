@@ -5,6 +5,7 @@
 pub(crate) use std::any::TypeId;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::app::PluginGroupBuilder;
+use bevy::render::view::{self, VisibilityClass};
 pub(crate) use bevy::sprite::Anchor;
 pub(crate) use bevy::text::TextLayoutInfo;
 pub(crate) use bevy::platform::collections::HashMap;
@@ -178,7 +179,8 @@ impl CameraTextureRenderConstructor for Camera {
 /// # }
 /// ```
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
-#[require(Visibility, Transform, Dimension)]
+#[require(Visibility, Transform, Dimension, VisibilityClass)]
+#[component(on_add = view::add_visibility_class::<UiLayoutRoot>)]
 pub struct UiLayoutRoot {
     abs_scale: f32,
 }
@@ -415,7 +417,8 @@ pub fn system_debug_print_data(
 /// # }
 /// ```
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
-#[require(Visibility, Transform, Dimension, UiState, UiDepth)]
+#[require(Visibility, Transform, Dimension, VisibilityClass, UiState, UiDepth)]
+#[component(on_add = view::add_visibility_class::<UiLayout>)]
 pub struct UiLayout {
     /// Stored layout per state
     pub layouts: HashMap<TypeId, UiLayoutType>
