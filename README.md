@@ -2,7 +2,7 @@
 
 <div align="center">
   <a href="https://crates.io/crates/bevy_lunex"><img src="https://img.shields.io/crates/v/bevy_lunex?label=version&color=d69039"></a>
-  <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.15.X-white.svg?label=bevy&color=bb86a5"></a>
+  <a href="https://crates.io/crates/bevy"><img src="https://img.shields.io/badge/v0.16-white.svg?label=bevy&color=bb86a5"></a>
   <a href="./LICENSE-MIT"><img src="https://img.shields.io/badge/License-Apache/MIT-white.svg?label=license&color=9fcec4"></a>
   <a href="https://deps.rs/crate/bevy_lunex"><img src="https://img.shields.io/badge/check-white.svg?label=deps&color=a0f6b9"></a>
   <a href="https://docs.rs/bevy_lunex"><img src="https://img.shields.io/docsrs/bevy_lunex/latest?color=8df7cb"></a>
@@ -70,11 +70,11 @@ commands.spawn((
             Sprite {
                 image: asset_server.load("images/button.png"),
                 // Here we enable sprite slicing
-                image_mode: SpriteImageMode::Sliced(TextureSlicer { border: BorderRect::square(32.0), ..default() }),
+                image_mode: SpriteImageMode::Sliced(TextureSlicer { border: BorderRect::all(32.0), ..default() }),
                 ..default()
             },
             // Make sure it does not cover the bounding zone of parent
-            PickingBehavior::IGNORE,
+            Pickable::IGNORE,
         )).with_children(|ui| {
 
             // Spawn a text child node
@@ -96,7 +96,7 @@ commands.spawn((
                     ..default()
                 },
                 // Make sure it does not cover the bounding zone of parent
-                PickingBehavior::IGNORE,
+                Pickable::IGNORE,
             ));
         });
     })
@@ -105,7 +105,7 @@ commands.spawn((
     .observe(hover_set::<Pointer<Out>, false>)
     // Interactivity is done through observers, you can query anything here
     .observe(|_: Trigger<Pointer<Click>>| {
-        // ... Do something on click
+        println!("I was clicked!");
     });
 });
 ```

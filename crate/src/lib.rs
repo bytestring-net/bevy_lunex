@@ -822,9 +822,9 @@ pub fn system_text_size_from_dimension(
 /// This system takes updated [`TextLayoutInfo`] data and overwrites coresponding [`UiLayout`] data to match the text size.
 pub fn system_text_size_to_layout(
     mut commands: Commands,
-    mut query: Query<(&mut UiLayout, &TextLayoutInfo, &UiTextSize), Changed<TextLayoutInfo>>,
+    mut query: Query<(&mut UiLayout, &Text2d, &TextLayoutInfo, &UiTextSize), Changed<TextLayoutInfo>>,
 ) {
-    for (mut layout, text_info, text_size) in &mut query {
+    for (mut layout, text, text_info, text_size) in &mut query {
         // Wait for text to render
         if text_info.size.y == 0.0 {
             commands.trigger(RecomputeUiLayout);
@@ -833,8 +833,9 @@ pub fn system_text_size_to_layout(
         // Create the text layout
         match layout.layouts.get_mut(&UiBase::id()).expect("UiBase state not found for Text") {
             UiLayoutType::Window(window) => {
-                window.set_height(**text_size);
-                window.set_width(**text_size * (text_info.size.x / text_info.size.y));
+                let lines = 1 + text.trim().matches('\n').count();
+                window.set_height(**text_size * (lines as f32));
+                window.set_width(**text_size * (lines as f32) * (text_info.size.x / text_info.size.y));
             },
             UiLayoutType::Solid(solid) => {
                 solid.set_size(Ab(text_info.size));
@@ -850,9 +851,9 @@ pub fn system_text_size_to_layout(
 #[cfg(feature = "text3d")]
 pub fn system_text_3d_size_to_layout(
     mut commands: Commands,
-    mut query: Query<(&mut UiLayout, &Text3dDimensionOut, &UiTextSize), Changed<Text3dDimensionOut>>,
+    mut query: Query<(&mut UiLayout, &Text3d, &Text3dDimensionOut, &UiTextSize), Changed<Text3dDimensionOut>>,
 ) {
-    for (mut layout, text_info, text_size) in &mut query {
+    for (mut layout, text, text_info, text_size) in &mut query {
         // Wait for text to render
         if text_info.dimension.y == 0.0 {
             commands.trigger(RecomputeUiLayout);
@@ -862,8 +863,11 @@ pub fn system_text_3d_size_to_layout(
         // Create the text layout
         match layout.layouts.get_mut(&UiBase::id()).expect("UiBase state not found for Text") {
             UiLayoutType::Window(window) => {
-                window.set_height(**text_size);
-                window.set_width(**text_size * (text_info.dimension.x / text_info.dimension.y));
+                let lines = 1 + text.get_single()
+                    .expect("Multisegment 3D text not supported, make a PR to Lunex if you need it")
+                    .trim().matches('\n').count();
+                window.set_height(**text_size * (lines as f32));
+                window.set_width(**text_size * (lines as f32) * (text_info.dimension.x / text_info.dimension.y));
             },
             UiLayoutType::Solid(solid) => {
                 solid.set_size(Ab(text_info.dimension));
