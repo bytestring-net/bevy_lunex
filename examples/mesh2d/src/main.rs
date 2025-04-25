@@ -57,7 +57,10 @@ fn setup(
                 MeshMaterial2d(materials.add(Color::srgb(1.0, 0.5, 0.5))),
                 // On hover change the cursor to this
                 OnHoverSetCursor::new(SystemCursorIcon::Pointer),
-            ));
+            ))
+            .observe(|_: Trigger<Pointer<Out>>| info!("Moving out!") )
+            .observe(|_: Trigger<Pointer<Over>>| info!("Moving in!") )
+            .observe(|_: Trigger<Pointer<Click>>| info!("Click!") );
         });
     });
 }
