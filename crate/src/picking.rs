@@ -90,7 +90,7 @@ fn lunex_2d_picking(
 
         let picks: Vec<(Entity, HitData)> = sorted_nodes
             .iter()
-            .cloned()
+            .copied()
             .filter_map(|(entity, dimension, node_transform, pickable)| {
                 if blocked {
                     return None;
