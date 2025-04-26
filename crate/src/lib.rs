@@ -851,7 +851,7 @@ macro_rules! replacing {
     ( $event:ty, $state:literal, $anim:expr ) => {
         {
             |t: Trigger<$event>, mut q: Query<&mut UiStateAnimation>| {
-                if let Ok(mut anims) = q.get_mut(t.entity()) {
+                if let Ok(mut anims) = q.get_mut(t.target()) {
                     anims.insert($state, $anim);
                 }
             }
@@ -866,7 +866,7 @@ macro_rules! morphing {
     ( $event:ty, $state:literal, $new_anim:expr ) => {
         {
             |t: Trigger<$event>, mut q: Query<&mut UiStateAnimation>| {
-                if let Ok(mut anims) = q.get_mut(t.entity()) {
+                if let Ok(mut anims) = q.get_mut(t.target()) {
                     if let Some(anim) = anims.get_mut($state) {
                         anim.segments = $new_anim.segments;
                         anim.init = $new_anim.init;

@@ -48,6 +48,13 @@ fn setup(
             UiMeshPlane2d,
             MeshMaterial2d(materials.add(ColorMaterial::default())),
             OnHoverSetCursor::new(SystemCursorIcon::Pointer),
+            children![(
+                Name::new("text"),
+                Pickable::IGNORE,
+                UiLayout::window().size(Rl(100.)).pack(),
+                Text2d::new("hover me!"),
+                TextFont::from_font_size(100.),
+            )],
         ))
          // on Pointer<Over> events, insert an animation for 'hover' state
          // a single linear segment from 0 to 1 with a speed of 2 units/sec (in 0.5 secs) with a trigger at the end
@@ -55,13 +62,13 @@ fn setup(
         // this will continue to 0 from the current weight (at a speed of 0.5 unit/sec) (1 unit in 2 seconds)
         .observe(morphing!(Pointer<Out>, "hover", Anim::line(1., 0., 1.0/2.0)))
         // replacing, because we always want to jump to 1 when clicked
-        .observe(replacing!(Pointer<Down>, "click",
+        .observe(replacing!(Pointer<Pressed>, "click",
             // you can insert multiple stage animations
             // go to weight 0 in 1 sec, then back to weight 1 in 0.5 sec
             // starting with a weight of 1
             Anim::segs(vec![Seg::To(0., 1.), Seg::To(1.,2.)]).with_init(1.).looping()
         ))
-        .observe(morphing!(Pointer<Up>, "click",
+        .observe(morphing!(Pointer<Released>, "click",
             Anim::segs(vec![
                 // in 1 sec, go to weight 0
                 Seg::To(0., 1.),
@@ -76,23 +83,14 @@ fn setup(
             ])
         ))
         .observe(print)
-        .observe(spawn_after_hover)
-        .with_children(|ui| {
-            ui.spawn((
-                Name::new("text"),
-                PickingBehavior::IGNORE,
-                UiLayout::window().size(Rl(100.)).pack(),
-                Text2d::new("hover me!"),
-                TextFont::from_font_size(100.),
-            ));
-        });
+        .observe(spawn_after_hover);
     });
 }
 
 fn print(
     trig: Trigger<AnimTrig>,
 ) {
-    info!("reached Trig point in animation of '{}' for entity {}", trig.event().0, trig.entity());
+    info!("reached Trig point in animation of '{}' for entity {}", trig.event().0, trig.target());
 }
 
 fn spawn_after_hover(
@@ -100,7 +98,7 @@ fn spawn_after_hover(
     mut writer: EventWriter<SpawnEvent>,
 ) {
     if trig.event().0 == "hover" {
-        writer.send(SpawnEvent);
+        writer.write(SpawnEvent);
     }
 }
 
@@ -109,7 +107,7 @@ fn despawn_after_click(
     mut commands: Commands,
 ) {
     if trig.event().0 == "click" {
-        commands.entity(trig.entity()).despawn_recursive();
+        commands.entity(trig.target()).despawn();
     }
 }
 
@@ -155,14 +153,22 @@ fn spawn(
             ]),
             UiMeshPlane2d,
             MeshMaterial2d(materials.add(ColorMaterial::default())),
+            ChildOf(query.single().unwrap()),
+            children![(
+                Name::new("text"),
+                Pickable::IGNORE,
+                UiLayout::window().size(Rl(100.)).pack(),
+                Text2d::new("click me!"),
+                TextFont::from_font_size(100.),
+            )],
         ))
 
         .observe(morphing!(Pointer<Over>, "hover", Anim::line(0., 1., 1.0/0.3).with_end_trig()))
         .observe(morphing!(Pointer<Out>, "hover", Anim::line(1., 0., 1.0/0.8)))
-        .observe(replacing!(Pointer<Down>, "click",
+        .observe(replacing!(Pointer<Pressed>, "click",
             Anim::segs(vec![Seg::To(0.,1.), Seg::To(1.,2.)]).with_init(1.).looping()
         ))
-        .observe(morphing!(Pointer<Up>, "click",
+        .observe(morphing!(Pointer<Released>, "click",
             Anim::segs(vec![
                 Seg::To(0., 1.),
                 Seg::Hold(0.2),
@@ -172,19 +178,7 @@ fn spawn(
             ])
         ))
         .observe(print)
-        .observe(despawn_after_click)
-
-        .set_parent(query.single())
-
-        .with_children(|ui| {
-            ui.spawn((
-                Name::new("text"),
-                PickingBehavior::IGNORE,
-                UiLayout::window().size(Rl(100.)).pack(),
-                Text2d::new("click me!"),
-                TextFont::from_font_size(100.),
-            ));
-        });
+        .observe(despawn_after_click);
     }
 }
 
