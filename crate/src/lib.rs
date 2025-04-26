@@ -4,9 +4,10 @@
 // Imports for this crate
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::app::PluginGroupBuilder;
-pub(crate) use bevy::sprite::{SpriteSource, Anchor};
+use bevy::render::view::{self, VisibilityClass};
+pub(crate) use bevy::sprite::Anchor;
 pub(crate) use bevy::text::TextLayoutInfo;
-pub(crate) use bevy::utils::HashMap;
+pub(crate) use bevy::platform::collections::HashMap;
 pub(crate) use bevy::render::view::RenderLayers;
 pub(crate) use colored::Colorize;
 #[cfg(feature = "text3d")]
@@ -141,7 +142,7 @@ pub trait CameraTextureRenderConstructor {
     fn clear_render_to(handle: Handle<Image>) -> Camera {
         use bevy::render::camera::RenderTarget;
         Camera {
-            target: RenderTarget::Image(handle),
+            target: RenderTarget::Image(handle.into()),
             clear_color: ClearColorConfig::Custom(Color::srgba(0.0, 0.0, 0.0, 0.0)),
             ..default()
         }
@@ -180,7 +181,8 @@ impl CameraTextureRenderConstructor for Camera {
 /// # }
 /// ```
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
-#[require(Visibility, Transform, Dimension)]
+#[require(Visibility, Transform, Dimension, VisibilityClass)]
+#[component(on_add = view::add_visibility_class::<UiLayoutRoot>)]
 pub struct UiLayoutRoot {
     abs_scale: f32,
 }
@@ -208,7 +210,7 @@ pub fn system_mark_3d(
     for (is_root_3d, root_children) in &root_query {
 
         // Stack-based traversal
-        let mut stack: Vec<(Entity, usize)> = root_children.iter().map(|&child| (child, 1)).rev().collect();
+        let mut stack: Vec<(Entity, usize)> = root_children.iter().map(|child| (child, 1)).rev().collect();
 
         // Loop over the stack
         while let Some((current_entity, depth)) = stack.pop() {
@@ -226,7 +228,7 @@ pub fn system_mark_3d(
 
                 // Push children to the stack
                 if let Some(node_children) = node_children_option {
-                    for &child in node_children.iter().rev() {
+                    for child in node_children.iter().rev() {
                         stack.push((child, depth + 1));
                     }
                 }
@@ -299,7 +301,7 @@ pub fn system_debug_print_data(
         let mut stack: Vec<(Entity, usize, bool)> = root_children
             .iter()
             .enumerate()
-            .map(|(i, &child)| (child, 1, i == root_children.len() - 1)) // Track last-child flag
+            .map(|(i, child)| (child, 1, i == root_children.len() - 1)) // Track last-child flag
             .rev()
             .collect();
 
@@ -374,7 +376,7 @@ pub fn system_debug_print_data(
 
                 if let Some(node_children) = node_children_option {
                     let child_count = node_children.len();
-                    for (i, &child) in node_children.iter().enumerate().rev() {
+                    for (i, child) in node_children.iter().enumerate().rev() {
                         stack.push((child, depth + 1, i == child_count - 1));
                     }
                 }
@@ -417,7 +419,8 @@ pub fn system_debug_print_data(
 /// # }
 /// ```
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
-#[require(Visibility, SpriteSource, Transform, Dimension, UiState, UiDepth)]
+#[require(Visibility, Transform, Dimension, VisibilityClass, UiState, UiDepth)]
+#[component(on_add = view::add_visibility_class::<UiLayout>)]
 pub struct UiLayout {
     /// Stored layout per state
     pub layouts: HashMap<&'static str, UiLayoutType>
@@ -527,7 +530,7 @@ pub fn system_layout_compute(
         };
 
         // Stack-based traversal
-        let mut stack: Vec<(Entity, Rectangle2D, f32)> = root_children.iter().map(|&child| (child, root_rectangle, 0.0)).rev().collect();
+        let mut stack: Vec<(Entity, Rectangle2D, f32)> = root_children.iter().map(|child| (child, root_rectangle, 0.0)).rev().collect();
 
         while let Some((current_entity, parent_rectangle, depth)) = stack.pop() {
             if let Ok((node_layout, node_depth, node_state, mut node_transform, mut node_dimension, node_children_option)) = node_query.get_mut(current_entity) {
@@ -575,7 +578,7 @@ pub fn system_layout_compute(
 
                 if let Some(node_children) = node_children_option {
                     // Add children to the stack
-                    stack.extend(node_children.iter().map(|&child| (child, node_rectangle, depth)));
+                    stack.extend(node_children.iter().map(|child| (child, node_rectangle, depth)));
                 }
             }
         }
@@ -994,9 +997,9 @@ pub fn system_text_size_from_dimension(
 /// This system takes updated [`TextLayoutInfo`] data and overwrites coresponding [`UiLayout`] data to match the text size.
 pub fn system_text_size_to_layout(
     mut commands: Commands,
-    mut query: Query<(&mut UiLayout, &TextLayoutInfo, &UiTextSize), Changed<TextLayoutInfo>>,
+    mut query: Query<(&mut UiLayout, &Text2d, &TextLayoutInfo, &UiTextSize), Changed<TextLayoutInfo>>,
 ) {
-    for (mut layout, text_info, text_size) in &mut query {
+    for (mut layout, text, text_info, text_size) in &mut query {
         // Wait for text to render
         if text_info.size.y == 0.0 {
             commands.trigger(RecomputeUiLayout);
@@ -1005,8 +1008,9 @@ pub fn system_text_size_to_layout(
         // Create the text layout
         match layout.layouts.get_mut("base").expect("'base' state not found for Text") {
             UiLayoutType::Window(window) => {
-                window.set_height(**text_size);
-                window.set_width(**text_size * (text_info.size.x / text_info.size.y));
+                let lines = 1 + text.trim().matches('\n').count();
+                window.set_height(**text_size * (lines as f32));
+                window.set_width(**text_size * (lines as f32) * (text_info.size.x / text_info.size.y));
             },
             UiLayoutType::Solid(solid) => {
                 solid.set_size(Ab(text_info.size));
@@ -1022,9 +1026,9 @@ pub fn system_text_size_to_layout(
 #[cfg(feature = "text3d")]
 pub fn system_text_3d_size_to_layout(
     mut commands: Commands,
-    mut query: Query<(&mut UiLayout, &Text3dDimensionOut, &UiTextSize), Changed<Text3dDimensionOut>>,
+    mut query: Query<(&mut UiLayout, &Text3d, &Text3dDimensionOut, &UiTextSize), Changed<Text3dDimensionOut>>,
 ) {
-    for (mut layout, text_info, text_size) in &mut query {
+    for (mut layout, text, text_info, text_size) in &mut query {
         // Wait for text to render
         if text_info.dimension.y == 0.0 {
             commands.trigger(RecomputeUiLayout);
@@ -1034,8 +1038,11 @@ pub fn system_text_3d_size_to_layout(
         // Create the text layout
         match layout.layouts.get_mut("base").expect("'base' state not found for Text") {
             UiLayoutType::Window(window) => {
-                window.set_height(**text_size);
-                window.set_width(**text_size * (text_info.dimension.x / text_info.dimension.y));
+                let lines = 1 + text.get_single()
+                    .expect("Multisegment 3D text not supported, make a PR to Lunex if you need it")
+                    .trim().matches('\n').count();
+                window.set_height(**text_size * (lines as f32));
+                window.set_width(**text_size * (lines as f32) * (text_info.dimension.x / text_info.dimension.y));
             },
             UiLayoutType::Solid(solid) => {
                 solid.set_size(Ab(text_info.dimension));
@@ -1128,12 +1135,12 @@ pub struct UiSourceCamera<const INDEX: usize>;
 
 /// This system takes [`Camera`] viewport data and pipes them into querried [`Dimension`] + [`UiLayoutRoot`] + [`UiFetchFromCamera`].
 pub fn system_fetch_dimension_from_camera<const INDEX: usize>(
-    src_query: Query<(&Camera, Option<&OrthographicProjection>), (With<UiSourceCamera<INDEX>>, Changed<Camera>)>,
+    src_query: Query<(&Camera, Option<&Projection>), (With<UiSourceCamera<INDEX>>, Changed<Camera>)>,
     mut dst_query: Query<&mut Dimension, (With<UiLayoutRoot>, With<UiFetchFromCamera<INDEX>>)>,
 ) {
     // Check if we have a camera dimension input
     if src_query.is_empty() { return; }
-    let Ok((camera, projection_option)) = src_query.get_single() else {
+    let Ok((camera, projection_option)) = src_query.single() else {
         warn_once!("Multiple UiSourceCamera<{INDEX}> exist at once! Ignoring all camera inputs to avoid unexpected behavior!");
         return;
     };
@@ -1141,7 +1148,7 @@ pub fn system_fetch_dimension_from_camera<const INDEX: usize>(
     // Pipe the camera viewport size
     if let Some(cam_size) = camera.logical_viewport_size() {
         for mut size in &mut dst_query {
-            **size = Vec2::from((cam_size.x, cam_size.y)) * if let Some(p) = projection_option { p.scale } else { 1.0 };
+            **size = Vec2::from((cam_size.x, cam_size.y)) * if let Some(Projection::Orthographic(p)) = projection_option { p.scale } else { 1.0 };
         }
     }
 }

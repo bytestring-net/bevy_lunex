@@ -55,7 +55,10 @@ fn setup(
                 Sprite::from_image(asset_server.load("background.png")),
                 // On hover change the cursor to this
                 OnHoverSetCursor::new(SystemCursorIcon::Pointer),
-            ));
+            ))
+            .observe(|_: Trigger<Pointer<Out>>| info!("Moving out!") )
+            .observe(|_: Trigger<Pointer<Over>>| info!("Moving in!") )
+            .observe(|_: Trigger<Pointer<Click>>| info!("Click!") );
         });
     });
 }

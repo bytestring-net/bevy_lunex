@@ -844,6 +844,7 @@ impl UiValueEvaluate<f32> for UiValue<f32> {
         if let Some(v) = self.rh { out += (v/100.0) * parent_size }
         if let Some(v) = self.em { out += v * font_size }
         if let Some(v) = self.vp { out += (v/100.0) * viewport_size }
+        if let Some(v) = self.vw { out += (v/100.0) * viewport_size }
         if let Some(v) = self.vh { out += (v/100.0) * viewport_size }
         out
     }
@@ -856,7 +857,8 @@ impl UiValueEvaluate<Vec2> for UiValue<Vec2> {
         if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
         if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
         if let Some(v) = self.em { out += v * font_size }
-        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size }
+        if let Some(v) = self.vw { out += (v/100.0) * viewport_size.x }
         if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
         out
     }
@@ -869,7 +871,8 @@ impl UiValueEvaluate<Vec3> for UiValue<Vec3> {
         if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
         if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
         if let Some(v) = self.em { out += v * font_size }
-        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size }
+        if let Some(v) = self.vw { out += (v/100.0) * viewport_size.x }
         if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
         out
     }
@@ -882,7 +885,8 @@ impl UiValueEvaluate<Vec4> for UiValue<Vec4> {
         if let Some(v) = self.rw { out += (v/100.0) * parent_size.x }
         if let Some(v) = self.rh { out += (v/100.0) * parent_size.y }
         if let Some(v) = self.em { out += v * font_size }
-        if let Some(v) = self.vp { out += (v/100.0) * viewport_size.x }
+        if let Some(v) = self.vp { out += (v/100.0) * viewport_size }
+        if let Some(v) = self.vw { out += (v/100.0) * viewport_size.x }
         if let Some(v) = self.vh { out += (v/100.0) * viewport_size.y }
         out
     }
@@ -917,49 +921,49 @@ impl NiceDisplay for UiValue<f32> {
         let mut t = String::new();
         if let Some(v) = self.ab {
             if v != 0.0 {
-                t = format!("{}", format!("{:.00}", v).bright_blue());
+                t = format!("{}", format!("{v:.00}").bright_blue());
             }
         }
         if let Some(v) = self.rl {
             if v != 0.0 {
                 if !t.is_empty() { t += " + " };
-                t = format!("{}{}{}", t, format!("{:.00}", v).bright_green(), "%".bright_green());
+                t = format!("{}{}{}", t, format!("{v:.00}").bright_green(), "%".bright_green());
             }
         }
         if let Some(v) = self.rw {
             if v != 0.0 {
                 if !t.is_empty() { t += " + " };
-                t = format!("{}{}{}", t, format!("{:.00}", v).bright_green(), "%w".bright_green());
+                t = format!("{}{}{}", t, format!("{v:.00}").bright_green(), "%w".bright_green());
             }
         }
         if let Some(v) = self.rh {
             if v != 0.0 {
                 if !t.is_empty() { t += " + " };
-                t = format!("{}{}{}", t, format!("{:.00}", v).bright_green(), "%h".bright_green());
+                t = format!("{}{}{}", t, format!("{v:.00}").bright_green(), "%h".bright_green());
             }
         }
         if let Some(v) = self.em {
             if v != 0.0 {
                 if !t.is_empty() { t += " + " };
-                t = format!("{}{}{}", t, format!("{:.00}", v).bright_red(), "m".bright_red());
+                t = format!("{}{}{}", t, format!("{v:.00}").bright_red(), "m".bright_red());
             }
         }
         if let Some(v) = self.vp {
             if v != 0.0 {
                 if !t.is_empty() { t += " + " };
-                t = format!("{}{}{}", t, format!("{:.00}", v).bright_green(), "v%".bright_green());
+                t = format!("{}{}{}", t, format!("{v:.00}").bright_green(), "v%".bright_green());
             }
         }
         if let Some(v) = self.vw {
             if v != 0.0 {
                 if !t.is_empty() { t += " + " };
-                t = format!("{}{}{}", t, format!("{:.00}", v).bright_green(), "v%w".bright_green());
+                t = format!("{}{}{}", t, format!("{v:.00}").bright_green(), "v%w".bright_green());
             }
         }
         if let Some(v) = self.vh {
             if v != 0.0 {
                 if !t.is_empty() { t += " + " };
-                t = format!("{}{}{}", t, format!("{:.00}", v).bright_green(), "v%h".bright_green());
+                t = format!("{}{}{}", t, format!("{v:.00}").bright_green(), "v%h".bright_green());
             }
         }
         if t.is_empty() { t = format!("{}", "0".bright_blue()); };
@@ -1050,7 +1054,7 @@ impl NiceDisplay for UiValue<Vec2> {
         }
         if tx.is_empty() { tx = format!("{}", "0".bright_blue()); };
         if ty.is_empty() { ty = format!("{}", "0".bright_blue()); };
-        format!("({}, {})", tx, ty)
+        format!("({tx}, {ty})")
     }
 }
 impl NiceDisplay for UiValue<Vec3> {
