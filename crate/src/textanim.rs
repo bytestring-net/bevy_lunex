@@ -20,9 +20,9 @@ impl Default for TextAnimator {
     fn default() -> Self {
         Self {
             string: String::new(),
-            function: typing_animation,
+            function: typing_animation_underscore,
             counter: 0.0,
-            mode: DurationMode::AnimDuration(10.0),
+            mode: DurationMode::AnimDuration(5.0),
         }
     }
 }
@@ -147,7 +147,21 @@ impl TextAnimator {
 }
 
 /// Simulates typing animation with an underscore cursor
-pub fn typing_animation(t: f32, text: &str) -> String {
+pub fn typing_animation_underscore(t: f32, text: &str) -> String {
+    let visible_chars = (t * text.len() as f32).floor() as usize;
+    let visible_chars = visible_chars.min(text.len());
+
+    if visible_chars < text.len() {
+        // Show typed characters plus cursor
+        format!("{}{}", &text[..visible_chars], "_")
+    } else {
+        // All characters visible, show cursor at end
+        text.to_string()
+    }
+}
+
+/// Simulates typing animation with an vertical line cursor
+pub fn typing_animation_cursor(t: f32, text: &str) -> String {
     let visible_chars = (t * text.len() as f32).floor() as usize;
     let visible_chars = visible_chars.min(text.len());
 

@@ -56,9 +56,9 @@ fn setup(
                 // This controls the height of the text, so 10% of the parent's node height
                 UiTextSize::from(Rh(10.0)),
                 // Set the starting text value
-                Text3d::new(""),
+                Text3d::new("Hello 3D UI!"),
                 // Set the text animation
-                TextAnimator::new("Hello 3D UI!"),
+                TextAnimator::new("Hello 3D UI!"),      // Note: Changing Text3D after spawn will break mesh picking
                 // Style the 3D text font
                 Text3dStyling {
                     size: 64.0,

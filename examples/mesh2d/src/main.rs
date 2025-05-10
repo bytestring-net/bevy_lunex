@@ -70,7 +70,7 @@ fn setup(
                 // Mark this as UI plane mesh
                 UiMeshPlane2d,
                 // Give it some material
-                MeshMaterial2d(materials.add(Color::srgb(1.0, 0.5, 0.5))),
+                MeshMaterial2d(materials.add(Color::srgb(0.2, 0.5, 0.8))),
                 // On hover change the cursor to this
                 OnHoverSetCursor::new(SystemCursorIcon::Pointer),
             ))
