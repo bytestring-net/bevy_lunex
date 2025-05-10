@@ -44,6 +44,8 @@ pub mod prelude {
         UiTextSize,
 
         UiBase,
+
+        TextAnimator,
     };
 
     // Import other file preludes
@@ -69,6 +71,8 @@ mod picking;
 pub use picking::*;
 mod states;
 pub use states::*;
+mod textanim;
+pub use textanim::*;
 mod units;
 pub use units::*;
 
@@ -1296,7 +1300,7 @@ impl PluginGroup for UiLunexPlugins {
         }
 
         // Add Lunex plugin
-        builder = builder.add(UiLunexPlugin);
+        builder = builder.add(UiLunexPlugin).add(UiLunexAnimPlugin);
 
         // Return the plugin group
         builder

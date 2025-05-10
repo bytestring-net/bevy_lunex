@@ -56,6 +56,7 @@
     "bevy_window",
     "bevy_winit",
     "custom_cursor",
+    "bevy_log",
 
     # Required for doctests
     "x11",
@@ -71,3 +72,4 @@
   
   radsort   = { version = "^0.1.1" }
   colored   = { version = "^3.0.0" }
+  rand      = { version = "^0.9.1" }
