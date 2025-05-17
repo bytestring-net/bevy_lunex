@@ -32,7 +32,7 @@ This is an example of a clickable Button created from scratch using provided com
 Thanks to ECS, the syntax is highly modular with strong emphasis on components-per-functionality.
 As you can see, it is no different from vanilla Bevy ECS.
 
-```rust
+```rust ignore
 // Create UI
 commands.spawn((
     // Initialize the UI root for 2D
@@ -70,8 +70,8 @@ commands.spawn((
             Sprite {
                 image: asset_server.load("images/button.png"),
                 // Here we enable sprite slicing
-                image_mode: SpriteImageMode::Sliced(TextureSlicer { border: BorderRect::all(32.0), ..default() }),
-                ..default()
+                image_mode: SpriteImageMode::Sliced(TextureSlicer { border: BorderRect::all(32.0), ..Default::default() }),
+                ..Default::default()
             },
             // Make sure it does not cover the bounding zone of parent
             Pickable::IGNORE,
@@ -93,7 +93,7 @@ commands.spawn((
                 TextFont {
                     font: asset_server.load("fonts/semibold.ttf"),
                     font_size: 64.0,
-                    ..default()
+                    ..Default::default()
                 },
                 // Make sure it does not cover the bounding zone of parent
                 Pickable::IGNORE,

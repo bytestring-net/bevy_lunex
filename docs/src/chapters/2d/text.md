@@ -20,7 +20,7 @@ ui.spawn((
     TextFont {
         font: asset_server.load("fonts/Rajdhani.ttf"),
         font_size: 64.0,
-        ..default()
+        ..Default::default()
     },
 ));
 ```

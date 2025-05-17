@@ -1,7 +1,7 @@
-use bevy::math::FloatExt;
-use bevy::window::PrimaryWindow;
-use bevy::picking::backend::prelude::*;
-use bevy::picking::{backend::PointerHits, Pickable};
+use bevy_math::FloatExt;
+use bevy_window::PrimaryWindow;
+use bevy_picking::backend::prelude::*;
+use bevy_picking::{backend::PointerHits, Pickable};
 
 use crate::*;
 

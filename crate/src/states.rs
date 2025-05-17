@@ -21,8 +21,7 @@ pub mod prelude {
 /// For more information check the documentation on [`UiState`].
 /// 
 /// ```
-/// # use bevy::prelude::*;
-/// # use bevy_lunex::*;
+/// # use bevy_ecs::prelude::*; use bevy_asset::prelude::*; use bevy_picking::prelude::*; use bevy_color::prelude::*; use bevy_lunex::prelude::*; use bevy_text::prelude::*; use bevy_sprite::prelude::*; use bevy_color::palettes::basic::*; use bevy_math::prelude::*;
 ///      UiLayout::new(vec![
 ///          (UiBase::id(), UiLayout::window().full()),
 ///          (UiHover::id(), UiLayout::window().x(Rl(10.0)).full())
@@ -34,8 +33,7 @@ pub mod prelude {
 ///
 /// ## 🛠️ Example
 /// ```
-/// # use bevy::prelude::*;
-/// # use bevy_lunex::*;
+/// # use bevy_ecs::prelude::*; use bevy_asset::prelude::*; use bevy_picking::prelude::*; use bevy_color::prelude::*; use bevy_lunex::prelude::*; use bevy_text::prelude::*; use bevy_sprite::prelude::*; use bevy_color::palettes::basic::*; use bevy_math::prelude::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
 /// #     UiLayoutRoot::new_2d(),

@@ -53,7 +53,7 @@ fn setup(
                     base_color_texture: Some(asset_server.load("panel.png")),
                     alpha_mode: AlphaMode::Blend,
                     unlit: true,
-                    ..default()
+                    ..Default::default()
                 })),
                 // This component will tell Lunex to reconstruct this mesh as plane on demand
                 UiMeshPlane3d,

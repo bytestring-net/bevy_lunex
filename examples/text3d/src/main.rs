@@ -11,7 +11,7 @@ fn main() -> AppExit {
         .add_plugins((DefaultPlugins, UiLunexPlugins, UiLunexDebugPlugin::<0, 0>))
         .insert_resource(LoadFonts {
             font_directories: vec!["assets/fonts".to_owned()],
-            ..default()
+            ..Default::default()
         })
         .add_systems(Startup, setup)
 
