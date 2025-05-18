@@ -49,6 +49,8 @@ pub mod prelude {
         AnimTrig,
         replacing,
         morphing,
+
+        TextAnimator,
     };
 
     // Import other file preludes
@@ -71,6 +73,8 @@ mod layouts;
 pub use layouts::*;
 mod picking;
 pub use picking::*;
+mod textanim;
+pub use textanim::*;
 mod units;
 pub use units::*;
 
@@ -1471,7 +1475,7 @@ impl PluginGroup for UiLunexPlugins {
         }
 
         // Add Lunex plugin
-        builder = builder.add(UiLunexPlugin);
+        builder = builder.add(UiLunexPlugin).add(UiLunexAnimPlugin);
 
         // Return the plugin group
         builder

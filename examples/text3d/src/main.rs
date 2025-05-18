@@ -50,14 +50,16 @@ fn setup(
 
             // Spawn the panel
             ui.spawn((
-                Name::new("Panel"),
+                Name::new("Text"),
                 // Set the layout of this mesh
                 UiLayout::window().pos(Rl(50.0)).anchor(Anchor::Center).pack(),
                 // This controls the height of the text, so 10% of the parent's node height
                 UiTextSize::from(Rh(10.0)),
-                // Set the text value
+                // Set the starting text value
                 Text3d::new("Hello 3D UI!"),
-                // Style the 3D text
+                // Set the text animation
+                TextAnimator::new("Hello 3D UI!"),      // Note: Changing Text3D after spawn will break mesh picking
+                // Style the 3D text font
                 Text3dStyling {
                     size: 64.0,
                     color: Srgba::new(1., 1., 1., 1.),
@@ -79,7 +81,10 @@ fn setup(
                 Mesh3d::default(),
                 // On hover change the cursor to this
                 OnHoverSetCursor::new(SystemCursorIcon::Pointer),
-            ));
+            ))
+            .observe(|_: Trigger<Pointer<Out>>| info!("Moving out!") )
+            .observe(|_: Trigger<Pointer<Over>>| info!("Moving in!") )
+            .observe(|_: Trigger<Pointer<Click>>| info!("Click!") );
         });
     }
 }
