@@ -1,5 +1,10 @@
 use crate::*;
-use bevy::{input::{gamepad::GamepadButtonChangedEvent, mouse::MouseButtonInput, ButtonState}, picking::{pointer::{Location, PointerAction, PointerId, PointerInput, PointerLocation}, PickSet}, render::camera::{NormalizedRenderTarget, RenderTarget}, platform::collections::HashMap, window::{PrimaryWindow, SystemCursorIcon, WindowRef}, winit::cursor::CursorIcon};
+use bevy_input::{gamepad::GamepadButtonChangedEvent, mouse::MouseButtonInput, ButtonState}; 
+use bevy_picking::{pointer::{Location, PointerAction, PointerId, PointerInput, PointerLocation}, PickSet};
+use bevy_render::camera::{NormalizedRenderTarget, RenderTarget};
+use bevy_platform::collections::HashMap;
+use bevy_window::{PrimaryWindow, SystemCursorIcon, WindowRef};
+use bevy_winit::cursor::CursorIcon;
 
 // Exported prelude
 pub mod prelude {
@@ -12,7 +17,7 @@ pub mod prelude {
     };
 
     // Export stuff from other crates
-    pub use bevy::window::SystemCursorIcon;
+    pub use bevy_window::SystemCursorIcon;
 }
 
 // #=========================#

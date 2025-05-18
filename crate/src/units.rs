@@ -316,8 +316,7 @@ macro_rules! init_value {
         /// * [`f32`] [`Vec2`] [`Vec3`] [`Vec4`]
         /// ## 🛠️ Example
         /// ```
-        /// # use bevy_lunex::*;
-        /// # use bevy::prelude::*;
+        /// # use bevy_ecs::prelude::*; use bevy_asset::prelude::*; use bevy_picking::prelude::*; use bevy_color::prelude::*; use bevy_lunex::prelude::*; use bevy_text::prelude::*; use bevy_sprite::prelude::*; use bevy_color::palettes::basic::*; use bevy_math::prelude::*;
         /// let a: UiValue<f32> = Ab(4.0) + Em(1.0);  // -> 4px + 1em
         /// let b: UiValue<f32> = Ab(40.0) - Rl(5.0); // -> 40px - 5%
         /// let c: UiValue<Vec2> = (Ab(20.0), Em(2.0)).into(); // -> [20px, 2em]

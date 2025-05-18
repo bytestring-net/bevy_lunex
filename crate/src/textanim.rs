@@ -28,10 +28,27 @@ impl Default for TextAnimator {
 }
 impl TextAnimator {
     /// Creates new instance
-    pub fn new(text: impl std::fmt::Display) -> Self {
+    pub fn new(text: impl Into<String>) -> Self {
         Self {
-            string: text.to_string(),
+            string: text.into(),
             ..Default::default()
+        }
+    }
+    /// Replace the text with a new one and resets the animation.
+    pub fn set_text(&mut self, text: impl Into<String>) {
+        self.string = text.into();
+        self.counter = 0.0;
+    }
+    /// Replace the text with a new one while not reseting the animation.
+    pub fn set_text_quiet(&mut self, text: impl Into<String>) {
+        self.string = text.into();
+        match self.mode {
+            DurationMode::AnimDuration(duration) => {
+                self.counter = duration;
+            },
+            DurationMode::CharSpeed(_) => {
+                self.counter = 1.0 + self.string.trim().chars().count() as f32
+            }
         }
     }
     /// Replace the default function with a new one. The function provided takes time as input and original string and outputs modified string.
