@@ -8,7 +8,7 @@
 
 [workspace.package]
   authors    = ["IDEDARY"]
-  version    = "0.4.1"
+  version    = "0.4.2"
   edition    = "2024"
   license    = "MIT OR Apache-2.0"
   repository = "https://github.com/bytestring-net/bevy-lunex"
@@ -45,21 +45,28 @@
   #===========================#
   #=== GAME ENGINE SOURCE === #
 
-  # GAME ENGINE
-  bevy = { version = "^0.16.0", default-features = false, features = [
-    "bevy_pbr",
-    "bevy_sprite",
-    "bevy_text",
-    "bevy_gizmos",
-    "bevy_picking",
-    "bevy_ui",
-    "bevy_window",
-    "bevy_winit",
-    "custom_cursor",
-
-    # Required for doctests
-    "x11",
-  ] }
+  ## GAME ENGINE
+  bevy_asset = { version = "^0.16.0", default-features = false }
+  bevy_app = { version = "^0.16.0", default-features = false }
+  bevy_color = { version = "^0.16.0", default-features = false }
+  bevy_ecs = { version = "^0.16.0", default-features = false }
+  bevy_math = { version = "^0.16.0", default-features = false }
+  bevy_text = { version = "^0.16.0", default-features = false }
+  bevy_sprite = { version = "^0.16.0", default-features = false }
+  bevy_image = { version = "^0.16.0", default-features = false }
+  bevy_render = { version = "^0.16.0", default-features = false}
+  bevy_platform = { version = "^0.16.0", default-features = false }
+  bevy_reflect = { version = "^0.16.0", default-features = false }
+  bevy_transform = { version = "^0.16.0", default-features = false }
+  bevy_log = { version = "^0.16.0", default-features = false }
+  bevy_gizmos = { version = "^0.16.0", default-features = false, features = ["bevy_render"] }
+  bevy_window = { version = "^0.16.0", default-features = false }
+  bevy_picking = { version = "^0.16.0", default-features = false }
+  bevy_input = { version = "^0.16.0", default-features = false }
+  bevy_time = { version = "^0.16.0", default-features = false }
+  bevy_pbr = { version = "^0.16.0", default-features = false }
+  bevy_winit = { version = "^0.16.0", default-features = false, features = ["custom_cursor"]}
+  bevy_derive = { version = "^0.16.0", default-features = false }
 
   #===============================#
   #=== GAME ENGINE EXTENSIONS === #
@@ -71,3 +78,5 @@
   
   radsort   = { version = "^0.1.1" }
   colored   = { version = "^3.0.0" }
+  rand      = { version = "^0.9.1" }
+  getrandom = { version = "^0.3.3", features = ["wasm_js"]}

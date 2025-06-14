@@ -18,17 +18,41 @@
 [dependencies]
 
   # GAME ENGINE
-  bevy = { workspace = true }
+  bevy_asset = { workspace = true }
+  bevy_app = { workspace = true }
+  bevy_color = { workspace = true }
+  bevy_ecs = { workspace = true }
+  bevy_math = { workspace = true }
+  bevy_text = { workspace = true }
+  bevy_sprite = { workspace = true }
+  bevy_image = { workspace = true }
+  bevy_render = { workspace = true }
+  bevy_platform = { workspace = true }
+  bevy_reflect = { workspace = true }
+  bevy_transform = { workspace = true }
+  bevy_log = { workspace = true }
+  bevy_gizmos = { workspace = true }
+  bevy_window = { workspace = true }
+  bevy_picking = { workspace = true }
+  bevy_input = { workspace = true }
+  bevy_time = { workspace = true }
+  bevy_pbr = { workspace = true }
+  bevy_winit = { workspace = true }
+  bevy_derive = { workspace = true }
+
+  # GAME ENGINE EXTENSIONS
   bevy_rich_text3d = { workspace = true, optional = true }
 
   # RUST MISCELLANEOUS
-  radsort = { workspace = true }
-  colored = { workspace = true }
+  radsort   = { workspace = true }
+  colored   = { workspace = true }
+  rand      = { workspace = true }
+  getrandom = { workspace = true, optional = true}
 
 [features]
-
-  default = [
-    "text3d"
-  ]
-
+  default = ["text3d"]
   text3d = ["dep:bevy_rich_text3d"]
+  wasm = ["dep:getrandom"]
+
+[target.'cfg(unix)'.dependencies]
+  bevy_winit = { version = "*", default-features = false, features = ["x11"]}

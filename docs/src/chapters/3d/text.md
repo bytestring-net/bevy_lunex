@@ -66,6 +66,6 @@ ui.spawn((
 > ```rust, noplayground
 > .insert_resource(LoadFonts {
 >     font_directories: vec!["assets/fonts".to_owned()],
->     ..default()
+>     ..Default::default()
 > })
 > ```

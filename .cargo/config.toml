@@ -2,11 +2,12 @@
   linker = "clang"
   rustflags = ["-C", "link-arg=-fuse-ld=/usr/bin/mold", "-Zshare-generics=y"]
 
-[unstable]
-  codegen-backend = true
+[target.wasm32-unknown-unknown]
+  rustflags = ['--cfg', 'getrandom_backend="wasm_js"']
 
-[profile.dev]
-  codegen-backend = "cranelift"
-
-[profile.dev.package."*"]
-  codegen-backend = "llvm"
+#[unstable]
+#  codegen-backend = true
+#[profile.dev]
+#  codegen-backend = "cranelift"
+#[profile.dev.package."*"]
+#  codegen-backend = "llvm"

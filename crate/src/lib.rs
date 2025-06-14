@@ -2,18 +2,41 @@
 #![allow(clippy::type_complexity)]
 
 // Imports for this crate
-pub(crate) use std::any::TypeId;
-pub(crate) use bevy::prelude::*;
-pub(crate) use bevy::app::PluginGroupBuilder;
-use bevy::render::view::{self, VisibilityClass};
-pub(crate) use bevy::sprite::Anchor;
-pub(crate) use bevy::text::TextLayoutInfo;
-pub(crate) use bevy::platform::collections::HashMap;
-pub(crate) use bevy::render::view::RenderLayers;
+pub (crate) use std::any::TypeId;
+
+pub (crate) use bevy_asset::prelude::*;
+pub (crate) use bevy_app::prelude::*;
+pub (crate) use bevy_color::prelude::*;
+pub (crate) use bevy_ecs::prelude::*;
+pub (crate) use bevy_math::prelude::*;
+pub (crate) use bevy_text::prelude::*;
+pub (crate) use bevy_sprite::prelude::*;
+pub (crate) use bevy_image::prelude::*;
+pub (crate) use bevy_render::prelude::*;
+pub (crate) use bevy_platform::prelude::*;
+pub (crate) use bevy_reflect::prelude::*;
+pub (crate) use bevy_transform::prelude::*;
+pub (crate) use bevy_log::prelude::*;
+pub (crate) use bevy_gizmos::prelude::*;
+pub (crate) use bevy_window::prelude::*;
+pub (crate) use bevy_picking::prelude::*;
+pub (crate) use bevy_input::prelude::*;
+pub (crate) use bevy_time::prelude::*;
+pub (crate) use bevy_pbr::prelude::*;
+pub (crate) use bevy_derive::*;
+
+
+
+pub(crate) use bevy_app::PluginGroupBuilder;
+use bevy_render::view::{self, VisibilityClass};
+pub(crate) use bevy_sprite::Anchor;
+pub(crate) use bevy_text::TextLayoutInfo;
+pub(crate) use bevy_platform::collections::HashMap;
+pub(crate) use bevy_render::view::RenderLayers;
 pub(crate) use colored::Colorize;
 #[cfg(feature = "text3d")]
 pub(crate) use bevy_rich_text3d::*;
-pub(crate) use bevy::render::{primitives::Aabb, mesh::MeshAabb};
+pub(crate) use bevy_render::{primitives::Aabb, mesh::MeshAabb};
 
 // Imports from this crate
 pub mod prelude {
@@ -44,6 +67,9 @@ pub mod prelude {
         UiTextSize,
 
         UiBase,
+        UiStateTrait,
+
+        TextAnimator,
     };
 
     // Import other file preludes
@@ -53,11 +79,11 @@ pub mod prelude {
     pub use crate::units::*;
 
     // Export stuff from other crates
-    pub use bevy::sprite::Anchor;
+    pub use bevy_sprite::Anchor;
     #[cfg(feature = "text3d")]
     pub use bevy_rich_text3d::*;
     #[cfg(feature = "text3d")]
-    pub use bevy::text::cosmic_text::Weight;
+    pub use bevy_text::cosmic_text::Weight;
 }
 
 // Link files
@@ -69,6 +95,8 @@ mod picking;
 pub use picking::*;
 mod states;
 pub use states::*;
+mod textanim;
+pub use textanim::*;
 mod units;
 pub use units::*;
 
@@ -104,7 +132,7 @@ pub fn system_embedd_resize(
     for (sprite, dimension) in &query {
         if let Some(image) = images.get_mut(&sprite.image) {
             if **dimension != Vec2::ZERO {
-                image.resize(bevy::render::render_resource::Extent3d { width: dimension.x as u32, height: dimension.y as u32, ..default() });
+                image.resize(bevy_render::render_resource::Extent3d { width: dimension.x as u32, height: dimension.y as u32, ..Default::default() });
             }
         }
     }
@@ -114,14 +142,14 @@ pub fn system_embedd_resize(
 pub trait ImageTextureConstructor {
     /// Just a utility constructor hiding the necessary texture initialization
     fn clear_render_texture() -> Image {
-        use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
-        use bevy::asset::RenderAssetUsages;
+        use bevy_render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
+        use bevy_asset::RenderAssetUsages;
 
         let mut image = Image::new_fill(
             Extent3d {
                 width: 512,
                 height: 512,
-                ..default()
+                ..Default::default()
             },
             TextureDimension::D2,
             &[0, 0, 0, 0],
@@ -138,11 +166,11 @@ impl ImageTextureConstructor for Image {}
 pub trait CameraTextureRenderConstructor {
     /// Just a utility constructor for camera that renders to a transparent texture
     fn clear_render_to(handle: Handle<Image>) -> Camera {
-        use bevy::render::camera::RenderTarget;
+        use bevy_render::camera::RenderTarget;
         Camera {
             target: RenderTarget::Image(handle.into()),
             clear_color: ClearColorConfig::Custom(Color::srgba(0.0, 0.0, 0.0, 0.0)),
-            ..default()
+            ..Default::default()
         }
     }
     /// Modify the camera render order
@@ -167,8 +195,7 @@ impl CameraTextureRenderConstructor for Camera {
 /// - [`Dimension`] - Set the size of the Ui-Tree
 /// ## 🛠️ Example
 /// ```
-/// # use bevy::prelude::*;
-/// # use bevy_lunex::*;
+/// # use bevy_ecs::prelude::*; use bevy_asset::prelude::*; use bevy_lunex::prelude::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 ///     commands.spawn((
 ///         UiLayoutRoot::new_2d(),
@@ -400,8 +427,7 @@ pub fn system_debug_print_data(
 ///
 /// ## 🛠️ Example
 /// ```
-/// # use bevy::prelude::*;
-/// # use bevy_lunex::*;
+/// # use bevy_ecs::prelude::*; use bevy_asset::prelude::*; use bevy_picking::prelude::*; use bevy_color::prelude::*; use bevy_lunex::prelude::*; use bevy_text::prelude::*; use bevy_sprite::prelude::*; use bevy_color::palettes::basic::*; use bevy_math::prelude::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
 /// #     UiLayoutRoot::new_2d(),
@@ -463,6 +489,36 @@ impl UiLayout {
             map.insert(state, layout.into());
         }
         Self { layouts: map }
+    }
+    /// Try to return a reference to a stored layout
+    pub fn get_boundary(&self, id: TypeId) -> Option<&UiLayoutTypeBoundary> {
+        let UiLayoutType::Boundary(boundary) = self.layouts.get(&id)? else { return None; };
+        Some(boundary)
+    }
+    /// Try to return a mut reference to a stored layout
+    pub fn get_mut_boundary(&mut self, id: TypeId) -> Option<&mut UiLayoutTypeBoundary> {
+        let UiLayoutType::Boundary(boundary) = self.layouts.get_mut(&id)? else { return None; };
+        Some(boundary)
+    }
+    /// Try to return a reference to a stored layout
+    pub fn get_window(&self, id: TypeId) -> Option<&UiLayoutTypeWindow> {
+        let UiLayoutType::Window(window) = self.layouts.get(&id)? else { return None; };
+        Some(window)
+    }
+    /// Try to return a mut reference to a stored layout
+    pub fn get_mut_window(&mut self, id: TypeId) -> Option<&mut UiLayoutTypeWindow> {
+        let UiLayoutType::Window(window) = self.layouts.get_mut(&id)? else { return None; };
+        Some(window)
+    }
+    /// Try to return a reference to a stored layout
+    pub fn get_solid(&self, id: TypeId) -> Option<&UiLayoutTypeSolid> {
+        let UiLayoutType::Solid(solid) = self.layouts.get(&id)? else { return None; };
+        Some(solid)
+    }
+    /// Try to return a mut reference to a stored layout
+    pub fn get_mut_solid(&mut self, id: TypeId) -> Option<&mut UiLayoutTypeSolid> {
+        let UiLayoutType::Solid(solid) = self.layouts.get_mut(&id)? else { return None; };
+        Some(solid)
     }
 }
 /// Conversion implementations
@@ -604,9 +660,7 @@ pub fn system_layout_compute(
 ///
 /// ## 🛠️ Example
 /// ```
-/// # use bevy::prelude::*;
-/// # use bevy::color::palettes::basic::*;
-/// # use bevy_lunex::*;
+/// # use bevy_ecs::prelude::*; use bevy_asset::prelude::*; use bevy_picking::prelude::*; use bevy_color::prelude::*; use bevy_lunex::prelude::*; use bevy_text::prelude::*; use bevy_sprite::prelude::*; use bevy_color::palettes::basic::*; use bevy_math::prelude::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
 /// #     UiLayoutRoot::new_2d(),
@@ -769,8 +823,7 @@ pub fn system_image_size_to_layout(
 ///
 /// ## 🛠️ Example
 /// ```
-/// # use bevy::prelude::*;
-/// # use bevy_lunex::*;
+/// # use bevy_ecs::prelude::*; use bevy_asset::prelude::*; use bevy_picking::prelude::*; use bevy_color::prelude::*; use bevy_lunex::prelude::*; use bevy_text::prelude::*; use bevy_sprite::prelude::*; use bevy_color::palettes::basic::*; use bevy_math::prelude::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
 /// #     UiLayoutRoot::new_2d(),
@@ -786,7 +839,7 @@ pub fn system_image_size_to_layout(
 ///           TextFont {
 ///               font: asset_server.load("fonts/Rajdhani.ttf"),
 ///               font_size: 64.0,
-///               ..default()
+///               ..Default::default()
 ///           },
 ///       ));
 /// # });
@@ -1006,9 +1059,7 @@ pub fn system_touch_camera_if_fetch_added<const INDEX: usize>(
 ///
 /// ## 🛠️ Example
 /// ```
-/// # use bevy::prelude::*;
-/// # use bevy::color::palettes::basic::*;
-/// # use bevy_lunex::*;
+/// # use bevy_ecs::prelude::*; use bevy_asset::prelude::*; use bevy_picking::prelude::*; use bevy_color::prelude::*; use bevy_lunex::prelude::*; use bevy_text::prelude::*; use bevy_sprite::prelude::*; use bevy_color::palettes::basic::*; use bevy_math::prelude::*;
 /// # fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// # commands.spawn((
 /// #     UiLayoutRoot::new_2d(),
@@ -1070,7 +1121,7 @@ pub fn system_color(
         &UiState,
     ), Or<(Changed<UiColor>, Changed<UiState>)>>,
     mut materials2d: ResMut<Assets<ColorMaterial>>,
-    mut materials3d: ResMut<Assets<StandardMaterial>>,
+    mut materials3d: Option<ResMut<Assets<StandardMaterial>>>,
 ) {
     for (node_sprite_option, node_text_option, mat2d, mat3d, node_color, node_state) in &mut query {
 
@@ -1123,8 +1174,10 @@ pub fn system_color(
                 mat.color = blend_color.into();
             }
         } else if let Some(id) = mat3d {
-            if let Some(mat) = materials3d.get_mut(id) {
-                mat.base_color = blend_color.into();
+            if let Some(materials3d) = &mut materials3d {
+                if let Some(mat) = materials3d.get_mut(id) {
+                    mat.base_color = blend_color.into();
+                }
             }
         }
     }
@@ -1171,7 +1224,7 @@ impl Plugin for UiLunexPlugin {
         // Configure the system set
         app.configure_sets(PostUpdate, (
             UiSystems::PreCompute.before(UiSystems::Compute),
-            UiSystems::PostCompute.after(UiSystems::Compute).before(bevy::transform::TransformSystem::TransformPropagate),
+            UiSystems::PostCompute.after(UiSystems::Compute).before(bevy_transform::TransformSystem::TransformPropagate),
         ));
 
         // Add observers
@@ -1181,7 +1234,7 @@ impl Plugin for UiLunexPlugin {
         app.add_systems(PostUpdate, (
 
             system_state_base_balancer,
-            system_text_size_to_layout.after(bevy::text::update_text2d_layout),
+            system_text_size_to_layout.after(bevy_text::update_text2d_layout),
             system_image_size_to_layout,
             system_recompute_on_change::<UiLayout>,
 
@@ -1208,7 +1261,7 @@ impl Plugin for UiLunexPlugin {
 
             system_color,
             system_mark_3d,
-            system_pipe_sprite_size_from_dimension.before(bevy::sprite::SpriteSystem::ComputeSlices),
+            system_pipe_sprite_size_from_dimension.before(bevy_sprite::SpriteSystem::ComputeSlices),
             system_text_size_from_dimension,
             system_mesh_3d_reconstruct_from_dimension,
             system_mesh_2d_reconstruct_from_dimension,
@@ -1296,7 +1349,7 @@ impl PluginGroup for UiLunexPlugins {
         }
 
         // Add Lunex plugin
-        builder = builder.add(UiLunexPlugin);
+        builder = builder.add(UiLunexPlugin).add(UiLunexAnimPlugin);
 
         // Return the plugin group
         builder
