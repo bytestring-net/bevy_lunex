@@ -1121,7 +1121,7 @@ pub fn system_color(
         &UiState,
     ), Or<(Changed<UiColor>, Changed<UiState>)>>,
     mut materials2d: ResMut<Assets<ColorMaterial>>,
-    mut materials3d: ResMut<Assets<StandardMaterial>>,
+    mut materials3d: Option<ResMut<Assets<StandardMaterial>>>,
 ) {
     for (node_sprite_option, node_text_option, mat2d, mat3d, node_color, node_state) in &mut query {
 
@@ -1174,8 +1174,10 @@ pub fn system_color(
                 mat.color = blend_color.into();
             }
         } else if let Some(id) = mat3d {
-            if let Some(mat) = materials3d.get_mut(id) {
-                mat.base_color = blend_color.into();
+            if let Some(materials3d) = &mut materials3d {
+                if let Some(mat) = materials3d.get_mut(id) {
+                    mat.base_color = blend_color.into();
+                }
             }
         }
     }

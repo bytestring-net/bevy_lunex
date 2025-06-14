@@ -18,6 +18,11 @@ impl Plugin for UiLunexPickingPlugin {
     }
 }
 
+/// This component disables the Lunex picking backend for this entity.
+/// Use this only if you want to use a different or custom picking
+/// bakckend. To disable picking entirely, use [`Pickable::IGNORE`].
+#[derive(Component)]
+pub struct NoLunexPicking;
 
 /// Checks if any Dimension entities are under a pointer
 fn lunex_2d_picking(
@@ -35,7 +40,7 @@ fn lunex_2d_picking(
         &GlobalTransform,
         Option<&Pickable>,
         &ViewVisibility,
-    )>,
+    ), Without<NoLunexPicking>>,
     mut output: EventWriter<PointerHits>,
 ) {
     let mut sorted_nodes: Vec<_> = lunex_query
