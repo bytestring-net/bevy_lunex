@@ -2,8 +2,6 @@
 #![allow(clippy::type_complexity)]
 
 // Imports for this crate
-pub (crate) use std::any::TypeId;
-
 pub (crate) use bevy_asset::prelude::*;
 pub (crate) use bevy_app::prelude::*;
 pub (crate) use bevy_color::prelude::*;
@@ -66,8 +64,12 @@ pub mod prelude {
         UiImageSize,
         UiTextSize,
 
-        UiBase,
-        UiStateTrait,
+        UiStateAnimation,
+        Anim,
+        Seg,
+        AnimTrig,
+        replacing,
+        morphing,
 
         TextAnimator,
     };
@@ -75,7 +77,6 @@ pub mod prelude {
     // Import other file preludes
     pub use crate::cursor::prelude::*;
     pub use crate::layouts::prelude::*;
-    pub use crate::states::prelude::*;
     pub use crate::units::*;
 
     // Export stuff from other crates
@@ -93,8 +94,6 @@ mod layouts;
 pub use layouts::*;
 mod picking;
 pub use picking::*;
-mod states;
-pub use states::*;
 mod textanim;
 pub use textanim::*;
 mod units;
@@ -364,7 +363,7 @@ pub fn system_debug_print_data(
                     format!("{:.00}", node_transform.translation.z).green(),
                 );
 
-                match node_layout.layouts.get(&UiBase::id()).unwrap() {
+                match node_layout.layouts.get("base").unwrap() {
                     UiLayoutType::Boundary(boundary) => {
                         output_string += &format!(" ➜ {} {} p1: {}, p2: {} {}",
                             "Boundary".bold(),
@@ -447,7 +446,7 @@ pub fn system_debug_print_data(
 #[component(on_add = view::add_visibility_class::<UiLayout>)]
 pub struct UiLayout {
     /// Stored layout per state
-    pub layouts: HashMap<TypeId, UiLayoutType>
+    pub layouts: HashMap<&'static str, UiLayoutType>
 }
 /// Constructors
 impl UiLayout {
@@ -483,7 +482,7 @@ impl UiLayout {
         UiLayoutTypeSolid::new()
     }
     /// Create multiple layouts for a different states at once.
-    pub fn new(value: Vec<(TypeId, impl Into<UiLayoutType>)>) -> Self {
+    pub fn new(value: Vec<(&'static str, impl Into<UiLayoutType>)>) -> Self {
         let mut map = HashMap::new();
         for (state, layout) in value {
             map.insert(state, layout.into());
@@ -491,33 +490,33 @@ impl UiLayout {
         Self { layouts: map }
     }
     /// Try to return a reference to a stored layout
-    pub fn get_boundary(&self, id: TypeId) -> Option<&UiLayoutTypeBoundary> {
-        let UiLayoutType::Boundary(boundary) = self.layouts.get(&id)? else { return None; };
+    pub fn get_boundary(&self, id: &'static str) -> Option<&UiLayoutTypeBoundary> {
+        let UiLayoutType::Boundary(boundary) = self.layouts.get(id)? else { return None; };
         Some(boundary)
     }
     /// Try to return a mut reference to a stored layout
-    pub fn get_mut_boundary(&mut self, id: TypeId) -> Option<&mut UiLayoutTypeBoundary> {
-        let UiLayoutType::Boundary(boundary) = self.layouts.get_mut(&id)? else { return None; };
+    pub fn get_mut_boundary(&mut self, id: &'static str) -> Option<&mut UiLayoutTypeBoundary> {
+        let UiLayoutType::Boundary(boundary) = self.layouts.get_mut(id)? else { return None; };
         Some(boundary)
     }
     /// Try to return a reference to a stored layout
-    pub fn get_window(&self, id: TypeId) -> Option<&UiLayoutTypeWindow> {
-        let UiLayoutType::Window(window) = self.layouts.get(&id)? else { return None; };
+    pub fn get_window(&self, id: &'static str) -> Option<&UiLayoutTypeWindow> {
+        let UiLayoutType::Window(window) = self.layouts.get(id)? else { return None; };
         Some(window)
     }
     /// Try to return a mut reference to a stored layout
-    pub fn get_mut_window(&mut self, id: TypeId) -> Option<&mut UiLayoutTypeWindow> {
-        let UiLayoutType::Window(window) = self.layouts.get_mut(&id)? else { return None; };
+    pub fn get_mut_window(&mut self, id: &'static str) -> Option<&mut UiLayoutTypeWindow> {
+        let UiLayoutType::Window(window) = self.layouts.get_mut(id)? else { return None; };
         Some(window)
     }
     /// Try to return a reference to a stored layout
-    pub fn get_solid(&self, id: TypeId) -> Option<&UiLayoutTypeSolid> {
-        let UiLayoutType::Solid(solid) = self.layouts.get(&id)? else { return None; };
+    pub fn get_solid(&self, id: &'static str) -> Option<&UiLayoutTypeSolid> {
+        let UiLayoutType::Solid(solid) = self.layouts.get(id)? else { return None; };
         Some(solid)
     }
     /// Try to return a mut reference to a stored layout
-    pub fn get_mut_solid(&mut self, id: TypeId) -> Option<&mut UiLayoutTypeSolid> {
-        let UiLayoutType::Solid(solid) = self.layouts.get_mut(&id)? else { return None; };
+    pub fn get_mut_solid(&mut self, id: &'static str) -> Option<&mut UiLayoutTypeSolid> {
+        let UiLayoutType::Solid(solid) = self.layouts.get_mut(id)? else { return None; };
         Some(solid)
     }
 }
@@ -525,7 +524,7 @@ impl UiLayout {
 impl From<UiLayoutType> for UiLayout {
     fn from(value: UiLayoutType) -> Self {
         let mut map = HashMap::new();
-        map.insert(UiBase::id(), value);
+        map.insert("base", value);
         Self {
             layouts: map,
         }
@@ -639,6 +638,137 @@ pub fn system_layout_compute(
     }
 }
 
+// #=====================#
+// #===== ANIMATION =====#
+
+/// a segment within an animation
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum Seg {
+    /// (target, speed)
+    To(f32, f32),
+    /// (target, speed, curve function)
+    Curved(f32, f32, fn(f32) -> f32),
+    /// hold for a duration
+    Hold(f32),
+    /// trigger an event
+    Trig,
+}
+
+/// an animation
+#[derive(Default, Clone, Debug, PartialEq)]
+pub struct Anim {
+    pub value: f32,
+    pub segments: Vec<Seg>,
+    pub looping: bool,
+    pub init: f32,
+    pub current_seg: usize,
+    /// used for hold segments
+    pub elapsed_duration: f32,
+}
+
+/// triggered whenever a Trig segment is reached within an animation
+/// it targets the entity with the animation and contains the state being animated
+#[derive(Event, Clone)]
+pub struct AnimTrig(pub &'static str);
+
+impl Anim {
+    /// make a new animation with initial point 0 and given `segments`
+    /// ```
+    /// Anim::segs(vec![Seg::Hold(1.0), Seg::To(1.0, 1.0)]);
+    /// ```
+    pub fn segs(segments: Vec<Seg>) -> Self {
+        Self { segments, ..Default::default() }
+    }
+    /// a single linear segment animation that goes from `start` to `end` at `speed`
+    pub fn line(start: f32, end: f32, speed: f32) -> Self {
+        Self {
+            segments: vec![Seg::To(end, speed)],
+            init: start,
+            value: start,
+            ..Default::default()
+        }
+    }
+    /// a single curved segment animation from `start` to `end` at `speed` with `f` curve function
+    pub fn curve(start: f32, end: f32, speed: f32, f: fn(f32) -> f32) -> Self {
+        Self {
+            segments: vec![Seg::Curved(end, speed, f)],
+            init: start,
+            value: start,
+            ..Default::default()
+        }
+    }
+    /// return this animation with looping set to true
+    pub fn looping(mut self) -> Self {
+        self.looping = true;
+        self
+    }
+    /// return this animation with the given `initial` value
+    pub fn with_init(mut self, initial: f32) -> Self {
+        self.init = initial;
+        self.value = initial;
+        self
+    }
+    /// return this animation with a trigger at the end
+    pub fn with_end_trig(mut self) -> Self {
+        self.segments.push(Seg::Trig);
+        self
+    }
+    /// move to next stage
+    pub fn step(&mut self) {
+        self.current_seg += 1;
+        if self.looping && self.current_seg == self.segments.len() {
+            self.current_seg = 0;
+            self.value = self.init;
+        }
+    }
+    /// whether or not the animation is in a Trig stage
+    pub fn in_trig(&self) -> bool {
+        self.segments.get(self.current_seg) == Some(&Seg::Trig)
+    }
+    /// whether the animation has reached its end
+    pub fn ended(&self) -> bool {
+        self.current_seg >= self.segments.len()
+    }
+    /// move by `t` time and return the new value
+    pub fn tick(&mut self, t: f32) -> Option<f32> {
+        if let Some(seg) = self.segments.get(self.current_seg) {
+            match seg {
+                Seg::To(target, speed) => {
+                    if self.value == *target {
+                        self.step();
+                    } else if self.value > *target {
+                        self.value = (self.value - t * *speed).max(*target);
+                        return Some(self.value);
+                    } else {
+                        self.value = (self.value + t * *speed).min(*target);
+                        return Some(self.value);
+                    }
+                }
+                Seg::Curved(target, speed, f) => {
+                    if self.value == *target {
+                        self.step();
+                    } else if self.value > *target {
+                        self.value = (self.value - t * *speed).max(*target);
+                        return Some(f(self.value));
+                    } else {
+                        self.value = (self.value + t * *speed).min(*target);
+                        return Some(f(self.value));
+                    }
+                }
+                Seg::Hold(duration) => {
+                    self.elapsed_duration += t;
+                    if self.elapsed_duration >= *duration {
+                        self.step();
+                        self.elapsed_duration = 0.;
+                    }
+                }
+                Seg::Trig => {}
+            }
+        }
+        None
+    }
+}
+
 
 // #=====================#
 // #=== STATE CONTROL ===#
@@ -689,13 +819,14 @@ pub fn system_layout_compute(
 #[derive(Component, Reflect, Clone, PartialEq, Debug)]
 pub struct UiState {
     /// Stored transition per state
-    states: HashMap<TypeId, f32>,
+    states: HashMap<&'static str, f32>,
 }
+
 /// Default constructor
 impl Default for UiState {
     fn default() -> Self {
         let mut map = HashMap::new();
-        map.insert(UiBase::id(), 1.0);
+        map.insert("base", 1.0);
         Self {
             states: map,
         }
@@ -705,59 +836,100 @@ impl Default for UiState {
 /// This system controls the [`UiBase`] state. This state is decreased based on total sum of all other active states.
 pub fn system_state_base_balancer(
     mut query: Query<&mut UiState, Changed<UiState>>,
+    mut commands: Commands,
 ) {
+    let mut should_recompute = false;
+
     for mut manager in &mut query {
         // Normalize the active nobase state weights
         let mut total_nonbase_weight = 0.0;
         for (state, value) in &manager.states {
-            if *state == UiBase::id() { continue; }
+            if *state == "base" { continue; }
             total_nonbase_weight += value;
         }
 
         // Decrease base transition based on other states
-        if let Some(value) = manager.states.get_mut(&UiBase::id()) {
+        if let Some(value) = manager.states.get_mut("base") {
             *value = (1.0 - total_nonbase_weight).clamp(0.0, 1.0);
         }
+
+        should_recompute = true;
+    }
+
+    if should_recompute {
+        commands.trigger(RecomputeUiLayout);
     }
 }
-/// This system pipes the attached state component data to the [`UiState`] component.
-pub fn system_state_pipe_into_manager<S: UiStateTrait + Component>(
-    mut commads: Commands,
-    mut query: Query<(&mut UiState, &S), Changed<S>>,
-) {
-    for (mut manager, state) in &mut query {
-        // Send the value to the manager
-        if let Some(value) = manager.states.get_mut(&S::id()) {
-            *value = state.value();
 
-        // Insert the value if it does not exist
-        } else {
-            manager.states.insert(S::id(), state.value());
+#[derive(Component, Clone, Default, Deref, DerefMut)]
+pub struct UiStateAnimation(pub HashMap<&'static str, Anim>);
+
+impl UiStateAnimation {
+    pub fn new(value: Vec<(&'static str, Anim)>) -> Self {
+        let mut map = HashMap::new();
+        for (state, anim) in value {
+            map.insert(state, anim);
         }
-        // Recompute layout
-        commads.trigger(RecomputeUiLayout);
+        UiStateAnimation(map)
     }
 }
 
-/// Trait that all states must implement before being integrated into the state machine.
-pub trait UiStateTrait: Send + Sync + 'static {
-    /// This is used as a key to identify a Ui-Node state.
-    fn id() -> TypeId {
-        TypeId::of::<Self>()
+pub fn system_state_animate_transition(
+    mut query: Query<(Entity, &mut UiState, &mut UiStateAnimation)>,
+    time: Res<Time<Real>>,
+    mut commands: Commands,
+) {
+    for (entity, mut manager, mut animations) in &mut query {
+        for (state, anim) in animations.iter_mut() {
+            if anim.ended() { continue; }
+            if anim.in_trig() {
+                commands.trigger_targets(AnimTrig(state), entity);
+                anim.step();
+            }
+            if !manager.states.contains_key(state) {
+                manager.states.insert(*state, 0.);
+            }
+            if let Some(v) = anim.tick(time.delta_secs()) {
+                *manager.states.get_mut(state).unwrap() = v;
+            }
+        }
     }
-    /// This must return a value between `0.0 - 1.0`. It is used as transition value
-    /// for a state, with `0.0` being off and `1.0` being on. Any smoothing should happen
-    /// inside this function.
-    fn value(&self) -> f32;
 }
 
-/// **Ui Base** - The default state for a Ui-Node, used only for the [`UiBase::id`] key. It is not a component that you can control.
-#[derive(Clone, PartialEq, Debug)]
-pub struct UiBase;
-impl UiStateTrait for UiBase {
-    fn value(&self) -> f32 {
-        1.0
-    }
+/// set animation for state on triggered event, replacing any existing one
+#[macro_export]
+macro_rules! replacing {
+    ( $event:ty, $state:literal, $anim:expr ) => {
+        {
+            |t: Trigger<$event>, mut q: Query<&mut UiStateAnimation>| {
+                if let Ok(mut anims) = q.get_mut(t.target()) {
+                    anims.insert($state, $anim);
+                }
+            }
+        }
+    };
+}
+
+/// set animation for state on triggered event,
+/// but keep the current value of the existing animation if any
+#[macro_export]
+macro_rules! morphing {
+    ( $event:ty, $state:literal, $new_anim:expr ) => {
+        {
+            |t: Trigger<$event>, mut q: Query<&mut UiStateAnimation>| {
+                if let Ok(mut anims) = q.get_mut(t.target()) {
+                    if let Some(anim) = anims.get_mut($state) {
+                        anim.segments = $new_anim.segments;
+                        anim.init = $new_anim.init;
+                        anim.current_seg = $new_anim.current_seg;
+                        anim.looping = $new_anim.looping;
+                    } else {
+                        anims.insert($state, $new_anim);
+                    }
+                }
+            }
+        }
+    };
 }
 
 
@@ -793,12 +965,12 @@ pub fn system_image_size_to_layout(
             let x = image_size.get_x() * image.width() as f32;
             let y = image_size.get_y() * image.height() as f32;
 
-            if match layout.layouts.get(&UiBase::id()).unwrap() {
+            if match layout.layouts.get("base").unwrap() {
                 UiLayoutType::Window(window) => window.size.get_x() != x || window.size.get_y() != y,
                 UiLayoutType::Solid(solid) => solid.size.get_x() != x || solid.size.get_y() != y,
                 _ => false,
             } {
-                match layout.layouts.get_mut(&UiBase::id()).unwrap() {
+                match layout.layouts.get_mut("base").unwrap() {
                     UiLayoutType::Window(window) => { window.set_width(x); window.set_height(y); },
                     UiLayoutType::Solid(solid) => { solid.set_width(x); solid.set_height(y); },
                     _ => {},
@@ -884,7 +1056,7 @@ pub fn system_text_size_to_layout(
         }
 
         // Create the text layout
-        match layout.layouts.get_mut(&UiBase::id()).expect("UiBase state not found for Text") {
+        match layout.layouts.get_mut("base").expect("'base' state not found for Text") {
             UiLayoutType::Window(window) => {
                 let lines = 1 + text.trim().matches('\n').count();
                 window.set_height(**text_size * (lines as f32));
@@ -914,7 +1086,7 @@ pub fn system_text_3d_size_to_layout(
         }
 
         // Create the text layout
-        match layout.layouts.get_mut(&UiBase::id()).expect("UiBase state not found for Text") {
+        match layout.layouts.get_mut("base").expect("'base' state not found for Text") {
             UiLayoutType::Window(window) => {
                 let lines = 1 + text.get_single()
                     .expect("Multisegment 3D text not supported, make a PR to Lunex if you need it")
@@ -1085,12 +1257,12 @@ pub fn system_touch_camera_if_fetch_added<const INDEX: usize>(
 /// ```
 #[derive(Component, Reflect, Deref, DerefMut, Default, Clone, PartialEq, Debug)]
 pub struct UiColor {
-    colors: HashMap<TypeId, Color>
+    colors: HashMap<&'static str, Color>
 }
 /// Constructors
 impl UiColor {
     /// Define multiple states at once using a vec.
-    pub fn new(value: Vec<(TypeId, impl Into<Color>)>) -> Self {
+    pub fn new(value: Vec<(&'static str, impl Into<Color>)>) -> Self {
         let mut map = HashMap::new();
         for (state, layout) in value {
             map.insert(state, layout.into());
@@ -1102,7 +1274,7 @@ impl UiColor {
 impl <T: Into<Color>> From<T> for UiColor {
     fn from(value: T) -> Self {
         let mut map = HashMap::new();
-        map.insert(UiBase::id(), value.into());
+        map.insert("base", value.into());
         Self {
             colors: map,
         }
@@ -1138,7 +1310,7 @@ pub fn system_color(
 
         // If no state active just try to use base color
         if total_weight == 0.0 {
-            if let Some(color) = node_color.colors.get(&UiBase::id()) {
+            if let Some(color) = node_color.colors.get("base") {
                 blend_color = (*color).into();
             }
 
@@ -1233,6 +1405,7 @@ impl Plugin for UiLunexPlugin {
         // PRE-COMPUTE SYSTEMS
         app.add_systems(PostUpdate, (
 
+            system_state_animate_transition,
             system_state_base_balancer,
             system_text_size_to_layout.after(bevy_text::update_text2d_layout),
             system_image_size_to_layout,
@@ -1279,7 +1452,6 @@ impl Plugin for UiLunexPlugin {
         // Add index plugins
         app.add_plugins((
             CursorPlugin,
-            UiLunexStatePlugin,
             UiLunexPickingPlugin,
             UiLunexIndexPlugin::<0>,
             UiLunexIndexPlugin::<1>,
