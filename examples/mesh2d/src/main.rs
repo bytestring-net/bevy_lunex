@@ -131,10 +131,8 @@ fn system_construct_custom_shape_from_dimension(
         .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
 
         // Compute AABB for the raycaster
-        if let Some(a) = new_mesh.compute_aabb() {
-            if let Some(mut aabb) = aabb_option {
-                *aabb = a;
-            }
+        if let Some(a) = new_mesh.compute_aabb() && let Some(mut aabb) = aabb_option {
+            *aabb = a;
         }
         mesh.0 = meshes.add(new_mesh);
     }

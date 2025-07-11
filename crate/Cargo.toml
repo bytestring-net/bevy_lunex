@@ -55,4 +55,4 @@
   wasm = ["dep:getrandom"]
 
 [target.'cfg(unix)'.dependencies]
-  bevy_winit = { version = "*", default-features = false, features = ["x11"]}
+  bevy_winit = { workspace = true, default-features = false, features = ["x11"]}
