@@ -1,0 +1,16 @@
+#====================#
+#=== EXAMPLE INFO ===#
+
+[package]
+  name = "dualcamera"
+  authors.workspace = true
+  version.workspace = true
+  edition.workspace = true
+  publish = false
+
+#===============================#
+#=== DEPENDENCIES & FEATURES ===#
+
+[dependencies]
+  bevy = { version = "^0.16.0", default-features = true }
+  bevy_lunex = { workspace = true }
