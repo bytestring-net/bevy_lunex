@@ -2,6 +2,7 @@ use bevy_math::FloatExt;
 use bevy_window::PrimaryWindow;
 use bevy_picking::backend::prelude::*;
 use bevy_picking::{backend::PointerHits, Pickable};
+use bevy_camera::visibility::{RenderLayers, DEFAULT_LAYERS};
 
 use crate::*;
 
@@ -32,6 +33,7 @@ fn lunex_2d_picking(
         &Camera,
         &GlobalTransform,
         &Projection,
+        Option<&RenderLayers>,
     )>,
     primary_window: Query<Entity, With<PrimaryWindow>>,
     lunex_query: Query<(
@@ -40,21 +42,22 @@ fn lunex_2d_picking(
         &GlobalTransform,
         Option<&Pickable>,
         &ViewVisibility,
+        Option<&RenderLayers>,
     ), Without<NoLunexPicking>>,
     mut output: MessageWriter<PointerHits>,
 ) {
     let mut sorted_nodes: Vec<_> = lunex_query
         .iter()
-        .filter_map(|(entity, dimension, transform, pickable, vis)| {
+        .filter_map(|(entity, dimension, transform, pickable, vis, render_layers)| {
             if !transform.affine().is_nan() && vis.get() {
-                Some((entity, dimension, transform, pickable))
+                Some((entity, dimension, transform, pickable, render_layers))
             } else {
                 None
             }
         }).collect();
 
     // radsort is a stable radix sort that performed better than `slice::sort_by_key`
-    radsort::sort_by_key(&mut sorted_nodes, |(_, _, transform, _)| {
+    radsort::sort_by_key(&mut sorted_nodes, |(_, _, transform, _, _)| {
         -transform.translation().z
     });
 
@@ -64,22 +67,24 @@ fn lunex_2d_picking(
         pointer_location.location().map(|loc| (pointer, loc))
     }) {
         let mut blocked = false;
-        let Some((cam_entity, camera, cam_transform, Projection::Orthographic(cam_ortho))) =
+
+        // Find the highest-order active camera that matches this pointer's target
+        let Some((cam_entity, camera, cam_transform, Projection::Orthographic(cam_ortho), cam_render_layers)) =
             cameras
                 .iter()
-                .filter(|(_, camera, _, _)| {
+                .filter(|(_, camera, _, _, _)| {
                     camera.is_active
+                        && camera
+                            .target
+                            .normalize(primary_window)
+                            .is_some_and(|x| x == location.target)
                 })
-                .find(|(_, camera, _, _)| {
-                    
-                    camera
-                        .target
-                        .normalize(primary_window)
-                        .is_some_and(|x| x == location.target)
-                })
+                .max_by_key(|(_, camera, _, _, _)| camera.order)
         else {
             continue;
         };
+
+        let cam_layers = cam_render_layers.unwrap_or(DEFAULT_LAYERS);
 
         let viewport_pos = camera
             .logical_viewport_rect()
@@ -96,8 +101,14 @@ fn lunex_2d_picking(
         let picks: Vec<(Entity, HitData)> = sorted_nodes
             .iter()
             .copied()
-            .filter_map(|(entity, dimension, node_transform, pickable)| {
+            .filter_map(|(entity, dimension, node_transform, pickable, entity_render_layers)| {
                 if blocked {
+                    return None;
+                }
+
+                // Check if camera can see this entity via RenderLayers
+                let entity_layers = entity_render_layers.unwrap_or(DEFAULT_LAYERS);
+                if !cam_layers.intersects(entity_layers) {
                     return None;
                 }
 
@@ -129,7 +140,7 @@ fn lunex_2d_picking(
 
                 let rect = Rect::from_center_size(Vec2::ZERO, **dimension);
                 let is_cursor_in_sprite = rect.contains(cursor_pos_sprite);
-                
+
                 blocked = is_cursor_in_sprite && pickable.map(|p| p.should_block_lower).unwrap_or(true);
 
                 is_cursor_in_sprite.then(|| {
