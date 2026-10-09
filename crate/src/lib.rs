@@ -6,7 +6,8 @@ pub (crate) use std::any::TypeId;
 
 pub (crate) use bevy_asset::prelude::*;
 pub (crate) use bevy_app::prelude::*;
-use bevy_camera::{primitives::{Aabb, MeshAabb}, visibility::{RenderLayers, VisibilityClass}, Camera, ClearColorConfig};
+pub (crate) use bevy_camera::{primitives::{Aabb, MeshAabb}, visibility::{RenderLayers, VisibilityClass}, Camera, ClearColorConfig};
+pub (crate) use bevy_shape::Rectangle;
 pub (crate) use bevy_color::prelude::*;
 pub (crate) use bevy_ecs::prelude::*;
 pub (crate) use bevy_math::prelude::*;
@@ -613,7 +614,7 @@ pub fn system_recompute_on_change <C: Component>(query: Query<Entity, Changed<C>
 /// This observer triggers a UI recompute whenever a hierarchy edge is added anywhere.
 /// Flow layouts depend on the sibling structure, so newly inserted children have to be laid out.
 pub fn observer_recompute_on_hierarchy_add(
-    _trigger: On<Add, ChildOf>,
+    _trigger: On<Add<ChildOf>>,
     mut commands: Commands,
 ) {
     commands.trigger(RecomputeUiLayout);
@@ -622,7 +623,7 @@ pub fn observer_recompute_on_hierarchy_add(
 /// This observer triggers a UI recompute whenever a hierarchy edge is removed anywhere.
 /// This covers reparenting and despawning nodes out of a flow container.
 pub fn observer_recompute_on_hierarchy_remove(
-    _trigger: On<Remove, ChildOf>,
+    _trigger: On<Remove<ChildOf>>,
     mut commands: Commands,
 ) {
     commands.trigger(RecomputeUiLayout);
@@ -900,8 +901,8 @@ pub fn system_layout_compute(
 ///           // ... Sprite, Text, etc.
 ///
 ///       // Add observers that enable/disable the hover state component
-///       )).observe(hover_set::<Pointer<Over>, true>)
-///         .observe(hover_set::<Pointer<Out>, false>);
+///       )).observe(hover_set::<PointerOver, true>)
+///         .observe(hover_set::<PointerOut, false>);
 /// # });
 /// # }
 /// ```
@@ -1107,6 +1108,7 @@ pub fn system_text_size_to_layout(
         // Wait for text to render
         if text_info.size.y == 0.0 {
             commands.trigger(RecomputeUiLayout);
+            continue;
         }
 
         // Create the text layout
@@ -1197,7 +1199,7 @@ pub fn system_mesh_3d_reconstruct_from_dimension(
 ) {
     for (dimension, mut mesh, aabb_option) in &mut query {
         let plane_mesh = Mesh::from(Rectangle::new(dimension.x, dimension.y));
-        if let Some(a) = plane_mesh.compute_aabb() && let Some(mut aabb) = aabb_option {
+        if let Some(a) = plane_mesh.get_aabb() && let Some(mut aabb) = aabb_option {
             *aabb = a;
         }
         mesh.0 = meshes.add(plane_mesh);
@@ -1211,7 +1213,7 @@ pub fn system_mesh_2d_reconstruct_from_dimension(
 ) {
     for (dimension, mut mesh, aabb_option) in &mut query {
         let plane_mesh = Mesh::from(Rectangle::new(dimension.x, dimension.y));
-        if let Some(a) = plane_mesh.compute_aabb()  && let Some(mut aabb) = aabb_option {
+        if let Some(a) = plane_mesh.get_aabb()  && let Some(mut aabb) = aabb_option {
             *aabb = a;
         }
         mesh.0 = meshes.add(plane_mesh);
@@ -1462,7 +1464,7 @@ impl Plugin for UiLunexPlugin {
         app.add_systems(PostUpdate, (
 
             system_state_base_balancer,
-            system_text_size_to_layout.after(bevy_sprite::update_text2d_layout),
+            system_text_size_to_layout,
             system_image_size_to_layout,
             system_recompute_on_change::<UiLayout>,
             system_recompute_on_text_change,
@@ -1491,7 +1493,7 @@ impl Plugin for UiLunexPlugin {
 
             system_color,
             system_mark_3d,
-            system_pipe_sprite_size_from_dimension.before(bevy_sprite::SpriteSystems::ComputeSlices),
+            system_pipe_sprite_size_from_dimension,
             system_text_size_from_dimension,
             system_mesh_3d_reconstruct_from_dimension,
             system_mesh_2d_reconstruct_from_dimension,

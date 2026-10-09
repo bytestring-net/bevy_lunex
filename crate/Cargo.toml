@@ -35,13 +35,13 @@
   bevy_platform      = { workspace = true }
   bevy_reflect       = { workspace = true }
   bevy_render        = { workspace = true }
+  bevy_shape         = { workspace = true }
   bevy_sprite        = { workspace = true }
   bevy_sprite_render = { workspace = true }
   bevy_text          = { workspace = true }
   bevy_time          = { workspace = true }
   bevy_transform     = { workspace = true }
   bevy_window        = { workspace = true }
-  bevy_winit         = { workspace = true }
 
   # GAME ENGINE EXTENSIONS
   bevy_rich_text3d = { workspace = true, optional = true }
@@ -56,6 +56,3 @@
   default = ["text3d"]
   text3d  = ["dep:bevy_rich_text3d"]
   wasm    = ["dep:getrandom"]
-
-[target.'cfg(unix)'.dependencies]
-  bevy_winit = { workspace = true, default-features = false, features = ["x11"] }

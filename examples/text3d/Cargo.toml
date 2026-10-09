@@ -12,5 +12,5 @@
   #=== DEPENDENCIES & FEATURES ===#
 
 [dependencies]
-  bevy       = { version = "0.19", default-features = true }
+  bevy       = { version = "0.20", default-features = true }
   bevy_lunex = { workspace = true }

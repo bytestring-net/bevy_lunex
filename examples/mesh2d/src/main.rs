@@ -86,9 +86,9 @@ fn setup(
                 // On hover change the cursor to this
                 OnHoverSetCursor::new(SystemCursorIcon::Pointer),
             ))
-            .observe(|_: On<Pointer<Out>>| info!("Moving out!") )
-            .observe(|_: On<Pointer<Over>>| info!("Moving in!") )
-            .observe(|_: On<Pointer<Click>>| info!("Click!") );
+            .observe(|_: On<PointerOut>| info!("Moving out!") )
+            .observe(|_: On<PointerOver>| info!("Moving in!") )
+            .observe(|_: On<PointerClick>| info!("Click!") );
         });
     });
 }
@@ -131,7 +131,7 @@ fn system_construct_custom_shape_from_dimension(
         .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
 
         // Compute AABB for the raycaster
-        if let Some(a) = new_mesh.compute_aabb() && let Some(mut aabb) = aabb_option {
+        if let Some(a) = new_mesh.get_aabb() && let Some(mut aabb) = aabb_option {
             *aabb = a;
         }
         mesh.0 = meshes.add(new_mesh);

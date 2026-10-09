@@ -151,9 +151,9 @@ impl OnHoverSetCursor {
     }
 }
 
-fn observer_cursor_request_cursor_icon(mut trigger: On<Pointer<Over>>, mut pointers: Query<(&PointerId, &PointerLocation, Has<GamepadCursor>)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
+fn observer_cursor_request_cursor_icon(mut trigger: On<PointerOver>, mut pointers: Query<(&PointerId, &PointerLocation, Has<GamepadCursor>)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
     // Find the pointer location that triggered this observer
-    let id = trigger.pointer_id;
+    let id = trigger.pointer.id;
     for (pointer, location, is_gamepad) in pointers.iter_mut().filter(|(p_id, _, _)| id == **p_id) {
 
         // Check if the pointer is attached to a window
@@ -168,9 +168,9 @@ fn observer_cursor_request_cursor_icon(mut trigger: On<Pointer<Over>>, mut point
     }
 }
 
-fn observer_cursor_cancel_cursor_icon(mut trigger: On<Pointer<Out>>, mut pointers: Query<(&PointerId, &PointerLocation)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
+fn observer_cursor_cancel_cursor_icon(mut trigger: On<PointerOut>, mut pointers: Query<(&PointerId, &PointerLocation)>, query: Query<&OnHoverSetCursor>, mut queue: ResMut<CursorIconQueue>) {
     // Find the pointer location that triggered this observer
-    let id = trigger.pointer_id;
+    let id = trigger.pointer.id;
     for (pointer, location) in pointers.iter_mut().filter(|(p_id, _)| id == **p_id) {
 
         // Check if the pointer is attached to a window

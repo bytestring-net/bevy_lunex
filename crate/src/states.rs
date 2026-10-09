@@ -45,8 +45,8 @@ pub mod prelude {
 ///           UiHover::new().forward_speed(20.0).backward_speed(4.0),   // Enable the state
 ///
 ///       // Add the observers
-///       )).observe(hover_set::<Pointer<Over>, true>)
-///         .observe(hover_set::<Pointer<Out>, false>);
+///       )).observe(hover_set::<PointerOver, true>)
+///         .observe(hover_set::<PointerOut, false>);
 /// # });
 /// # }
 /// ```
