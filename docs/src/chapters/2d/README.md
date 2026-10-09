@@ -61,7 +61,7 @@ ui.spawn((
     // On hover change the cursor to this
     OnHoverSetCursor::new(SystemCursorIcon::Pointer),
 ))
-.observe(|_: On<Pointer<Click>>| info!("Click!"));
+.observe(|_: On<PointerClick>| info!("Click!"));
 ```
 
 > [!NOTE]

@@ -45,13 +45,13 @@ ui.spawn((
     // ... Sprite, Text, etc.
 
 // Add observers that enable/disable the hover state component
-)).observe(hover_set::<Pointer<Over>, true>)
-  .observe(hover_set::<Pointer<Out>, false>);
+)).observe(hover_set::<PointerOver, true>)
+  .observe(hover_set::<PointerOut, false>);
 ```
 
 The `hover_set` utility is a ready-made observer that toggles the hover state on the entity it is
 attached to. The generic `true`/`false` constant decides whether the state should be enabled or
-disabled, so you pair it with `Pointer<Over>` and `Pointer<Out>` respectively.
+disabled, so you pair it with `PointerOver` and `PointerOut` respectively.
 
 > [!TIP]
 > Hover events are automatically **duplicated to all children** of the observed entity, so hovering

@@ -48,7 +48,7 @@ ui.spawn((
     OnHoverSetCursor::new(SystemCursorIcon::Pointer),
 
 // Interactivity is done through observers, you can query anything here
-)).observe(|_: On<Pointer<Click>>, mut exit: MessageWriter<AppExit>| {
+)).observe(|_: On<PointerClick>, mut exit: MessageWriter<AppExit>| {
     
     // Close the app on click
     exit.write(AppExit::Success);

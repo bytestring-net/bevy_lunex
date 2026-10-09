@@ -7,15 +7,15 @@ _Observers are a type of a one-shot system, that is run when specific event is t
 We define these observers, which take `On<E: Event>` that specify for which event it listens. Then we attach it
 to a spawned entity (_local observer_).
 
-We can listen to ANY event we want, even our own custom events. But in practise, the `Pointer<T>` events are the most common.
+We can listen to ANY event we want, even our own custom events. But in practise, the `Pointer*` events are the most common.
 These events are related to `bevy_picking`, which are fired when for example a mouse cursor clicks when pointing at the entity.
 
-- `Pointer<Click>`
-- `Pointer<Over>`
-- `Pointer<Out>`
-- `Pointer<Down>`
-- `Pointer<Up>`
-- `Pointer<Drag>`
+- `PointerClick`
+- `PointerOver`
+- `PointerOut`
+- `PointerPress`
+- `PointerRelease`
+- `PointerDrag`
 
 These events also have metadata that you can access through the `On` event, like for example which mouse button was pressed.
 
@@ -32,7 +32,7 @@ ui.spawn((
     Sprite::from_image(asset_server.load("images/button.png")),
 
 // Interactivity is done through observers, you can query anything here
-)).observe(|_: On<Pointer<Click>>, mut exit: MessageWriter<AppExit>| {
+)).observe(|_: On<PointerClick>, mut exit: MessageWriter<AppExit>| {
     
     // Close the app on click
     exit.write(AppExit::Success);

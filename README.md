@@ -103,10 +103,10 @@ commands.spawn((
         });
     })
     // Utility observers that enable the hover state on trigger
-    .observe(hover_set::<Pointer<Over>, true>)
-    .observe(hover_set::<Pointer<Out>, false>)
+    .observe(hover_set::<PointerOver, true>)
+    .observe(hover_set::<PointerOut, false>)
     // Interactivity is done through observers, you can query anything here
-    .observe(|_: On<Pointer<Click>>| {
+    .observe(|_: On<PointerClick>| {
         println!("I was clicked!");
     });
 });
