@@ -52,6 +52,12 @@ impl UiFlowText {
 /// Epsilon used for float comparisons.
 const FLOW_EPSILON: f32 = 0.01;
 
+/// Maximum re-runs of the layout pipeline when wrapping is involved. A wrapping
+/// container's cross size is derived top-down and propagates at most one ancestor
+/// level per iteration; three covers the practical nesting depth (wrap container
+/// -> Fit parent -> grandparent), and the early exit keeps non-wrap trees at one.
+const FIXPOINT_MAX_ITERATIONS: usize = 3;
+
 /// Evaluation context passed through the flow algorithm.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct UiFlowContext {
@@ -104,6 +110,13 @@ fn pack_lines_greedy(footprints: &[f32], gap: f32, inner_main: f32) -> Vec<Vec<u
     if !current.is_empty() { lines.push(current) }
     if lines.is_empty() { lines.push(Vec::new()) }
     lines
+}
+
+/// Groups child indices into grid lines of `tracks` items per line. With `grid_wrap`
+/// disabled, all children stay on a single line.
+fn pack_lines_grid(child_count: usize, tracks: usize, grid_wrap: bool) -> Vec<Vec<usize>> {
+    let all: Vec<usize> = (0..child_count).collect();
+    if grid_wrap { all.chunks(tracks.max(1)).map(|chunk| chunk.to_vec()).collect() } else { vec![all] }
 }
 
 /// Extracts the leftover-space claim weight of a node's sizing on an axis:
@@ -299,14 +312,11 @@ impl FlowLayout {
         let item = &self.items[index];
         (item.pos, item.size)
     }
-    /// Returns the entity of an item.
-    pub(crate) fn entity(&self, index: usize) -> Entity {
-        self.items[index].entity
-    }
-    /// Returns the wrap-text width assigned to an item, if it is wrap-enabled text.
-    pub(crate) fn wrap_text_width(&self, index: usize) -> Option<f32> {
-        let item = &self.items[index];
-        if item.wrap_text { Some(item.size.x.max(0.0)) } else { None }
+    /// Iterates `(entity, assigned width)` of all wrap-enabled text items in the arena.
+    pub(crate) fn wrap_text_widths(&self) -> impl Iterator<Item = (Entity, f32)> + '_ {
+        self.items.iter()
+            .filter(|item| item.wrap_text)
+            .map(|item| (item.entity, item.size.x.max(0.0)))
     }
     /// Iterates all item indices in the subtree rooted at `index` (preorder).
     pub(crate) fn subtree(&self, index: usize) -> Vec<usize> {
@@ -341,7 +351,10 @@ impl FlowLayout {
         // after the top-down pass - ancestors laid out with stale sizes need a re-run.
         // The fixpoint is bounded and exits early once sizes stabilize.
         let has_wrap = order.iter().any(|&i| is_wrap_mode(&self.items[i].config));
-        let max_iterations = if has_wrap { 3 } else { 1 };
+        let max_iterations = if has_wrap { FIXPOINT_MAX_ITERATIONS } else { 1 };
+        // A previously computed subtree may have exhausted its iterations with the flag
+        // still set - always start clean so it does not skew this subtree.
+        self.wrap_dirty = false;
         for _ in 0..max_iterations {
             // === Bottom-up content pass (children before parents) ===
             for &i in order.iter().rev() {
@@ -446,17 +459,14 @@ impl FlowLayout {
                             None => vec![(0..child_count).collect::<Vec<usize>>()],
                         };
                         // Wrapping containers can compress along the main axis down to their
-                        // largest child footprint - the single-line minimum does not apply.
+                        // largest child footprint plus their own padding - the single-line
+                        // minimum does not apply.
                         let largest = main_fps.iter().copied().fold(0.0, f32::max);
-                        axis_set(&mut min, axis, largest);
+                        axis_set(&mut min, axis, largest + pad_main);
                         (groups, None)
                     } else {
                         let n = config.grid.len();
-                        let groups: Vec<Vec<usize>> = if config.grid_wrap {
-                            (0..child_count).collect::<Vec<usize>>().chunks(n).map(|chunk| chunk.to_vec()).collect()
-                        } else {
-                            vec![(0..child_count).collect::<Vec<usize>>()]
-                        };
+                        let groups = pack_lines_grid(child_count, n, config.grid_wrap);
                         // Bottom-up grid track bases (`Fit` = footprint, `Fixed` = explicit,
                         // `Grow`/`Sp` = margins only); the longest line bounds the container.
                         let mut longest: f32 = 0.0;
@@ -635,12 +645,7 @@ impl FlowLayout {
 
         // === Line packing ===
         let lines: Vec<Vec<usize>> = if !config.grid.is_empty() {
-            let n = config.grid.len();
-            if config.grid_wrap {
-                (0..child_count).collect::<Vec<usize>>().chunks(n).map(|chunk| chunk.to_vec()).collect()
-            } else {
-                vec![(0..child_count).collect::<Vec<usize>>()]
-            }
+            pack_lines_grid(child_count, config.grid.len(), config.grid_wrap)
         } else if config.wrap {
             pack_lines_greedy(&main_fps, gap, axis_get(inner, axis))
         } else {
@@ -680,17 +685,17 @@ impl FlowLayout {
             }
         }
 
+        // === Cross-axis margins ===
+        let cross_margins: Vec<(MarginPart, MarginPart)> = children.iter().map(|&child| {
+            let (start, end) = margin_sides(&self.items[child].margin, cross);
+            (MarginPart { fixed: start.evaluate_axis(ctx.abs_scale, own, ctx.viewport, ctx.font_size, cross), weight: start.sp_weight() },
+             MarginPart { fixed: end.evaluate_axis(ctx.abs_scale, own, ctx.viewport, ctx.font_size, cross), weight: end.sp_weight() })
+        }).collect();
+
         // === Line cross extents ===
         // In wrap mode each line is as tall as its largest child footprint; on a single
         // line the extent is the parent's inner cross axis.
         let line_cross: Vec<f32> = if wrap_mode {
-            let mut cross_margins: Vec<(MarginPart, MarginPart)> = Vec::with_capacity(child_count);
-            for &child in &children {
-                let (start, end) = margin_sides(&self.items[child].margin, cross);
-                let part_start = MarginPart { fixed: start.evaluate_axis(ctx.abs_scale, own, ctx.viewport, ctx.font_size, cross), weight: start.sp_weight() };
-                let part_end = MarginPart { fixed: end.evaluate_axis(ctx.abs_scale, own, ctx.viewport, ctx.font_size, cross), weight: end.sp_weight() };
-                cross_margins.push((part_start, part_end));
-            }
             lines.iter().map(|line| line.iter().map(|&k| {
                 let (part_start, part_end) = cross_margins[k];
                 part_start.fixed + axis_get(self.items[children[k]].size, cross) + part_end.fixed
@@ -721,9 +726,7 @@ impl FlowLayout {
             let extent = line_cross[l];
             for &k in line {
                 let child = children[k];
-                let (start, end) = margin_sides(&self.items[child].margin, cross);
-                let part_start = MarginPart { fixed: start.evaluate_axis(ctx.abs_scale, own, ctx.viewport, ctx.font_size, cross), weight: start.sp_weight() };
-                let part_end = MarginPart { fixed: end.evaluate_axis(ctx.abs_scale, own, ctx.viewport, ctx.font_size, cross), weight: end.sp_weight() };
+                let (part_start, part_end) = cross_margins[k];
                 let size_claim = size_sp_weight(&self.items[child].config, cross);
                 let size_cross = axis_get(self.items[child].size, cross);
                 let whitespace = extent - (part_start.fixed + size_cross + part_end.fixed);
@@ -777,6 +780,8 @@ impl FlowLayout {
     /// Sizes the grid tracks of each line and stretches the line's children to their tracks.
     /// `Fit` tracks hug their item's footprint, `Fixed` tracks are explicit and `Sp`/`Grow`
     /// tracks claim shares of the line's leftover space alongside the children's `Sp` margins.
+    /// Items are stretched to their track minus their fixed margins, floored at their
+    /// minimum and capped at their maximum clamps.
     #[allow(clippy::too_many_arguments)]  // internal single-call helper; bundling would obscure the data flow
     fn distribute_grid_tracks(&mut self, children: &[usize], lines: &[Vec<usize>], grid: &[UiFlowSize], margins: &[(MarginPart, MarginPart)], main_fps: &[f32], axis: usize, inner: Vec2, gap: f32, base: Vec2, ctx: &UiFlowContext) {
         let n = grid.len();
@@ -817,7 +822,8 @@ impl FlowLayout {
                 let (part_start, part_end) = margins[k];
                 let value = (tracks[t] - part_start.fixed - part_end.fixed).max(0.0);
                 let min = self.effective_min(child, axis, base, ctx);
-                axis_set(&mut self.items[child].size, axis, min.max(value));
+                let max = self.effective_max(child, axis, base, ctx);
+                axis_set(&mut self.items[child].size, axis, min.max(value.min(max)));
                 self.items[child].resolved_margin[start_slot] = part_start.fixed + u * part_start.weight;
                 self.items[child].resolved_margin[end_slot] = part_end.fixed + u * part_end.weight;
             }
@@ -1895,6 +1901,40 @@ mod tests {
         assert_vec2(flow.result(c).0, Vec2::new(0.0, 60.0));
     }
 
+    #[test]
+    fn wrap_minimum_includes_padding() {
+        let mut flow = FlowLayout::default();
+        // A Grow-width wrap container with padding, overflowing its parent: it can only
+        // compress down to its padding plus the largest child footprint.
+        let root = flow.push(None, FlowItem::new(UiLayoutTypeFlow::new().width(70.0)));
+        let wrap = flow.push(Some(root), FlowItem::new(UiLayoutTypeFlow::new()
+            .width(UiFlowSize::Grow).padding_x(Ab(10.0)).wrapping()));
+        let _a = flow.push(Some(wrap), fixed(Vec2::new(60.0, 20.0)));
+        flow.compute(root, Vec2::new(1000.0, 600.0), &ctx());
+
+        // The container floors at 10 + 60 + 10 = 80 and overflows the 70-wide parent
+        // instead of compressing below its own padding.
+        assert_vec2(flow.result(wrap).1, Vec2::new(80.0, 20.0));
+    }
+
+    #[test]
+    fn empty_grid_keeps_wrapping_enabled() {
+        let mut flow = FlowLayout::default();
+        // `.grid(vec![])` must not disable wrapping set through `.wrapping()`.
+        let root = flow.push(None, FlowItem::new(UiLayoutTypeFlow::new()
+            .width(250.0).wrapping().grid(Vec::<UiFlowSize>::new()).gap(Ab(10.0))));
+        let a = flow.push(Some(root), fixed(Vec2::new(100.0, 50.0)));
+        let b = flow.push(Some(root), fixed(Vec2::new(100.0, 50.0)));
+        let c = flow.push(Some(root), fixed(Vec2::new(100.0, 50.0)));
+        flow.compute(root, Vec2::new(1000.0, 600.0), &ctx());
+
+        // Two items fit, the third wraps: identical to plain wrapping.
+        assert_vec2(flow.result(root).1, Vec2::new(250.0, 110.0));
+        assert_vec2(flow.result(a).0, Vec2::ZERO);
+        assert_vec2(flow.result(b).0, Vec2::new(110.0, 0.0));
+        assert_vec2(flow.result(c).0, Vec2::new(0.0, 60.0));
+    }
+
     // #=== GRID ===#
 
     #[test]
@@ -1999,9 +2039,36 @@ mod tests {
         assert_vec2(flow.result(c).1, Vec2::new(30.0, 60.0));
     }
 
+    #[test]
+    fn grid_items_respect_max_clamp() {
+        let mut flow = FlowLayout::default();
+        let root = flow.push(None, FlowItem::new(UiLayoutTypeFlow::new()
+            .width(400.0).grid([UiFlowSize::Fixed(Ab(150.0).into())])));
+        let a = flow.push(Some(root), FlowItem::new(UiLayoutTypeFlow::new().max_width(Ab(50.0)).height(50.0)));
+        flow.compute(root, Vec2::new(1000.0, 600.0), &ctx());
+
+        // The item is stretched to its track but capped at its own maximum clamp.
+        assert_vec2(flow.result(a).1, Vec2::new(50.0, 50.0));
+    }
+
+    #[test]
+    fn grid_flipped_stacks_lines_from_end() {
+        let mut flow = FlowLayout::default();
+        let root = flow.push(None, FlowItem::new(UiLayoutTypeFlow::new()
+            .width(Ab(50.0)).height(Ab(120.0)).flipped().grid([UiFlowSize::Fixed(Ab(50.0).into())])));
+        let a = flow.push(Some(root), fixed(Vec2::new(50.0, 30.0)));
+        let b = flow.push(Some(root), fixed(Vec2::new(50.0, 30.0)));
+        flow.compute(root, Vec2::new(1000.0, 600.0), &ctx());
+
+        // One item per line; flipped stacks the first line at the bottom edge.
+        assert_vec2(flow.result(a).0, Vec2::new(0.0, 90.0));
+        assert_vec2(flow.result(b).0, Vec2::new(0.0, 60.0));
+    }
+
     /// Mirrors the doc examples so they stay compile-checked without running the heavy doctests.
     #[test]
-    fn public_api_doc_examples_compile() {        let _size: UiFlowSize = UiFlowSize::Fit;
+    fn public_api_doc_examples_compile() {
+        let _size: UiFlowSize = UiFlowSize::Fit;
         let _size: UiFlowSize = UiFlowSize::Grow;
         let _size: UiFlowSize = UiFlowSize::Fixed(Ab(50.0).into());
         let _size: UiFlowSize = UiFlowSize::Fixed(Rl(50.0).into());

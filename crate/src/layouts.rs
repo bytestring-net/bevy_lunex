@@ -573,11 +573,11 @@ impl UiLayoutTypeFlow {
         self.flipped = true;
         self
     }
-    /// Defines grid tracks along the main axis, one per item in the slice, and enables
-    /// wrapping onto further lines after the last track.
+    /// Defines grid tracks along the main axis, one per item in the slice. A non-empty
+    /// grid implies wrap mode (lines wrap after the last track); an empty vector leaves
+    /// the wrapping setting untouched.
     pub fn grid(mut self, tracks: impl Into<Vec<UiFlowSize>>) -> Self {
         self.grid = tracks.into();
-        self.wrap = !self.grid.is_empty();
         self
     }
     /// Replaces whether grid items wrap onto further lines after the last track.

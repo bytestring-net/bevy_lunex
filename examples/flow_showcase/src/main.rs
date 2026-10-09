@@ -27,12 +27,12 @@ fn setup(mut commands: Commands, window: Single<&Window>) {
     // The UI root acts as an implicit left-to-right flow container, so the
     // three showcase columns split the root width evenly. Its `Dimension` is
     // driven manually by the drag system instead of the camera viewport.
-    let (x, y) = top_left_anchor(window_size, window_size);
+    let anchor = top_left_anchor(window_size, window_size);
     commands.spawn((
         Name::new("Root"),
         UiLayoutRoot::new_2d(),
         Dimension(window_size),
-        Transform::from_xyz(x, y, 0.0),
+        Transform::from_xyz(anchor.x, anchor.y, 0.0),
         Sprite::from_color(Color::srgb(0.03, 0.04, 0.05), Vec2::ONE),
     ))
     .with_children(|ui| {
@@ -47,8 +47,8 @@ const ROOT_MIN: Vec2 = Vec2::new(200.0, 100.0);
 
 /// Returns the transform position that anchors a root box of `size` at the
 /// window's top-left corner (the root box is centered on its transform).
-fn top_left_anchor(size: Vec2, window_size: Vec2) -> (f32, f32) {
-    (-window_size.x / 2.0 + size.x / 2.0, window_size.y / 2.0 - size.y / 2.0)
+fn top_left_anchor(size: Vec2, window_size: Vec2) -> Vec2 {
+    Vec2::new(-window_size.x / 2.0 + size.x / 2.0, window_size.y / 2.0 - size.y / 2.0)
 }
 
 /// While the left mouse button is held, resizes the UI root so it spans from
@@ -62,11 +62,11 @@ fn resize_root_by_drag(
     let Some(cursor) = window.cursor_position() else { return };
     let window_size = window.size();
     let size = cursor.clamp(ROOT_MIN, window_size);
-    let (x, y) = top_left_anchor(size, window_size);
+    let anchor = top_left_anchor(size, window_size);
     for (mut dimension, mut transform) in &mut roots {
         **dimension = size;
-        transform.translation.x = x;
-        transform.translation.y = y;
+        transform.translation.x = anchor.x;
+        transform.translation.y = anchor.y;
     }
 }
 
@@ -193,8 +193,9 @@ fn wrap_grid_panel(ui: &mut ChildSpawnerCommands) {
         });
 
         // === Flipped wrapping: the first line sits at the bottom edge. ===
-        // The fixed height leaves visible empty space above whenever the lines do not
-        // fill it (at the narrowest width the items wrap one per line and exactly fill it).
+        // The fixed height is the exact worst case (4 items one per line:
+        // 4*24 + 3*6 gaps + 2*8 padding = 130) - narrower states exactly fill it
+        // and wider states show the flipped bottom-stacking with space above.
         panel.spawn((
             Name::new("Wrap flipped"),
             UiLayout::flow()
@@ -204,7 +205,7 @@ fn wrap_grid_panel(ui: &mut ChildSpawnerCommands) {
                 .gap(Ab(6.0))
                 .padding_all(Ab(8.0))
                 .width(UiFlowSize::Grow)
-                .height(Ab(142.0))
+                .height(Ab(130.0))
                 .pack(),
             Sprite::from_color(Color::srgb(0.15, 0.17, 0.22), Vec2::ONE),
         ))

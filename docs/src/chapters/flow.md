@@ -159,8 +159,10 @@ ui.spawn(UiLayout::flow()
 
 - `Fit` tracks hug their item's footprint (auto tracks), `Fixed` tracks are
   explicit lengths, and `Sp`/`Grow` tracks claim shares of the line's leftover
-  space alongside any `Sp` margins of their item.
-- Items are stretched to fill their track (minus their fixed margins).
+  space alongside the item's `Sp` margins (including the ones injected by
+  `justify`).
+- Items are stretched to fill their track (minus their fixed margins), floored
+  at their minimum and capped at their maximum clamps.
 - With `grid_wrap` enabled (the default) full lines wrap onto the next line;
   disabling it keeps every item on a single line, overflowing into implicit `Fit`
   tracks.

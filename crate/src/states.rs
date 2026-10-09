@@ -1,3 +1,5 @@
+use bevy_ecs::event::SetEntityEventTarget;
+
 use crate::*;
 
 // Exported prelude
@@ -134,6 +136,13 @@ pub struct UiHoverSet{
     enable_hover_transition: bool,
 }
 
+/// Allows retargeting the event, required for child duplication
+impl SetEntityEventTarget for UiHoverSet {
+    fn set_event_target(&mut self, entity: Entity) {
+        self.entity = entity;
+    }
+}
+
 /// This observer enables the hover transition on trigger
 fn observer_state_hover_set(
     trigger: On<UiHoverSet>,
@@ -211,14 +220,14 @@ impl UiStateTrait for UiOutro {
 pub fn default_linear_curve() -> fn(f32) -> f32 { |v| {v} }
 
 /// This observer will listen for said event and duplicate it to it's children
-fn observer_event_duplicator<'a, E: EntityEvent + Copy>(trigger: On<E>, mut commands: Commands, mut query: Query<&Children>)
+fn observer_event_duplicator<'a, E: EntityEvent + Copy + SetEntityEventTarget>(trigger: On<E>, mut commands: Commands, mut query: Query<&Children>)
     where E::Trigger<'a>: Default
 {
     if let Ok(children) = query.get_mut(trigger.event_target()) {
         for target in children.iter() {
-            let child_event = *trigger.event();
-            //*child_event.event_target() = target;
-            commands.entity(target).trigger(|_| child_event);
+            let mut child_event = *trigger.event();
+            child_event.set_event_target(target);
+            commands.trigger(child_event);
         }
     }
 }

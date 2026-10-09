@@ -758,18 +758,6 @@ pub fn system_layout_compute(
                 flow.reparent(index, virtual_root);
             }
             flow.compute(virtual_root, root_rectangle.size, &flow_context);
-
-            // Feed the assigned widths back into wrap-enabled text nodes.
-            for sub_index in flow.subtree(virtual_root) {
-                if let Some(width) = flow.wrap_text_width(sub_index) {
-                    let changed = node_query.get(flow.entity(sub_index))
-                        .map(|(_, _, _, _, _, _, _, _, _, _, bounds)| bounds.is_none_or(|b| b.width.is_none_or(|current| (current - width).abs() > 0.01)))
-                        .unwrap_or(true);
-                    if changed {
-                        commands.entity(flow.entity(sub_index)).try_insert(TextBounds::new_horizontal(width));
-                    }
-                }
-            }
         }
 
         // #=== HYBRID COMPUTE TRAVERSAL ===#
@@ -777,23 +765,13 @@ pub fn system_layout_compute(
         let mut stack: Vec<(Entity, Rectangle2D, f32)> = root_children.iter().map(|child| (child, root_rectangle, 0.0)).rev().collect();
 
         while let Some((current_entity, parent_rectangle, depth)) = stack.pop() {
-            if let Ok((node_layout, node_depth, node_state, mut node_transform, mut node_dimension, node_children_option, _node_text_info, _node_sprite, _node_image_size, _node_flow_text, node_text_bounds)) = node_query.get_mut(current_entity) {
+            if let Ok((node_layout, node_depth, node_state, mut node_transform, mut node_dimension, node_children_option, _node_text_info, _node_sprite, _node_image_size, _node_flow_text, _node_text_bounds)) = node_query.get_mut(current_entity) {
 
                 // Flow node - computed by the flow engine
                 let node_rectangle = if let Some(&index) = flow_map.get(&current_entity) {
                     // The root of a flow subtree is computed here with the parent's box as the constraint.
                     if flow.is_root(index) {
                         flow.compute(index, parent_rectangle.size, &flow_context);
-
-                        // Feed the assigned widths back into wrap-enabled text nodes.
-                        for sub_index in flow.subtree(index) {
-                            if let Some(width) = flow.wrap_text_width(sub_index) {
-                                let changed = node_text_bounds.is_none_or(|bounds| bounds.width.is_none_or(|current| (current - width).abs() > 0.01));
-                                if changed {
-                                    commands.entity(flow.entity(sub_index)).try_insert(TextBounds::new_horizontal(width));
-                                }
-                            }
-                        }
                     }
                     let (rel_pos, size) = flow.result(index);
                     // Convert from top-left relative to center-relative (y-down), like the other layouts.
@@ -862,6 +840,19 @@ pub fn system_layout_compute(
                     // Add children to the stack
                     stack.extend(node_children.iter().map(|child| (child, node_rectangle, depth)));
                 }
+            }
+        }
+
+        // #=== WRAP-TEXT WIDTH FEEDBACK ===#
+        // Feed the flow-assigned widths back into wrap-enabled text nodes so their text
+        // re-wraps to the width the flow engine gave it. Each node's own bounds are
+        // checked so unchanged widths do not cause per-frame re-measure churn.
+        for (entity, width) in flow.wrap_text_widths() {
+            let changed = node_query.get(entity)
+                .map(|(_, _, _, _, _, _, _, _, _, _, bounds)| bounds.is_none_or(|b| b.width.is_none_or(|current| (current - width).abs() > 0.01)))
+                .unwrap_or(true);
+            if changed {
+                commands.entity(entity).try_insert(TextBounds::new_horizontal(width));
             }
         }
     }
